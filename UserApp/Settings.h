@@ -1,0 +1,147 @@
+#pragma once
+#include <string>
+#include <vector>
+#include <optional>
+
+#include <QDebug>
+
+#include "crypto/KeyPair.h"
+#include "drive/Utils.h"
+
+class Settings
+{
+public:
+
+    struct ChannelInfo
+    {
+        std::string m_hash;
+        std::string m_name;
+
+        template<class Archive>
+        void serialize( Archive &ar )
+        {
+            ar( m_hash, m_name );
+        }
+    };
+
+    struct DriveInfo
+    {
+        std::string m_hash;
+        std::string m_name;
+
+        template<class Archive>
+        void serialize( Archive &ar )
+        {
+            ar( m_hash, m_name );
+        }
+    };
+
+    struct DownloadInfo
+    {
+        std::string m_hash;
+        std::string m_fileName;
+        std::string m_saveFolder;
+        int         m_percents;
+
+        template<class Archive>
+        void serialize( Archive &ar )
+        {
+            ar( m_hash, m_fileName, m_saveFolder );
+        }
+    };
+
+    struct Account
+    {
+        std::string                 m_restBootstrap       = "google.com:7001"; //TODO!!!
+        std::string                 m_replicatorBootstrap = "192.168.2.101:7002"; //TODO!!!
+        std::string                 m_udpPort             = "6846";
+
+        std::string                 m_privateKeyStr;
+        std::string                 m_downloadFolder = "~/Downloads";
+
+        std::vector<DownloadInfo>   m_downloads;
+
+        std::string                 m_publicKeyStr;
+
+        Account() {}
+
+        Account& operator=( const Account& a )
+        {
+            m_restBootstrap         = a.m_restBootstrap;
+            m_replicatorBootstrap   = a.m_replicatorBootstrap;
+            m_udpPort               = a.m_udpPort;
+            m_privateKeyStr         = a.m_privateKeyStr;
+            m_downloadFolder        = a.m_downloadFolder;
+            updateKeyPair( m_privateKeyStr );
+            return *this;
+        }
+
+        Account( const Account& a )
+        {
+            *this = a;
+        }
+
+        template<class Archive>
+        void serialize( Archive &ar )
+        {
+            ar( m_restBootstrap,
+                m_replicatorBootstrap,
+                m_udpPort,
+                m_privateKeyStr,
+                m_downloadFolder );
+        }
+
+        std::optional<sirius::crypto::KeyPair>  m_keyPair;
+
+        void updateKeyPair( std::string privateKeyStr )
+        {
+            m_privateKeyStr = privateKeyStr;
+
+            if ( m_privateKeyStr.size() == 64 )
+            {
+                m_keyPair =
+                    sirius::crypto::KeyPair::FromPrivate(
+                        sirius::crypto::PrivateKey::FromString( m_privateKeyStr ));
+
+                m_publicKeyStr = sirius::drive::toString( m_keyPair->publicKey().array() );
+            }
+        }
+
+    };
+
+public:
+
+    Settings() {}
+
+    bool load( const std::string& pwd );
+    void save();
+
+    bool loaded() const { return m_loaded; }
+
+    std::vector<std::string> accountList();
+
+    Account& config()
+    {
+        assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
+        return m_accounts[m_currentAccountIndex];
+    }
+
+    void setCurrentAccountIndex( int currentAccountIndex )
+    {
+        qDebug() << "setCurrentAccountIndex: " << currentAccountIndex;
+        m_currentAccountIndex = currentAccountIndex;
+        assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
+    }
+
+private:
+    friend class PrivKeyDialog;
+    friend class SettingsDialog;
+
+    Settings& operator=( const Settings& s ) = default;
+
+    std::vector<Account>    m_accounts;
+    int                     m_currentAccountIndex = -1;
+    bool                    m_loaded = false;
+};
+
+inline Settings gSettings;
