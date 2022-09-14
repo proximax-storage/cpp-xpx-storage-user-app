@@ -110,7 +110,7 @@
        <string>Refresh</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox">
+     <widget class="QComboBox" name="m_channels">
       <property name="geometry">
        <rect>
         <x>12</x>
@@ -119,21 +119,6 @@
         <height>32</height>
        </rect>
       </property>
-      <item>
-       <property name="text">
-        <string>my_famaly_photos</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>movies</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>jazz_songs</string>
-       </property>
-      </item>
      </widget>
      <widget class="QLabel" name="label_4">
       <property name="geometry">

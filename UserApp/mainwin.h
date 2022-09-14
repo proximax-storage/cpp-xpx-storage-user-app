@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include <QFileSystemModel>
 
-#define TEST_UI_INTERFACE
+#define STANDALONE_TEST
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -32,6 +32,8 @@ private:
     void setupDownloadsTab();
     void setupFsTreeTable();
     void setupDownloadsTable();
+
+    void updateChannelsCBox();
 
     void setDownloadPath( );
 

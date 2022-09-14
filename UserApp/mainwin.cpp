@@ -14,6 +14,7 @@
 #include <QFileIconProvider>
 #include <QScreen>
 #include <QScroller>
+#include <QComboBox>
 
 #include <random>
 
@@ -49,8 +50,28 @@ MainWin::MainWin(QWidget *parent)
 
 void MainWin::setupDownloadsTab()
 {
+#ifdef STANDALONE_TEST
+    gSettings.config().m_channels.clear();
+    gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                "0101010100000000000000000000000000000000000000000000000000000000",
+                                                "0100000000050607080900010203040506070809000102030405060708090001",
+                                                "my_channel" } );
+    gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                "0202020200000000000000000000000000000000000000000000000000000000",
+                                                "0100000000050607080900010203040506070809000102030405060708090001",
+                                                "my_channel2" } );
+    gSettings.config().m_currentChannelIndex = 0;
+#endif
     setupFsTreeTable();
     setupDownloadsTable();
+    updateChannelsCBox();
+
+    connect( ui->m_channels, &QComboBox::currentIndexChanged, this, [this] (int index)
+    {
+        qDebug() << index;
+        //m_fsTreeTableModel->setFsTree( {}, {} );
+    });
+    //ui->m_channels->setCurrentIndex( gSettings.config().m_currentChannelIndex );
 }
 
 void MainWin::setupFsTreeTable()
@@ -80,7 +101,7 @@ void MainWin::setupFsTreeTable()
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
 
-#ifdef TEST_UI_INTERFACE
+#ifdef STANDALONE_TEST
     sirius::drive::FsTree fsTree;
     fsTree.addFolder( "f1" );
     fsTree.addFolder( "f2" );
@@ -103,7 +124,7 @@ void MainWin::setupFsTreeTable()
 
 void MainWin::setupDownloadsTable()
 {
-#ifdef TEST_UI_INTERFACE
+#ifdef STANDALONE_TEST
     gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
     gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
     gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
@@ -207,3 +228,11 @@ void MainWin::initDriveTree()
 //    ui->m_driveFiles->setColumnWidth(0,420);
 }
 
+void MainWin::updateChannelsCBox()
+{
+    emit ui->m_channels->clear();
+    for( const auto& channelInfo: gSettings.config().m_channels )
+    {
+        ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name) );
+    }
+}

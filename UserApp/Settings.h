@@ -15,6 +15,7 @@ public:
     struct ChannelInfo
     {
         std::string m_hash;
+        std::string m_driveHash;
         std::string m_name;
 
         template<class Archive>
@@ -57,11 +58,14 @@ public:
         std::string                 m_udpPort             = "6846";
 
         std::string                 m_privateKeyStr;
-        std::string                 m_downloadFolder = "~/Downloads";
+        std::string                 m_publicKeyStr;
 
+        std::vector<ChannelInfo>    m_channels;
+        int                         m_currentChannelIndex = -1;
+
+        std::string                 m_downloadFolder = "~/Downloads";
         std::vector<DownloadInfo>   m_downloads;
 
-        std::string                 m_publicKeyStr;
 
         Account() {}
 
@@ -88,6 +92,8 @@ public:
                 m_replicatorBootstrap,
                 m_udpPort,
                 m_privateKeyStr,
+                m_channels,
+                m_currentChannelIndex,
                 m_downloadFolder );
         }
 
@@ -126,6 +132,12 @@ public:
         return m_accounts[m_currentAccountIndex];
     }
 
+    ChannelInfo& currentChannelInfo()
+    {
+        assert( config().m_currentChannelIndex >= 0 && config().m_currentChannelIndex < config().m_channels.size() );
+        return config().m_channels[config().m_currentChannelIndex];
+    }
+
     void setCurrentAccountIndex( int currentAccountIndex )
     {
         qDebug() << "setCurrentAccountIndex: " << currentAccountIndex;
@@ -139,6 +151,7 @@ private:
 
     Settings& operator=( const Settings& s ) = default;
 
+    uint32_t                m_settingsVersion = 1;
     std::vector<Account>    m_accounts;
     int                     m_currentAccountIndex = -1;
     bool                    m_loaded = false;

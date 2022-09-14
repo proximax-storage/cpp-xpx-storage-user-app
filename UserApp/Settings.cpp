@@ -114,6 +114,7 @@ void Settings::save()
     {
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
+        archive( m_settingsVersion );
         archive( m_currentAccountIndex );
         archive( m_accounts );
 
