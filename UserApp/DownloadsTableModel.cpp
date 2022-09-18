@@ -14,7 +14,7 @@ DownloadsTableModel::DownloadsTableModel(QObject *parent)
 
 int DownloadsTableModel::rowCount(const QModelIndex &) const
 {
-    qDebug() << "m_downloads.size: " << gSettings.config().m_downloads.size();
+    //qDebug() << "m_downloads.size: " << gSettings.config().m_downloads.size();
     return gSettings.config().m_downloads.size();
 }
 

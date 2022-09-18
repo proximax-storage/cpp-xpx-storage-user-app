@@ -3,13 +3,21 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 #include "crypto/KeyPair.h"
+#include "drive/FsTree.h"
+
+#include "Settings.h"
 
 namespace sirius { namespace drive {
     class ClientSession;
 }}
 
-using  endpoint_list = std::vector<boost::asio::ip::tcp::endpoint>;
+using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
+
+using  FsTreeHandler  = std::function<void( const std::string&           channelHash,
+                                            const std::array<uint8_t,32> fsTreeHash,
+                                            const sirius::drive::FsTree& fsTree )>;
 
 class StorageEngine
 {
@@ -19,6 +27,10 @@ public:
     void start();
 
     void restart();
+
+    void downloadFsTree( Settings::ChannelInfo&         channelInfo,
+                         const std::array<uint8_t,32>&  fsTreeHash,
+                         FsTreeHandler                  onFsTreeReceived );
 
 private:
     void initClientSession( const sirius::crypto::KeyPair&  keyPair,

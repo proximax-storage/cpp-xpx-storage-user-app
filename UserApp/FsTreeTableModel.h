@@ -11,6 +11,8 @@ public:
     FsTreeTableModel();
 
     void setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path );
+    void update();
+
     int onDoubleClick( int row );
     std::string currentPath() const;
 

@@ -2,11 +2,20 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <filesystem>
 
 #include <QDebug>
 
 #include "crypto/KeyPair.h"
 #include "drive/Utils.h"
+#include "drive/Session.h"
+#include "libtorrent/torrent_handle.hpp"
+
+#define STANDALONE_TEST
+
+inline std::mutex gChannelsMutex;
+
+std::filesystem::path settingsFolder();
 
 class Settings
 {
@@ -14,14 +23,20 @@ public:
 
     struct ChannelInfo
     {
-        std::string m_hash;
-        std::string m_driveHash;
-        std::string m_name;
+        std::string     m_name;
+        std::string     m_hash;
+        std::string     m_driveHash;
+        endpoint_list   m_endpointList = {};
+
+        bool                                m_waitingFsTree              = true;
+        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
+        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
+
 
         template<class Archive>
         void serialize( Archive &ar )
         {
-            ar( m_hash, m_name );
+            ar( m_hash, m_name, m_driveHash );
         }
     };
 
@@ -54,7 +69,7 @@ public:
     struct Account
     {
         std::string                 m_restBootstrap       = "google.com:7001"; //TODO!!!
-        std::string                 m_replicatorBootstrap = "192.168.2.101:7002"; //TODO!!!
+        std::string                 m_replicatorBootstrap = "192.168.2.101:5001"; //TODO!!!
         std::string                 m_udpPort             = "6846";
 
         std::string                 m_privateKeyStr;
@@ -136,6 +151,15 @@ public:
     {
         assert( config().m_currentChannelIndex >= 0 && config().m_currentChannelIndex < config().m_channels.size() );
         return config().m_channels[config().m_currentChannelIndex];
+    }
+
+    ChannelInfo* currentChannelInfoPtr()
+    {
+        if ( config().m_currentChannelIndex < 0 && config().m_currentChannelIndex >= config().m_channels.size() )
+        {
+            return nullptr;
+        }
+        return &config().m_channels[config().m_currentChannelIndex];
     }
 
     void setCurrentAccountIndex( int currentAccountIndex )

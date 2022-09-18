@@ -13,7 +13,7 @@
 
 namespace fs = std::filesystem;
 
-static fs::path settingsFolder()
+fs::path settingsFolder()
 {
     fs::path path;
 #ifdef _WIN32
@@ -61,6 +61,23 @@ bool Settings::load( const std::string& pwd )
         std::istringstream is( os.str(), std::ios::binary );
         cereal::PortableBinaryInputArchive iarchive( is );
 
+        uint32_t settingsVersion;
+        iarchive( settingsVersion );
+
+        if ( settingsVersion != m_settingsVersion )
+        {
+            QMessageBox msgBox;
+            msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
+            msgBox.setInformativeText( "It will be lost" );
+            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+            int reply = msgBox.exec();
+            if ( reply == QMessageBox::Cancel )
+            {
+                exit(1);
+            }
+            return false;
+        }
+
         iarchive( m_currentAccountIndex );
         iarchive( m_accounts );
 
@@ -82,8 +99,13 @@ bool Settings::load( const std::string& pwd )
 
         qDebug() << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
     }
-    catch( std::runtime_error& )
+    catch( std::runtime_error& err )
     {
+        QMessageBox msgBox;
+        msgBox.setText( QString::fromStdString( "Cannot load config data" ) );
+        msgBox.setInformativeText( QString::fromStdString( err.what() ) );
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.exec();
         return false;
     }
 

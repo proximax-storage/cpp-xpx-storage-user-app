@@ -1,4 +1,6 @@
 #include "FsTreeTableModel.h"
+#include "Settings.h"
+
 #include <QApplication>
 #include <QStyle>
 #include <QIcon>
@@ -11,6 +13,7 @@ FsTreeTableModel::FsTreeTableModel()
 
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path )
 {
+
     m_fsTree = fsTree;
     m_currentPath = path;
     m_currentFolder = &m_fsTree;
@@ -26,12 +29,19 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const FsT
     }
 
     updateRows();
+//    QMetaObject::invokeMethod( this, "layoutChanged" );
+}
 
-    emit this->layoutChanged();
+void FsTreeTableModel::update()
+{
+    beginResetModel();
+    endResetModel();
 }
 
 void FsTreeTableModel::updateRows()
 {
+    beginResetModel();
+
     m_rows.clear();
     m_rows.reserve( m_currentFolder->childs().size()+1 );
 
@@ -42,14 +52,18 @@ void FsTreeTableModel::updateRows()
     {
         if ( sirius::drive::isFolder(child) )
         {
+            qDebug() << "updateRows isFolder: " << sirius::drive::getFolder(child).name().c_str();
             m_rows.emplace_back( Row{true, sirius::drive::getFolder(child).name(), 0} );
         }
         else
         {
+            qDebug() << "updateRows isFolder: " << sirius::drive::getFile(child).name().c_str();
             const auto& file = sirius::drive::getFile(child);
             m_rows.emplace_back( Row{false, file.name(), file.size()} );
         }
     }
+
+    endResetModel();
 }
 
 int FsTreeTableModel::onDoubleClick( int row )
@@ -70,7 +84,7 @@ int FsTreeTableModel::onDoubleClick( int row )
         m_currentPath.pop_back();
 
         updateRows();
-        emit this->layoutChanged();
+        //emit this->layoutChanged();
 
         int toBeSelectedRow = 0;
         for( const auto& child: m_currentFolder->childs() )
@@ -96,7 +110,7 @@ int FsTreeTableModel::onDoubleClick( int row )
         m_currentFolder = &sirius::drive::getFolder(*it);
 
         updateRows();
-        emit this->layoutChanged();
+        //emit this->layoutChanged();
         return 0;
     }
     return 0;
@@ -124,12 +138,25 @@ std::string FsTreeTableModel::currentPath() const
 
 int FsTreeTableModel::rowCount(const QModelIndex &) const
 {
+    {
+        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+
+        auto channelInfo = gSettings.currentChannelInfoPtr();
+
+        if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+        {
+            qDebug() << "rowCount: channelInfo == nullptr";
+            qDebug() << "rowCount: 1";
+            return 1;
+        }
+    }
+//    qDebug() << "rowCount: " << m_rows.size();
     return m_rows.size();
 }
 
 int FsTreeTableModel::columnCount(const QModelIndex &parent) const
 {
-    return 2;
+    return 3;
 }
 
 QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
@@ -148,6 +175,16 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
         }
         case Qt::DecorationRole:
         {
+            {
+                std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+
+                auto channelInfo = gSettings.currentChannelInfoPtr();
+
+                if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+                {
+                    return value;
+                }
+            }
             if ( index.column() == 0 )
             {
                 if ( m_rows[index.row()].m_isFolder )
@@ -156,10 +193,6 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 }
                 return QApplication::style()->standardIcon(QStyle::SP_FileIcon);
             }
-//            else if ( index.column() == 1 )
-//            {
-//                return new QPushButton("download");
-//            }
             break;
         }
 
@@ -167,10 +200,26 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
         {
             switch( index.column() )
             {
-                case 0: {
+                case 0:
+                {
+                    {
+                        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+
+                        auto channelInfo = gSettings.currentChannelInfoPtr();
+
+                        if ( channelInfo == nullptr )
+                        {
+                            return QString("No channel selected");
+                        }
+                        if ( channelInfo->m_waitingFsTree )
+                        {
+                            return QString("Loading...");
+                        }
+                    }
                     return QString::fromStdString( m_rows[index.row()].m_name );
                 }
-                case 1: {
+                case 1:
+                {
                     const auto& row = m_rows[index.row()];
                     if ( row.m_isFolder )
                     {

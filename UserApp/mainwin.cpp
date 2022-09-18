@@ -10,6 +10,7 @@
 
 #include "crypto/Signer.h"
 #include "drive/Utils.h"
+#include "utils/HexParser.h"
 
 #include <QFileIconProvider>
 #include <QScreen>
@@ -17,6 +18,7 @@
 #include <QComboBox>
 
 #include <random>
+#include <thread>
 
 MainWin* MainWin::m_instanse = nullptr;
 
@@ -46,6 +48,12 @@ MainWin::MainWin(QWidget *parent)
         gStorageEngine = std::make_shared<StorageEngine>();
         gStorageEngine->start();
     }
+
+    if ( gSettings.config().m_currentChannelIndex >= 0 )
+    {
+        ui->m_channels->setCurrentIndex( gSettings.config().m_currentChannelIndex );
+        onChannelChanged(gSettings.config().m_currentChannelIndex);
+    }
 }
 
 void MainWin::setupDownloadsTab()
@@ -58,10 +66,11 @@ void MainWin::setupDownloadsTab()
                                                 "my_channel" } );
     gSettings.config().m_channels.push_back( Settings::ChannelInfo{
                                                 "0202020200000000000000000000000000000000000000000000000000000000",
-                                                "0100000000050607080900010203040506070809000102030405060708090001",
+                                                "0200000000050607080900010203040506070809000102030405060708090001",
                                                 "my_channel2" } );
     gSettings.config().m_currentChannelIndex = 0;
 #endif
+
     setupFsTreeTable();
     setupDownloadsTable();
     updateChannelsCBox();
@@ -69,9 +78,8 @@ void MainWin::setupDownloadsTab()
     connect( ui->m_channels, &QComboBox::currentIndexChanged, this, [this] (int index)
     {
         qDebug() << index;
-        //m_fsTreeTableModel->setFsTree( {}, {} );
+        onChannelChanged( index );
     });
-    //ui->m_channels->setCurrentIndex( gSettings.config().m_currentChannelIndex );
 }
 
 void MainWin::setupFsTreeTable()
@@ -101,22 +109,22 @@ void MainWin::setupFsTreeTable()
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
 
-#ifdef STANDALONE_TEST
-    sirius::drive::FsTree fsTree;
-    fsTree.addFolder( "f1" );
-    fsTree.addFolder( "f2" );
-    fsTree.addFolder( "f2/f3" );
-    fsTree.addFile( "", "file1", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "", "file2", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "", "file3", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2", "file21", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2", "file22", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2", "file23", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2/f3", "file21", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2/f3", "file22", sirius::drive::InfoHash(), 1024*1024 );
-    fsTree.addFile( "f2/f3", "file23", sirius::drive::InfoHash(), 1024*1024 );
-    m_fsTreeTableModel->setFsTree( fsTree, {} );
-#endif
+//#ifdef STANDALONE_TEST
+//    sirius::drive::FsTree fsTree;
+//    fsTree.addFolder( "f1" );
+//    fsTree.addFolder( "f2" );
+//    fsTree.addFolder( "f2/f3" );
+//    fsTree.addFile( "", "file1", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "", "file2", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "", "file3", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2", "file21", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2", "file22", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2", "file23", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2/f3", "file21", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2/f3", "file22", sirius::drive::InfoHash(), 1024*1024 );
+//    fsTree.addFile( "f2/f3", "file23", sirius::drive::InfoHash(), 1024*1024 );
+//    m_fsTreeTableModel->setFsTree( fsTree, {} );
+//#endif
 
     ui->m_fsTreeTableView->update();
     ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
@@ -230,9 +238,77 @@ void MainWin::initDriveTree()
 
 void MainWin::updateChannelsCBox()
 {
-    emit ui->m_channels->clear();
+    ui->m_channels->clear();
     for( const auto& channelInfo: gSettings.config().m_channels )
     {
         ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name) );
     }
+
+//    onChannelChanged(0);
 }
+
+void MainWin::onChannelChanged( int index )
+{
+    gSettings.config().m_currentChannelIndex = index;
+    gSettings.currentChannelInfo().m_waitingFsTree = true;
+    m_fsTreeTableModel->setFsTree( {}, {} );
+
+    //#todo request FsTree hash
+#ifdef STANDALONE_TEST
+    std::thread( [this,index]
+    {
+        qDebug() << "onChannelChanged: " << index;
+
+        std::array<uint8_t,32> fsTreeHash;
+
+        if ( index == 0 )
+        {
+            sirius::utils::ParseHexStringIntoContainer( //session_log_alert: CONNECTION FAILED:!!!! "ae1661b44791616368085b35b5ab142f05b52e6bb15a96f3606ed5bfbf4293b2",
+                                                        "92fe3c62d8e38fdd57d40a55a89961b5add872b5bf3314b124401631ecd73e0c",
+                                                        64, fsTreeHash );
+        }
+        else if ( index == 1 )
+        {
+            sirius::utils::ParseHexStringIntoContainer( "3bf8ac3aca14dd8ae346a267345565fd0fcfedc67dc7a57ef5c6305ffed7e69c",
+                                                        64, fsTreeHash );
+        }
+
+        sleep(1);
+        onFsTreeHashReceived( gSettings.config().m_channels[index].m_hash, fsTreeHash );
+    }).detach();
+#endif
+}
+
+void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash )
+{
+    std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+
+    auto channelInfo = gSettings.currentChannelInfoPtr();
+    if ( channelInfo == nullptr )
+    {
+        // ignore fsTreeHash for unexisting channel
+        qDebug() << "ignore fsTreeHash for unexisting channel";
+
+        return;
+    }
+
+    gStorageEngine->downloadFsTree( *channelInfo, fsTreeHash, [this] ( const std::string&           channelHash,
+                                                                       const std::array<uint8_t,32> fsTreeHash,
+                                                                       const sirius::drive::FsTree& fsTree )
+    {
+        qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
+
+        std::unique_lock<std::mutex> channelsLock( gChannelsMutex );
+
+        auto channelInfo = gSettings.currentChannelInfoPtr();
+        if ( channelInfo != nullptr )
+        {
+            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
+            channelInfo->m_waitingFsTree = false;
+            channelsLock.unlock();
+
+            m_fsTreeTableModel->setFsTree( fsTree, {} );
+        }
+    });
+}
+

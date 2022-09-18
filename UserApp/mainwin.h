@@ -3,8 +3,6 @@
 #include <QMainWindow>
 #include <QFileSystemModel>
 
-#define STANDALONE_TEST
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
 QT_END_NAMESPACE
@@ -34,6 +32,9 @@ private:
     void setupDownloadsTable();
 
     void updateChannelsCBox();
+
+    void onChannelChanged( int index );
+    void onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );
 
