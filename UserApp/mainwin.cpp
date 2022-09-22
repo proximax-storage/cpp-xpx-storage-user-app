@@ -61,13 +61,15 @@ void MainWin::setupDownloadsTab()
 #ifdef STANDALONE_TEST
     gSettings.config().m_channels.clear();
     gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                "my_channel",
                                                 "0101010100000000000000000000000000000000000000000000000000000000",
-                                                "0100000000050607080900010203040506070809000102030405060708090001",
-                                                "my_channel" } );
+                                                "0100000000050607080900010203040506070809000102030405060708090001"
+                                                 } );
     gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                "my_channel2",
                                                 "0202020200000000000000000000000000000000000000000000000000000000",
-                                                "0200000000050607080900010203040506070809000102030405060708090001",
-                                                "my_channel2" } );
+                                                "0200000000050607080900010203040506070809000102030405060708090001"
+                                                 } );
     gSettings.config().m_currentChannelIndex = 0;
 #endif
 
@@ -79,6 +81,11 @@ void MainWin::setupDownloadsTab()
     {
         qDebug() << index;
         onChannelChanged( index );
+    });
+
+    connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
+    {
+        onDownloadBtn();
     });
 }
 
@@ -94,12 +101,12 @@ void MainWin::setupFsTreeTable()
 
     connect( ui->m_fsTreeTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
-        ui->m_fsTreeTableView->selectRow( index.row() );
+        selectFsTreeItem( index.row() );
     });
 
     connect( ui->m_fsTreeTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
     {
-        ui->m_fsTreeTableView->selectRow( index.row() );
+        selectFsTreeItem( index.row() );
     });
 
     m_fsTreeTableModel = new FsTreeTableModel();
@@ -128,6 +135,43 @@ void MainWin::setupFsTreeTable()
 
     ui->m_fsTreeTableView->update();
     ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
+}
+
+void MainWin::selectFsTreeItem( int index )
+{
+    if ( index < 0 && index >= m_fsTreeTableModel->m_rows.size() )
+    {
+        return;
+    }
+
+    ui->m_fsTreeTableView->selectRow( index );
+
+    ui->m_downloadBtn->setEnabled( ! m_fsTreeTableModel->m_rows[index].m_isFolder );
+}
+
+void MainWin::onDownloadBtn()
+{
+    auto selectedIndexes = ui->m_fsTreeTableView->selectionModel()->selectedRows();
+    for( auto index: selectedIndexes )
+    {
+        int row = index.row();
+        if ( row < 1 || row >= m_fsTreeTableModel->m_rows.size() )
+        {
+            continue;
+        }
+
+        const auto& hash = m_fsTreeTableModel->m_rows[row].m_hash;
+        const auto& name = m_fsTreeTableModel->m_rows[row].m_name;
+//        qDebug() << "onDownloadBtn: " << index << " " << row;
+//        qDebug() << "onDownloadBtn: " << name.c_str();
+
+        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+        auto channelId = gSettings.currentChannelInfoPtr();
+        if ( channelId != nullptr )
+        {
+            gStorageEngine->downloadFile( *channelId,  hash, name );
+        }
+    }
 }
 
 void MainWin::setupDownloadsTable()

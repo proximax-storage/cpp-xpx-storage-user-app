@@ -53,13 +53,15 @@ void FsTreeTableModel::updateRows()
         if ( sirius::drive::isFolder(child) )
         {
             qDebug() << "updateRows isFolder: " << sirius::drive::getFolder(child).name().c_str();
-            m_rows.emplace_back( Row{true, sirius::drive::getFolder(child).name(), 0} );
+            m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child).name(), 0, {} } );
         }
         else
         {
-            qDebug() << "updateRows isFolder: " << sirius::drive::getFile(child).name().c_str();
             const auto& file = sirius::drive::getFile(child);
-            m_rows.emplace_back( Row{false, file.name(), file.size()} );
+            qDebug() << "updateRows isFile: " << sirius::drive::getFile(child).name().c_str() << " "
+                     << sirius::drive::toString( file.hash().array() ).c_str();
+            m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
+            qDebug() << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
         }
     }
 

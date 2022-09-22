@@ -32,6 +32,10 @@ public:
                          const std::array<uint8_t,32>&  fsTreeHash,
                          FsTreeHandler                  onFsTreeReceived );
 
+    void downloadFile( Settings::ChannelInfo&         channelInfo,
+                       const std::array<uint8_t,32>&  fileHash,
+                       const std::string&             saveFileName );
+
 private:
     void initClientSession( const sirius::crypto::KeyPair&  keyPair,
                             const std::string&              address,

@@ -23,12 +23,14 @@ public:
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-private:
+public:
     struct Row
     {
         bool        m_isFolder;
         std::string m_name;
         size_t      m_size;
+
+        std::array<uint8_t,32> m_hash;
     };
 
     void updateRows();

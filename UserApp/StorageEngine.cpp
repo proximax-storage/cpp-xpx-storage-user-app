@@ -105,3 +105,40 @@ void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
                                        "",
                                        {});
 }
+
+
+void StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
+                                  const std::array<uint8_t,32>&  fileHash,
+                                  const std::string&             saveFileName )
+{
+    qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
+
+    std::array<uint8_t,32> channelId;
+    sirius::utils::ParseHexStringIntoContainer( channelInfo.m_hash.c_str(), 64, channelId );
+
+    m_session->addDownloadChannel( channelId );
+
+    qDebug() << "downloadFile(): m_session->download(...";
+    m_session->download( sirius::drive::DownloadContext(
+                                    sirius::drive::DownloadContext::file_from_drive,
+
+                                    []( sirius::drive::download_status::code code,
+                                        const sirius::drive::InfoHash& infoHash,
+                                        const std::filesystem::path filePath,
+                                        size_t downloaded,
+                                        size_t fileSize,
+                                        const std::string& /*errorText*/)
+                                    {
+                                        qDebug() << "file downloading: " << downloaded << "/" << fileSize << " " << std::string(filePath).c_str();
+                                    },
+
+                                    fileHash,
+                                    {},//channelId,
+                                    0, false,
+                                    std::filesystem::path( gSettings.config().m_downloadFolder ) / saveFileName
+                                ),
+                       channelId,
+                       std::filesystem::path( gSettings.config().m_downloadFolder ),
+                       "",
+                       {});
+}

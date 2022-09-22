@@ -81,7 +81,6 @@ public:
         std::string                 m_downloadFolder = "~/Downloads";
         std::vector<DownloadInfo>   m_downloads;
 
-
         Account() {}
 
         Account& operator=( const Account& a )

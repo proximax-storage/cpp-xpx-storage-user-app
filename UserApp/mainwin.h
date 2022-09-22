@@ -27,9 +27,12 @@ private slots:
 private:
     bool requestPrivateKey();
     void initDriveTree();
+
     void setupDownloadsTab();
     void setupFsTreeTable();
     void setupDownloadsTable();
+    void selectFsTreeItem( int index );
+    void onDownloadBtn();
 
     void updateChannelsCBox();
 
