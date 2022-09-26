@@ -141,7 +141,7 @@ std::string FsTreeTableModel::currentPath() const
 int FsTreeTableModel::rowCount(const QModelIndex &) const
 {
     {
-        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+        //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
 
@@ -178,7 +178,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
         case Qt::DecorationRole:
         {
             {
-                std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+                //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
 
                 auto channelInfo = gSettings.currentChannelInfoPtr();
 
@@ -205,7 +205,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 case 0:
                 {
                     {
-                        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+                        //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
 
                         auto channelInfo = gSettings.currentChannelInfoPtr();
 

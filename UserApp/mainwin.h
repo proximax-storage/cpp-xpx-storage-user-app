@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QFileSystemModel>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -23,6 +24,8 @@ public:
 
 private slots:
     void onSettingsBtn();
+    void onDownloadUpdateTimer();
+    void onDownloadCompleted( QString hash );
 
 private:
     bool requestPrivateKey();
@@ -49,6 +52,8 @@ private:
     static MainWin*         m_instanse;
 
     Ui::MainWin*            ui;
+
+    QTimer*                 m_downloadUpdateTimer;
 
     FsTreeTableModel*       m_fsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;

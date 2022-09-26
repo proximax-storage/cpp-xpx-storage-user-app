@@ -1,8 +1,11 @@
 #include "StorageEngine.h"
 #include "Settings.h"
+#include "mainwin.h""
 #include "drive/ClientSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
+
+#include <QMetaObject>
 
 #include <boost/algorithm/string.hpp>
 
@@ -107,9 +110,9 @@ void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
 }
 
 
-void StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
-                                  const std::array<uint8_t,32>&  fileHash,
-                                  const std::string&             saveFileName )
+sirius::drive::lt_handle StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
+                                                      const std::array<uint8_t,32>&  fileHash,
+                                                      const std::string&             saveFileName )
 {
     qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 
@@ -119,7 +122,8 @@ void StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
     m_session->addDownloadChannel( channelId );
 
     qDebug() << "downloadFile(): m_session->download(...";
-    m_session->download( sirius::drive::DownloadContext(
+    qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
+    auto handle = m_session->download( sirius::drive::DownloadContext(
                                     sirius::drive::DownloadContext::file_from_drive,
 
                                     []( sirius::drive::download_status::code code,
@@ -130,6 +134,8 @@ void StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
                                         const std::string& /*errorText*/)
                                     {
                                         qDebug() << "file downloading: " << downloaded << "/" << fileSize << " " << std::string(filePath).c_str();
+                                        QMetaObject::invokeMethod( &MainWin::instanse(), "onDownloadCompleted", Qt::QueuedConnection,
+                                            Q_ARG( QString, QString::fromStdString( sirius::drive::toString(infoHash) )));
                                     },
 
                                     fileHash,
@@ -141,4 +147,5 @@ void StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
                        std::filesystem::path( gSettings.config().m_downloadFolder ),
                        "",
                        {});
+    return handle;
 }

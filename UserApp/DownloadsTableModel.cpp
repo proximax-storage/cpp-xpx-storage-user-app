@@ -55,7 +55,8 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                 }
                 case 1: {
                     const auto& row = gSettings.config().m_downloads[index.row()];
-                    return QString::fromStdString( std::to_string( row.m_percents) ) + "%";
+                    //return QString::fromStdString( std::to_string( row.m_percents) ) + "%";
+                    return QString::fromStdString("%");
                 }
             }
         }
@@ -71,4 +72,57 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
 QVariant DownloadsTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     return QVariant();
+}
+
+void DownloadsTableModel::updateProgress()
+{
+    std::lock_guard<std::mutex> lock(gSettingsMutex);
+
+    auto& downloads = gSettings.config().m_downloads;
+
+    beginResetModel();
+    {
+        for( auto& dnInfo: downloads )
+        {
+            if ( dnInfo.isCompleted() || ! dnInfo.m_ltHandle.is_valid() )
+            {
+                continue;
+            }
+
+            std::vector<int64_t> fp = dnInfo.m_ltHandle.file_progress();
+
+            uint64_t dnBytes = 0;
+            uint64_t totalBytes = 0;
+
+            for( uint32_t i=0; i<fp.size(); i++ )
+            {
+                auto fsize = dnInfo.m_ltHandle.torrent_file()->files().file_size(i);
+                dnBytes    += fp[i];
+                totalBytes += fsize;
+            }
+
+            double progress = (1000.0 * totalBytes) / double(dnBytes);
+            dnInfo.m_progress = progress;
+        }
+    }
+    endResetModel();
+}
+
+void DownloadsTableModel::onDownloadCompleted( const std::array<uint8_t,32>& hash )
+{
+    std::unique_lock<std::mutex> lock( gSettingsMutex );
+
+    auto& downloads = gSettings.config().m_downloads;
+
+    beginResetModel();
+    {
+        for( auto& dnInfo: downloads )
+        {
+            if (  dnInfo.m_hash == hash )
+            {
+                dnInfo.m_progress = 1001;
+            }
+        }
+    }
+    endResetModel();
 }

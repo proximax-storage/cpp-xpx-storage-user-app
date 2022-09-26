@@ -13,7 +13,7 @@
 
 #define STANDALONE_TEST
 
-inline std::mutex gChannelsMutex;
+inline std::mutex gSettingsMutex;
 
 std::filesystem::path settingsFolder();
 
@@ -54,16 +54,20 @@ public:
 
     struct DownloadInfo
     {
-        std::string m_hash;
-        std::string m_fileName;
-        std::string m_saveFolder;
-        int         m_percents;
+        std::array<uint8_t,32>  m_hash;
+        std::string             m_fileName;
+        std::string             m_saveFolder;
+
+        int                      m_progress = 0; // m_progress==1001 means completed
+        sirius::drive::lt_handle m_ltHandle;
 
         template<class Archive>
         void serialize( Archive &ar )
         {
             ar( m_hash, m_fileName, m_saveFolder );
         }
+
+        bool isCompleted() const { return m_progress>1000; }
     };
 
     struct Account

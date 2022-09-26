@@ -41,19 +41,41 @@ MainWin::MainWin(QWidget *parent)
         }
     }
 
-    if ( ! m_mustExit )
+    if ( m_mustExit )
     {
-        setupDownloadsTab();
-
-        gStorageEngine = std::make_shared<StorageEngine>();
-        gStorageEngine->start();
+        return;
     }
+
+    setupDownloadsTab();
+
+    gStorageEngine = std::make_shared<StorageEngine>();
+    gStorageEngine->start();
 
     if ( gSettings.config().m_currentChannelIndex >= 0 )
     {
         ui->m_channels->setCurrentIndex( gSettings.config().m_currentChannelIndex );
         onChannelChanged(gSettings.config().m_currentChannelIndex);
     }
+
+//    m_downloadUpdateTimer = new QTimer();
+//    connect( m_downloadUpdateTimer, SIGNAL(timeout()), this, SLOT( onDownloadUpdateTimer() ));
+//    m_downloadUpdateTimer->start(333); // 3 times per second
+}
+
+MainWin::~MainWin()
+{
+    delete ui;
+}
+
+void MainWin::onDownloadUpdateTimer()
+{
+}
+
+void MainWin::onDownloadCompleted( QString hash )
+{
+    auto infoHash = sirius::drive::stringToByteArray<sirius::drive::InfoHash>( hash.toStdString() );
+
+    m_downloadsTableModel->onDownloadCompleted( infoHash.array() );
 }
 
 void MainWin::setupDownloadsTab()
@@ -151,6 +173,8 @@ void MainWin::selectFsTreeItem( int index )
 
 void MainWin::onDownloadBtn()
 {
+    //std::unique_lock<std::mutex> lock( gSettingsMutex );
+
     auto selectedIndexes = ui->m_fsTreeTableView->selectionModel()->selectedRows();
     for( auto index: selectedIndexes )
     {
@@ -162,43 +186,46 @@ void MainWin::onDownloadBtn()
 
         const auto& hash = m_fsTreeTableModel->m_rows[row].m_hash;
         const auto& name = m_fsTreeTableModel->m_rows[row].m_name;
-//        qDebug() << "onDownloadBtn: " << index << " " << row;
-//        qDebug() << "onDownloadBtn: " << name.c_str();
+        qDebug() << "onDownloadBtn: " << index << " " << row;
+        qDebug() << "onDownloadBtn: " << name.c_str();
 
-        std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
         auto channelId = gSettings.currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
-            gStorageEngine->downloadFile( *channelId,  hash, name );
+            auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash, name );
+//            gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
+//                                                                                 gSettings.config().m_downloadFolder,
+//                                                                                 0, ltHandle } );
+
         }
     }
 }
 
 void MainWin::setupDownloadsTable()
 {
-#ifdef STANDALONE_TEST
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f11", "~/Downloads", 100});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f21", "~/Downloads", 50});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f31", "~/Downloads", 25});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f41", "~/Downloads", 0});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f12", "~/Downloads", 100});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f22", "~/Downloads", 50});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f32", "~/Downloads", 25});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f42", "~/Downloads", 0});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f13", "~/Downloads", 100});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f23", "~/Downloads", 50});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f33", "~/Downloads", 25});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f43", "~/Downloads", 0});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
-    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
+//#ifdef STANDALONE_TEST
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f11", "~/Downloads", 100});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f21", "~/Downloads", 50});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f31", "~/Downloads", 25});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f41", "~/Downloads", 0});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f12", "~/Downloads", 100});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f22", "~/Downloads", 50});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f32", "~/Downloads", 25});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f42", "~/Downloads", 0});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f13", "~/Downloads", 100});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f23", "~/Downloads", 50});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f33", "~/Downloads", 25});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f43", "~/Downloads", 0});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
+//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
 
-#endif
+//#endif
 
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
@@ -225,11 +252,6 @@ void MainWin::setupDownloadsTable()
     ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::NoSelection );
 
     ui->m_downloadsTableView->update();
-}
-
-MainWin::~MainWin()
-{
-    delete ui;
 }
 
 void MainWin::onSettingsBtn()
@@ -325,7 +347,7 @@ void MainWin::onChannelChanged( int index )
 
 void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash )
 {
-    std::lock_guard<std::mutex> channelsLock( gChannelsMutex );
+    //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
 
     auto channelInfo = gSettings.currentChannelInfoPtr();
     if ( channelInfo == nullptr )
@@ -342,7 +364,7 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
-        std::unique_lock<std::mutex> channelsLock( gChannelsMutex );
+        std::unique_lock<std::mutex> channelsLock( gSettingsMutex );
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
         if ( channelInfo != nullptr )
