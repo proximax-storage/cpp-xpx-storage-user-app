@@ -141,7 +141,7 @@ std::string FsTreeTableModel::currentPath() const
 int FsTreeTableModel::rowCount(const QModelIndex &) const
 {
     {
-        //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
+        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
 
@@ -178,7 +178,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
         case Qt::DecorationRole:
         {
             {
-                //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
+                std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
                 auto channelInfo = gSettings.currentChannelInfoPtr();
 
@@ -204,19 +204,17 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
+                    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+
+                    auto channelInfo = gSettings.currentChannelInfoPtr();
+
+                    if ( channelInfo == nullptr )
                     {
-                        //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
-
-                        auto channelInfo = gSettings.currentChannelInfoPtr();
-
-                        if ( channelInfo == nullptr )
-                        {
-                            return QString("No channel selected");
-                        }
-                        if ( channelInfo->m_waitingFsTree )
-                        {
-                            return QString("Loading...");
-                        }
+                        return QString("No channel selected");
+                    }
+                    if ( channelInfo->m_waitingFsTree )
+                    {
+                        return QString("Loading...");
                     }
                     return QString::fromStdString( m_rows[index.row()].m_name );
                 }

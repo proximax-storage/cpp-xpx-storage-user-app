@@ -173,7 +173,7 @@ void MainWin::selectFsTreeItem( int index )
 
 void MainWin::onDownloadBtn()
 {
-    //std::unique_lock<std::mutex> lock( gSettingsMutex );
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     auto selectedIndexes = ui->m_fsTreeTableView->selectionModel()->selectedRows();
     for( auto index: selectedIndexes )
@@ -186,17 +186,18 @@ void MainWin::onDownloadBtn()
 
         const auto& hash = m_fsTreeTableModel->m_rows[row].m_hash;
         const auto& name = m_fsTreeTableModel->m_rows[row].m_name;
-        qDebug() << "onDownloadBtn: " << index << " " << row;
-        qDebug() << "onDownloadBtn: " << name.c_str();
+//        qDebug() << "onDownloadBtn: " << index << " " << row;
+//        qDebug() << "onDownloadBtn: " << name.c_str();
 
         auto channelId = gSettings.currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
             auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash, name );
-//            gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
-//                                                                                 gSettings.config().m_downloadFolder,
-//                                                                                 0, ltHandle } );
-
+            m_downloadsTableModel->beginResetModel();
+            gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
+                                                                                 gSettings.config().m_downloadFolder,
+                                                                                 0, ltHandle } );
+            m_downloadsTableModel->endResetModel();
         }
     }
 }
@@ -347,7 +348,7 @@ void MainWin::onChannelChanged( int index )
 
 void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash )
 {
-    //std::lock_guard<std::mutex> channelsLock( gSettingsMutex );
+    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
     auto channelInfo = gSettings.currentChannelInfoPtr();
     if ( channelInfo == nullptr )
@@ -364,14 +365,14 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
-        std::unique_lock<std::mutex> channelsLock( gSettingsMutex );
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
         if ( channelInfo != nullptr )
         {
             channelInfo->m_tmpRequestingFsTreeTorrent.reset();
             channelInfo->m_waitingFsTree = false;
-            channelsLock.unlock();
+            lock.unlock();
 
             m_fsTreeTableModel->setFsTree( fsTree, {} );
         }

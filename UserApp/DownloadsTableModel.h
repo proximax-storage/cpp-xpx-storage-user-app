@@ -16,4 +16,8 @@ public:
 
     void updateProgress();
     void onDownloadCompleted( const std::array<uint8_t,32>& hash );
+
+    void beginResetModel() { QAbstractItemModel::beginResetModel(); }
+    void endResetModel() { QAbstractItemModel::endResetModel(); }
+
 };

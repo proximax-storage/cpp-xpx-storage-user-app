@@ -76,7 +76,7 @@ QVariant DownloadsTableModel::headerData(int section, Qt::Orientation orientatio
 
 void DownloadsTableModel::updateProgress()
 {
-    std::lock_guard<std::mutex> lock(gSettingsMutex);
+    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
 
     auto& downloads = gSettings.config().m_downloads;
 
@@ -110,7 +110,7 @@ void DownloadsTableModel::updateProgress()
 
 void DownloadsTableModel::onDownloadCompleted( const std::array<uint8_t,32>& hash )
 {
-    std::unique_lock<std::mutex> lock( gSettingsMutex );
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     auto& downloads = gSettings.config().m_downloads;
 

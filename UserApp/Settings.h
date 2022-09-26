@@ -13,7 +13,7 @@
 
 #define STANDALONE_TEST
 
-inline std::mutex gSettingsMutex;
+inline std::recursive_mutex gSettingsMutex;
 
 std::filesystem::path settingsFolder();
 
