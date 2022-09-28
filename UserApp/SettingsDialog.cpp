@@ -79,7 +79,7 @@ void SettingsDialog::updateAccountFields()
     ui->m_replicatorBootAddrField->setText( QString::fromStdString( m_settingsCopy.config().m_replicatorBootstrap ));
     ui->m_portField->setValidator( new QIntValidator(1025, 65535, this) );
     ui->m_portField->setText( QString::fromStdString( m_settingsCopy.config().m_udpPort ));
-    ui->m_dnFolderField->setText( QString::fromStdString( m_settingsCopy.config().m_downloadFolder ));
+    ui->m_dnFolderField->setText( QString::fromStdString( m_settingsCopy.downloadFolder() ));
 }
 
 void SettingsDialog::accept()
@@ -107,7 +107,6 @@ void SettingsDialog::accept()
         gSettings.config().m_restBootstrap          = m_settingsCopy.config().m_restBootstrap;
         gSettings.config().m_replicatorBootstrap    = m_settingsCopy.config().m_replicatorBootstrap;
         gSettings.config().m_downloadFolder         = m_settingsCopy.config().m_downloadFolder;
-        qDebug() << "m_downloadFolder: " << gSettings.config().m_downloadFolder.c_str();
         gSettings.m_accounts                        = m_settingsCopy.m_accounts;
         gSettings.setCurrentAccountIndex( m_settingsCopy.m_currentAccountIndex );
         gSettings.save();

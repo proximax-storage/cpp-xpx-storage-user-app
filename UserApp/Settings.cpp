@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "StorageEngine.h"
 #include "drive/Utils.h"
 #include <fstream>
 #include <filesystem>
@@ -166,4 +167,41 @@ std::vector<std::string> Settings::accountList()
         list.push_back( account.m_publicKeyStr );
     }
     return list;
+}
+
+void Settings::removeFromDownloads( const DownloadInfo& dnInfo )
+{
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    auto& downloads = config().m_downloads;
+
+    auto itemRef = downloads.end();
+    int  hashCounter = 0;
+
+    for( auto it = downloads.begin(); it != downloads.end(); it++ )
+    {
+        if ( it->m_hash == dnInfo.m_hash )
+        {
+            hashCounter++;
+            if ( it->m_fileName == dnInfo.m_fileName )
+            {
+                assert( itemRef == downloads.end() );
+                itemRef = it;
+            }
+        }
+    }
+
+    if ( itemRef != downloads.end() )
+    {
+        if ( hashCounter == 1 )
+        {
+            gStorageEngine->removeTorrentSync( itemRef->m_hash );
+        }
+
+        // remove file
+        std::error_code ec;
+        fs::remove( downloadFolder() / itemRef->m_fileName, ec );
+
+    }
+
 }

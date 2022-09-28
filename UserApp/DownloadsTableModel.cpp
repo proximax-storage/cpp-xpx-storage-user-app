@@ -51,12 +51,24 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             switch( index.column() )
             {
                 case 0: {
+                    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
                     return QString::fromStdString( gSettings.config().m_downloads[index.row()].m_fileName );
                 }
                 case 1: {
-                    const auto& row = gSettings.config().m_downloads[index.row()];
-                    //return QString::fromStdString( std::to_string( row.m_percents) ) + "%";
-                    return QString::fromStdString("%");
+                    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
+
+                    const auto& dnInfo = gSettings.config().m_downloads[index.row()];
+                    if ( dnInfo.isCompleted() )
+                    {
+                        //qDebug() << "isCompleted:"
+                        return QString::fromStdString("done");
+                    }
+                    if ( !dnInfo.m_ltHandle.is_valid() )
+                    {
+                        //qDebug() << "isCompleted:"
+                        return QString::fromStdString("0%");
+                    }
+                    return QString::fromStdString( std::to_string( (dnInfo.m_progress+5)/10 ) ) + "%";
                 }
             }
         }
@@ -101,7 +113,9 @@ void DownloadsTableModel::updateProgress()
                 totalBytes += fsize;
             }
 
-            double progress = (1000.0 * totalBytes) / double(dnBytes);
+
+            double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
+            qDebug() << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
             dnInfo.m_progress = progress;
         }
     }

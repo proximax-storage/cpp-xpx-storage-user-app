@@ -36,6 +36,8 @@ public:
                                            const std::array<uint8_t,32>&  fileHash,
                                            const std::string&             saveFileName );
 
+    void removeTorrentSync( sirius::drive::InfoHash infoHash );
+
 private:
     void initClientSession( const sirius::crypto::KeyPair&  keyPair,
                             const std::string&              address,

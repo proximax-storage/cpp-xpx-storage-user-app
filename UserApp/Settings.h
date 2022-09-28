@@ -11,7 +11,9 @@
 #include "drive/Session.h"
 #include "libtorrent/torrent_handle.hpp"
 
-#define STANDALONE_TEST
+namespace fs = std::filesystem;
+
+inline bool STANDALONE_TEST = true;
 
 inline std::recursive_mutex gSettingsMutex;
 
@@ -150,6 +152,8 @@ public:
         return m_accounts[m_currentAccountIndex];
     }
 
+    fs::path downloadFolder() { return config().m_downloadFolder; }
+
     ChannelInfo& currentChannelInfo()
     {
         assert( config().m_currentChannelIndex >= 0 && config().m_currentChannelIndex < config().m_channels.size() );
@@ -171,6 +175,8 @@ public:
         m_currentAccountIndex = currentAccountIndex;
         assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
     }
+
+    void removeFromDownloads( const DownloadInfo& );
 
 private:
     friend class PrivKeyDialog;

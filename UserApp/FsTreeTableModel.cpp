@@ -47,18 +47,17 @@ void FsTreeTableModel::updateRows()
 
     m_rows.emplace_back( Row{true, "..", 0} );
 
-    m_currentFolder->sort();
     for( const auto& child : m_currentFolder->childs() )
     {
-        if ( sirius::drive::isFolder(child) )
+        if ( sirius::drive::isFolder(child.second) )
         {
-            qDebug() << "updateRows isFolder: " << sirius::drive::getFolder(child).name().c_str();
-            m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child).name(), 0, {} } );
+            qDebug() << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
+            m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
         }
         else
         {
-            const auto& file = sirius::drive::getFile(child);
-            qDebug() << "updateRows isFile: " << sirius::drive::getFile(child).name().c_str() << " "
+            const auto& file = sirius::drive::getFile(child.second);
+            qDebug() << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
                      << sirius::drive::toString( file.hash().array() ).c_str();
             m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
             qDebug() << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
@@ -92,7 +91,7 @@ int FsTreeTableModel::onDoubleClick( int row )
         for( const auto& child: m_currentFolder->childs() )
         {
             toBeSelectedRow++;
-            if ( sirius::drive::isFolder(child) && currentFolder->name() == sirius::drive::getFolder(child).name() )
+            if ( sirius::drive::isFolder(child.second) && currentFolder->name() == sirius::drive::getFolder(child.second).name() )
             {
                 break;
             }
@@ -158,7 +157,7 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
 
 int FsTreeTableModel::columnCount(const QModelIndex &parent) const
 {
-    return 3;
+    return 2;
 }
 
 QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const

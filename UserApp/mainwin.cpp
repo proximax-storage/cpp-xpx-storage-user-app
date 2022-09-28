@@ -16,6 +16,7 @@
 #include <QScreen>
 #include <QScroller>
 #include <QComboBox>
+#include <QMessageBox>
 
 #include <random>
 #include <thread>
@@ -57,9 +58,9 @@ MainWin::MainWin(QWidget *parent)
         onChannelChanged(gSettings.config().m_currentChannelIndex);
     }
 
-//    m_downloadUpdateTimer = new QTimer();
-//    connect( m_downloadUpdateTimer, SIGNAL(timeout()), this, SLOT( onDownloadUpdateTimer() ));
-//    m_downloadUpdateTimer->start(333); // 3 times per second
+    m_downloadUpdateTimer = new QTimer();
+    connect( m_downloadUpdateTimer, SIGNAL(timeout()), this, SLOT( onDownloadUpdateTimer() ));
+    m_downloadUpdateTimer->start(500); // 2 times per second
 }
 
 MainWin::~MainWin()
@@ -69,6 +70,7 @@ MainWin::~MainWin()
 
 void MainWin::onDownloadUpdateTimer()
 {
+    m_downloadsTableModel->updateProgress();
 }
 
 void MainWin::onDownloadCompleted( QString hash )
@@ -80,20 +82,21 @@ void MainWin::onDownloadCompleted( QString hash )
 
 void MainWin::setupDownloadsTab()
 {
-#ifdef STANDALONE_TEST
-    gSettings.config().m_channels.clear();
-    gSettings.config().m_channels.push_back( Settings::ChannelInfo{
-                                                "my_channel",
-                                                "0101010100000000000000000000000000000000000000000000000000000000",
-                                                "0100000000050607080900010203040506070809000102030405060708090001"
-                                                 } );
-    gSettings.config().m_channels.push_back( Settings::ChannelInfo{
-                                                "my_channel2",
-                                                "0202020200000000000000000000000000000000000000000000000000000000",
-                                                "0200000000050607080900010203040506070809000102030405060708090001"
-                                                 } );
-    gSettings.config().m_currentChannelIndex = 0;
-#endif
+    if ( STANDALONE_TEST )
+    {
+        gSettings.config().m_channels.clear();
+        gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                    "my_channel",
+                                                    "0101010100000000000000000000000000000000000000000000000000000000",
+                                                    "0100000000050607080900010203040506070809000102030405060708090001"
+                                                     } );
+        gSettings.config().m_channels.push_back( Settings::ChannelInfo{
+                                                    "my_channel2",
+                                                    "0202020200000000000000000000000000000000000000000000000000000000",
+                                                    "0200000000050607080900010203040506070809000102030405060708090001"
+                                                     } );
+        gSettings.config().m_currentChannelIndex = 0;
+    }
 
     setupFsTreeTable();
     setupDownloadsTable();
@@ -138,23 +141,6 @@ void MainWin::setupFsTreeTable()
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
 
-//#ifdef STANDALONE_TEST
-//    sirius::drive::FsTree fsTree;
-//    fsTree.addFolder( "f1" );
-//    fsTree.addFolder( "f2" );
-//    fsTree.addFolder( "f2/f3" );
-//    fsTree.addFile( "", "file1", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "", "file2", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "", "file3", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2", "file21", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2", "file22", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2", "file23", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2/f3", "file21", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2/f3", "file22", sirius::drive::InfoHash(), 1024*1024 );
-//    fsTree.addFile( "f2/f3", "file23", sirius::drive::InfoHash(), 1024*1024 );
-//    m_fsTreeTableModel->setFsTree( fsTree, {} );
-//#endif
-
     ui->m_fsTreeTableView->update();
     ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
 }
@@ -175,6 +161,10 @@ void MainWin::onDownloadBtn()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
+    auto& downloads = gSettings.config().m_downloads;
+
+    bool overrideFileForAll = false;
+
     auto selectedIndexes = ui->m_fsTreeTableView->selectionModel()->selectedRows();
     for( auto index: selectedIndexes )
     {
@@ -189,13 +179,93 @@ void MainWin::onDownloadBtn()
 //        qDebug() << "onDownloadBtn: " << index << " " << row;
 //        qDebug() << "onDownloadBtn: " << name.c_str();
 
+        auto it = std::find_if( downloads.begin(), downloads.end(), [&name]( const auto& item )
+        {
+            return item.m_fileName == name;
+        });
+
+        fs::path filePath = gSettings.downloadFolder() / name;
+        std::error_code ec;
+        bool fileExist = fs::exists( filePath, ec );
+
+        if ( overrideFileForAll )
+        {
+            //todo
+        }
+        else
+        {
+            if ( it != downloads.end() && ! it->isCompleted() )
+            {
+                Settings::DownloadInfo dnInfoCopy = *it; // item could be removed?
+                lock.unlock();
+
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is currently downloading" ) );
+                msgBox.setInformativeText( "Do you want to replace this download with the current request" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+
+                if ( reply == QMessageBox::Cancel )
+                {
+                    return;
+                }
+                else
+                {
+                    gSettings.removeFromDownloads( dnInfoCopy );
+                }
+                lock.lock();
+            }
+            else if ( it != downloads.end() )
+            {
+                Settings::DownloadInfo dnInfoCopy = *it; // item could be removed?
+                lock.unlock();
+
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is already downloaded" ) );
+                msgBox.setInformativeText( "Do you want to override it" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+
+                if ( reply == QMessageBox::Cancel )
+                {
+                    return;
+                }
+                else
+                {
+                    gSettings.removeFromDownloads( dnInfoCopy );
+                }
+                lock.lock();
+            }
+            else if ( fileExist )
+            {
+                lock.unlock();
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is already exist" ) );
+                msgBox.setInformativeText( "Do you want to override it" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+
+                if ( reply == QMessageBox::Cancel )
+                {
+                    return;
+                }
+                else
+                {
+                    //???
+                }
+                lock.lock();
+            }
+
+
+        }
+
         auto channelId = gSettings.currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
             auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash, name );
             m_downloadsTableModel->beginResetModel();
             gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
-                                                                                 gSettings.config().m_downloadFolder,
+                                                                                 gSettings.downloadFolder(),
                                                                                  0, ltHandle } );
             m_downloadsTableModel->endResetModel();
         }
@@ -204,30 +274,6 @@ void MainWin::onDownloadBtn()
 
 void MainWin::setupDownloadsTable()
 {
-//#ifdef STANDALONE_TEST
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f11", "~/Downloads", 100});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f21", "~/Downloads", 50});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f31", "~/Downloads", 25});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f41", "~/Downloads", 0});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f12", "~/Downloads", 100});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f22", "~/Downloads", 50});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f32", "~/Downloads", 25});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f42", "~/Downloads", 0});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f13", "~/Downloads", 100});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f23", "~/Downloads", 50});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f33", "~/Downloads", 25});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f43", "~/Downloads", 0});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f1", "~/Downloads", 100});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f2", "~/Downloads", 50});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f3", "~/Downloads", 25});
-//    gSettings.config().m_downloads.push_back( Settings::DownloadInfo{ {}, "f4", "~/Downloads", 0});
-
-//#endif
-
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
         qDebug() << index;
@@ -320,30 +366,34 @@ void MainWin::onChannelChanged( int index )
     gSettings.currentChannelInfo().m_waitingFsTree = true;
     m_fsTreeTableModel->setFsTree( {}, {} );
 
-    //#todo request FsTree hash
-#ifdef STANDALONE_TEST
-    std::thread( [this,index]
+
+    if ( !STANDALONE_TEST )
     {
-        qDebug() << "onChannelChanged: " << index;
-
-        std::array<uint8_t,32> fsTreeHash;
-
-        if ( index == 0 )
+        assert( !"todo request FsTree hash" );
+    }
+    else
+    {
+        std::thread( [this,index]
         {
-            sirius::utils::ParseHexStringIntoContainer( //session_log_alert: CONNECTION FAILED:!!!! "ae1661b44791616368085b35b5ab142f05b52e6bb15a96f3606ed5bfbf4293b2",
-                                                        "92fe3c62d8e38fdd57d40a55a89961b5add872b5bf3314b124401631ecd73e0c",
-                                                        64, fsTreeHash );
-        }
-        else if ( index == 1 )
-        {
-            sirius::utils::ParseHexStringIntoContainer( "3bf8ac3aca14dd8ae346a267345565fd0fcfedc67dc7a57ef5c6305ffed7e69c",
-                                                        64, fsTreeHash );
-        }
+            qDebug() << "onChannelChanged: " << index;
 
-        sleep(1);
-        onFsTreeHashReceived( gSettings.config().m_channels[index].m_hash, fsTreeHash );
-    }).detach();
-#endif
+            std::array<uint8_t,32> fsTreeHash;
+
+            if ( index == 0 )
+            {
+                sirius::utils::ParseHexStringIntoContainer( "ce0cf74c024aec3fddc3f8a13e0a4504f6b75197878901c238dff5a3ed55171e",
+                                                            64, fsTreeHash );
+            }
+            else if ( index == 1 )
+            {
+                sirius::utils::ParseHexStringIntoContainer( "a36e0f092c1b9d63ec08e04e1ce6b008b9df5bca6926a25d90180dad52f3da90",
+                                                            64, fsTreeHash );
+            }
+
+            sleep(1);
+            onFsTreeHashReceived( gSettings.config().m_channels[index].m_hash, fsTreeHash );
+        }).detach();
+    }
 }
 
 void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash )
