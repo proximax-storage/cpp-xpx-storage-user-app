@@ -59,6 +59,7 @@ public:
         std::array<uint8_t,32>  m_hash;
         std::string             m_fileName;
         std::string             m_saveFolder;
+        bool                    m_isCompleted = false;
 
         int                      m_progress = 0; // m_progress==1001 means completed
         sirius::drive::lt_handle m_ltHandle;
@@ -66,10 +67,10 @@ public:
         template<class Archive>
         void serialize( Archive &ar )
         {
-            ar( m_hash, m_fileName, m_saveFolder );
+            ar( m_hash, m_fileName, m_saveFolder, m_isCompleted );
         }
 
-        bool isCompleted() const { return m_progress>1000; }
+        bool isCompleted() const { return m_isCompleted; }
     };
 
     struct Account
@@ -175,6 +176,8 @@ public:
         m_currentAccountIndex = currentAccountIndex;
         assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
     }
+
+    void onDownloadCompleted( lt::torrent_handle handle );
 
     void removeFromDownloads( const DownloadInfo& );
 

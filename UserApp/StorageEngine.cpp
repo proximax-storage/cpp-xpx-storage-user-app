@@ -40,16 +40,7 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
                                         const std::string&              address,
                                         const endpoint_list&            bootstraps )
 {
-    if ( !STANDALONE_TEST )
-    {
-        m_session = sirius::drive::createClientSession(  keyPair,
-                                                         address,
-                                                         []( const lt::alert* ) {},
-                                                         bootstraps,
-                                                         false,
-                                                         "client_session" );
-    }
-    else
+    if ( STANDALONE_TEST )
     {
         m_session = sirius::drive::createClientSession( keyPair,
                                                         "192.168.2.200:2000",
@@ -61,6 +52,20 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
         pack.set_int( lt::settings_pack::download_rate_limit, 500*1024 );
         m_session->setSessionSettings( pack, true );
     }
+    else
+    {
+        m_session = sirius::drive::createClientSession(  keyPair,
+                                                         address,
+                                                         []( const lt::alert* ) {},
+                                                         bootstraps,
+                                                         false,
+                                                         "client_session" );
+    }
+
+    m_session->setTorrentDeletedHandler( [this] ( lt::torrent_handle handle )
+    {
+        gSettings.onDownloadCompleted( handle );
+    });
 }
 
 void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
@@ -118,8 +123,7 @@ void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
 
 
 sirius::drive::lt_handle StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
-                                                      const std::array<uint8_t,32>&  fileHash,
-                                                      const std::string&             saveFileName )
+                                                      const std::array<uint8_t,32>&  fileHash )
 {
     qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 
@@ -148,7 +152,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( Settings::ChannelInfo&    
                                     fileHash,
                                     {},//channelId,
                                     0, false,
-                                    gSettings.downloadFolder() / saveFileName
+                                    ""
                                 ),
                        channelId,
                        gSettings.downloadFolder(),
@@ -161,4 +165,8 @@ void StorageEngine::removeTorrentSync( sirius::drive::InfoHash infoHash )
 {
     std::vector<std::array<uint8_t,32>> torrents{ infoHash.array() };
     m_session->removeTorrents( torrents );
+}
+
+void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHash )
+{
 }

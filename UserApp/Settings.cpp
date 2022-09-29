@@ -169,6 +169,70 @@ std::vector<std::string> Settings::accountList()
     return list;
 }
 
+void Settings::onDownloadCompleted( lt::torrent_handle handle )
+{
+    std::thread( [ this, handle ]
+    {
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        auto& downloads = config().m_downloads;
+
+        int counter = 0;
+
+        for( auto& dnInfo: downloads )
+        {
+            if ( dnInfo.m_ltHandle == handle )
+            {
+                counter++;
+            }
+        }
+
+        for( auto& dnInfo: downloads )
+        {
+            if ( dnInfo.m_ltHandle == handle )
+            {
+                fs::path srcPath = fs::path(dnInfo.m_saveFolder) / sirius::drive::toString( dnInfo.m_hash );
+                fs::path destPath = fs::path(dnInfo.m_saveFolder) / dnInfo.m_fileName;
+
+                std::error_code ec;
+
+                int index = 0;
+                while( fs::exists(destPath,ec) )
+                {
+                    index++;
+                    auto newName = fs::path(dnInfo.m_fileName).stem().string()
+                                    + " (" + std::to_string(index) + ")"
+                                    + fs::path(dnInfo.m_fileName).extension().string();
+                    destPath = fs::path(dnInfo.m_saveFolder) / newName;
+                }
+
+                dnInfo.m_fileName = destPath.filename();
+
+                if ( --counter == 0 )
+                {
+                    fs::rename( srcPath, destPath, ec );
+                }
+                else
+                {
+                    fs::copy( srcPath, destPath, ec );
+                }
+
+                if ( ec )
+                {
+                    QMessageBox msgBox;
+                    msgBox.setText( QString::fromStdString( "Cannot save file: " + std::string(destPath.filename()) ) );
+                    msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.exec();
+                }
+
+                dnInfo.m_isCompleted = true;
+            }
+        }
+
+    }).detach();
+}
+
 void Settings::removeFromDownloads( const DownloadInfo& dnInfo )
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );

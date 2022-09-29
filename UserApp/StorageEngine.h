@@ -33,8 +33,7 @@ public:
                          FsTreeHandler                  onFsTreeReceived );
 
     sirius::drive::lt_handle downloadFile( Settings::ChannelInfo&         channelInfo,
-                                           const std::array<uint8_t,32>&  fileHash,
-                                           const std::string&             saveFileName );
+                                           const std::array<uint8_t,32>&  fileHash );
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
 
@@ -42,6 +41,8 @@ private:
     void initClientSession( const sirius::crypto::KeyPair&  keyPair,
                             const std::string&              address,
                             const endpoint_list&            bootstraps );
+
+    void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
 
     std::shared_ptr<sirius::drive::ClientSession> m_session;
 };

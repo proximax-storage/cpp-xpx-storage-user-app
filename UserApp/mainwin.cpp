@@ -176,96 +176,15 @@ void MainWin::onDownloadBtn()
 
         const auto& hash = m_fsTreeTableModel->m_rows[row].m_hash;
         const auto& name = m_fsTreeTableModel->m_rows[row].m_name;
-//        qDebug() << "onDownloadBtn: " << index << " " << row;
-//        qDebug() << "onDownloadBtn: " << name.c_str();
-
-        auto it = std::find_if( downloads.begin(), downloads.end(), [&name]( const auto& item )
-        {
-            return item.m_fileName == name;
-        });
-
-        fs::path filePath = gSettings.downloadFolder() / name;
-        std::error_code ec;
-        bool fileExist = fs::exists( filePath, ec );
-
-        if ( overrideFileForAll )
-        {
-            //todo
-        }
-        else
-        {
-            if ( it != downloads.end() && ! it->isCompleted() )
-            {
-                Settings::DownloadInfo dnInfoCopy = *it; // item could be removed?
-                lock.unlock();
-
-                QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is currently downloading" ) );
-                msgBox.setInformativeText( "Do you want to replace this download with the current request" );
-                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-                int reply = msgBox.exec();
-
-                if ( reply == QMessageBox::Cancel )
-                {
-                    return;
-                }
-                else
-                {
-                    gSettings.removeFromDownloads( dnInfoCopy );
-                }
-                lock.lock();
-            }
-            else if ( it != downloads.end() )
-            {
-                Settings::DownloadInfo dnInfoCopy = *it; // item could be removed?
-                lock.unlock();
-
-                QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is already downloaded" ) );
-                msgBox.setInformativeText( "Do you want to override it" );
-                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-                int reply = msgBox.exec();
-
-                if ( reply == QMessageBox::Cancel )
-                {
-                    return;
-                }
-                else
-                {
-                    gSettings.removeFromDownloads( dnInfoCopy );
-                }
-                lock.lock();
-            }
-            else if ( fileExist )
-            {
-                lock.unlock();
-                QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "File with same name '" + name + "' is already exist" ) );
-                msgBox.setInformativeText( "Do you want to override it" );
-                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-                int reply = msgBox.exec();
-
-                if ( reply == QMessageBox::Cancel )
-                {
-                    return;
-                }
-                else
-                {
-                    //???
-                }
-                lock.lock();
-            }
-
-
-        }
 
         auto channelId = gSettings.currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
-            auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash, name );
+            auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash );
             m_downloadsTableModel->beginResetModel();
             gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
                                                                                  gSettings.downloadFolder(),
+                                                                                 false,
                                                                                  0, ltHandle } );
             m_downloadsTableModel->endResetModel();
         }

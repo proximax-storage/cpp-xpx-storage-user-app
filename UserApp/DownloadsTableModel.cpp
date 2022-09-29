@@ -63,7 +63,7 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                         //qDebug() << "isCompleted:"
                         return QString::fromStdString("done");
                     }
-                    if ( !dnInfo.m_ltHandle.is_valid() )
+                    if ( ! dnInfo.m_ltHandle.is_valid() )
                     {
                         //qDebug() << "isCompleted:"
                         return QString::fromStdString("0%");
