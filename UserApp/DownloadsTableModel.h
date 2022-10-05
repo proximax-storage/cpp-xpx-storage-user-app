@@ -5,6 +5,9 @@
 class DownloadsTableModel : public QAbstractListModel
 {
 public:
+    int m_selectedRow = -1;
+
+public:
     explicit DownloadsTableModel(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &) const override;
@@ -15,7 +18,6 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     void updateProgress();
-    void onDownloadCompleted( const std::array<uint8_t,32>& hash );
 
     void beginResetModel() { QAbstractItemModel::beginResetModel(); }
     void endResetModel() { QAbstractItemModel::endResetModel(); }

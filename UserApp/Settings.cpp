@@ -173,6 +173,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 {
     std::thread( [ this, handle ]
     {
+        qDebug() << "onDownloadCompleted: before lock";
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto& downloads = config().m_downloads;
@@ -186,6 +187,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 counter++;
             }
         }
+        qDebug() << "onDownloadCompleted: counter: " << counter;
 
         for( auto& dnInfo: downloads )
         {
@@ -210,15 +212,19 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
                 if ( --counter == 0 )
                 {
+                    qDebug() << "onDownloadCompleted: rename()";
                     fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
+                    qDebug() << "onDownloadCompleted: copy()";
                     fs::copy( srcPath, destPath, ec );
                 }
 
                 if ( ec )
                 {
+                    qDebug() << "onDownloadCompleted: Cannot save file: " << ec.message();
+
                     QMessageBox msgBox;
                     msgBox.setText( QString::fromStdString( "Cannot save file: " + std::string(destPath.filename()) ) );
                     msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
@@ -233,13 +239,20 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
     }).detach();
 }
 
-void Settings::removeFromDownloads( const DownloadInfo& dnInfo )
+void Settings::removeFromDownloads( int index )
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     auto& downloads = config().m_downloads;
 
-    auto itemRef = downloads.end();
+    if ( index < 0 || index >= downloads.size() )
+    {
+        qDebug() << "removeFromDownloads: invalid index: " << index << "; downloads.size()=" << downloads.size();
+        return;
+    }
+
+    auto& dnInfo = downloads[index];
+
     int  hashCounter = 0;
 
     for( auto it = downloads.begin(); it != downloads.end(); it++ )
@@ -247,25 +260,28 @@ void Settings::removeFromDownloads( const DownloadInfo& dnInfo )
         if ( it->m_hash == dnInfo.m_hash )
         {
             hashCounter++;
-            if ( it->m_fileName == dnInfo.m_fileName )
-            {
-                assert( itemRef == downloads.end() );
-                itemRef = it;
-            }
         }
     }
 
-    if ( itemRef != downloads.end() )
+    qDebug() << "hashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
+
+    if ( hashCounter == 1 )
     {
-        if ( hashCounter == 1 )
-        {
-            gStorageEngine->removeTorrentSync( itemRef->m_hash );
-        }
-
-        // remove file
-        std::error_code ec;
-        fs::remove( downloadFolder() / itemRef->m_fileName, ec );
-
+        gStorageEngine->removeTorrentSync( dnInfo.m_hash );
     }
 
+    // remove file
+    std::error_code ec;
+    if ( dnInfo.isCompleted() )
+    {
+        fs::remove( downloadFolder() / dnInfo.m_fileName, ec );
+        qDebug() << "remove: " << (downloadFolder() / dnInfo.m_fileName).string().c_str() << " ec=" << ec.message().c_str();
+    }
+    else if ( hashCounter == 1 )
+    {
+        fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash), ec );
+        qDebug() << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash)).string().c_str() << " ec=" << ec.message().c_str();
+    }
+
+    config().m_downloads.erase( config().m_downloads.begin()+index );
 }

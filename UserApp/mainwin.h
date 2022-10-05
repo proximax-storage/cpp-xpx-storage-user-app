@@ -21,11 +21,11 @@ public:
 
     static MainWin& instanse() { return *m_instanse; }
 
+    void selectDownloadRow( int );
 
 private slots:
     void onSettingsBtn();
     void onDownloadUpdateTimer();
-    void onDownloadCompleted( QString hash );
 
 private:
     bool requestPrivateKey();
@@ -43,6 +43,9 @@ private:
     void onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );
+
+    void setupDrivesTab();
+    void updateDrivesCBox();
 
 public:
     // if private key is not set it will be 'true'

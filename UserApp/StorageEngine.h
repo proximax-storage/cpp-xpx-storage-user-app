@@ -32,6 +32,10 @@ public:
                          const std::array<uint8_t,32>&  fsTreeHash,
                          FsTreeHandler                  onFsTreeReceived );
 
+    void downloadFsTree( Settings::DriveInfo&           driveInfo,
+                         const std::array<uint8_t,32>&  fsTreeHash,
+                         FsTreeHandler                  onFsTreeReceived );
+
     sirius::drive::lt_handle downloadFile( Settings::ChannelInfo&         channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
 

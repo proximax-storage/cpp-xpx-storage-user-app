@@ -1,5 +1,6 @@
 #include "DownloadsTableModel.h"
 #include "Settings.h"
+#include "mainwin.h"
 
 #include <QApplication>
 #include <QStyle>
@@ -106,8 +107,10 @@ void DownloadsTableModel::updateProgress()
             uint64_t dnBytes = 0;
             uint64_t totalBytes = 0;
 
+            //qDebug() << "fp.size(): " << fp.size();
             for( uint32_t i=0; i<fp.size(); i++ )
             {
+                //qDebug() << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
                 auto fsize = dnInfo.m_ltHandle.torrent_file()->files().file_size(i);
                 dnBytes    += fp[i];
                 totalBytes += fsize;
@@ -115,28 +118,16 @@ void DownloadsTableModel::updateProgress()
 
 
             double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
-            qDebug() << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
+            //qDebug() << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
             dnInfo.m_progress = progress;
-        }
-    }
-    endResetModel();
-}
 
-void DownloadsTableModel::onDownloadCompleted( const std::array<uint8_t,32>& hash )
-{
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-    auto& downloads = gSettings.config().m_downloads;
-
-    beginResetModel();
-    {
-        for( auto& dnInfo: downloads )
-        {
-            if (  dnInfo.m_hash == hash )
+            if ( totalBytes>0 && totalBytes==dnBytes )
             {
-                dnInfo.m_progress = 1001;
+                dnInfo.m_isCompleted = true;
             }
         }
     }
     endResetModel();
+
+    MainWin::instanse().selectDownloadRow( m_selectedRow );
 }

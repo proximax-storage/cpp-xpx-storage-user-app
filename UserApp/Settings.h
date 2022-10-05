@@ -19,6 +19,9 @@ inline std::recursive_mutex gSettingsMutex;
 
 std::filesystem::path settingsFolder();
 
+inline QDebug& operator<<(QDebug& out, const std::string& str) { out << QString::fromStdString(str); return out; }
+
+
 class Settings
 {
 public:
@@ -44,13 +47,16 @@ public:
 
     struct DriveInfo
     {
-        std::string m_hash;
+        std::string m_driveHash;
         std::string m_name;
+
+        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
+        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
 
         template<class Archive>
         void serialize( Archive &ar )
         {
-            ar( m_hash, m_name );
+            ar( m_driveHash, m_name );
         }
     };
 
@@ -82,11 +88,14 @@ public:
         std::string                 m_privateKeyStr;
         std::string                 m_publicKeyStr;
 
-        std::vector<ChannelInfo>    m_channels;
-        int                         m_currentChannelIndex = -1;
+        std::vector<ChannelInfo>    m_dnChannels;
+        int                         m_currentDnChannelIndex = -1;
 
         std::string                 m_downloadFolder = "~/Downloads";
         std::vector<DownloadInfo>   m_downloads;
+
+        std::vector<DriveInfo>      m_drives;
+        int                         m_currentDriveIndex = -1;
 
         Account() {}
 
@@ -96,7 +105,13 @@ public:
             m_replicatorBootstrap   = a.m_replicatorBootstrap;
             m_udpPort               = a.m_udpPort;
             m_privateKeyStr         = a.m_privateKeyStr;
+            m_dnChannels            = a.m_dnChannels;
+            m_currentDnChannelIndex = a.m_currentDnChannelIndex;
             m_downloadFolder        = a.m_downloadFolder;
+            m_downloads             = a.m_downloads;
+            m_drives                = a.m_drives;
+            m_currentDriveIndex     = a.m_currentDriveIndex;
+
             updateKeyPair( m_privateKeyStr );
             return *this;
         }
@@ -113,8 +128,8 @@ public:
                 m_replicatorBootstrap,
                 m_udpPort,
                 m_privateKeyStr,
-                m_channels,
-                m_currentChannelIndex,
+                m_dnChannels,
+                m_currentDnChannelIndex,
                 m_downloadFolder );
         }
 
@@ -157,17 +172,17 @@ public:
 
     ChannelInfo& currentChannelInfo()
     {
-        assert( config().m_currentChannelIndex >= 0 && config().m_currentChannelIndex < config().m_channels.size() );
-        return config().m_channels[config().m_currentChannelIndex];
+        assert( config().m_currentDnChannelIndex >= 0 && config().m_currentDnChannelIndex < config().m_dnChannels.size() );
+        return config().m_dnChannels[config().m_currentDnChannelIndex];
     }
 
     ChannelInfo* currentChannelInfoPtr()
     {
-        if ( config().m_currentChannelIndex < 0 && config().m_currentChannelIndex >= config().m_channels.size() )
+        if ( config().m_currentDnChannelIndex < 0 && config().m_currentDnChannelIndex >= config().m_dnChannels.size() )
         {
             return nullptr;
         }
-        return &config().m_channels[config().m_currentChannelIndex];
+        return &config().m_dnChannels[config().m_currentDnChannelIndex];
     }
 
     void setCurrentAccountIndex( int currentAccountIndex )
@@ -179,7 +194,7 @@ public:
 
     void onDownloadCompleted( lt::torrent_handle handle );
 
-    void removeFromDownloads( const DownloadInfo& );
+    void removeFromDownloads( int index );
 
 private:
     friend class PrivKeyDialog;

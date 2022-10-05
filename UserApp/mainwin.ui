@@ -32,7 +32,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -173,7 +173,7 @@
        <string>Path:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_36">
+     <widget class="QPushButton" name="m_removeDownloadBtn">
       <property name="geometry">
        <rect>
         <x>576</x>
@@ -236,7 +236,7 @@
      <attribute name="title">
       <string>Drives</string>
      </attribute>
-     <widget class="QComboBox" name="comboBox_2">
+     <widget class="QComboBox" name="m_driveCBox">
       <property name="geometry">
        <rect>
         <x>24</x>
@@ -350,23 +350,23 @@
       <property name="geometry">
        <rect>
         <x>24</x>
-        <y>150</y>
+        <y>124</y>
         <width>505</width>
-        <height>350</height>
+        <height>377</height>
        </rect>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_19">
       <property name="geometry">
        <rect>
-        <x>28</x>
+        <x>258</x>
         <y>520</y>
-        <width>171</width>
+        <width>269</width>
         <height>32</height>
        </rect>
       </property>
       <property name="text">
-       <string>Sync With Replicators</string>
+       <string>Update Local Drive With Remoute</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_11">
@@ -500,17 +500,17 @@
        </property>
       </item>
      </widget>
-     <widget class="QCheckBox" name="checkBox">
+     <widget class="QPushButton" name="pushButton_13">
       <property name="geometry">
        <rect>
-        <x>36</x>
-        <y>124</y>
-        <width>417</width>
-        <height>20</height>
+        <x>24</x>
+        <y>520</y>
+        <width>151</width>
+        <height>32</height>
        </rect>
       </property>
       <property name="text">
-       <string>Drive Local  Copy</string>
+       <string>Open Local Folder</string>
       </property>
      </widget>
     </widget>
