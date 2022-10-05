@@ -373,16 +373,19 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
         return;
     }
 
-    gStorageEngine->downloadFsTree( *channelInfo, fsTreeHash, [this] ( const std::string&           channelHash,
-                                                                       const std::array<uint8_t,32> fsTreeHash,
-                                                                       const sirius::drive::FsTree& fsTree )
+    gStorageEngine->downloadFsTree( channelInfo->m_driveHash,
+                                    channelInfo->m_hash,
+                                    fsTreeHash,
+                                    [this] ( const std::string&           driveHash,
+                                             const std::array<uint8_t,32> fsTreeHash,
+                                             const sirius::drive::FsTree& fsTree )
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
-        if ( channelInfo != nullptr )
+        if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
         {
             channelInfo->m_tmpRequestingFsTreeTorrent.reset();
             channelInfo->m_waitingFsTree = false;

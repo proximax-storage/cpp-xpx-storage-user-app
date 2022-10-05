@@ -15,12 +15,17 @@ namespace sirius { namespace drive {
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
 
-using  FsTreeHandler  = std::function<void( const std::string&           channelHash,
+using  FsTreeHandler  = std::function<void( const std::string&           driveHash,
                                             const std::array<uint8_t,32> fsTreeHash,
                                             const sirius::drive::FsTree& fsTree )>;
 
 class StorageEngine
 {
+    std::shared_ptr<sirius::drive::ClientSession>   m_session;
+
+    //std::vector<lt::torrent_handle>                 m_fsTreeLtHandles;
+    std::recursive_mutex                            m_mutex;
+
 public:
     StorageEngine() {}
 
@@ -28,11 +33,8 @@ public:
 
     void restart();
 
-    void downloadFsTree( Settings::ChannelInfo&         channelInfo,
-                         const std::array<uint8_t,32>&  fsTreeHash,
-                         FsTreeHandler                  onFsTreeReceived );
-
-    void downloadFsTree( Settings::DriveInfo&           driveInfo,
+    void downloadFsTree( const std::string&             driveHash,
+                         const std::string&             dnChannelId,
                          const std::array<uint8_t,32>&  fsTreeHash,
                          FsTreeHandler                  onFsTreeReceived );
 
@@ -47,8 +49,6 @@ private:
                             const endpoint_list&            bootstraps );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
-
-    std::shared_ptr<sirius::drive::ClientSession> m_session;
 };
 
 inline std::shared_ptr<StorageEngine> gStorageEngine;

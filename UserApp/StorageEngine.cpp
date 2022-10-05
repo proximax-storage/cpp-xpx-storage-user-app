@@ -68,40 +68,28 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
     });
 }
 
-void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
+void StorageEngine::downloadFsTree( const std::string&              driveHash,
+                                    const std::string&              dnChannelId,
                                     const std::array<uint8_t,32>&   fsTreeHash,
                                     FsTreeHandler                   onFsTreeReceived )
 {
-    qDebug() << "downloadFsTree(): channelId: " << channelInfo.m_hash.c_str();
+    qDebug() << "downloadFsTree(): channelId: " << driveHash;
+
+    std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
     std::array<uint8_t,32> channelId;
-    sirius::utils::ParseHexStringIntoContainer( channelInfo.m_hash.c_str(), 64, channelId );
-
-    if ( channelInfo.m_tmpRequestingFsTreeTorrent )
-    {
-        qDebug() << "downloadFsTree(): channelInfo.m_tmpRequestingFsTreeTorrent ";
-
-        if ( channelInfo.m_tmpRequestingFsTreeHash == fsTreeHash )
-        {
-            qDebug() << "downloadFsTree(): channelInfo.m_tmpRequestingFsTreeHash == fsTreeHash";
-            return;
-        }
-
-        // remove previouse request
-        std::vector<std::array<uint8_t,32>> torrents;
-        torrents.push_back( channelInfo.m_tmpRequestingFsTreeHash );
-        m_session->removeTorrents( torrents );
-    }
-
-    channelInfo.m_tmpRequestingFsTreeHash = fsTreeHash;
+    sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );
 
     m_session->addDownloadChannel( channelId );
 
     qDebug() << "downloadFsTree(): m_session->download(...";
-    channelInfo.m_tmpRequestingFsTreeTorrent =
+
+    auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
+
+//    auto tmpRequestingFsTreeTorrent =
                     m_session->download( sirius::drive::DownloadContext(
                                             sirius::drive::DownloadContext::fs_tree,
-                                            [ onFsTreeReceived, driveHash=channelInfo.m_driveHash, fsTreeSaveFolder=settingsFolder()/channelInfo.m_hash ]
+                                            [ onFsTreeReceived, driveHash, fsTreeSaveFolder ]
                                              ( sirius::drive::download_status::code code,
                                                 const sirius::drive::InfoHash& infoHash,
                                                 const std::filesystem::path /*filePath*/,
@@ -117,65 +105,10 @@ void StorageEngine::downloadFsTree( Settings::ChannelInfo&          channelInfo,
                                             fsTreeHash,
                                             channelId, 0 ),
                                        channelId,
-                                       settingsFolder() / channelInfo.m_hash,
+                                       fsTreeSaveFolder,
                                        "",
                                        {});
 }
-
-void StorageEngine::downloadFsTree( Settings::DriveInfo&            driveInfo,
-                                    const std::array<uint8_t,32>&   fsTreeHash,
-                                    FsTreeHandler                   onFsTreeReceived )
-{
-    qDebug() << "downloadFsTree(): driveHash: " << driveInfo.m_driveHash;
-
-    std::array<uint8_t,32> channelId;
-//    sirius::utils::ParseHexStringIntoContainer( channelInfo.m_hash.c_str(), 64, channelId );
-
-    if ( driveInfo.m_tmpRequestingFsTreeTorrent )
-    {
-        qDebug() << "downloadFsTree(): channelInfo.m_tmpRequestingFsTreeTorrent ";
-
-        if ( driveInfo.m_tmpRequestingFsTreeHash == fsTreeHash )
-        {
-            qDebug() << "downloadFsTree(): channelInfo.m_tmpRequestingFsTreeHash == fsTreeHash";
-            return;
-        }
-
-        // remove previouse request
-        std::vector<std::array<uint8_t,32>> torrents;
-        torrents.push_back( driveInfo.m_tmpRequestingFsTreeHash );
-        m_session->removeTorrents( torrents );
-    }
-
-    driveInfo.m_tmpRequestingFsTreeHash = fsTreeHash;
-
-//    m_session->addDownloadChannel( channelId );
-
-    qDebug() << "downloadFsTree(): m_session->download(...";
-    driveInfo.m_tmpRequestingFsTreeTorrent =
-                    m_session->download( sirius::drive::DownloadContext(
-                                            sirius::drive::DownloadContext::fs_tree,
-                                            [ onFsTreeReceived, driveHash=driveInfo.m_driveHash, fsTreeSaveFolder=settingsFolder()/driveInfo.m_driveHash ]
-                                             ( sirius::drive::download_status::code code,
-                                                const sirius::drive::InfoHash& infoHash,
-                                                const std::filesystem::path /*filePath*/,
-                                                size_t /*downloaded*/,
-                                                size_t /*fileSize*/,
-                                                const std::string& /*errorText*/)
-                                            {
-                                                qDebug() << "fstree received: " << std::string(fsTreeSaveFolder);
-                                                sirius::drive::FsTree fsTree;
-                                                fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
-                                                onFsTreeReceived( driveHash, infoHash.array(), fsTree );
-                                            },
-                                            fsTreeHash,
-                                            channelId, 0 ),
-                                       channelId,
-                                       settingsFolder()/driveInfo.m_driveHash,
-                                       "",
-                                       {});
-}
-
 
 sirius::drive::lt_handle StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
                                                       const std::array<uint8_t,32>&  fileHash )
