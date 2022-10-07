@@ -1,12 +1,14 @@
+//#include "moc_mainwin.cpp"
+
 #include "mainwin.h"
 #include "./ui_mainwin.h"
+
+#include "Model.h"
 #include "FsTreeTableModel.h"
 #include "DownloadsTableModel.h"
 
-#include "Settings.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
-#include "StorageEngine.h"
 
 #include "crypto/Signer.h"
 #include "drive/Utils.h"
@@ -21,20 +23,19 @@
 #include <random>
 #include <thread>
 
-MainWin* MainWin::m_instanse = nullptr;
-
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWin)
 {
-    assert( m_instanse == nullptr );
-    m_instanse = this;
-
     ui->setupUi(this);
 
-    connect( ui->m_settingsBtn, SIGNAL (released()), this, SLOT( onSettingsBtn() ));
+    connect( ui->m_settingsBtn, &QPushButton::released, this, [this]
+    {
+        SettingsDialog settingsDialog( this );
+        settingsDialog.exec();
+    });
 
-    if ( ! gSettings.load("") )
+    if ( ! Model::loadSettings() )
     {
         if ( ! requestPrivateKey() )
         {
@@ -47,21 +48,24 @@ MainWin::MainWin(QWidget *parent)
         return;
     }
 
-    gStorageEngine = std::make_shared<StorageEngine>();
-    gStorageEngine->start();
+    Model::startStorageEngine();
 
     setupDownloadsTab();
     setupDrivesTab();
 
-    if ( gSettings.config().m_currentDnChannelIndex >= 0 )
+    // Set current download channel
+    int dnChannelIndex = Model::currentDnChannelIndex();
+    if ( dnChannelIndex >= 0 )
     {
-        ui->m_channels->setCurrentIndex( gSettings.config().m_currentDnChannelIndex );
-        onChannelChanged(gSettings.config().m_currentDnChannelIndex);
+        ui->m_channels->setCurrentIndex( dnChannelIndex );
+        onChannelChanged( dnChannelIndex );
     }
 
+    // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
-    connect( m_downloadUpdateTimer, SIGNAL(timeout()), this, SLOT( onDownloadUpdateTimer() ));
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
+
 }
 
 MainWin::~MainWin()
@@ -69,27 +73,11 @@ MainWin::~MainWin()
     delete ui;
 }
 
-void MainWin::onDownloadUpdateTimer()
-{
-    m_downloadsTableModel->updateProgress();
-}
-
 void MainWin::setupDownloadsTab()
 {
     if ( STANDALONE_TEST )
     {
-        gSettings.config().m_dnChannels.clear();
-        gSettings.config().m_dnChannels.push_back( Settings::ChannelInfo{
-                                                    "my_channel",
-                                                    "0101010100000000000000000000000000000000000000000000000000000000",
-                                                    "0100000000050607080900010203040506070809000102030405060708090001"
-                                                     } );
-        gSettings.config().m_dnChannels.push_back( Settings::ChannelInfo{
-                                                    "my_channel2",
-                                                    "0202020200000000000000000000000000000000000000000000000000000000",
-                                                    "0200000000050607080900010203040506070809000102030405060708090001"
-                                                     } );
-        gSettings.config().m_currentDnChannelIndex = 0;
+        Model::stestInitChannels();
     }
 
     setupFsTreeTable();
@@ -160,7 +148,7 @@ void MainWin::onDownloadBtn()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    auto& downloads = gSettings.config().m_downloads;
+    auto& downloads = Model::downloads();
 
     bool overrideFileForAll = false;
 
@@ -176,15 +164,15 @@ void MainWin::onDownloadBtn()
         const auto& hash = m_fsTreeTableModel->m_rows[row].m_hash;
         const auto& name = m_fsTreeTableModel->m_rows[row].m_name;
 
-        auto channelId = gSettings.currentChannelInfoPtr();
+        auto channelId = Model::currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
-            auto ltHandle = gStorageEngine->downloadFile( *channelId,  hash );
+            auto ltHandle = Model::downloadFile( *channelId,  hash );
             m_downloadsTableModel->beginResetModel();
-            gSettings.config().m_downloads.emplace_back( Settings::DownloadInfo{ hash, name,
-                                                                                 gSettings.downloadFolder(),
-                                                                                 false, 0, ltHandle } );
-            m_downloadsTableModel->m_selectedRow = int(gSettings.config().m_downloads.size()) - 1;
+            Model::downloads().emplace_back( DownloadInfo{ hash, name,
+                                                           Model::downloadFolder(),
+                                                           false, 0, ltHandle } );
+            m_downloadsTableModel->m_selectedRow = int(Model::downloads().size()) - 1;
             m_downloadsTableModel->endResetModel();
         }
     }
@@ -192,7 +180,7 @@ void MainWin::onDownloadBtn()
 
 void MainWin::setupDownloadsTable()
 {
-    m_downloadsTableModel = new DownloadsTableModel();
+    m_downloadsTableModel = new DownloadsTableModel( this, [this](int row) { ui->m_downloadsTableView->selectRow(row); });
 
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
@@ -226,11 +214,11 @@ void MainWin::setupDownloadsTable()
         }
 
         int rowIndex = rows.begin()->row();
-        auto& downloads = gSettings.config().m_downloads;
+        auto& downloads = Model::downloads();
 
         if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
         {
-            Settings::DownloadInfo dnInfo = downloads[rowIndex];
+            DownloadInfo dnInfo = Model::downloads()[rowIndex];
             lock.unlock();
 
             QMessageBox msgBox;
@@ -240,7 +228,7 @@ void MainWin::setupDownloadsTable()
 
             if ( reply == QMessageBox::Ok )
             {
-                gSettings.removeFromDownloads( rowIndex );
+                Model::removeFromDownloads( rowIndex );
             }
             selectDownloadRow(-1);
         }
@@ -265,16 +253,10 @@ void MainWin::selectDownloadRow( int row )
     ui->m_removeDownloadBtn->setEnabled( row >= 0 );
 }
 
-void MainWin::onSettingsBtn()
-{
-    SettingsDialog settingsDialog( this );
-    settingsDialog.exec();
-}
-
 bool MainWin::requestPrivateKey()
 {
     {
-        PrivKeyDialog pKeyDialog( this, gSettings );
+        PrivKeyDialog pKeyDialog( this );
 
         pKeyDialog.exec();
 
@@ -316,7 +298,7 @@ void MainWin::initDriveTree()
 void MainWin::updateChannelsCBox()
 {
     ui->m_channels->clear();
-    for( const auto& channelInfo: gSettings.config().m_dnChannels )
+    for( const auto& channelInfo: Model::dnChannels() )
     {
         ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name) );
     }
@@ -326,8 +308,8 @@ void MainWin::updateChannelsCBox()
 
 void MainWin::onChannelChanged( int index )
 {
-    gSettings.config().m_currentDnChannelIndex = index;
-    gSettings.currentChannelInfo().m_waitingFsTree = true;
+    Model::currentDnChannelIndex() = index;
+    Model::currentChannelInfoPtr()->m_waitingFsTree = true;
     m_fsTreeTableModel->setFsTree( {}, {} );
 
 
@@ -355,7 +337,7 @@ void MainWin::onChannelChanged( int index )
             }
 
             sleep(1);
-            onFsTreeHashReceived( gSettings.config().m_dnChannels[index].m_hash, fsTreeHash );
+            onFsTreeHashReceived( Model::dnChannels()[index].m_hash, fsTreeHash );
         }).detach();
     }
 }
@@ -364,7 +346,7 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
 {
     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-    auto channelInfo = gSettings.currentChannelInfoPtr();
+    auto channelInfo = Model::currentChannelInfoPtr();
     if ( channelInfo == nullptr )
     {
         // ignore fsTreeHash for unexisting channel
@@ -373,18 +355,18 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
         return;
     }
 
-    gStorageEngine->downloadFsTree( channelInfo->m_driveHash,
-                                    channelInfo->m_hash,
-                                    fsTreeHash,
-                                    [this] ( const std::string&           driveHash,
-                                             const std::array<uint8_t,32> fsTreeHash,
-                                             const sirius::drive::FsTree& fsTree )
+    Model::downloadFsTree( channelInfo->m_driveHash,
+                           channelInfo->m_hash,
+                           fsTreeHash,
+                           [this] ( const std::string&           driveHash,
+                                    const std::array<uint8_t,32> fsTreeHash,
+                                    const sirius::drive::FsTree& fsTree )
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        auto channelInfo = gSettings.currentChannelInfoPtr();
+        auto channelInfo = Model::currentChannelInfoPtr();
         if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
         {
             channelInfo->m_tmpRequestingFsTreeTorrent.reset();
@@ -400,14 +382,7 @@ void MainWin::setupDrivesTab()
 {
     if ( STANDALONE_TEST )
     {
-        gSettings.config().m_drives.clear();
-        std::array<uint8_t,32> driveKey{1,0,0,0,0,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1};
-        gSettings.config().m_drives.push_back( Settings::DriveInfo{ sirius::drive::toString(driveKey), "drive1" });
-
-        std::array<uint8_t,32> driveKey2{2,0,0,0,0,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1};
-        gSettings.config().m_drives.push_back( Settings::DriveInfo{ sirius::drive::toString(driveKey2), "drive2" });
-
-        gSettings.config().m_currentDnChannelIndex = 0;
+        Model::stestInitDrives();
     }
 
     updateDrivesCBox();
@@ -415,10 +390,20 @@ void MainWin::setupDrivesTab()
     // request FsTree info-hash
     if ( STANDALONE_TEST )
     {
-//        Settings::ChannelInfo&          channelInfo,
-//        const std::array<uint8_t,32>&   fsTreeHash,
-//        FsTreeHandler                   onFsTreeReceived
-//        gStorageEngine->downloadFsTree()
+        auto* driveInfoPtr = Model::currentDriveInfoPtr();
+        std::array<uint8_t,32> fsTreeHash;
+        sirius::utils::ParseHexStringIntoContainer( "ce0cf74c024aec3fddc3f8a13e0a4504f6b75197878901c238dff5a3ed55171e",
+                                                        64, fsTreeHash );
+
+        Model::downloadFsTree( driveInfoPtr->m_driveHash,
+                               "0000000000000000000000000000000000000000000000000000000000000000",
+                               fsTreeHash,
+                               [this] ( const std::string&           driveHash,
+                                        const std::array<uint8_t,32> fsTreeHash,
+                                        const sirius::drive::FsTree& fsTree )
+        {
+            Model::onFsTreeForDriveReceived( driveHash, fsTreeHash, fsTree );
+        });
     }
     else
     {
@@ -429,7 +414,7 @@ void MainWin::setupDrivesTab()
 void MainWin::updateDrivesCBox()
 {
     ui->m_driveCBox->clear();
-    for( const auto& channelInfo: gSettings.config().m_drives )
+    for( const auto& channelInfo: Model::drives() )
     {
         ui->m_driveCBox->addItem( QString::fromStdString( channelInfo.m_name) );
     }

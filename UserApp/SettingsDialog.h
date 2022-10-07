@@ -2,7 +2,6 @@
 #define SETTINGDIALOG_H
 
 #include <QDialog>
-#include "Settings.h"
 
 namespace Ui { class SettingsDialog; }
 
@@ -29,9 +28,6 @@ private:
 
 private:
     Ui::SettingsDialog* ui;
-
-    // not saved properties
-    Settings m_settingsCopy;
 };
 
 #endif // SETTINGDIALOG_H

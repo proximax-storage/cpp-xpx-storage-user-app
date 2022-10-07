@@ -19,13 +19,7 @@ public:
     MainWin(QWidget *parent = nullptr);
     ~MainWin();
 
-    static MainWin& instanse() { return *m_instanse; }
-
     void selectDownloadRow( int );
-
-private slots:
-    void onSettingsBtn();
-    void onDownloadUpdateTimer();
 
 private:
     bool requestPrivateKey();
@@ -52,8 +46,6 @@ public:
     bool          m_mustExit = false;
 
 private:
-    static MainWin*         m_instanse;
-
     Ui::MainWin*            ui;
 
     QTimer*                 m_downloadUpdateTimer;

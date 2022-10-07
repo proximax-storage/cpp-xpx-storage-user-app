@@ -12,10 +12,23 @@
 #include <QMessageBox>
 #include <QFileDialog>
 
-PrivKeyDialog::PrivKeyDialog( QWidget *parent, Settings& settings ) :
+PrivKeyDialog::PrivKeyDialog( QWidget *parent ) :
+    QDialog(parent),
+    ui(new Ui::PrivKeyDialog),
+    m_settings(gSettings)
+{
+    init();
+}
+
+PrivKeyDialog::PrivKeyDialog( QWidget *parent, Settings& settings) :
     QDialog(parent),
     ui(new Ui::PrivKeyDialog),
     m_settings(settings)
+{
+    init();
+}
+
+void PrivKeyDialog::init()
 {
     ui->setupUi(this);
 

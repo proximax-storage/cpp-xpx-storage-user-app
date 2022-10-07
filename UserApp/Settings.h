@@ -11,11 +11,7 @@
 #include "drive/Session.h"
 #include "libtorrent/torrent_handle.hpp"
 
-namespace fs = std::filesystem;
-
-inline bool STANDALONE_TEST = true;
-
-inline std::recursive_mutex gSettingsMutex;
+#include "Model.h"
 
 std::filesystem::path settingsFolder();
 
@@ -26,58 +22,40 @@ class Settings
 {
 public:
 
-    struct ChannelInfo
-    {
-        std::string     m_name;
-        std::string     m_hash;
-        std::string     m_driveHash;
-        endpoint_list   m_endpointList = {};
+//    struct DriveInfo
+//    {
+//        std::string m_driveHash;
+//        std::string m_name;
+//        std::string m_localDriveFolder;
 
-        bool                                m_waitingFsTree              = true;
-        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
-        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
+//        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
+//        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
 
+//        template<class Archive>
+//        void serialize( Archive &ar )
+//        {
+//            ar( m_driveHash, m_name );
+//        }
+//    };
 
-        template<class Archive>
-        void serialize( Archive &ar )
-        {
-            ar( m_hash, m_name, m_driveHash );
-        }
-    };
+//    struct DownloadInfo
+//    {
+//        std::array<uint8_t,32>  m_hash;
+//        std::string             m_fileName;
+//        std::string             m_saveFolder;
+//        bool                    m_isCompleted = false;
 
-    struct DriveInfo
-    {
-        std::string m_driveHash;
-        std::string m_name;
+//        int                      m_progress = 0; // m_progress==1001 means completed
+//        sirius::drive::lt_handle m_ltHandle;
 
-        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
-        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
+//        template<class Archive>
+//        void serialize( Archive &ar )
+//        {
+//            ar( m_hash, m_fileName, m_saveFolder, m_isCompleted );
+//        }
 
-        template<class Archive>
-        void serialize( Archive &ar )
-        {
-            ar( m_driveHash, m_name );
-        }
-    };
-
-    struct DownloadInfo
-    {
-        std::array<uint8_t,32>  m_hash;
-        std::string             m_fileName;
-        std::string             m_saveFolder;
-        bool                    m_isCompleted = false;
-
-        int                      m_progress = 0; // m_progress==1001 means completed
-        sirius::drive::lt_handle m_ltHandle;
-
-        template<class Archive>
-        void serialize( Archive &ar )
-        {
-            ar( m_hash, m_fileName, m_saveFolder, m_isCompleted );
-        }
-
-        bool isCompleted() const { return m_isCompleted; }
-    };
+//        bool isCompleted() const { return m_isCompleted; }
+//    };
 
     struct Account
     {

@@ -12,7 +12,8 @@ class PrivKeyDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit PrivKeyDialog( QWidget *parent, Settings& settings );
+    explicit PrivKeyDialog( QWidget *parent );
+    explicit PrivKeyDialog( QWidget *parent, Settings& );
     ~PrivKeyDialog();
 
 protected:
@@ -24,6 +25,7 @@ private slots:
     void onLoadFromFileBtn();
 
 private:
+    void init();
     void verify();
 
 private:

@@ -7,17 +7,13 @@
 #include "crypto/KeyPair.h"
 #include "drive/FsTree.h"
 
-#include "Settings.h"
+#include "Model.h"
 
 namespace sirius { namespace drive {
     class ClientSession;
 }}
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
-
-using  FsTreeHandler  = std::function<void( const std::string&           driveHash,
-                                            const std::array<uint8_t,32> fsTreeHash,
-                                            const sirius::drive::FsTree& fsTree )>;
 
 class StorageEngine
 {
@@ -38,7 +34,7 @@ public:
                          const std::array<uint8_t,32>&  fsTreeHash,
                          FsTreeHandler                  onFsTreeReceived );
 
-    sirius::drive::lt_handle downloadFile( Settings::ChannelInfo&         channelInfo,
+    sirius::drive::lt_handle downloadFile( ChannelInfo&                   channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );

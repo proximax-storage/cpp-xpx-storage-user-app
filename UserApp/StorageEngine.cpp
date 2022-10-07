@@ -1,6 +1,6 @@
 #include "StorageEngine.h"
 #include "Settings.h"
-#include "mainwin.h""
+#include "mainwin.h"
 #include "drive/ClientSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
@@ -77,9 +77,12 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
+//    qDebug() << "downloadFsTree(): after mutex";
+
     std::array<uint8_t,32> channelId;
     sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );
 
+//    qDebug() << "downloadFsTree(): 1";
     m_session->addDownloadChannel( channelId );
 
     qDebug() << "downloadFsTree(): m_session->download(...";
@@ -110,8 +113,8 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                        {});
 }
 
-sirius::drive::lt_handle StorageEngine::downloadFile( Settings::ChannelInfo&         channelInfo,
-                                                      const std::array<uint8_t,32>&  fileHash )
+sirius::drive::lt_handle StorageEngine::downloadFile( ChannelInfo&                  channelInfo,
+                                                      const std::array<uint8_t,32>& fileHash )
 {
     qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 

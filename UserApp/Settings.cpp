@@ -1,3 +1,5 @@
+//#include "moc_Settings.cpp"
+
 #include "Settings.h"
 #include "StorageEngine.h"
 #include "drive/Utils.h"

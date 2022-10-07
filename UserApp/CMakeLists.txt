@@ -39,6 +39,7 @@ set(PROJECT_SOURCES
         mainwin.h               mainwin.cpp                 mainwin.ui
         SettingsDialog.h        SettingsDialog.cpp          SettingsDialog.ui
         PrivKeyDialog.h         PrivKeyDialog.cpp           PrivKeyDialog.ui
+        Model.h                 Model.cpp
         Settings.h              Settings.cpp
         StorageEngine.h         StorageEngine.cpp
         FsTreeTableModel.h      FsTreeTableModel.cpp
