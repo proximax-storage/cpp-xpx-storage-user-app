@@ -6,6 +6,7 @@
 #include "Model.h"
 #include "FsTreeTableModel.h"
 #include "DownloadsTableModel.h"
+#include "DriveTreeModel.h"
 
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
@@ -282,17 +283,17 @@ bool MainWin::requestPrivateKey()
 void MainWin::initDriveTree()
 {
     QFileSystemModel* m_model = new QFileSystemModel();
-    m_model->setRootPath("~/");
-    ui->m_driveTree->setModel(m_model);
-    ui->m_driveTree->header()->resizeSection(0, 320);
-    ui->m_driveTree->header()->resizeSection(1, 30);
-    ui->m_driveTree->header()->setDefaultAlignment(Qt::AlignLeft);
-    ui->m_driveTree->header()->hideSection(2);
-    ui->m_driveTree->header()->hideSection(3);
+    m_model->setRootPath("/Users/alex/000-LocalFolder");
+    ui->m_driveTreeView->setModel(m_model);
+    ui->m_driveTreeView->header()->resizeSection(0, 320);
+    ui->m_driveTreeView->header()->resizeSection(1, 30);
+    ui->m_driveTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_driveTreeView->header()->hideSection(2);
+    ui->m_driveTreeView->header()->hideSection(3);
 
-    ui->m_diffView->setColumnWidth(0,330);
+//    ui->m_diffView->setColumnWidth(0,330);
 
-//    ui->m_driveFiles->setColumnWidth(0,420);
+////    ui->m_driveFiles->setColumnWidth(0,420);
 }
 
 void MainWin::updateChannelsCBox()
@@ -409,6 +410,27 @@ void MainWin::setupDrivesTab()
     {
 
     }
+
+//    m_driveTreeModel = new DriveTreeModel();
+//    ui->m_driveTreeView->setModel( m_driveTreeModel );
+//    //ui->m_driveTreeView->header()->resizeSection(0, 30);
+//    ui->m_driveTreeView->header()->resizeSection(1, 300);
+//    ui->m_driveTreeView->header()->resizeSection(2, 30);
+//    ui->m_driveTreeView->setHeaderHidden(true);
+//    ui->m_driveTreeView->show();
+//    ui->m_driveTreeView->expandAll();
+
+    QFileSystemModel* m_model = new QFileSystemModel();
+    m_model->setRootPath("/Users/alex/000-LocalFolder");
+    ui->m_driveTreeView->setModel(m_model);
+    ui->m_driveTreeView->header()->resizeSection(0, 320);
+    ui->m_driveTreeView->header()->resizeSection(1, 30);
+    ui->m_driveTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_driveTreeView->header()->hideSection(2);
+    ui->m_driveTreeView->header()->hideSection(3);
+    ui->m_driveTreeView->show();
+    ui->m_driveTreeView->expandAll();
+
 }
 
 void MainWin::updateDrivesCBox()

@@ -10,6 +10,7 @@ QT_END_NAMESPACE
 
 class FsTreeTableModel;
 class DownloadsTableModel;
+class DriveTreeModel;
 
 class MainWin : public QMainWindow
 {
@@ -52,4 +53,5 @@ private:
 
     FsTreeTableModel*       m_fsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
+    DriveTreeModel*         m_driveTreeModel;
 };

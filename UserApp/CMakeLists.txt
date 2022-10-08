@@ -44,6 +44,7 @@ set(PROJECT_SOURCES
         StorageEngine.h         StorageEngine.cpp
         FsTreeTableModel.h      FsTreeTableModel.cpp
         DownloadsTableModel.h   DownloadsTableModel.cpp
+        DriveTreeModel.h        DriveTreeModel.cpp
         ${TS_FILES}
 )
 
