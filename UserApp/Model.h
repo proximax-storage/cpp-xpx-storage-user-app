@@ -51,6 +51,7 @@ struct ChannelInfo
 struct DownloadInfo
 {
     std::array<uint8_t,32>  m_hash;
+    std::string             m_channelHash;
     std::string             m_fileName;
     std::string             m_saveFolder;
     bool                    m_isCompleted = false;
@@ -61,7 +62,7 @@ struct DownloadInfo
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_hash, m_fileName, m_saveFolder, m_isCompleted );
+        ar( m_hash, m_channelHash, m_fileName, m_saveFolder, m_isCompleted );
     }
 
     bool isCompleted() const { return m_isCompleted; }
@@ -89,6 +90,21 @@ public: // tmp
     }
 };
 
+struct LocalDriveItem
+{
+    bool                        m_isFolder;
+    std::string                 m_name;
+    std::array<uint8_t,32>      m_hash;     // file hash
+    std::vector<LocalDriveItem> m_childs;
+    fs::file_time_type          m_modifyTime;
+
+    template<class Archive>
+    void serialize( Archive &ar )
+    {
+        ar( m_isFolder, m_name, m_childs );
+    }
+};
+
 //
 // Model
 //
@@ -100,15 +116,15 @@ public:
     // Settings
     //
     static bool     loadSettings();
+    static void     saveSettings();
     static fs::path downloadFolder();
 
-    static int&     currentDnChannelIndex();
+    static std::vector<ChannelInfo>&    dnChannels();
+    static void                         setCurrentDnChannelIndex( int );
+    static int                          currentDnChannelIndex();
+    static ChannelInfo*                 currentChannelInfoPtr();
 
-    static std::vector<ChannelInfo>& dnChannels();
-
-    static std::vector<DownloadInfo>& downloads();
-
-    static ChannelInfo* currentChannelInfoPtr();
+    static std::vector<DownloadInfo>&   downloads();
 
     //
     // StorageEngine
@@ -120,7 +136,7 @@ public:
                                 const std::array<uint8_t,32>&  fsTreeHash,
                                 FsTreeHandler                  onFsTreeReceived );
 
-    static sirius::drive::lt_handle downloadFile( ChannelInfo&                  channelInfo,
+    static sirius::drive::lt_handle downloadFile( const std::string&            channelId,
                                                   const std::array<uint8_t,32>& fileHash );
 
 
@@ -134,6 +150,11 @@ public:
     static void                     onFsTreeForDriveReceived( const std::string&           driveHash,
                                                               const std::array<uint8_t,32> fsTreeHash,
                                                               const sirius::drive::FsTree& fsTree );
+
+    //
+    // Drive Diff
+    //
+    void scanFolderR( fs::path, LocalDriveItem& parent );
 
     //
     // Standalone test

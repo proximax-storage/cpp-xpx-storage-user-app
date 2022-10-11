@@ -113,13 +113,10 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                        {});
 }
 
-sirius::drive::lt_handle StorageEngine::downloadFile( ChannelInfo&                  channelInfo,
+sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
                                                       const std::array<uint8_t,32>& fileHash )
 {
     qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
-
-    std::array<uint8_t,32> channelId;
-    sirius::utils::ParseHexStringIntoContainer( channelInfo.m_hash.c_str(), 64, channelId );
 
     m_session->addDownloadChannel( channelId );
 

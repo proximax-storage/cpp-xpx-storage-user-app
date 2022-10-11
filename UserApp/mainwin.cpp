@@ -168,9 +168,9 @@ void MainWin::onDownloadBtn()
         auto channelId = Model::currentChannelInfoPtr();
         if ( channelId != nullptr )
         {
-            auto ltHandle = Model::downloadFile( *channelId,  hash );
+            auto ltHandle = Model::downloadFile( channelId->m_hash,  hash );
             m_downloadsTableModel->beginResetModel();
-            Model::downloads().emplace_back( DownloadInfo{ hash, name,
+            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
                                                            Model::downloadFolder(),
                                                            false, 0, ltHandle } );
             m_downloadsTableModel->m_selectedRow = int(Model::downloads().size()) - 1;
@@ -309,7 +309,7 @@ void MainWin::updateChannelsCBox()
 
 void MainWin::onChannelChanged( int index )
 {
-    Model::currentDnChannelIndex() = index;
+    Model::setCurrentDnChannelIndex( index );
     Model::currentChannelInfoPtr()->m_waitingFsTree = true;
     m_fsTreeTableModel->setFsTree( {}, {} );
 

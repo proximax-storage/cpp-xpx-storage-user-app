@@ -1,10 +1,16 @@
 #include "Model.h"
 #include "Settings.h"
 #include "StorageEngine.h"
+#include "utils/HexParser.h"
 
 bool Model::loadSettings()
 {
     return gSettings.load("");
+}
+
+void Model::saveSettings()
+{
+    return gSettings.save();
 }
 
 fs::path Model::downloadFolder()
@@ -12,14 +18,19 @@ fs::path Model::downloadFolder()
     return gSettings.downloadFolder();
 }
 
-int& Model::currentDnChannelIndex()
-{
-    return gSettings.config().m_currentDnChannelIndex;
-}
-
 std::vector<ChannelInfo>& Model::dnChannels()
 {
     return gSettings.config().m_dnChannels;
+}
+
+void Model::setCurrentDnChannelIndex( int index )
+{
+    gSettings.config().m_currentDnChannelIndex = index;
+}
+
+int Model::currentDnChannelIndex()
+{
+    return gSettings.config().m_currentDnChannelIndex;
 }
 
 std::vector<DownloadInfo>& Model::downloads()
@@ -69,10 +80,13 @@ void Model::downloadFsTree( const std::string&             driveHash,
                                     onFsTreeReceived );
 }
 
-sirius::drive::lt_handle Model::downloadFile( ChannelInfo&                  channelInfo,
+sirius::drive::lt_handle Model::downloadFile( const std::string&            channelIdStr,
                                               const std::array<uint8_t,32>& fileHash )
 {
-    return gStorageEngine->downloadFile( channelInfo, fileHash );
+    std::array<uint8_t,32> channelId;
+    sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
+
+    return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
 void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
@@ -94,6 +108,25 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
     it->m_fsTree = fsTree;
     //todo
 
+}
+
+void scanFolderR( fs::path path, LocalDriveItem& parent )
+{
+    for( const auto& entry : std::filesystem::directory_iterator(path) )
+    {
+        const auto entryName = entry.path().filename().string();
+
+        if ( entry.is_directory() )
+        {
+            parent.m_childs.emplace_back( LocalDriveItem{ true, entryName, "", {}, fs::last_write_time(entry) } );
+
+            scanFolderR( path / entryName, parent.m_childs.back() );
+        }
+        else if ( entry.is_regular_file() && entryName != ".DS_Store" )
+        {
+            parent.m_childs.emplace_back( LocalDriveItem{ true, entryName, "", {}, fs::last_write_time(entry) } );
+        }
+    }
 }
 
 
