@@ -90,21 +90,6 @@ public: // tmp
     }
 };
 
-struct LocalDriveItem
-{
-    bool                        m_isFolder;
-    std::string                 m_name;
-    std::array<uint8_t,32>      m_hash;     // file hash
-    std::vector<LocalDriveItem> m_childs;
-    fs::file_time_type          m_modifyTime;
-
-    template<class Archive>
-    void serialize( Archive &ar )
-    {
-        ar( m_isFolder, m_name, m_childs );
-    }
-};
-
 //
 // Model
 //
@@ -150,11 +135,6 @@ public:
     static void                     onFsTreeForDriveReceived( const std::string&           driveHash,
                                                               const std::array<uint8_t,32> fsTreeHash,
                                                               const sirius::drive::FsTree& fsTree );
-
-    //
-    // Drive Diff
-    //
-    void scanFolderR( fs::path, LocalDriveItem& parent );
 
     //
     // Standalone test

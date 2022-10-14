@@ -18,7 +18,13 @@ if ( APPLE)
     find_package(Threads REQUIRED)
     find_package(Boost 1.71.0 REQUIRED)
 
-    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
+    set(CMAKE_VERBOSE_MAKEFILE ON)
+    set(BOOST_INCLUDE_DIR "/usr/local/include")
+    set(BOOST_LIB_DIR "/usr/local/lib")
+    set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
+    set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
+
+#    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
 endif()
 
 add_definitions(-DSIRIUS_DRIVE_MULTI)
@@ -45,6 +51,7 @@ set(PROJECT_SOURCES
         FsTreeTableModel.h      FsTreeTableModel.cpp
         DownloadsTableModel.h   DownloadsTableModel.cpp
         DriveTreeModel.h        DriveTreeModel.cpp
+        Diff.h                  Diff.cpp
         ${TS_FILES}
 )
 

@@ -110,26 +110,6 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
 
 }
 
-void scanFolderR( fs::path path, LocalDriveItem& parent )
-{
-    for( const auto& entry : std::filesystem::directory_iterator(path) )
-    {
-        const auto entryName = entry.path().filename().string();
-
-        if ( entry.is_directory() )
-        {
-            parent.m_childs.emplace_back( LocalDriveItem{ true, entryName, "", {}, fs::last_write_time(entry) } );
-
-            scanFolderR( path / entryName, parent.m_childs.back() );
-        }
-        else if ( entry.is_regular_file() && entryName != ".DS_Store" )
-        {
-            parent.m_childs.emplace_back( LocalDriveItem{ true, entryName, "", {}, fs::last_write_time(entry) } );
-        }
-    }
-}
-
-
 void Model::stestInitChannels()
 {
     gSettings.config().m_dnChannels.clear();
@@ -156,4 +136,11 @@ void Model::stestInitDrives()
     gSettings.config().m_drives.push_back( DriveInfo{ sirius::drive::toString(driveKey2), "drive2", "/Users/alex/000-drive2" });
 
     gSettings.config().m_currentDriveIndex = 0;
+
+    //todo!!!
+//    LocalDriveItem root;
+//    Model::scanFolderR( gSettings.config().m_drives[0].m_localDriveFolder, root );
+//    LocalDriveItem root2;
+//    Model::scanFolderR( gSettings.config().m_drives[0].m_localDriveFolder, root2 );
+//    calcDiff( gSettings.config().m_drives[0].m_localDriveFolder, "", root, root2 );
 }
