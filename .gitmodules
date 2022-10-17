@@ -1,3 +1,6 @@
 [submodule "cpp-xpx-storage-sdk"]
 	path = cpp-xpx-storage-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk.git
+[submodule "cpp-xpx-chain-sdk"]
+	path = cpp-xpx-chain-sdk
+	url = https://github.com/proximax-storage/cpp-xpx-chain-sdk.git
