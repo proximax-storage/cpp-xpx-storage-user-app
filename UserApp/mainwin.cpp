@@ -12,16 +12,14 @@
 #include "PrivKeyDialog.h"
 
 #include "crypto/Signer.h"
-#include "drive/Utils.h"
 #include "utils/HexParser.h"
 
+#include <qdebug.h>
 #include <QFileIconProvider>
 #include <QScreen>
-#include <QScroller>
 #include <QComboBox>
 #include <QMessageBox>
 
-#include <random>
 #include <thread>
 
 MainWin::MainWin(QWidget *parent)
@@ -85,7 +83,7 @@ void MainWin::setupDownloadsTab()
     setupDownloadsTable();
     updateChannelsCBox();
 
-    connect( ui->m_channels, &QComboBox::currentIndexChanged, this, [this] (int index)
+    connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
         qDebug() << index;
         onChannelChanged( index );

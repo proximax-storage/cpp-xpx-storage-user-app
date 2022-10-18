@@ -40,7 +40,8 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     {
         ui->m_errorText->setText("");
     });
-    connect(ui->m_accountCbox, &QComboBox::currentIndexChanged, this, [this] (int index)
+
+    connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
         //todo
         qDebug() << "Settings::QComboBox::currentIndexChanged: " << index;
