@@ -2,6 +2,7 @@
 
 #include "Settings.h"
 #include "StorageEngine.h"
+//#include "Diff.h"
 #include "drive/Utils.h"
 #include <fstream>
 #include <filesystem>
@@ -43,6 +44,30 @@ fs::path settingsFolder()
     }
 
     return path;
+}
+
+Settings::Account::Account() {}
+
+Settings::Account::Account( const Account& a )
+{
+    *this = a;
+}
+
+Settings::Account& Settings::Account::operator=( const Account& a )
+{
+    m_restBootstrap         = a.m_restBootstrap;
+    m_replicatorBootstrap   = a.m_replicatorBootstrap;
+    m_udpPort               = a.m_udpPort;
+    m_privateKeyStr         = a.m_privateKeyStr;
+    m_dnChannels            = a.m_dnChannels;
+    m_currentDnChannelIndex = a.m_currentDnChannelIndex;
+    m_downloadFolder        = a.m_downloadFolder;
+    m_downloads             = a.m_downloads;
+    m_drives                = a.m_drives;
+    m_currentDriveIndex     = a.m_currentDriveIndex;
+
+    updateKeyPair( m_privateKeyStr );
+    return *this;
 }
 
 bool Settings::load( const std::string& pwd )

@@ -7,6 +7,7 @@
 #include "FsTreeTableModel.h"
 #include "DownloadsTableModel.h"
 #include "DriveTreeModel.h"
+#include "DiffTableModel.h"
 
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
@@ -278,22 +279,6 @@ bool MainWin::requestPrivateKey()
     return true;
 }
 
-void MainWin::initDriveTree()
-{
-    QFileSystemModel* m_model = new QFileSystemModel();
-    m_model->setRootPath("/Users/alex/000-LocalFolder");
-    ui->m_driveTreeView->setModel(m_model);
-    ui->m_driveTreeView->header()->resizeSection(0, 320);
-    ui->m_driveTreeView->header()->resizeSection(1, 30);
-    ui->m_driveTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
-    ui->m_driveTreeView->header()->hideSection(2);
-    ui->m_driveTreeView->header()->hideSection(3);
-
-//    ui->m_diffView->setColumnWidth(0,330);
-
-////    ui->m_driveFiles->setColumnWidth(0,420);
-}
-
 void MainWin::updateChannelsCBox()
 {
     ui->m_channels->clear();
@@ -326,12 +311,12 @@ void MainWin::onChannelChanged( int index )
 
             if ( index == 0 )
             {
-                sirius::utils::ParseHexStringIntoContainer( "ce0cf74c024aec3fddc3f8a13e0a4504f6b75197878901c238dff5a3ed55171e",
+                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
                                                             64, fsTreeHash );
             }
             else if ( index == 1 )
             {
-                sirius::utils::ParseHexStringIntoContainer( "a36e0f092c1b9d63ec08e04e1ce6b008b9df5bca6926a25d90180dad52f3da90",
+                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH2,
                                                             64, fsTreeHash );
             }
 
@@ -379,6 +364,16 @@ void MainWin::onFsTreeHashReceived( const std::string& channelHash, const std::a
 
 void MainWin::setupDrivesTab()
 {
+    ui->m_calcDiffBtn->setEnabled(false);
+
+    connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
+    {
+        Model::calcDiff();
+        m_driveTreeModel->updateModel();
+        ui->m_driveTreeView->expandAll();
+        m_diffTableModel->updateModel();
+    });
+
     if ( STANDALONE_TEST )
     {
         Model::stestInitDrives();
@@ -391,10 +386,12 @@ void MainWin::setupDrivesTab()
     {
         auto* driveInfoPtr = Model::currentDriveInfoPtr();
         std::array<uint8_t,32> fsTreeHash;
-        sirius::utils::ParseHexStringIntoContainer( "ce0cf74c024aec3fddc3f8a13e0a4504f6b75197878901c238dff5a3ed55171e",
+        sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
                                                         64, fsTreeHash );
 
-        Model::downloadFsTree( driveInfoPtr->m_driveHash,
+        qDebug() << "driveHash: " << driveInfoPtr->m_driveKey.c_str();
+
+        Model::downloadFsTree( driveInfoPtr->m_driveKey,
                                "0000000000000000000000000000000000000000000000000000000000000000",
                                fsTreeHash,
                                [this] ( const std::string&           driveHash,
@@ -402,6 +399,14 @@ void MainWin::setupDrivesTab()
                                         const sirius::drive::FsTree& fsTree )
         {
             Model::onFsTreeForDriveReceived( driveHash, fsTreeHash, fsTree );
+
+            qDebug() << "driveHash: " << driveHash.c_str();
+
+            if ( driveHash == Model::currentDriveInfoPtr()->m_driveKey )
+            {
+                qDebug() << "m_calcDiffBtn->setEnabled: " << driveHash.c_str();
+                ui->m_calcDiffBtn->setEnabled(true);
+            }
         });
     }
     else
@@ -409,26 +414,26 @@ void MainWin::setupDrivesTab()
 
     }
 
-//    m_driveTreeModel = new DriveTreeModel();
-//    ui->m_driveTreeView->setModel( m_driveTreeModel );
-//    //ui->m_driveTreeView->header()->resizeSection(0, 30);
-//    ui->m_driveTreeView->header()->resizeSection(1, 300);
-//    ui->m_driveTreeView->header()->resizeSection(2, 30);
-//    ui->m_driveTreeView->setHeaderHidden(true);
-//    ui->m_driveTreeView->show();
-//    ui->m_driveTreeView->expandAll();
-
-    QFileSystemModel* m_model = new QFileSystemModel();
-    m_model->setRootPath("/Users/alex/000-LocalFolder");
-    ui->m_driveTreeView->setModel(m_model);
-    ui->m_driveTreeView->header()->resizeSection(0, 320);
-    ui->m_driveTreeView->header()->resizeSection(1, 30);
+    m_driveTreeModel = new DriveTreeModel();
+    ui->m_driveTreeView->setModel( m_driveTreeModel );
+    ui->m_driveTreeView->setTreePosition(1);
+    ui->m_driveTreeView->setColumnHidden(0,true);
+    ui->m_driveTreeView->header()->resizeSection(1, 300);
+    ui->m_driveTreeView->header()->resizeSection(2, 30);
     ui->m_driveTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
-    ui->m_driveTreeView->header()->hideSection(2);
-    ui->m_driveTreeView->header()->hideSection(3);
+    ui->m_driveTreeView->setHeaderHidden(true);
     ui->m_driveTreeView->show();
     ui->m_driveTreeView->expandAll();
 
+    m_diffTableModel = new DiffTableModel();
+
+    ui->m_diffTableView->setModel( m_diffTableModel );
+    ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->m_diffTableView->horizontalHeader()->hide();
+    ui->m_diffTableView->horizontalHeader()->resizeSection(0, 300);
+    ui->m_diffTableView->horizontalHeader()->resizeSection(1, 300);
+    ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_diffTableView->setGridStyle( Qt::NoPen );
 }
 
 void MainWin::updateDrivesCBox()

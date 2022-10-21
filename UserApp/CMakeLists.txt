@@ -24,6 +24,7 @@ if ( APPLE)
     set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
     set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
 
+
 #    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
 endif()
 
@@ -51,7 +52,9 @@ set(PROJECT_SOURCES
         FsTreeTableModel.h      FsTreeTableModel.cpp
         DownloadsTableModel.h   DownloadsTableModel.cpp
         DriveTreeModel.h        DriveTreeModel.cpp
+        DiffTableModel.h        DiffTableModel.cpp
         Diff.h                  Diff.cpp
+        LocalDriveItem.h
         ${TS_FILES}
 )
 

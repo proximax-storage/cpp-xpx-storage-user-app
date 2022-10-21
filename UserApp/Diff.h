@@ -1,62 +1,24 @@
 #pragma once
 
-#include "drive/FsTree.h"
+#include "LocalDriveItem.h"
 #include "drive/ActionList.h"
 
 namespace fs = std::filesystem;
 
-enum { ldi_not_changed, ldi_added, ldi_removed, ldi_changed };
-
-//
-// LocalDriveItem
-//
-struct LocalDriveItem
-{
-    bool                                    m_isFolder;
-    std::string                             m_name;
-    std::array<uint8_t,32>                  m_hash;     // file hash
-    std::map<std::string,LocalDriveItem>    m_childs;
-    fs::file_time_type                      m_modifyTime;
-
-    int                                     m_ldiStatus = ldi_not_changed;
-
-    template<class Archive>
-    void serialize( Archive &ar )
-    {
-        ar( m_isFolder, m_name, m_childs );
-    }
-
-    bool operator<( const LocalDriveItem& rhs ) const
-    {
-        if ( m_isFolder && !rhs.m_isFolder )
-        {
-            return true;
-        }
-        if ( !m_isFolder && rhs.m_isFolder )
-        {
-            return false;
-        }
-        return m_name < rhs.m_name;
-    }
-
-    bool operator==( const LocalDriveItem& rhs ) const
-    {
-        return ( m_isFolder == rhs.m_isFolder ) && ( m_name == rhs.m_name );
-    }
-};
-
-
 class Diff
 {
-    sirius::drive::ActionList m_diff;
+    sirius::drive::ActionList& m_diffActionList;
 
 public:
 
     Diff( LocalDriveItem&               driveInfo,
           const sirius::drive::FsTree&  fsTree,
           fs::path                      localFolderPath,
+          sirius::drive::ActionList&    diffActionList,
           std::array<uint8_t,32>&       driveKey )
+      : m_diffActionList( diffActionList )
     {
+        m_diffActionList.clear();
         calcDiff( driveInfo, fsTree, localFolderPath, "", driveKey );
     }
 

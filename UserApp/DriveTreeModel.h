@@ -1,27 +1,37 @@
 #pragma once
 
 #include <QAbstractItemModel>
+#include <QApplication>
+#include <QStyle>
 #include <QVariant>
 #include <QList>
 
 #include <filesystem>
 
+#include "LocalDriveItem.h"
+
 namespace fs = std::filesystem;
 
 class DriveTreeItem
 {
+    bool                    m_isFolder;
+    int                     m_ldiStatus;
     QList<DriveTreeItem*>   m_childItems;
     QList<QVariant>         m_itemData;
     DriveTreeItem*          m_parentItem = nullptr;
 
 public:
-    explicit DriveTreeItem( const QList<QVariant>& data, DriveTreeItem* parentItem = nullptr )
-        : m_itemData(data), m_parentItem(parentItem)
+    explicit DriveTreeItem( bool isFolder, int ldiStatus, const QList<QVariant>& data, DriveTreeItem* parentItem = nullptr )
+        : m_isFolder(isFolder), m_ldiStatus(ldiStatus), m_itemData(data), m_parentItem(parentItem)
     {}
 
     ~DriveTreeItem() {  qDeleteAll(m_childItems); }
 
-    DriveTreeItem *child( int row )
+    bool isFolder() const { return m_isFolder; }
+
+    int  ldiStatus() const { return m_ldiStatus; }
+
+    DriveTreeItem* child( int row )
     {
         if ( row<0 || row>=m_childItems.size() )
         {
@@ -70,13 +80,51 @@ public:
     explicit DriveTreeModel( QObject *parent = nullptr );
     ~DriveTreeModel() { delete m_rootItem; }
 
-    void readFolder( const fs::path& folder );
+    void updateModel();
 
-    QVariant        data( const QModelIndex &index, int role ) const override
+    void update( const LocalDriveItem& localDriveRoot );
+
+    QVariant data( const QModelIndex &index, int role ) const override
     {
         if ( !index.isValid() )
         {
             return QVariant();
+        }
+
+        if ( role == Qt::DecorationRole )
+        {
+            if ( index.column() == 1 )
+            {
+                DriveTreeItem *item = static_cast<DriveTreeItem*>(index.internalPointer());
+                if ( item->isFolder() )
+                {
+                    return QApplication::style()->standardIcon(QStyle::SP_DirIcon);
+                }
+                else
+                {
+                    return QApplication::style()->standardIcon(QStyle::SP_FileIcon);
+                }
+            }
+        }
+
+        if ( role == Qt::ForegroundRole )
+        {
+            if ( index.column() == 1 )
+            {
+                DriveTreeItem *item = static_cast<DriveTreeItem*>(index.internalPointer());
+                switch( item->ldiStatus() )
+                {
+                    case ldi_added:
+                        return QVariant( QColor( Qt::darkGreen ) );
+                    case ldi_changed:
+                        return QVariant( QColor( 0xffa500 ) );
+                    case ldi_removed:
+                        return QVariant( QColor( Qt::darkRed ) );
+                    default:
+                        return QVariant( QColor( Qt::black ) );
+                }
+            }
+            return QVariant( QColor( Qt::black ) );
         }
 
         if ( role != Qt::DisplayRole )
@@ -89,7 +137,7 @@ public:
         return item->data(index.column());
     }
 
-    Qt::ItemFlags   flags( const QModelIndex &index ) const override
+    Qt::ItemFlags flags( const QModelIndex &index ) const override
     {
         if ( !index.isValid() )
         {
@@ -99,7 +147,7 @@ public:
         return QAbstractItemModel::flags(index);
     }
 
-    QVariant        headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const override
+    QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const override
     {
         if ( orientation == Qt::Horizontal && role == Qt::DisplayRole )
         {
@@ -128,7 +176,7 @@ public:
         }
 
 
-        if ( DriveTreeItem *childItem = parentItem->child(row); childItem )
+        if ( DriveTreeItem* childItem = parentItem->child(row); childItem )
         {
             return createIndex(row, column, childItem);
         }

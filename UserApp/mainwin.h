@@ -11,6 +11,7 @@ QT_END_NAMESPACE
 class FsTreeTableModel;
 class DownloadsTableModel;
 class DriveTreeModel;
+class DiffTableModel;
 
 class MainWin : public QMainWindow
 {
@@ -24,7 +25,6 @@ public:
 
 private:
     bool requestPrivateKey();
-    void initDriveTree();
 
     void setupDownloadsTab();
     void setupFsTreeTable();
@@ -54,4 +54,5 @@ private:
     FsTreeTableModel*       m_fsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
     DriveTreeModel*         m_driveTreeModel;
+    DiffTableModel*         m_diffTableModel;
 };

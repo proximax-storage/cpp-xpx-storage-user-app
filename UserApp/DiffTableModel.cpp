@@ -1,0 +1,130 @@
+#include "DiffTableModel.h"
+#include "Settings.h"
+
+#include <QApplication>
+#include <QStyle>
+#include <QIcon>
+#include <QPushButton>
+
+void DiffTableModel::updateModel()
+{
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    const auto* drive = Model::currentDriveInfoPtr();
+
+    beginResetModel();
+    m_actionList.clear();
+
+    if ( drive != nullptr )
+    {
+        m_actionList = drive->m_actionList;
+    }
+
+    endResetModel();
+}
+
+int DiffTableModel::rowCount(const QModelIndex &) const
+{
+    return m_actionList.size();
+}
+
+int DiffTableModel::columnCount(const QModelIndex &parent) const
+{
+    return 2;
+}
+
+QVariant DiffTableModel::data(const QModelIndex &index, int role) const
+{
+    QVariant value;
+
+    switch ( role )
+    {
+        case Qt::TextAlignmentRole:
+        {
+            if ( index.column() == 1 )
+            {
+                return Qt::AlignRight;
+            }
+            break;
+        }
+        case Qt::DecorationRole:
+        {
+            if ( index.column() == 0 )
+            {
+                return QApplication::style()->standardIcon(QStyle::SP_FileIcon);
+            }
+            break;
+        }
+
+        case Qt::ForegroundRole:
+        {
+            if ( index.column() == 0 )
+            {
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+                auto& action = m_actionList[ index.row() ];
+
+                switch( action.m_actionId )
+                {
+                    case sirius::drive::action_list_id::upload:
+                        return QVariant( QColor( Qt::darkGreen ) );
+                    case sirius::drive::action_list_id::remove:
+                        return QVariant( QColor( Qt::darkRed ) );
+                    default:
+                        return QVariant( QColor( Qt::black ) );
+                }
+            }
+            return QVariant( QColor( Qt::black ) );
+        }
+
+
+        case Qt::DisplayRole:
+        {
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            auto& action = m_actionList[ index.row() ];
+
+            switch( index.column() )
+            {
+                case 0:
+                {
+                    switch( action.m_actionId )
+                    {
+                        case sirius::drive::action_list_id::upload:
+                            return QString::fromStdString( action.m_param2 );
+                        case sirius::drive::action_list_id::remove:
+                            return QString::fromStdString( action.m_param1 );
+                        default:
+                            return QString::fromStdString( "???" );
+                    }
+                    return QString::fromStdString( "???" );
+                }
+                case 1:
+                {
+                    switch( action.m_actionId )
+                    {
+                        case sirius::drive::action_list_id::upload:
+                            return QString::fromStdString( "add" );
+                        case sirius::drive::action_list_id::remove:
+                            return QString::fromStdString( "del" );
+                        default:
+                            return QString::fromStdString( "???" );
+                    }
+
+                    return QString::fromStdString( "???" );
+                }
+            }
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    return value;
+}
+
+QVariant DiffTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    return QVariant();
+}

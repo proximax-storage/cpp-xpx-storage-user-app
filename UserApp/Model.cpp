@@ -1,4 +1,6 @@
 #include "Model.h"
+#include "Diff.h"
+#include "LocalDriveItem.h"
 #include "Settings.h"
 #include "StorageEngine.h"
 #include "utils/HexParser.h"
@@ -97,7 +99,7 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
 
     auto it = std::find_if( drives.begin(), drives.end(), [driveHash] (const auto& driveInfo)
     {
-        return driveHash==driveInfo.m_driveHash;
+        return driveHash==driveInfo.m_driveKey;
     });
 
     if ( it == drives.end() )
@@ -105,9 +107,30 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
         return;
     }
 
-    it->m_fsTree = fsTree;
-    //todo
+    it->m_rootHash  = fsTreeHash;
+    it->m_fsTree    = fsTree;
+}
 
+void Model::calcDiff()
+{
+    auto* drive = currentDriveInfoPtr();
+
+    if ( drive == nullptr )
+    {
+        qDebug() << "currentDriveInfoPtr() == nullptr";
+        return;
+    }
+
+    std::array<uint8_t,32> driveKey;
+    sirius::utils::ParseHexStringIntoContainer( drive->m_driveKey.c_str(), 64, driveKey );
+
+
+    auto localDrive = std::make_shared<LocalDriveItem>();
+    Diff::calcLocalDriveInfoR( *localDrive, drive->m_localDriveFolder, true, &driveKey );
+
+    Diff diff( *localDrive, drive->m_fsTree, drive->m_localDriveFolder, drive->m_actionList, driveKey );
+
+    drive->m_localDrive = std::move(localDrive);
 }
 
 void Model::stestInitChannels()

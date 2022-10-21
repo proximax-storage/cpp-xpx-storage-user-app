@@ -22,41 +22,6 @@ class Settings
 {
 public:
 
-//    struct DriveInfo
-//    {
-//        std::string m_driveHash;
-//        std::string m_name;
-//        std::string m_localDriveFolder;
-
-//        std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
-//        std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
-
-//        template<class Archive>
-//        void serialize( Archive &ar )
-//        {
-//            ar( m_driveHash, m_name );
-//        }
-//    };
-
-//    struct DownloadInfo
-//    {
-//        std::array<uint8_t,32>  m_hash;
-//        std::string             m_fileName;
-//        std::string             m_saveFolder;
-//        bool                    m_isCompleted = false;
-
-//        int                      m_progress = 0; // m_progress==1001 means completed
-//        sirius::drive::lt_handle m_ltHandle;
-
-//        template<class Archive>
-//        void serialize( Archive &ar )
-//        {
-//            ar( m_hash, m_fileName, m_saveFolder, m_isCompleted );
-//        }
-
-//        bool isCompleted() const { return m_isCompleted; }
-//    };
-
     struct Account
     {
         std::string                 m_restBootstrap       = "google.com:7001"; //TODO!!!
@@ -75,29 +40,10 @@ public:
         std::vector<DriveInfo>      m_drives;
         int                         m_currentDriveIndex = -1;
 
-        Account() {}
+        Account();
+        Account( const Account& a );
+        Account& operator=( const Account& a );
 
-        Account& operator=( const Account& a )
-        {
-            m_restBootstrap         = a.m_restBootstrap;
-            m_replicatorBootstrap   = a.m_replicatorBootstrap;
-            m_udpPort               = a.m_udpPort;
-            m_privateKeyStr         = a.m_privateKeyStr;
-            m_dnChannels            = a.m_dnChannels;
-            m_currentDnChannelIndex = a.m_currentDnChannelIndex;
-            m_downloadFolder        = a.m_downloadFolder;
-            m_downloads             = a.m_downloads;
-            m_drives                = a.m_drives;
-            m_currentDriveIndex     = a.m_currentDriveIndex;
-
-            updateKeyPair( m_privateKeyStr );
-            return *this;
-        }
-
-        Account( const Account& a )
-        {
-            *this = a;
-        }
 
         template<class Archive>
         void serialize( Archive &ar )
