@@ -128,7 +128,7 @@ void Model::calcDiff()
     auto localDrive = std::make_shared<LocalDriveItem>();
     Diff::calcLocalDriveInfoR( *localDrive, drive->m_localDriveFolder, true, &driveKey );
 
-    Diff diff( *localDrive, drive->m_fsTree, drive->m_localDriveFolder, drive->m_actionList, driveKey );
+    Diff diff( *localDrive, drive->m_localDriveFolder, drive->m_fsTree, driveKey, drive->m_actionList );
 
     drive->m_localDrive = std::move(localDrive);
 }

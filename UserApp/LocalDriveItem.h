@@ -13,6 +13,7 @@ struct LocalDriveItem
 {
     bool                                    m_isFolder;
     std::string                             m_name;
+    uint64_t                                m_size;
     std::array<uint8_t,32>                  m_hash;     // file hash
     std::map<std::string,LocalDriveItem>    m_childs;
     fs::file_time_type                      m_modifyTime;

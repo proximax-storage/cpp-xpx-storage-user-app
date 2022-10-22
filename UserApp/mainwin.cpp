@@ -433,7 +433,7 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->resizeSection(0, 300);
     ui->m_diffTableView->horizontalHeader()->resizeSection(1, 300);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-    ui->m_diffTableView->setGridStyle( Qt::NoPen );
+    //ui->m_diffTableView->setGridStyle( Qt::NoPen );
 }
 
 void MainWin::updateDrivesCBox()

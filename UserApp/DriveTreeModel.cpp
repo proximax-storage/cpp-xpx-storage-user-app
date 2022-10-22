@@ -26,7 +26,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
             {
                 QList<QVariant> child;
                 child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
-                child << QString::fromStdString( entryName ) << "124";
+                child << QString::fromStdString( entryName ) << QString::fromStdString( std::to_string( entry.file_size() ) );
                 auto* treeItem = new DriveTreeItem( false, ldi_not_changed, child, parent );
                 parent->appendChild( treeItem );
             }
@@ -77,7 +77,7 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder )
         {
             QList<QVariant> child;
             child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
-            child << QString::fromStdString( name ) << "124";
+            child << QString::fromStdString( name ) << QString::fromStdString( std::to_string( entry.m_size ) );;
             auto* treeItem = new DriveTreeItem( false, entry.m_ldiStatus, child, parent );
             parent->appendChild( treeItem );
         }

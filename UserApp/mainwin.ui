@@ -240,8 +240,8 @@
       <property name="geometry">
        <rect>
         <x>24</x>
-        <y>44</y>
-        <width>325</width>
+        <y>12</y>
+        <width>509</width>
         <height>32</height>
        </rect>
       </property>
@@ -261,32 +261,12 @@
        </property>
       </item>
      </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="geometry">
-       <rect>
-        <x>34</x>
-        <y>24</y>
-        <width>81</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>.AppleSystemUIFont</family>
-        <pointsize>15</pointsize>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Drives:</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_11">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>44</y>
-        <width>169</width>
+        <x>356</x>
+        <y>48</y>
+        <width>168</width>
         <height>32</height>
        </rect>
       </property>
@@ -297,9 +277,9 @@
      <widget class="QPushButton" name="pushButton_12">
       <property name="geometry">
        <rect>
-        <x>776</x>
+        <x>772</x>
         <y>520</y>
-        <width>151</width>
+        <width>152</width>
         <height>32</height>
        </rect>
       </property>
@@ -311,7 +291,7 @@
       <property name="geometry">
        <rect>
         <x>34</x>
-        <y>80</y>
+        <y>48</y>
         <width>31</width>
         <height>32</height>
        </rect>
@@ -324,7 +304,7 @@
       <property name="geometry">
        <rect>
         <x>74</x>
-        <y>80</y>
+        <y>48</y>
         <width>31</width>
         <height>32</height>
        </rect>
@@ -336,8 +316,8 @@
      <widget class="QPushButton" name="pushButton_17">
       <property name="geometry">
        <rect>
-        <x>256</x>
-        <y>80</y>
+        <x>120</x>
+        <y>48</y>
         <width>81</width>
         <height>32</height>
        </rect>
@@ -350,18 +330,18 @@
       <property name="geometry">
        <rect>
         <x>24</x>
-        <y>124</y>
-        <width>505</width>
-        <height>377</height>
+        <y>88</y>
+        <width>504</width>
+        <height>413</height>
        </rect>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_19">
       <property name="geometry">
        <rect>
-        <x>258</x>
+        <x>256</x>
         <y>520</y>
-        <width>269</width>
+        <width>268</width>
         <height>32</height>
        </rect>
       </property>
@@ -369,30 +349,10 @@
        <string>Update Local Drive With Remoute</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_11">
-      <property name="geometry">
-       <rect>
-        <x>564</x>
-        <y>19</y>
-        <width>261</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>.AppleSystemUIFont</family>
-        <pointsize>15</pointsize>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Difference:</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_10">
       <property name="geometry">
        <rect>
-        <x>556</x>
+        <x>560</x>
         <y>520</y>
         <width>151</width>
         <height>32</height>
@@ -405,7 +365,7 @@
      <widget class="QPushButton" name="pushButton_13">
       <property name="geometry">
        <rect>
-        <x>24</x>
+        <x>28</x>
         <y>520</y>
         <width>151</width>
         <height>32</height>
@@ -418,7 +378,7 @@
      <widget class="QPushButton" name="m_calcDiffBtn">
       <property name="geometry">
        <rect>
-        <x>800</x>
+        <x>560</x>
         <y>12</y>
         <width>125</width>
         <height>32</height>
@@ -433,7 +393,7 @@
        <rect>
         <x>556</x>
         <y>48</y>
-        <width>373</width>
+        <width>372</width>
         <height>453</height>
        </rect>
       </property>
