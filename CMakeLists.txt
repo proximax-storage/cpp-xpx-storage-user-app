@@ -51,7 +51,7 @@ include_directories(${PROJECT_SOURCE_DIR}/cpp-xpx-storage-sdk/cereal/include)
 include_directories(${PROJECT_SOURCE_DIR}/cpp-xpx-storage-sdk/cpp-xpx-rpclib/include)
 include_directories(${PROJECT_SOURCE_DIR}/cpp-xpx-storage-sdk/libtorrent/include)
 
-#add_subdirectory(${PROJECT_SOURCE_DIR}/cpp-xpx-chain-sdk)
+add_subdirectory(${PROJECT_SOURCE_DIR}/cpp-xpx-chain-sdk)
 include_directories(${PROJECT_SOURCE_DIR}/cpp-xpx-chain-sdk/include)
 
 add_subdirectory(UserApp)

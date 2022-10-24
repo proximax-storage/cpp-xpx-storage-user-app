@@ -54,7 +54,9 @@ set(PROJECT_SOURCES
         DriveTreeModel.h        DriveTreeModel.cpp
         DiffTableModel.h        DiffTableModel.cpp
         Diff.h                  Diff.cpp
-        LocalDriveItem.h
+        LocalDriveItem.h        BlockchainEngine.cpp
+        BlockchainEngine.h      Worker.cpp
+        Worker.h
         ${TS_FILES}
 )
 
@@ -85,7 +87,7 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(StorageClientApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils)
+target_link_libraries(StorageClientApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
 
 set_target_properties(StorageClientApp PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
