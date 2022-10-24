@@ -56,7 +56,8 @@ set(PROJECT_SOURCES
         Diff.h                  Diff.cpp
         LocalDriveItem.h        BlockchainEngine.cpp
         BlockchainEngine.h      Worker.cpp
-        Worker.h
+        Worker.h                TransactionsEngine.cpp
+        TransactionsEngine.h
         ${TS_FILES}
 )
 
