@@ -219,6 +219,13 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 }
                 case 1:
                 {
+                    auto channelInfo = gSettings.currentChannelInfoPtr();
+
+                    if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+                    {
+                        return QString("");
+                    }
+
                     const auto& row = m_rows[index.row()];
                     if ( row.m_isFolder )
                     {

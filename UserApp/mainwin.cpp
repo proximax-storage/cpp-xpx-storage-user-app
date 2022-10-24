@@ -299,7 +299,7 @@ void MainWin::onChannelChanged( int index )
 
     if ( !STANDALONE_TEST )
     {
-        assert( !"todo request FsTree hash" );
+        //assert( !"todo request FsTree hash" );
     }
     else
     {
