@@ -32,9 +32,9 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
-    <widget class="QWidget" name="tab">
+    <widget class="QWidget" name="m_downloadsTab">
      <attribute name="title">
       <string>Downloads</string>
      </attribute>
@@ -51,7 +51,7 @@
        <string>Download Files By Link</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_4">
+     <widget class="QPushButton" name="m_addChannel">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -64,7 +64,7 @@
        <string>+</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_6">
+     <widget class="QPushButton" name="m_manageChannels">
       <property name="geometry">
        <rect>
         <x>100</x>
@@ -90,6 +90,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -133,6 +134,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -140,7 +142,7 @@
        <string>Channels:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_8">
+     <widget class="QPushButton" name="m_closeChannel">
       <property name="geometry">
        <rect>
         <x>60</x>
@@ -166,6 +168,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -185,6 +188,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -224,6 +228,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -232,7 +237,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="DriveOwner">
+    <widget class="QWidget" name="m_drivesTab">
      <attribute name="title">
       <string>Drives</string>
      </attribute>
@@ -399,7 +404,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_2">
+    <widget class="QWidget" name="m_myReplicatorTab">
      <attribute name="title">
       <string>My Replicator</string>
      </attribute>
@@ -416,6 +421,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -568,7 +574,7 @@ color : #aa6600</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

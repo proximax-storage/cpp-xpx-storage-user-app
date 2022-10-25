@@ -43,21 +43,23 @@ set(TS_FILES StorageClientApp_en_US.ts)
 
 set(PROJECT_SOURCES
         main.cpp
-        mainwin.h               mainwin.cpp                 mainwin.ui
-        SettingsDialog.h        SettingsDialog.cpp          SettingsDialog.ui
-        PrivKeyDialog.h         PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                 Model.cpp
-        Settings.h              Settings.cpp
-        StorageEngine.h         StorageEngine.cpp
-        FsTreeTableModel.h      FsTreeTableModel.cpp
-        DownloadsTableModel.h   DownloadsTableModel.cpp
-        DriveTreeModel.h        DriveTreeModel.cpp
-        DiffTableModel.h        DiffTableModel.cpp
-        Diff.h                  Diff.cpp
-        LocalDriveItem.h        BlockchainEngine.cpp
-        BlockchainEngine.h      Worker.cpp
-        Worker.h                TransactionsEngine.cpp
-        TransactionsEngine.h
+        mainwin.h                   mainwin.cpp                 mainwin.ui
+        SettingsDialog.h            SettingsDialog.cpp          SettingsDialog.ui
+        PrivKeyDialog.h             PrivKeyDialog.cpp           PrivKeyDialog.ui
+        Model.h                     Model.cpp                   adddownloadchanneldialog.ui
+        Settings.h                  Settings.cpp                closechanneldialog.ui
+        StorageEngine.h             StorageEngine.cpp
+        FsTreeTableModel.h          FsTreeTableModel.cpp
+        DownloadsTableModel.h       DownloadsTableModel.cpp
+        DriveTreeModel.h            DriveTreeModel.cpp
+        DiffTableModel.h            DiffTableModel.cpp
+        Diff.h                      Diff.cpp
+        LocalDriveItem.h            BlockchainEngine.cpp
+        BlockchainEngine.h          Worker.cpp
+        Worker.h                    TransactionsEngine.cpp
+        TransactionsEngine.h        AddDownloadChannelDialog.cpp
+        AddDownloadChannelDialog.h  CloseChannelDialog.cpp
+        CloseChannelDialog.h
         ${TS_FILES}
 )
 
