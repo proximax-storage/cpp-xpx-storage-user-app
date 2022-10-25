@@ -11,6 +11,8 @@
 
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
+#include "AddDownloadChannelDialog.h"
+#include "CloseChannelDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -66,6 +68,15 @@ MainWin::MainWin(QWidget *parent)
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
 
+    connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
+        AddDownloadChannelDialog dialog(this);
+        dialog.exec();
+    });
+
+    connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
+        CloseChannelDialog dialog(this);
+        dialog.exec();
+    });
 }
 
 MainWin::~MainWin()
