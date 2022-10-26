@@ -81,6 +81,8 @@ struct DriveInfo
     std::string m_driveKey;
     std::string m_name;
     std::string m_localDriveFolder;
+    uint64_t    m_maxDriveSize = 0;
+    uint32_t    m_replicatorNumber;
 
 public: // tmp
     std::optional<std::array<uint8_t,32>>   m_rootHash;

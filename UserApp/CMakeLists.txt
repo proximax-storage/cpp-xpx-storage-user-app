@@ -46,7 +46,7 @@ set(PROJECT_SOURCES
         mainwin.h                   mainwin.cpp                 mainwin.ui
         SettingsDialog.h            SettingsDialog.cpp          SettingsDialog.ui
         PrivKeyDialog.h             PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                     Model.cpp                   adddownloadchanneldialog.ui
+        Model.h                     Model.cpp
         Settings.h                  Settings.cpp                closechanneldialog.ui
         StorageEngine.h             StorageEngine.cpp
         FsTreeTableModel.h          FsTreeTableModel.cpp
@@ -54,12 +54,13 @@ set(PROJECT_SOURCES
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
-        LocalDriveItem.h            BlockchainEngine.cpp
-        BlockchainEngine.h          Worker.cpp
-        Worker.h                    TransactionsEngine.cpp
-        TransactionsEngine.h        AddDownloadChannelDialog.cpp
-        AddDownloadChannelDialog.h  CloseChannelDialog.cpp
-        CloseChannelDialog.h
+        LocalDriveItem.h
+        BlockchainEngine.h          BlockchainEngine.cpp
+        Worker.h                    Worker.cpp
+        TransactionsEngine.h        TransactionsEngine.cpp
+        AddDownloadChannelDialog.h  AddDownloadChannelDialog.cpp adddownloadchanneldialog.ui
+        CloseChannelDialog.h        CloseChannelDialog.cpp
+        AddDriveDialog.h            AddDriveDialog.cpp          AddDriveDialog.ui
         ${TS_FILES}
 )
 
