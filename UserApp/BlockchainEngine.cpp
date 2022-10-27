@@ -133,6 +133,29 @@ void BlockchainEngine::getDownloadChannelById(const std::string &channelPublicKe
     emit runProcess(id, task);
 }
 
+void BlockchainEngine::getDownloadChannels(const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage,
+                                           bool, std::string,std::string)> &callback) {
+    auto task = [this]() {
+        try {
+            auto channelsPage = mpChainClient->storage()->getDownloadChannels();
+            return QVariant::fromValue(channelsPage);
+        } catch (const xpx_chain_sdk::InvalidRequest& e) {
+            return QVariant::fromValue(e.getErrorMessage());
+        } catch (std::exception& e) {
+            return QVariant::fromValue(std::string(e.what()));
+        }
+    };
+
+    const QUuid id = QUuid::createUuid();
+    auto resolver = [this, id, callback] (QVariant data) {
+        emit removeResolver(id);
+        typeResolver<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>(data, callback);
+    };
+
+    emit addResolver(id, resolver);
+    emit runProcess(id, task);
+}
+
 void BlockchainEngine::getBlockByHeight(uint64_t height, const std::function<void(xpx_chain_sdk::Block, bool, std::string, std::string)> &callback) {
     auto task = [this, height]() {
         try {
@@ -172,6 +195,28 @@ void BlockchainEngine::getDriveById(const std::string &drivePublicKey,
     auto resolver = [this, id, callback] (QVariant data) {
         emit removeResolver(id);
         typeResolver<xpx_chain_sdk::Drive>(data, callback);
+    };
+
+    emit addResolver(id, resolver);
+    emit runProcess(id, task);
+}
+
+void BlockchainEngine::getDrives(const std::function<void(xpx_chain_sdk::drives_page::DrivesPage drivesPage, bool, std::string, std::string)> &callback) {
+    auto task = [this]() {
+        try {
+            auto drives = mpChainClient->storage()->getDrives();
+            return QVariant::fromValue(drives);
+        } catch (const xpx_chain_sdk::InvalidRequest& e) {
+            return QVariant::fromValue(e.getErrorMessage());
+        } catch (std::exception& e) {
+            return QVariant::fromValue(std::string(e.what()));
+        }
+    };
+
+    const QUuid id = QUuid::createUuid();
+    auto resolver = [this, id, callback] (QVariant data) {
+        emit removeResolver(id);
+        typeResolver<xpx_chain_sdk::drives_page::DrivesPage>(data, callback);
     };
 
     emit addResolver(id, resolver);

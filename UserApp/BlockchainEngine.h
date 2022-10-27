@@ -37,12 +37,16 @@ public:
     void getDownloadChannelById(const std::string& channelPublicKey,
                                 const std::function<void(xpx_chain_sdk::DownloadChannel, bool, std::string, std::string)>& callback);
 
+    void getDownloadChannels(const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage, bool, std::string, std::string)>& callback);
+
     void getBlockByHeight(
             uint64_t height,
             const std::function<void(xpx_chain_sdk::Block, bool, std::string, std::string)>& callback);
 
     void getDriveById(const std::string& drivePublicKey,
                       const std::function<void(xpx_chain_sdk::Drive, bool, std::string, std::string)>& callback);
+
+    void getDrives(const std::function<void(xpx_chain_sdk::drives_page::DrivesPage, bool, std::string, std::string)>& callback);
 
     void getTransactionInfo(xpx_chain_sdk::TransactionGroup group,
                             const std::string &id,
@@ -92,6 +96,8 @@ Q_DECLARE_METATYPE(std::string)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Block)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Drive)
 Q_DECLARE_METATYPE(xpx_chain_sdk::DownloadChannel)
+Q_DECLARE_METATYPE(xpx_chain_sdk::drives_page::DrivesPage)
+Q_DECLARE_METATYPE(xpx_chain_sdk::download_channels_page::DownloadChannelsPage)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Replicator)
 Q_DECLARE_METATYPE(xpx_chain_sdk::NetworkInfo)
 Q_DECLARE_METATYPE(xpx_chain_sdk::AccountInfo)

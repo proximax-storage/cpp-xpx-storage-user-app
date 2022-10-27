@@ -12,6 +12,7 @@ class FsTreeTableModel;
 class DownloadsTableModel;
 class DriveTreeModel;
 class DiffTableModel;
+class OnChainClient;
 
 class MainWin : public QMainWindow
 {
@@ -55,4 +56,5 @@ private:
     DownloadsTableModel*    m_downloadsTableModel;
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
+    OnChainClient*          m_onChainClient;
 };

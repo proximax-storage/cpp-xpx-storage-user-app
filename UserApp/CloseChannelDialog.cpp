@@ -1,14 +1,11 @@
 #include "CloseChannelDialog.h"
-#include "ui_closechanneldialog.h"
 
 CloseChannelDialog::CloseChannelDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::CloseChannelDialog)
+    QMessageBox(parent)
 {
-    ui->setupUi(this);
-}
-
-CloseChannelDialog::~CloseChannelDialog()
-{
-    delete ui;
+    QMessageBox::setWindowTitle("Confirmation");
+    setText("Are you confirm to remove channel?");
+    setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    setDefaultButton(QMessageBox::Cancel);
+    setButtonText(QMessageBox::Ok, "Confirm");
 }

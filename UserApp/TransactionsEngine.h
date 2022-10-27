@@ -7,7 +7,7 @@
 
 class TransactionsEngine {
     public:
-        TransactionsEngine(const std::string& clientPrivateKey, std::shared_ptr<xpx_chain_sdk::IClient> client, std::shared_ptr<BlockchainEngine> blockchainEngine);
+        TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client, std::shared_ptr<xpx_chain_sdk::Account> account, std::shared_ptr<BlockchainEngine> blockchainEngine);
         ~TransactionsEngine() = default;
 
     public:
@@ -20,12 +20,12 @@ class TransactionsEngine {
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
 
-    private:
+    public:
         static QString rawHashToHex(const std::array<uint8_t, 32>& drivePubKey);
 
     private:
-        std::shared_ptr<xpx_chain_sdk::Account> mpChainSdkAccount;
-        std::shared_ptr<xpx_chain_sdk::IClient> mpChainSdkClient;
+        std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
+        std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         std::shared_ptr<BlockchainEngine> mpBlockchainEngine;
 };
 

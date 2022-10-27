@@ -2,80 +2,73 @@
 <ui version="4.0">
  <class>AddDownloadChannelDialog</class>
  <widget class="QDialog" name="AddDownloadChannelDialog">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>621</width>
-    <height>183</height>
+    <width>636</width>
+    <height>193</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QWidget" name="verticalLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>601</width>
-     <height>161</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2">
-    <item>
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="drive">
-        <property name="text">
-         <string>Drive</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="drivesBox"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="keys">
-        <property name="text">
-         <string>Keys</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="prepaidAmount">
-        <property name="text">
-         <string>Prepaid amount</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="feedbacks">
-        <property name="text">
-         <string>Feedbacks number</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="keysLine"/>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="prepaidAmountLine"/>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLineEdit" name="feedbacksLine"/>
-      </item>
-      <item row="4" column="1">
-       <widget class="QDialogButtonBox" name="buttonBox">
-        <property name="standardButtons">
-         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMaximumSize</enum>
+     </property>
+     <item>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="2" column="1">
+        <widget class="QComboBox" name="drivesBox"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="keys">
+         <property name="text">
+          <string>Keys</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="keysLine"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="prepaidAmount">
+         <property name="text">
+          <string>Prepaid (megabytes)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="prepaidAmountLine"/>
+       </item>
+       <item row="5" column="1">
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Drive</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEdit"/>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

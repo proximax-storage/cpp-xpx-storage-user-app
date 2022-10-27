@@ -46,22 +46,24 @@ set(PROJECT_SOURCES
         mainwin.h                   mainwin.cpp                 mainwin.ui
         SettingsDialog.h            SettingsDialog.cpp          SettingsDialog.ui
         PrivKeyDialog.h             PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                     Model.cpp
-        Settings.h                  Settings.cpp                closechanneldialog.ui
-        StorageEngine.h             StorageEngine.cpp
-        FsTreeTableModel.h          FsTreeTableModel.cpp
+        Model.h                     Model.cpp                   adddownloadchanneldialog.ui
+        Settings.h                  Settings.cpp                progressbardialog.ui
+        StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
+        FsTreeTableModel.h          FsTreeTableModel.cpp        ManageDrivesDialog.ui
         DownloadsTableModel.h       DownloadsTableModel.cpp
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
-        LocalDriveItem.h
-        BlockchainEngine.h          BlockchainEngine.cpp
-        Worker.h                    Worker.cpp
-        TransactionsEngine.h        TransactionsEngine.cpp
-        AddDownloadChannelDialog.h  AddDownloadChannelDialog.cpp adddownloadchanneldialog.ui
-        CloseChannelDialog.h        CloseChannelDialog.cpp
-        AddDriveDialog.h            AddDriveDialog.cpp          AddDriveDialog.ui
-        ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
+        LocalDriveItem.h            BlockchainEngine.cpp
+        BlockchainEngine.h          Worker.cpp
+        Worker.h                    TransactionsEngine.cpp
+        TransactionsEngine.h        AddDownloadChannelDialog.cpp
+        AddDownloadChannelDialog.h  CloseChannelDialog.cpp
+        CloseChannelDialog.h        ProgressBarDialog.cpp
+        ProgressBarDialog.h         OnChainClient.cpp
+        OnChainClient.h				AddDriveDialog.cpp
+		AddDriveDialog.h			ManageDrivesDialog.cpp
+		ManageDrivesDialog.h
         ${TS_FILES}
 )
 

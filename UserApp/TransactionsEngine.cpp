@@ -1,19 +1,12 @@
 #include "TransactionsEngine.h"
 
-TransactionsEngine::TransactionsEngine(const std::string& clientPrivateKey,
-                                       std::shared_ptr<xpx_chain_sdk::IClient> client,
+TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client,
+                                       std::shared_ptr<xpx_chain_sdk::Account> account,
                                        std::shared_ptr<BlockchainEngine> blockchainEngine)
-    : mpChainSdkClient(client)
+    : mpChainClient(client)
     , mpBlockchainEngine(blockchainEngine)
-{
-    mpChainSdkAccount = std::make_shared<xpx_chain_sdk::Account>([clientPrivateKey](
-            xpx_chain_sdk::PrivateKeySupplierReason reason,
-            xpx_chain_sdk::PrivateKeySupplierParam param) {
-        xpx_chain_sdk::Key key;
-        ParseHexStringIntoContainer(clientPrivateKey.c_str(), clientPrivateKey.size(), key);
-        return xpx_chain_sdk::PrivateKey(key.data(), key.size());
-    }, mpChainSdkClient->getConfig()->NetworkId);
-}
+    , mpChainAccount(account)
+{}
 
 void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
                                             const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
@@ -35,8 +28,8 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
 
     // TODO: fix empty list of keys
     auto downloadTransaction = xpx_chain_sdk::CreateDownloadTransaction(driveKey, prepaidSize, feedbacksNumber, listOfAllowedPks.size(), listOfAllowedPks,
-                                                                        std::nullopt, std::nullopt, mpChainSdkClient->getConfig()->NetworkId);
-    mpChainSdkAccount->signTransaction(downloadTransaction.get());
+                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(downloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadNotifier;
@@ -45,17 +38,17 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "openDownloadChannel : ", notification.status.c_str(), notification.hash.c_str()});
         //emit downloadChannelOpenFailed(notification.hash.c_str(), notification.status.c_str());
 
-        mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code)
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code)
         {
             // error logs
         }, { downloadNotifierId });
 
-        mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
             // error logs
         }, { id });
     });
 
-    mpChainSdkClient->notifications()->addStatusNotifiers(mpChainSdkAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
         // error logs
     });
 
@@ -67,11 +60,11 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
         if (notification.meta.hash == hash) {
             //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "confirmed downloadTransaction hash: ", hash.c_str()});
 
-            mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
                 // error logs
             }, { statusNotifierId });
 
-            mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this, hash](auto code) {
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this, hash](auto code) {
                 // error logs
             }, { id });
 
@@ -95,7 +88,7 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "error addConfirmedAddedNotifiers: ", errorCode.message().c_str(), hash.c_str()});
     };
 
-    mpChainSdkClient->notifications()->addConfirmedAddedNotifiers(mpChainSdkAccount->address(), { downloadNotifier }, onSuccess, onError);
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadNotifier }, onSuccess, onError);
 }
 
 void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
@@ -111,8 +104,8 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::ParseHexStringIntoContainer(channelIdHex.toStdString().c_str(), channelIdHex.size(), channelIdKey);
 
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
-    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, std::nullopt, mpChainSdkClient->getConfig()->NetworkId);
-    mpChainSdkAccount->signTransaction(finishDownloadTransaction.get());
+    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(finishDownloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> finishDownloadNotifier;
@@ -121,16 +114,16 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "closeDownloadChannel : ", notification.status.c_str(), notification.hash.c_str()});
         //emit downloadChannelCloseFailed(notification.status.c_str());
 
-        mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
             // error logs
         }, { finishDownloadNotifierId });
 
-        mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
             // error logs
         }, { id });
     });
 
-    mpChainSdkClient->notifications()->addStatusNotifiers(mpChainSdkAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
         // error logs
     });
 
@@ -140,11 +133,11 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
         if (notification.meta.hash == hash) {
             //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "confirmed finishDownloadTransaction hash: ", hash.c_str()});
 
-            mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
                 // error logs
             } , { statusNotifierId });
 
-            mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this, hash](auto code) {
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this, hash](auto code) {
                 // error logs
             }, { id });
 
@@ -167,7 +160,7 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "error addConfirmedAddedNotifiers: ", errorCode.message().c_str(), hash.c_str()});
     };
 
-    mpChainSdkClient->notifications()->addConfirmedAddedNotifiers(mpChainSdkAccount->address(), { finishDownloadNotifier }, onSuccess, onError);
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { finishDownloadNotifier }, onSuccess, onError);
 }
 
 void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t prepaidSize) {
@@ -180,8 +173,8 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
 
     auto downloadPaymentTransaction = xpx_chain_sdk::CreateDownloadPaymentTransaction(channelIdKey, prepaidSize, feedbackFeeAmount,
-                                                                                      std::nullopt, std::nullopt, mpChainSdkClient->getConfig()->NetworkId);
-    mpChainSdkAccount->signTransaction(downloadPaymentTransaction.get());
+                                                                                      std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(downloadPaymentTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadPaymentNotifier;
@@ -190,16 +183,16 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "onDownloadPayment : ", notification.status.c_str(), notification.hash.c_str()});
         //emit downloadPaymentFailed(notification.hash.c_str(), notification.status.c_str());
 
-        mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
             // error logs
         }, { downloadPaymentNotifierId });
 
-        mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
             // error logs
         }, { id });
     });
 
-    mpChainSdkClient->notifications()->addStatusNotifiers(mpChainSdkAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
         // error logs
     });
 
@@ -209,11 +202,11 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         if (notification.meta.hash == hash) {
             //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "confirmed downloadPaymentTransaction hash: ", hash.c_str()});
 
-            mpChainSdkClient->notifications()->removeStatusNotifiers(mpChainSdkAccount->address(), [](){}, [this](auto code) {
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
                 // error logs
             }, { statusNotifierId });
 
-            mpChainSdkClient->notifications()->removeConfirmedAddedNotifiers(mpChainSdkAccount->address(), [](){}, [this, hash](auto code) {
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this, hash](auto code) {
                 // error logs
             }, {id });
 
@@ -237,7 +230,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "error addConfirmedAddedNotifiers: ", errorCode.message().c_str(), hash.c_str()});
     };
 
-    mpChainSdkClient->notifications()->addConfirmedAddedNotifiers(mpChainSdkAccount->address(), { downloadPaymentNotifier }, onSuccess, onError);
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadPaymentNotifier }, onSuccess, onError);
 }
 
 QString TransactionsEngine::rawHashToHex(const std::array<uint8_t, 32>& rawHash)

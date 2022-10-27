@@ -15,6 +15,8 @@
 #include "CloseChannelDialog.h"
 #include "AddDriveDialog.h"
 #include "ManageDrivesDialog.h"
+#include "ProgressBarDialog.h"
+#include "OnChainClient.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -80,11 +82,11 @@ MainWin::MainWin(QWidget *parent)
         dialog.exec();
     });
 
-    connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
+	connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
         //TODO
     });
 
-    connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
+	connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
         AddDriveDialog dialog(this);
         dialog.exec();
     });
@@ -97,6 +99,27 @@ MainWin::MainWin(QWidget *parent)
         ManageDrivesDialog dialog(this);
         dialog.exec();
     });
+
+    const std::string privateKey = "7AA907C3D80B3815BE4B4E1470DEEE8BB83BFEB330B9A82197603D09BA947230";
+    const std::string address = "127.0.0.1";
+    const std::string port = "3000";
+
+    m_onChainClient = new OnChainClient(privateKey, address, port, this);
+    connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,[this](const auto& channels) {
+        ui->m_channels->clear();
+        ui->m_channels->addItems(channels);
+    });
+
+    connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives) {
+        ui->m_driveCBox->clear();
+        ui->m_driveCBox->addItems(drives);
+
+        for (int i = 0; i < ui->m_driveCBox->count(); i++) {
+            m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
+        }
+    });
+
+    m_onChainClient->loadDrives();
 }
 
 MainWin::~MainWin()

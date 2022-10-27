@@ -1,22 +1,17 @@
 #ifndef CLOSECHANNELDIALOG_H
 #define CLOSECHANNELDIALOG_H
 
-#include <QDialog>
+#include <QMessageBox>
 
-namespace Ui {
-class CloseChannelDialog;
-}
-
-class CloseChannelDialog : public QDialog
+class CloseChannelDialog : public QMessageBox
 {
     Q_OBJECT
 
 public:
     explicit CloseChannelDialog(QWidget *parent = nullptr);
-    ~CloseChannelDialog();
+    ~CloseChannelDialog() = default;
 
 private:
-    Ui::CloseChannelDialog *ui;
 };
 
 #endif // CLOSECHANNELDIALOG_H
