@@ -61,6 +61,7 @@ set(PROJECT_SOURCES
         AddDownloadChannelDialog.h  AddDownloadChannelDialog.cpp adddownloadchanneldialog.ui
         CloseChannelDialog.h        CloseChannelDialog.cpp
         AddDriveDialog.h            AddDriveDialog.cpp          AddDriveDialog.ui
+        ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
         ${TS_FILES}
 )
 

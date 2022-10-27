@@ -18,6 +18,9 @@ protected:
     void reject() override;
 
 private:
+    bool verifyDriveName();
+    bool verifyLocalDriveFolder();
+    bool verifyKey();
     bool verify();
 
 private:

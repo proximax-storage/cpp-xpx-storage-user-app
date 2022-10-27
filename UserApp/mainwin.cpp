@@ -14,6 +14,7 @@
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
 #include "AddDriveDialog.h"
+#include "ManageDrivesDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -93,7 +94,8 @@ MainWin::MainWin(QWidget *parent)
     });
 
     connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
-        //TODO
+        ManageDrivesDialog dialog(this);
+        dialog.exec();
     });
 }
 
