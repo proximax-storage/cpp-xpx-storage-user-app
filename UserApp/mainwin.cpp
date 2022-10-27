@@ -13,6 +13,8 @@
 #include "PrivKeyDialog.h"
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
+#include "AddDriveDialog.h"
+#include "ManageDrivesDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -75,6 +77,24 @@ MainWin::MainWin(QWidget *parent)
 
     connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
         CloseChannelDialog dialog(this);
+        dialog.exec();
+    });
+
+    connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
+        //TODO
+    });
+
+    connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
+        AddDriveDialog dialog(this);
+        dialog.exec();
+    });
+
+    connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
+        //TODO
+    });
+
+    connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
+        ManageDrivesDialog dialog(this);
         dialog.exec();
     });
 }

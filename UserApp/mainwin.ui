@@ -32,7 +32,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="m_downloadsTab">
      <attribute name="title">
@@ -90,7 +90,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -134,7 +133,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -168,7 +166,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -188,7 +185,6 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -228,7 +224,6 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -266,7 +261,7 @@
        </property>
       </item>
      </widget>
-     <widget class="QPushButton" name="pushButton_11">
+     <widget class="QPushButton" name="m_topUpDrive">
       <property name="geometry">
        <rect>
         <x>356</x>
@@ -292,7 +287,7 @@
        <string>Cancel Modification</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_15">
+     <widget class="QPushButton" name="m_addDrive">
       <property name="geometry">
        <rect>
         <x>34</x>
@@ -305,7 +300,7 @@
        <string>+</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_16">
+     <widget class="QPushButton" name="m_closeDrive">
       <property name="geometry">
        <rect>
         <x>74</x>
@@ -318,7 +313,7 @@
        <string>-</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_17">
+     <widget class="QPushButton" name="m_manageDrives">
       <property name="geometry">
        <rect>
         <x>120</x>
@@ -421,7 +416,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -574,7 +568,7 @@ color : #aa6600</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>
