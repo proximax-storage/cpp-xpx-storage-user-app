@@ -17,7 +17,7 @@ class Worker : public QObject
     Q_OBJECT
 
 public:
-    Worker() = default;
+    Worker();
     ~Worker() override;
 
 signals:
@@ -31,6 +31,7 @@ private slots:
     void handler();
 
 private:
+    bool mIsInitialized;
     int mDelay;
     QTimer *mpTimer;
     std::queue<std::pair<QUuid,std::function<QVariant()>>> mRequests;

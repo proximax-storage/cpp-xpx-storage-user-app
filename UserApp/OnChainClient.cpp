@@ -41,7 +41,7 @@ OnChainClient::OnChainClient(const std::string& privateKey, const std::string& a
         return xpx_chain_sdk::PrivateKey(key.data(), key.size());
     }, mpChainClient->getConfig()->NetworkId);
 
-    mpBlockchainEngine = std::make_shared<BlockchainEngine>(mpChainClient, this);
+    mpBlockchainEngine = std::make_shared<BlockchainEngine>(mpChainClient);
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
 
     mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);

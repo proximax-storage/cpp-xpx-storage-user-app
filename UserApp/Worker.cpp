@@ -1,14 +1,23 @@
 #include "Worker.h"
 
+Worker::Worker()
+    : mIsInitialized(false)
+{}
+
 void Worker::init(int delay) {
     mDelay = delay;
     mpTimer = new QTimer(this);
     connect(mpTimer, &QTimer::timeout, this, &Worker::handler);
+    mIsInitialized = true;
+
+    if (!mRequests.empty() && !mpTimer->isActive()) {
+        mpTimer->start(mDelay);
+    }
 }
 
 void Worker::process(const QUuid& id, const std::function<QVariant()>& request) {
     mRequests.emplace(id, request);
-    if (!mpTimer->isActive()) {
+    if (mIsInitialized && !mpTimer->isActive()) {
         mpTimer->start(mDelay);
     }
 }

@@ -10,13 +10,13 @@ BlockchainEngine::BlockchainEngine(std::shared_ptr<xpx_chain_sdk::IClient> chain
 
 void BlockchainEngine::init(int delay) {
     mpWorker->moveToThread(mpThread);
-    connect(this, &BlockchainEngine::runProcess, mpWorker, &Worker::process, Qt::QueuedConnection);
-    connect(this, &BlockchainEngine::addResolver, this, &BlockchainEngine::onAddResolver, Qt::QueuedConnection);
-    connect(this, &BlockchainEngine::removeResolver, this, &BlockchainEngine::onRemoveResolver, Qt::QueuedConnection);
-    connect(mpWorker, &Worker::done, this, &BlockchainEngine::callbackResolver, Qt::QueuedConnection);
     connect(mpThread, &QThread::started, mpWorker, [w = mpWorker, delay]() { w->init(delay); }, Qt::QueuedConnection);
+    connect(mpWorker, &Worker::done, this, &BlockchainEngine::callbackResolver, Qt::QueuedConnection);
     connect(mpThread, &QThread::finished, mpThread, &QThread::deleteLater);
     connect(mpThread, &QThread::finished, mpWorker, &Worker::deleteLater);
+    connect(this, &BlockchainEngine::addResolver, this, &BlockchainEngine::onAddResolver, Qt::QueuedConnection);
+    connect(this, &BlockchainEngine::removeResolver, this, &BlockchainEngine::onRemoveResolver, Qt::QueuedConnection);
+    connect(this, &BlockchainEngine::runProcess, mpWorker, &Worker::process, Qt::QueuedConnection);
     mpThread->start();
 }
 
