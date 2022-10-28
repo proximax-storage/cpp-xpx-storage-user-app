@@ -214,7 +214,7 @@ void MainWin::setupFsTreeTable()
 
     m_fsTreeTableModel = new FsTreeTableModel();
 
-    //ui->m_fsTreeTableView->setModel( m_fsTreeTableModel );
+    ui->m_fsTreeTableView->setModel( m_fsTreeTableModel );
     ui->m_fsTreeTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
