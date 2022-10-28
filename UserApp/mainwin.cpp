@@ -112,13 +112,13 @@ MainWin::MainWin(QWidget *parent)
             ui->m_channels->addItems(channels);
         });
 
-        m_fsTreeModel = new FsTreeModel(this);
+        //m_fsTreeModel = new FsTreeModel(this);
 
         const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
-        m_fsTreeModel->setHeaders(driveStructureHeaders);
+        //m_fsTreeModel->setHeaders(driveStructureHeaders);
 
-        ui->m_fsTreeTableView->setModel( m_fsTreeModel );
-        ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+        //ui->m_fsTreeTableView->setModel( m_fsTreeModel );
+        //ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
             m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
@@ -152,6 +152,11 @@ MainWin::MainWin(QWidget *parent)
 
         m_onChainClient->loadDrives();
     }
+
+    connect(ui->m_refresh, &QPushButton::released, this, [this](){
+        m_onChainClient->loadDrives();
+        ui->m_fsTreeTableView->update();
+    });
 }
 
 MainWin::~MainWin()
@@ -166,7 +171,7 @@ void MainWin::setupDownloadsTab()
         Model::stestInitChannels();
     }
 
-    //setupFsTreeTable();
+    setupFsTreeTable();
     setupDownloadsTable();
     updateChannelsCBox();
 
@@ -193,7 +198,7 @@ void MainWin::setupFsTreeTable()
     {
         //qDebug() << index;
         int toBeSelectedRow = m_fsTreeTableModel->onDoubleClick( index.row() );
-        //ui->m_fsTreeTableView->selectRow( toBeSelectedRow );
+        ui->m_fsTreeTableView->selectRow( toBeSelectedRow );
         ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
     });
 
@@ -209,10 +214,10 @@ void MainWin::setupFsTreeTable()
 
     m_fsTreeTableModel = new FsTreeTableModel();
 
-    ui->m_fsTreeTableView->setModel( m_fsTreeTableModel );
-//    ui->m_fsTreeTableView->horizontalHeader()->setStretchLastSection(true);
-//    ui->m_fsTreeTableView->horizontalHeader()->hide();
-//    ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
+    //ui->m_fsTreeTableView->setModel( m_fsTreeTableModel );
+    ui->m_fsTreeTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->m_fsTreeTableView->horizontalHeader()->hide();
+    ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
 
     ui->m_fsTreeTableView->update();
     ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
@@ -225,7 +230,7 @@ void MainWin::selectFsTreeItem( int index )
         return;
     }
 
-    //ui->m_fsTreeTableView->selectRow( index );
+    ui->m_fsTreeTableView->selectRow( index );
 
     ui->m_downloadBtn->setEnabled( ! m_fsTreeTableModel->m_rows[index].m_isFolder );
 }
@@ -424,12 +429,15 @@ void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
-        m_fsTreeModel->updateModelData(fsTree);
+        //m_fsTreeModel->updateModelData(fsTree);
 
-        //std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-        //m_fsTreeTableModel->setFsTree( fsTree, {} );
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
+        connect(this, &MainWin::updateFsTree, m_fsTreeTableModel, [this, fsTree](){
+            m_fsTreeTableModel->setFsTree( fsTree, {} );
+        });
 
+        emit updateFsTree();
     });
 }
 

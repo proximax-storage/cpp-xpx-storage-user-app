@@ -5,15 +5,16 @@
 #include <QStyle>
 #include <QIcon>
 #include <QPushButton>
+#include <QThread>
 
 FsTreeTableModel::FsTreeTableModel()
 {
-
+    std::cout << "FsTreeTableModel::FsTreeTableModel: " << QThread::currentThreadId();
 }
 
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path )
 {
-
+    std::cout << "FsTreeTableModel::setFsTree: " << QThread::currentThreadId();
     m_fsTree = fsTree;
     m_currentPath = path;
     m_currentFolder = &m_fsTree;
@@ -151,7 +152,7 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
             return 1;
         }
     }
-//    qDebug() << "rowCount: " << m_rows.size();
+    qDebug() << "rowCount: " << m_rows.size();
     return m_rows.size();
 }
 

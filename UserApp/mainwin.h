@@ -26,6 +26,9 @@ public:
 
     void selectDownloadRow( int );
 
+    signals:
+        void updateFsTree();
+
 private:
     bool requestPrivateKey();
 

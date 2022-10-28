@@ -7,10 +7,10 @@ using FsTreePath = std::vector<sirius::drive::Folder*>;
 
 class FsTreeTableModel: public QAbstractListModel
 {
+    Q_OBJECT
 public:
     FsTreeTableModel();
 
-    void setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path );
     void update();
 
     int onDoubleClick( int row );
@@ -22,6 +22,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+
+    public slots:
+        void setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path );
 
 public:
     struct Row

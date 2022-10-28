@@ -98,7 +98,7 @@
        <string>Downloads:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_3">
+     <widget class="QPushButton" name="m_refresh">
       <property name="geometry">
        <rect>
         <x>24</x>
@@ -226,7 +226,7 @@
        <string>&gt;&gt;</string>
       </property>
      </widget>
-     <widget class="QTreeView" name="m_fsTreeTableView">
+     <widget class="QTableView" name="m_fsTreeTableView">
       <property name="geometry">
        <rect>
         <x>25</x>
