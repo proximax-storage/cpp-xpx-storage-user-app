@@ -8,7 +8,9 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
 QT_END_NAMESPACE
 
+class FsTreeModel;
 class FsTreeTableModel;
+class ChannelInfo;
 class DownloadsTableModel;
 class DriveTreeModel;
 class DiffTableModel;
@@ -36,7 +38,7 @@ private:
     void updateChannelsCBox();
 
     void onChannelChanged( int index );
-    void onFsTreeHashReceived( const std::string& channelHash, const std::array<uint8_t,32>& fsTreeHash );
+    void onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );
 
@@ -52,6 +54,7 @@ private:
 
     QTimer*                 m_downloadUpdateTimer;
 
+    FsTreeModel*            m_fsTreeModel;
     FsTreeTableModel*       m_fsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
     DriveTreeModel*         m_driveTreeModel;
