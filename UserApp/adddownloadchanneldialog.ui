@@ -37,7 +37,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="keys">
          <property name="text">
-          <string>Keys</string>
+          <string>Keys (optional)</string>
          </property>
         </widget>
        </item>
@@ -47,7 +47,7 @@
        <item row="4" column="0">
         <widget class="QLabel" name="prepaidAmount">
          <property name="text">
-          <string>Prepaid (megabytes)</string>
+          <string>Prepaid (required, in mb)</string>
          </property>
         </widget>
        </item>
@@ -64,12 +64,22 @@
        <item row="1" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Drive</string>
+          <string>Drive (required)</string>
          </property>
         </widget>
        </item>
        <item row="1" column="1">
         <widget class="QLineEdit" name="lineEdit"/>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="lineEdit_2"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Alias (required)</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
