@@ -63,7 +63,9 @@ set(PROJECT_SOURCES
         ProgressBarDialog.h         OnChainClient.cpp
         OnChainClient.h				AddDriveDialog.cpp
 		AddDriveDialog.h			ManageDrivesDialog.cpp
-		ManageDrivesDialog.h
+		ManageDrivesDialog.h        Fstreeitem.cpp
+        Fstreeitem.h                Fstreemodel.cpp
+        Fstreemodel.h
         ${TS_FILES}
 )
 
