@@ -10,7 +10,7 @@ public:
     Q_OBJECT
 
 public:
-    explicit AddDriveDialog( QWidget *parent, bool initSettings = false );
+    explicit AddDriveDialog( QWidget *parent, int editDriveIndex = -1 );
     ~AddDriveDialog() override;
 
 protected:
@@ -25,4 +25,6 @@ private:
 
 private:
     Ui::AddDriveDialog* ui;
+
+    int m_editDriveIndex;
 };
