@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "Model.h"
 #include "AddDriveDialog.h"
 #include "./ui_AddDriveDialog.h"
 
@@ -6,9 +7,10 @@
 
 #include <random>
 
-AddDriveDialog::AddDriveDialog( QWidget *parent, bool initSettings ) :
+AddDriveDialog::AddDriveDialog( QWidget *parent, int editDriveIndex ) :
     QDialog( parent ),
-    ui( new Ui::AddDriveDialog() )
+    ui( new Ui::AddDriveDialog() ),
+    m_editDriveIndex(editDriveIndex)
 {
 
     ui->setupUi(this);
@@ -54,20 +56,39 @@ AddDriveDialog::AddDriveDialog( QWidget *parent, bool initSettings ) :
     ui->m_maxDriveSize->setValidator( new QIntValidator( 1, 100*1024*1024, this) );
     ui->m_maxDriveSize->setText( QString::fromStdString( "100" ));
 
+    if ( m_editDriveIndex >= 0 )
     {
-        std::random_device   dev;
-        std::seed_seq        seed({dev(), dev(), dev(), dev()});
-        std::mt19937         rng(seed);
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        std::array<uint8_t,32> buffer;
+        const auto& drive = Model::drives()[m_editDriveIndex];
 
-        std::generate( buffer.begin(), buffer.end(), [&]
+        ui->m_driveName->setText( QString::fromStdString( drive.m_name ));
+        ui->m_replicatorNumber->setText( QString::fromStdString( std::to_string(drive.m_replicatorNumber) ));
+        ui->m_maxDriveSize->setText( QString::fromStdString( std::to_string(drive.m_maxDriveSize) ));
+        ui->m_localDriveFolder->setText( QString::fromStdString( drive.m_localDriveFolder ));
+        ui->m_key->setText( QString::fromStdString( drive.m_driveKey ));
+
+        ui->m_replicatorNumber->setReadOnly(true);
+        ui->m_maxDriveSize->setReadOnly(true);
+        ui->m_key->setReadOnly(true);
+    }
+    else
+    {
         {
-            return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
-        });
+            std::random_device   dev;
+            std::seed_seq        seed({dev(), dev(), dev(), dev()});
+            std::mt19937         rng(seed);
 
-        ui->m_key->setText( QString::fromStdString( sirius::drive::toString( buffer ) ));
+            std::array<uint8_t,32> buffer;
 
+            std::generate( buffer.begin(), buffer.end(), [&]
+            {
+                return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
+            });
+
+            ui->m_key->setText( QString::fromStdString( sirius::drive::toString( buffer ) ));
+
+        }
     }
 
     setWindowTitle("Create Drive");
@@ -86,6 +107,22 @@ void AddDriveDialog::accept()
     if ( verify() )
     {
         //TODO
+
+        if ( m_editDriveIndex >= 0 )
+        {
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            auto& drive = Model::drives()[m_editDriveIndex];
+
+            drive.m_name = ui->m_driveName->text().toStdString();
+//            drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
+//            drive.m_maxDriveSize = ui->m_maxDriveSize->text().toInt();
+            drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
+
+            ui->m_replicatorNumber->setReadOnly(true);
+            ui->m_maxDriveSize->setReadOnly(true);
+            ui->m_key->setReadOnly(true);
+        }
         QDialog::accept();
     }
 }

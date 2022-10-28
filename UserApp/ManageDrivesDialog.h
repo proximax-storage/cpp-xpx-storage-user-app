@@ -10,7 +10,7 @@ public:
     Q_OBJECT
 
 public:
-    explicit ManageDrivesDialog( QWidget *parent, bool initSettings = false );
+    explicit ManageDrivesDialog( QWidget *parent );
     ~ManageDrivesDialog() override;
 
 protected:
