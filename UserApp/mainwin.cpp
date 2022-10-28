@@ -105,51 +105,53 @@ MainWin::MainWin(QWidget *parent)
     const std::string address = "127.0.0.1";
     const std::string port = "3000";
 
-    m_onChainClient = new OnChainClient(privateKey, address, port, this);
-    connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
-        ui->m_channels->clear();
-        ui->m_channels->addItems(channels);
-    });
+    if (!STANDALONE_TEST) {
+        m_onChainClient = new OnChainClient(privateKey, address, port, this);
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
+            ui->m_channels->clear();
+            ui->m_channels->addItems(channels);
+        });
 
-    m_fsTreeModel = new FsTreeModel(this);
+        m_fsTreeModel = new FsTreeModel(this);
 
-    const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
-    m_fsTreeModel->setHeaders(driveStructureHeaders);
+        const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
+        m_fsTreeModel->setHeaders(driveStructureHeaders);
 
-    ui->m_fsTreeTableView->setModel( m_fsTreeModel );
-    ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+        ui->m_fsTreeTableView->setModel( m_fsTreeModel );
+        ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
-        m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
-            if (!isSuccess) {
-                // logs
-                return;
-            }
-
-            m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
+            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
                 if (!isSuccess) {
                     // logs
                     return;
                 }
 
-                ChannelInfo channelInfo;
-                channelInfo.m_hash = channel.data.id;
-                channelInfo.m_driveHash = channel.data.drive;
-                onFsTreeHashReceived(channelInfo, TransactionsEngine::rawHashFromHex(drive.data.rootHash.c_str()));
+                m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
+                    if (!isSuccess) {
+                        // logs
+                        return;
+                    }
+
+                    ChannelInfo channelInfo;
+                    channelInfo.m_hash = channel.data.id;
+                    channelInfo.m_driveHash = channel.data.drive;
+                    onFsTreeHashReceived(channelInfo, TransactionsEngine::rawHashFromHex(drive.data.rootHash.c_str()));
+                });
             });
         });
-    });
 
-    connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives) {
-        ui->m_driveCBox->clear();
-        ui->m_driveCBox->addItems(drives);
+        connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives) {
+            ui->m_driveCBox->clear();
+            ui->m_driveCBox->addItems(drives);
 
-        for (int i = 0; i < ui->m_driveCBox->count(); i++) {
+            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
                 m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
             }
         });
 
-    m_onChainClient->loadDrives();
+        m_onChainClient->loadDrives();
+    }
 }
 
 MainWin::~MainWin()
