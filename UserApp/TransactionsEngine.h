@@ -21,7 +21,8 @@ class TransactionsEngine {
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
 
     public:
-        static QString rawHashToHex(const std::array<uint8_t, 32>& drivePubKey);
+        static QString rawHashToHex(const std::array<uint8_t, 32>& rawHash);
+        static std::array<uint8_t, 32> rawHashFromHex(const QString& hex);
 
     private:
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;

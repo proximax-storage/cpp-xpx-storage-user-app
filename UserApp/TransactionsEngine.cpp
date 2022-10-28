@@ -233,9 +233,14 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadPaymentNotifier }, onSuccess, onError);
 }
 
-QString TransactionsEngine::rawHashToHex(const std::array<uint8_t, 32>& rawHash)
-{
+QString TransactionsEngine::rawHashToHex(const std::array<uint8_t, 32>& rawHash) {
     std::ostringstream stream;
     stream << sirius::utils::HexFormat(rawHash);
     return stream.str().c_str();
 }
+
+std::array<uint8_t, 32> TransactionsEngine::rawHashFromHex(const QString& hex) {
+    std::array<uint8_t, 32> hash{};
+    xpx_chain_sdk::ParseHexStringIntoContainer(hex.toStdString().c_str(), hex.size(), hash);
+    return hash;
+};
