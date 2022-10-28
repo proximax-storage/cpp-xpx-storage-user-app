@@ -1,6 +1,4 @@
 #include "OnChainClient.h"
-#include "BlockchainEngine.h"
-#include "TransactionsEngine.h"
 
 OnChainClient::OnChainClient(const std::string& privateKey, const std::string& address, const std::string& port,  QObject* parent)
     : QObject(parent)
@@ -83,4 +81,8 @@ void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
 
         emit downloadChannelsLoaded(loadedChannels);
     });
+}
+
+std::shared_ptr<BlockchainEngine> OnChainClient::getBlockchainEngine() {
+    return mpBlockchainEngine;
 }

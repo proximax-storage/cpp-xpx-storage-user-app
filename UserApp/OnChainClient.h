@@ -2,13 +2,11 @@
 #define ONCHAINCLIENT_H
 
 #include <QObject>
-
 #include <memory>
-
 #include <xpxchaincpp/sdk.h>
 
-class TransactionsEngine;
-class BlockchainEngine;
+#include "TransactionsEngine.h"
+#include "BlockchainEngine.h"
 
 class OnChainClient : public QObject
 {
@@ -21,6 +19,7 @@ class OnChainClient : public QObject
     public:
         void loadDrives();
         void loadDownloadChannels(const QString& drivePubKey);
+        std::shared_ptr<BlockchainEngine> getBlockchainEngine();
 
     signals:
         void drivesLoaded(const QStringList& drives);
