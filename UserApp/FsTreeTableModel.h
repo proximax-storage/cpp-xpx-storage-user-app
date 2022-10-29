@@ -23,7 +23,7 @@ public:
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-    public slots:
+//    public slots:
         void setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path );
 
 public:

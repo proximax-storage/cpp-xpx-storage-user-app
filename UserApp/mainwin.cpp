@@ -383,42 +383,44 @@ void MainWin::updateChannelsCBox()
 
 void MainWin::onChannelChanged( int index )
 {
-//    Model::setCurrentDnChannelIndex( index );
-//    Model::currentChannelInfoPtr()->m_waitingFsTree = true;
-//    m_fsTreeTableModel->setFsTree( {}, {} );
-//
-//
-//    if ( !STANDALONE_TEST )
-//    {
-//        //assert( !"todo request FsTree hash" );
-//    }
-//    else
-//    {
-//        std::thread( [this,index]
-//        {
-//            qDebug() << "onChannelChanged: " << index;
-//
-//            std::array<uint8_t,32> fsTreeHash;
-//
-//            if ( index == 0 )
-//            {
-//                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
-//                                                            64, fsTreeHash );
-//            }
-//            else if ( index == 1 )
-//            {
-//                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH2,
-//                                                            64, fsTreeHash );
-//            }
-//
-//            sleep(1);
-//            onFsTreeHashReceived( Model::dnChannels()[index].m_hash, fsTreeHash );
-//        }).detach();
-//    }
+    Model::setCurrentDnChannelIndex( index );
+    Model::currentChannelInfoPtr()->m_waitingFsTree = true;
+    m_fsTreeTableModel->setFsTree( {}, {} );
+
+
+    if ( !STANDALONE_TEST )
+    {
+        //assert( !"todo request FsTree hash" );
+    }
+    else
+    {
+        std::thread( [this,index]
+        {
+            qDebug() << "onChannelChanged: " << index;
+
+            std::array<uint8_t,32> fsTreeHash;
+
+            if ( index == 0 )
+            {
+                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
+                                                            64, fsTreeHash );
+            }
+            else if ( index == 1 )
+            {
+                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH2,
+                                                            64, fsTreeHash );
+            }
+
+            sleep(1);
+            onFsTreeHashReceived( Model::dnChannels()[index], fsTreeHash );
+        }).detach();
+    }
 }
 
 void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
 {
+    qDebug() << "onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
+
     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
     Model::downloadFsTree( channel.m_driveHash,
                            channel.m_hash,
@@ -429,15 +431,23 @@ void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array
     {
         qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
-        //m_fsTreeModel->updateModelData(fsTree);
-
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        connect(this, &MainWin::updateFsTree, m_fsTreeTableModel, [this, fsTree](){
-            m_fsTreeTableModel->setFsTree( fsTree, {} );
-        });
+        auto channelInfo = Model::currentChannelInfoPtr();
+        if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
+        {
+            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
+            channelInfo->m_waitingFsTree = false;
+            lock.unlock();
 
-        emit updateFsTree();
+            m_fsTreeTableModel->setFsTree( fsTree, {} );
+        }
+
+//        connect(this, &MainWin::updateFsTree, m_fsTreeTableModel, [this, fsTree](){
+            m_fsTreeTableModel->setFsTree( fsTree, {} );
+//        });
+
+//        emit updateFsTree();
     });
 }
 
