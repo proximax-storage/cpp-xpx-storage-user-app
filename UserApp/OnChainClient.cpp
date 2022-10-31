@@ -43,6 +43,10 @@ OnChainClient::OnChainClient(const std::string& privateKey, const std::string& a
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
 
     mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
+
+//    connect(mpTransactionsEngine, &TransactionsEngine::downloadChannelOpenTransactionConfirmed, this, [](auto ) {
+//
+//    });
 }
 
 void OnChainClient::loadDrives() {
@@ -85,4 +89,10 @@ void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
 
 std::shared_ptr<BlockchainEngine> OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
+}
+
+void OnChainClient::addDownloadChannel(const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
+                                       const std::array<uint8_t, 32> &drivePubKey, const uint64_t &prepaidSize,
+                                       const uint64_t &feedbacksNumber) {
+    mpTransactionsEngine->addDownloadChannel(listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
 }

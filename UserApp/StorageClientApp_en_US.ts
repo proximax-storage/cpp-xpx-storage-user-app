@@ -96,18 +96,7 @@
     <name>CloseChannelDialog</name>
     <message>
         <location filename="closechanneldialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_closechanneldialog.h" line="86"/>
         <source>Dialog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_closechanneldialog.h" line="87"/>
-        <source>Drive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_closechanneldialog.h" line="88"/>
-        <source>Channel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -321,22 +310,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="116"/>
+        <location filename="mainwin.cpp" line="117"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="116"/>
+        <location filename="mainwin.cpp" line="117"/>
         <source>Size (Bytes)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="116"/>
+        <location filename="mainwin.cpp" line="117"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="116"/>
+        <location filename="mainwin.cpp" line="117"/>
         <source>Date Modified</source>
         <translation type="unfinished"></translation>
     </message>

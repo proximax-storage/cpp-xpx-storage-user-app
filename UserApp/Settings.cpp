@@ -239,12 +239,12 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
                 if ( --counter == 0 )
                 {
-                    qDebug() << "onDownloadCompleted: rename()";
+                    qDebug() << "onDownloadCompleted: rename(): " << srcPath << " : " << destPath;
                     fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
-                    qDebug() << "onDownloadCompleted: copy()";
+                    qDebug() << "onDownloadCompleted: copy(): " << srcPath << " : " << destPath;
                     fs::copy( srcPath, destPath, ec );
                 }
 

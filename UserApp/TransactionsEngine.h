@@ -24,6 +24,12 @@ class TransactionsEngine {
         static QString rawHashToHex(const std::array<uint8_t, 32>& rawHash);
         static std::array<uint8_t, 32> rawHashFromHex(const QString& hex);
 
+//    signals:
+//        void downloadChannelOpenTransactionConfirmed(const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
+//        void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
+//        void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
+//        void downloadChannelCloseTransactionFailed(const QString& errorText);
+
     private:
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;

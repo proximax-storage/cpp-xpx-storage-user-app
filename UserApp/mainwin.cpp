@@ -73,11 +73,6 @@ MainWin::MainWin(QWidget *parent)
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
 
-    connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
-        AddDownloadChannelDialog dialog(this);
-        dialog.exec();
-    });
-
     connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
         CloseChannelDialog dialog(this);
         dialog.exec();
@@ -112,7 +107,16 @@ MainWin::MainWin(QWidget *parent)
             ui->m_channels->addItems(channels);
         });
 
-        //m_fsTreeModel = new FsTreeModel(this);
+        connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
+            QStringList drives;
+            drives.reserve(ui->m_driveCBox->count());
+            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
+                drives.push_back(ui->m_driveCBox->itemText(i));
+            }
+
+            AddDownloadChannelDialog dialog(m_onChainClient, drives, this);
+            dialog.exec();
+        });
 
         const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
         //m_fsTreeModel->setHeaders(driveStructureHeaders);
@@ -123,19 +127,20 @@ MainWin::MainWin(QWidget *parent)
         connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
             m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
                 if (!isSuccess) {
-                    // logs
+                    qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
                     return;
                 }
 
                 m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
                     if (!isSuccess) {
-                        // logs
+                        qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
                         return;
                     }
 
                     ChannelInfo channelInfo;
                     channelInfo.m_hash = channel.data.id;
                     channelInfo.m_driveHash = channel.data.drive;
+                    Model::dnChannels().push_back(channelInfo);
                     onFsTreeHashReceived(channelInfo, TransactionsEngine::rawHashFromHex(drive.data.rootHash.c_str()));
                 });
             });
@@ -384,7 +389,11 @@ void MainWin::updateChannelsCBox()
 void MainWin::onChannelChanged( int index )
 {
     Model::setCurrentDnChannelIndex( index );
-    Model::currentChannelInfoPtr()->m_waitingFsTree = true;
+
+    if ( STANDALONE_TEST ) {
+        Model::currentChannelInfoPtr()->m_waitingFsTree = true;
+    }
+
     m_fsTreeTableModel->setFsTree( {}, {} );
 
 
