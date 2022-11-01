@@ -34,7 +34,7 @@ public:
         std::vector<ChannelInfo>    m_dnChannels;
         int                         m_currentDnChannelIndex = -1;
 
-        std::string                 m_downloadFolder = "~/Downloads";
+        std::string                 m_downloadFolder;
         std::vector<DownloadInfo>   m_downloads;
 
         std::vector<DriveInfo>      m_drives;

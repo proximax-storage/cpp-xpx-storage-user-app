@@ -38,9 +38,23 @@ private:
     void selectFsTreeItem( int index );
     void onDownloadBtn();
 
+    void addChannel( const std::string&             channelName,
+                     const std::string&             channelKey,
+                     const std::string&             driveKey,
+                     const std::vector<std::string> allowedPublicKeys );
+
+    void onChannelCreationConfirmed( const std::string& channelKey );
+    void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );
+//    void onChannelDeleted( const std::string& channelKey );
+    void onCurrentChannelChanged( int index );
+
     void updateChannelsCBox();
 
-    void onChannelChanged( int index );
+    void onDriveCreationConfirmed( const std::string& driveKey );
+    void onDriveCreationFailed( const std::string& channelKey, const std::string& errorText );
+    void onDriveDeleted( const std::string& driveKey );
+    void onDriveChanged( int index );
+
     void onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );

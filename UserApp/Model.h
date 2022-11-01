@@ -3,6 +3,10 @@
 #include <vector>
 #include <string>
 #include <array>
+#include <chrono>
+
+#include <cereal/types/chrono.hpp>
+
 
 #include "drive/ClientSession.h"
 #include "drive/FsTree.h"
@@ -33,10 +37,17 @@ using  FsTreeHandler  = std::function<void( const std::string&           driveHa
 //
 struct ChannelInfo
 {
-    std::string     m_name;
-    std::string     m_hash;
-    std::string     m_driveHash;
-    endpoint_list   m_endpointList = {};
+    using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
+
+    std::string                 m_name;
+    std::string                 m_hash;
+    std::string                 m_driveHash;
+    std::vector<std::string>    m_allowedPublicKeys;
+    bool                        m_isCreating = true;
+    bool                        m_isDeleting = false;
+    timepoint                   m_creationTimepoint;
+    timepoint                   m_tobeDeletedTimepoint;
+    endpoint_list               m_endpointList = {};
 
     bool                                m_waitingFsTree              = true;
     std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
@@ -46,7 +57,14 @@ struct ChannelInfo
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_hash, m_name, m_driveHash );
+        ar( m_hash,
+            m_name,
+            m_driveHash,
+            m_allowedPublicKeys,
+            m_isCreating,
+            m_isDeleting,
+            m_creationTimepoint,
+            m_tobeDeletedTimepoint );
     }
 };
 
@@ -83,6 +101,8 @@ struct DriveInfo
     std::string m_localDriveFolder;
     uint64_t    m_maxDriveSize = 0;
     uint32_t    m_replicatorNumber;
+    bool        m_isCreating = true;
+    bool        m_isDeleting = false;
 
 public: // tmp
     std::optional<std::array<uint8_t,32>>   m_rootHash;
@@ -94,7 +114,13 @@ public: // tmp
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_driveKey, m_name, m_localDriveFolder );
+        ar( m_driveKey,
+            m_name,
+            m_localDriveFolder,
+            m_maxDriveSize,
+            m_replicatorNumber,
+            m_isCreating,
+            m_isDeleting );
     }
 };
 
@@ -116,6 +142,7 @@ public:
     static void                         setCurrentDnChannelIndex( int );
     static int                          currentDnChannelIndex();
     static ChannelInfo*                 currentChannelInfoPtr();
+    static ChannelInfo*                 findChannel( const std::string& channelKey );
 
     static std::vector<DownloadInfo>&   downloads();
 

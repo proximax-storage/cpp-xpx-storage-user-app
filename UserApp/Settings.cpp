@@ -89,28 +89,39 @@ bool Settings::load( const std::string& pwd )
         std::istringstream is( os.str(), std::ios::binary );
         cereal::PortableBinaryInputArchive iarchive( is );
 
-        uint32_t settingsVersion;
-        iarchive( settingsVersion );
+        bool isCorrupted = false;
 
-        if ( settingsVersion != m_settingsVersion )
+        try
         {
-            QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
-            msgBox.setInformativeText( "It will be lost" );
-            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-            int reply = msgBox.exec();
-            if ( reply == QMessageBox::Cancel )
+            uint32_t settingsVersion;
+            iarchive( settingsVersion );
+
+            if ( settingsVersion != m_settingsVersion )
             {
-                exit(1);
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
+                msgBox.setInformativeText( "It will be lost" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+                if ( reply == QMessageBox::Cancel )
+                {
+                    exit(1);
+                }
+                return false;
             }
-            return false;
+
+            iarchive( m_currentAccountIndex );
+            iarchive( m_accounts );
+        }
+        catch(...)
+        {
+            isCorrupted = true;
         }
 
-        iarchive( m_currentAccountIndex );
-        iarchive( m_accounts );
-
-        if ( m_accounts.size() <= size_t(m_currentAccountIndex) )
+        if ( isCorrupted || m_accounts.size() <= size_t(m_currentAccountIndex) )
         {
+            std::cerr << "Your config data is corrupted" << std::endl;
+            std::cerr << filePath << std::endl;
             QMessageBox msgBox;
             msgBox.setText( QString::fromStdString( "Your config data is corrupted" ) );
             msgBox.setInformativeText( QString::fromStdString( filePath ) );

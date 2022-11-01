@@ -64,6 +64,22 @@ ChannelInfo* Model::currentChannelInfoPtr()
     return gSettings.currentChannelInfoPtr();
 }
 
+ChannelInfo* Model::findChannel( const std::string& channelKey )
+{
+    auto& channels = gSettings.config().m_dnChannels;
+
+    auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
+    {
+        return channelKey==channelInfo.m_hash;
+    });
+
+    if ( it == channels.end() )
+    {
+        return nullptr;
+    }
+
+    return &(*it);
+}
 
 void Model::startStorageEngine()
 {

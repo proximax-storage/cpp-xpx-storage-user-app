@@ -65,7 +65,7 @@ MainWin::MainWin(QWidget *parent)
     if ( dnChannelIndex >= 0 )
     {
         ui->m_channels->setCurrentIndex( dnChannelIndex );
-        onChannelChanged( dnChannelIndex );
+        onCurrentChannelChanged( dnChannelIndex );
     }
 
     // Start update-timer for downloads
@@ -155,6 +155,14 @@ MainWin::MainWin(QWidget *parent)
             }
         });
 
+        connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto& channelKey, auto) {
+               this->onChannelCreationConfirmed( sirius::drive::toString( channelKey ) );
+            }, Qt::QueuedConnection);
+
+        connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
+               this->onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
+            }, Qt::QueuedConnection);
+
         m_onChainClient->loadDrives();
     }
 
@@ -183,7 +191,7 @@ void MainWin::setupDownloadsTab()
     connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
         qDebug() << index;
-        onChannelChanged( index );
+        onCurrentChannelChanged( index );
     });
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
@@ -380,13 +388,71 @@ void MainWin::updateChannelsCBox()
     ui->m_channels->clear();
     for( const auto& channelInfo: Model::dnChannels() )
     {
-        ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name) );
+        if ( channelInfo.m_isCreating )
+        {
+            ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name + "(creating...)") );
+        }
+        else if ( channelInfo.m_isDeleting )
+        {
+            ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name + "(...deleting)" ) );
+        }
+        else
+        {
+            ui->m_channels->addItem( QString::fromStdString( channelInfo.m_name) );
+        }
     }
 
-//    onChannelChanged(0);
+    ui->m_channels->setCurrentIndex( Model::currentDnChannelIndex() );
 }
 
-void MainWin::onChannelChanged( int index )
+void MainWin::addChannel( const std::string&             channelName,
+                          const std::string&             channelKey,
+                          const std::string&             driveKey,
+                          const std::vector<std::string> allowedPublicKeys )
+{
+    auto& channels = Model::dnChannels();
+    auto creationTime = std::chrono::steady_clock::now();
+    channels.emplace_back( ChannelInfo{ channelName,
+                                        channelKey,
+                                        driveKey,
+                                        allowedPublicKeys,
+                                        true, false, // isCreating, isDeleting
+                                        creationTime
+                           } );
+
+    Model::setCurrentDnChannelIndex( channels.size()-1 );
+
+    updateChannelsCBox();
+}
+
+void MainWin::onChannelCreationConfirmed( const std::string& channelKey )
+{
+    auto* channelInfo = Model::findChannel( channelKey );
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Channel '" + channelInfo->m_name + "' created successfully.") );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+
+    channelInfo->m_isCreating = false;
+
+    updateChannelsCBox();
+}
+
+void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
+{
+    auto* channelInfo = Model::findChannel( channelKey );
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Channel creation failed (" + channelInfo->m_name + ")\n It will be removed.") );
+    msgBox.setInformativeText( QString::fromStdString( errorText ) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+
+    //todo!!!
+}
+
+void MainWin::onCurrentChannelChanged( int index )
 {
     Model::setCurrentDnChannelIndex( index );
 
