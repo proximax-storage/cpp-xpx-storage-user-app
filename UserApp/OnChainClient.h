@@ -5,8 +5,9 @@
 #include <memory>
 #include <xpxchaincpp/sdk.h>
 
-#include "TransactionsEngine.h"
 #include "BlockchainEngine.h"
+#include "TransactionsEngine.h"
+#include "Utils.h"
 
 class OnChainClient : public QObject
 {
@@ -20,21 +21,24 @@ class OnChainClient : public QObject
         void loadDrives();
         void loadDownloadChannels(const QString& drivePubKey);
         std::shared_ptr<BlockchainEngine> getBlockchainEngine();
-        void addDownloadChannel(const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
+        void addDownloadChannel(const std::string& channelAlias,
+                                const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
                                 const std::array<uint8_t, 32>& drivePubKey,
                                 const uint64_t& prepaidSize,
                                 const uint64_t& feedbacksNumber);
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
+        void addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
+        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
 
     signals:
         void drivesLoaded(const QStringList& drives);
         void downloadChannelsLoaded(const QStringList& channels);
-        void downloadChannelOpenTransactionConfirmed(const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
+        void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
         void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadChannelCloseTransactionFailed(const QString& errorText);
-        void prepareDriveTransactionConfirmed(const std::array<uint8_t, 32>& drivePubKey);
-        void prepareDriveTransactionFailed(const QString& drivePubKey, const QString& errorText);
+        void prepareDriveTransactionConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey);
+        void prepareDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
 
     private:
         std::shared_ptr<BlockchainEngine> mpBlockchainEngine;

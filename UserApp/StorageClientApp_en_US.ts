@@ -5,31 +5,37 @@
     <name>AddDownloadChannelDialog</name>
     <message>
         <location filename="adddownloadchanneldialog.ui" line="17"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="124"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="138"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="adddownloadchanneldialog.ui" line="40"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="125"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="139"/>
         <source>Keys (optional)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="adddownloadchanneldialog.ui" line="67"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="127"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="141"/>
         <source>Drive (required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="adddownloadchanneldialog.ui" line="80"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="128"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="142"/>
         <source>Alias (required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="adddownloadchanneldialog.ui" line="87"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="143"/>
+        <source>My drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="adddownloadchanneldialog.ui" line="50"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="126"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_adddownloadchanneldialog.h" line="140"/>
         <source>Prepaid (required, in mb)</source>
         <oldsource>Prepaid (megabytes)</oldsource>
         <translation type="unfinished"></translation>
@@ -310,22 +316,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="117"/>
+        <location filename="mainwin.cpp" line="112"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="117"/>
+        <location filename="mainwin.cpp" line="112"/>
         <source>Size (Bytes)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="117"/>
+        <location filename="mainwin.cpp" line="112"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.cpp" line="117"/>
+        <location filename="mainwin.cpp" line="112"/>
         <source>Date Modified</source>
         <translation type="unfinished"></translation>
     </message>

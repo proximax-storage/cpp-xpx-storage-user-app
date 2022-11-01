@@ -73,21 +73,7 @@ MainWin::MainWin(QWidget *parent)
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
 
-    connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
-        CloseChannelDialog dialog(this);
-        dialog.exec();
-    });
-
 	connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
-        //TODO
-    });
-
-	connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
-        AddDriveDialog dialog(this);
-        dialog.exec();
-    });
-
-    connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
         //TODO
     });
 
@@ -141,7 +127,7 @@ MainWin::MainWin(QWidget *parent)
                     channelInfo.m_hash = channel.data.id;
                     channelInfo.m_driveHash = channel.data.drive;
                     Model::dnChannels().push_back(channelInfo);
-                    onFsTreeHashReceived(channelInfo, TransactionsEngine::rawHashFromHex(drive.data.rootHash.c_str()));
+                    onFsTreeHashReceived(channelInfo, rawHashFromHex(drive.data.rootHash.c_str()));
                 });
             });
         });
@@ -153,20 +139,42 @@ MainWin::MainWin(QWidget *parent)
             for (int i = 0; i < ui->m_driveCBox->count(); i++) {
                 m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
             }
+        }, Qt::QueuedConnection);
+
+        connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
+            onChannelCreationConfirmed( alias, sirius::drive::toString( channelKey ), sirius::drive::toString(driveKey) );
+        }, Qt::QueuedConnection);
+
+        connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
+               onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
+        }, Qt::QueuedConnection);
+
+        connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
+            CloseChannelDialog dialog(m_onChainClient, ui->m_channels->currentText(), this);
+            dialog.exec();
+        }, Qt::QueuedConnection);
+
+        connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
+            AddDriveDialog dialog(m_onChainClient, this);
+            dialog.exec();
         });
 
-        connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto& channelKey, auto) {
-               this->onChannelCreationConfirmed( sirius::drive::toString( channelKey ) );
-            }, Qt::QueuedConnection);
+        connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
+            // todo
+        });
 
-        connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
-               this->onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
-            }, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto alias, auto driveKey) {
+            onDriveCreationConfirmed( alias, sirius::drive::toString( driveKey ) );
+        }, Qt::QueuedConnection);
+
+        connect(m_onChainClient, &OnChainClient::prepareDriveTransactionFailed, this, [this](auto alias, auto driveKey, auto errorText) {
+            onDriveCreationFailed( alias, sirius::drive::toString( driveKey ), errorText.toStdString() );
+        }, Qt::QueuedConnection);
 
         m_onChainClient->loadDrives();
     }
 
-    connect(ui->m_refresh, &QPushButton::released, this, [this](){
+    connect(ui->m_refresh, &QPushButton::released, this, [this]()  {
         m_onChainClient->loadDrives();
         ui->m_fsTreeTableView->update();
     });
@@ -245,7 +253,9 @@ void MainWin::selectFsTreeItem( int index )
 
     ui->m_fsTreeTableView->selectRow( index );
 
-    ui->m_downloadBtn->setEnabled( ! m_fsTreeTableModel->m_rows[index].m_isFolder );
+    if (!m_fsTreeTableModel->m_rows.empty()) {
+        ui->m_downloadBtn->setEnabled( ! m_fsTreeTableModel->m_rows[index].m_isFolder );
+    }
 }
 
 void MainWin::onDownloadBtn()
@@ -425,17 +435,21 @@ void MainWin::addChannel( const std::string&             channelName,
     updateChannelsCBox();
 }
 
-void MainWin::onChannelCreationConfirmed( const std::string& channelKey )
+void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
-    auto* channelInfo = Model::findChannel( channelKey );
+    ChannelInfo channelInfo;
+    channelInfo.m_name = alias;
+    channelInfo.m_hash = channelKey;
+    channelInfo.m_driveHash = driveKey;
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Channel '" + channelInfo->m_name + "' created successfully.") );
+    msgBox.setText( QString::fromStdString( "Channel '" + alias + "' created successfully.") );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
-    channelInfo->m_isCreating = false;
+    channelInfo.m_isCreating = false;
 
+    Model::dnChannels().push_back(channelInfo);
     updateChannelsCBox();
 }
 
@@ -445,6 +459,32 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     QMessageBox msgBox;
     msgBox.setText( QString::fromStdString( "Channel creation failed (" + channelInfo->m_name + ")\n It will be removed.") );
+    msgBox.setInformativeText( QString::fromStdString( errorText ) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+
+    //todo!!!
+}
+
+void MainWin::onDriveCreationConfirmed(const std::string &alias, const std::string &driveKey) {
+    DriveInfo driveInfo;
+    driveInfo.m_name = alias;
+    driveInfo.m_driveKey = driveKey;
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Drive '" + alias + "' created successfully.") );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+
+    driveInfo.m_isCreating = false;
+
+    Model::drives().push_back(driveInfo);
+    updateDrivesCBox();
+}
+
+void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText) {
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Drive creation failed (" + alias + ")\n It will be removed.") );
     msgBox.setInformativeText( QString::fromStdString( errorText ) );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();

@@ -43,15 +43,15 @@ private:
                      const std::string&             driveKey,
                      const std::vector<std::string> allowedPublicKeys );
 
-    void onChannelCreationConfirmed( const std::string& channelKey );
+    void onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey );
     void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );
 //    void onChannelDeleted( const std::string& channelKey );
     void onCurrentChannelChanged( int index );
 
     void updateChannelsCBox();
 
-    void onDriveCreationConfirmed( const std::string& driveKey );
-    void onDriveCreationFailed( const std::string& channelKey, const std::string& errorText );
+    void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
+    void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
     void onDriveDeleted( const std::string& driveKey );
     void onDriveChanged( int index );
 

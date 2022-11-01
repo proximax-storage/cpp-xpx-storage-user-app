@@ -1,4 +1,5 @@
 #include "OnChainClient.h"
+#include <QDebug>
 
 OnChainClient::OnChainClient(const std::string& privateKey, const std::string& address, const std::string& port,  QObject* parent)
     : QObject(parent)
@@ -44,19 +45,39 @@ OnChainClient::OnChainClient(const std::string& privateKey, const std::string& a
 
     mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
 
-//    connect(mpTransactionsEngine, &TransactionsEngine::downloadChannelOpenTransactionConfirmed, this, [](auto ) {
-//
-//    });
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadTransactionConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
+        emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadTransactionFailed, this, [this](auto channelId, auto errorText) {
+        emit downloadChannelOpenTransactionFailed(channelId, errorText);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::finishDownloadTransactionConfirmed, this, [this](auto channelId) {
+        emit downloadChannelCloseTransactionConfirmed(channelId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::finishDownloadTransactionFailed, this, [this](auto errorText) {
+        emit downloadChannelCloseTransactionFailed(errorText);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveTransactionConfirmed, this, [this](auto alias, auto driveId) {
+        emit prepareDriveTransactionConfirmed(alias, driveId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveTransactionFailed, this, [this](auto alias, auto driveKey, auto errorText) {
+        emit prepareDriveTransactionFailed(alias, driveKey, errorText);
+    });
 }
 
 void OnChainClient::loadDrives() {
     mpBlockchainEngine->getDrives([this](auto drivesPage, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            // logs
+            qWarning() << message.c_str() << " : " << code.c_str();
             return;
         }
 
-        auto publicKey = TransactionsEngine::rawHashToHex(mpChainAccount->publicKey());
+        auto publicKey = rawHashToHex(mpChainAccount->publicKey());
 
         QStringList loadedDrives;
         for (const auto &drive: drivesPage.data.drives) {
@@ -65,14 +86,16 @@ void OnChainClient::loadDrives() {
             }
         }
 
-        emit drivesLoaded(loadedDrives);
+        if (!loadedDrives.empty()) {
+            emit drivesLoaded(loadedDrives);
+        }
     });
 }
 
 void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
     mpBlockchainEngine->getDownloadChannels([this, drivePubKey](auto channelsPage, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            // logs
+            qWarning() << message.c_str() << " : " << code.c_str();
             return;
         }
 
@@ -83,7 +106,9 @@ void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
             }
         }
 
-        emit downloadChannelsLoaded(loadedChannels);
+        if (!loadedChannels.empty()) {
+            emit downloadChannelsLoaded(loadedChannels);
+        }
     });
 }
 
@@ -91,8 +116,21 @@ std::shared_ptr<BlockchainEngine> OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
 }
 
-void OnChainClient::addDownloadChannel(const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
+void OnChainClient::addDownloadChannel(const std::string& channelAlias,
+                                       const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
                                        const std::array<uint8_t, 32> &drivePubKey, const uint64_t &prepaidSize,
                                        const uint64_t &feedbacksNumber) {
-    mpTransactionsEngine->addDownloadChannel(listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
+    mpTransactionsEngine->addDownloadChannel(channelAlias, listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
+}
+
+void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
+    mpTransactionsEngine->closeDownloadChannel(channelId);
+}
+
+void OnChainClient::addDrive(const std::string &driveAlias, const uint64_t &driveSize, ushort replicatorsCount) {
+    mpTransactionsEngine->addDrive(driveAlias, driveSize, replicatorsCount);
+}
+
+void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
+    mpTransactionsEngine->closeDrive(driveKey);
 }
