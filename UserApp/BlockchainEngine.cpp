@@ -6,6 +6,7 @@ BlockchainEngine::BlockchainEngine(std::shared_ptr<xpx_chain_sdk::IClient> chain
     , mpWorker(new Worker)
     , mpThread(new QThread)
 {
+    qRegisterMetaType<std::array<uint8_t,32>>("std::array<uint8_t,32>");
 }
 
 void BlockchainEngine::init(int delay) {

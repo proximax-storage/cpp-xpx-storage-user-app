@@ -1,4 +1,5 @@
 #include "TransactionsEngine.h"
+#include "Utils.h"
 
 #include <qdebug.h>
 
@@ -10,7 +11,8 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mpChainAccount(account)
 {}
 
-void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
+void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
+                                            const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
                                             const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
                                             const uint64_t &feedbacksNumber) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
@@ -37,7 +39,7 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
 
     statusNotifier.set([this, downloadNotifierId = downloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
-        //emit downloadChannelOpenTransactionFailed(notification.hash.c_str(), notification.status.c_str());
+        emit createDownloadTransactionFailed(notification.hash.c_str(), notification.status.c_str());
 
         mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [](auto code)
         {
@@ -55,12 +57,11 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
 
     const std::string hash = rawHashToHex(downloadTransaction->hash()).toStdString();
 
-    downloadNotifier.set([this, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](
+    downloadNotifier.set([this, channelAlias, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
             qInfo() << "confirmed downloadTransaction hash: " << hash.c_str();
-
             mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
                 qWarning() << code.message().c_str();
             }, { statusNotifierId });
@@ -70,12 +71,11 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
             }, { id });
 
             //emit balancesUpdated();
-            //emit downloadChannelOpenTransactionConfirmed(rawHashFromHex(hash.c_str()), rawDrivePubKey);
+            emit createDownloadTransactionConfirmed(channelAlias, rawHashFromHex(hash.c_str()), rawDrivePubKey);
         }
     });
 
-    auto onSuccess = [this, data = downloadTransaction->binary(), type = downloadTransaction->type(), hash](){
-        // TODO: logs
+    auto onSuccess = [this, data = downloadTransaction->binary()](){
         mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
             if (!isSuccess) {
                 qWarning() << message.c_str() << " : " << code.c_str();
@@ -92,10 +92,8 @@ void TransactionsEngine::addDownloadChannel(const std::vector<std::array<uint8_t
 
 void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
     QString channelIdHex = rawHashToHex(channelId);
-    //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), ": channelId: ", channelIdHex});
-
     if( channelId.empty()) {
-        //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), ": bad channelId: ", channelIdHex});
+        qWarning() << "bad channelId: " << " : " << channelIdHex;
         return;
     }
 
@@ -110,53 +108,49 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> finishDownloadNotifier;
 
     statusNotifier.set([this, finishDownloadNotifierId = finishDownloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
-        //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "closeDownloadChannel : ", notification.status.c_str(), notification.hash.c_str()});
-        //emit downloadChannelCloseFailed(notification.status.c_str());
+        qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+        emit finishDownloadTransactionFailed(notification.status.c_str());
 
-        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-            // error logs
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+            qWarning() << code.message().c_str();
         }, { finishDownloadNotifierId });
 
-        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-            // error logs
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+            qWarning() << code.message().c_str();
         }, { id });
     });
 
-    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
-        // error logs
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [](auto errorCode) {
+        qCritical() << errorCode.message().c_str();
     });
 
     const std::string hash = rawHashToHex(finishDownloadTransaction->hash()).toStdString();
 
     finishDownloadNotifier.set([this, hash, channelId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "confirmed finishDownloadTransaction hash: ", hash.c_str()});
-
-            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-                // error logs
+            qInfo() << "confirmed finishDownloadTransaction hash: " << hash.c_str();
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
             } , { statusNotifierId });
 
-            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this, hash](auto code) {
-                // error logs
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [hash](auto code) {
+                qWarning() << code.message().c_str();
             }, { id });
 
-            //emit downloadChannelCloseConfirmed(channelId);
+            emit finishDownloadTransactionConfirmed(channelId);
         }
     });
 
-    auto onSuccess = [this, data = finishDownloadTransaction->binary(), type = finishDownloadTransaction->type(), hash](){
-        // TODO: logs
+    auto onSuccess = [this, data = finishDownloadTransaction->binary()](){
         mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
-            if (isSuccess) {
-                // TODO: logs
-            } else {
-                // TODO: logs
+            if (!isSuccess) {
+                qWarning() << message.c_str() << " : " << code.c_str();
             }
         });
     };
 
-    auto onError = [this, hash](auto errorCode){
-        //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "error addConfirmedAddedNotifiers: ", errorCode.message().c_str(), hash.c_str()});
+    auto onError = [hash](auto errorCode){
+        qCritical() << errorCode.message().c_str() << " hash: " << hash.c_str();
     };
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { finishDownloadNotifier }, onSuccess, onError);
@@ -183,16 +177,16 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         //emit downloadPaymentFailed(notification.hash.c_str(), notification.status.c_str());
 
         mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-            // error logs
+            qWarning() << code.message().c_str();
         }, { downloadPaymentNotifierId });
 
         mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-            // error logs
+            qWarning() << code.message().c_str();
         }, { id });
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [this](auto errorCode) {
-        // error logs
+        qCritical() << errorCode.message().c_str();
     });
 
     const std::string hash = rawHashToHex(downloadPaymentTransaction->hash()).toStdString();
@@ -201,12 +195,12 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         if (notification.meta.hash == hash) {
             //emit log(Info, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "confirmed downloadPaymentTransaction hash: ", hash.c_str()});
 
-            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
-                // error logs
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
             }, { statusNotifierId });
 
-            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this, hash](auto code) {
-                // error logs
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [hash](auto code) {
+                qWarning() << code.message().c_str();
             }, {id });
 
             //emit balancesUpdated();
@@ -214,32 +208,142 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         }
     });
 
-    auto onSuccess = [this, data = downloadPaymentTransaction->binary(), type = downloadPaymentTransaction->type(), hash](){
-        // TODO: logs
+    auto onSuccess = [this, data = downloadPaymentTransaction->binary()](){
         mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
-            if (isSuccess) {
-                // TODO: logs
-            } else {
-                // TODO: logs
+            if (!isSuccess) {
+                qWarning() << message.c_str() << " : " << code.c_str();
             }
         });
     };
 
-    auto onError = [this, hash](auto errorCode){
-        //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "error addConfirmedAddedNotifiers: ", errorCode.message().c_str(), hash.c_str()});
+    auto onError = [hash](auto errorCode){
+        qCritical() << errorCode.message().c_str() << " hash: " << hash.c_str();
     };
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadPaymentNotifier }, onSuccess, onError);
 }
 
-QString TransactionsEngine::rawHashToHex(const std::array<uint8_t, 32>& rawHash) {
-    std::ostringstream stream;
-    stream << sirius::utils::HexFormat(rawHash);
-    return stream.str().c_str();
+void TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t& driveSize, const ushort replicatorsCount) {
+    xpx_chain_sdk::Amount verificationFeeAmount = 100;
+    auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(prepareDriveTransaction.get());
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> prepareDriveNotifier;
+
+    statusNotifier.set([this, driveAlias, prepareDriveNotifierId = prepareDriveNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+        qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+        emit createDriveTransactionFailed(driveAlias, rawHashFromHex(notification.hash.c_str()), notification.status.c_str());
+
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
+            qWarning() << code.message().c_str();
+        }, { prepareDriveNotifierId });
+
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [this](auto code) {
+            qWarning() << code.message().c_str();
+        }, { id });
+    });
+
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [](auto errorCode) {
+        qCritical() << errorCode.message().c_str();
+    });
+
+    const std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
+    //const auto fsTree = mDrivesFsTrees[prepareDriveTransaction->hash()];
+
+    prepareDriveNotifier.set([this, hash, driveAlias, statusNotifierId = statusNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionNotification& notification) {
+        if (notification.meta.hash == hash) {
+            qInfo() << "confirmed PrepareDrive transaction hash: " << hash.c_str();
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
+            }, { statusNotifierId });
+
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
+            }, { id });
+
+            auto rawDrivePubKey = rawHashFromHex(notification.meta.hash.c_str());
+            //showDrive(rawDrivePubKey);
+            //saveFsTree(rawDrivePubKey, fsTree);
+
+            emit createDriveTransactionConfirmed(driveAlias, rawDrivePubKey);
+        }
+    });
+
+    auto onSuccess = [this, data = prepareDriveTransaction->binary()](){
+        mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
+            if (!isSuccess) {
+                qWarning() << message.c_str() << " : " << code.c_str();
+            }
+        });
+    };
+
+    auto onError = [hash](auto errorCode){
+        qCritical() << errorCode.message().c_str() << " hash: " << hash.c_str();
+    };
+
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { prepareDriveNotifier }, onSuccess, onError);
 }
 
-std::array<uint8_t, 32> TransactionsEngine::rawHashFromHex(const QString& hex) {
-    std::array<uint8_t, 32> hash{};
-    xpx_chain_sdk::ParseHexStringIntoContainer(hex.toStdString().c_str(), hex.size(), hash);
-    return hash;
-};
+void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey) {
+    QString drivePubKey = rawHashToHex(rawDrivePubKey);
+
+    xpx_chain_sdk::Key driveKey;
+    xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
+
+    auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(driveClosureTransaction.get());
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> driveClosureNotifier;
+
+    statusNotifier.set([this, drivePubKey, driveClosureNotifierId = driveClosureNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+        //emit log(Error, {BOOST_CURRENT_FUNCTION, QString::number(__LINE__), "onRemoveDrive : ", notification.status.c_str(), notification.hash.c_str()});
+        //emit driveClosureTransactionFailed(drivePubKey, notification.status.c_str());
+
+        mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+            qWarning() << code.message().c_str();
+        }, { driveClosureNotifierId });
+
+        mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+            qWarning() << code.message().c_str();
+        }, { id });
+    });
+
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, [](){}, [](auto errorCode) {
+        qCritical() << errorCode.message().c_str();
+    });
+
+    const std::string hash = rawHashToHex(driveClosureTransaction->hash()).toStdString();
+
+    driveClosureNotifier.set([this, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
+        if (notification.meta.hash == hash) {
+            qInfo() << "confirmed driveClosureTransaction hash: " << hash.c_str();
+            mpChainClient->notifications()->removeConfirmedAddedNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
+            }, { statusNotifierId });
+
+            mpChainClient->notifications()->removeStatusNotifiers(mpChainAccount->address(), [](){}, [](auto code) {
+                qWarning() << code.message().c_str();
+            }, { id });
+
+            //emit driveClosureTransactionConfirmed(rawDrivePubKey);
+        }
+    });
+
+    auto onSuccess = [this, data = driveClosureTransaction->binary()]() {
+        mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
+            if (!isSuccess) {
+                qWarning() << message.c_str() << " : " << code.c_str();
+            }
+        });
+    };
+
+    auto onError = [hash](auto errorCode) {
+        qCritical() << errorCode.message().c_str() << " hash: " << hash.c_str();
+    };
+
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { driveClosureNotifier }, onSuccess, onError);
+}

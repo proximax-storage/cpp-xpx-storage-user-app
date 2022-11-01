@@ -88,9 +88,12 @@ private:
     std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
 };
 
+typedef std::array<uint8_t,32> stdArrayUint8_t32;
+
 Q_DECLARE_METATYPE(QUuid)
 Q_DECLARE_METATYPE(std::function<QVariant()>)
 Q_DECLARE_METATYPE(std::function<void(QVariant)>)
+Q_DECLARE_METATYPE(stdArrayUint8_t32)
 Q_DECLARE_METATYPE(xpx_chain_sdk::ErrorMessage)
 Q_DECLARE_METATYPE(std::string)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Block)
