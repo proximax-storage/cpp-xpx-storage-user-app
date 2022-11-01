@@ -82,8 +82,8 @@ MainWin::MainWin(QWidget *parent)
         dialog.exec();
     });
 
-    const std::string privateKey = "7AA907C3D80B3815BE4B4E1470DEEE8BB83BFEB330B9A82197603D09BA947230";
-    const std::string address = "127.0.0.1";
+    const std::string privateKey = "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4";
+    const std::string address = "54.151.169.225";
     const std::string port = "3000";
 
     if (!STANDALONE_TEST) {
@@ -146,6 +146,7 @@ MainWin::MainWin(QWidget *parent)
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
+            ///addChannel();
                onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
         }, Qt::QueuedConnection);
 
