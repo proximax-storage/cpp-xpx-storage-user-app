@@ -3,6 +3,8 @@
 #include <QTextStream>
 #include <QMutex>
 #include <iostream>
+#include <xpxchaincpp/utils/HexParser.h>
+#include <utils/HexFormatter.h>
 #include "Utils.h"
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -44,3 +46,16 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
         file.flush();
     }
 }
+
+
+QString rawHashToHex(const std::array<uint8_t, 32>& rawHash) {
+    std::ostringstream stream;
+    stream << sirius::utils::HexFormat(rawHash);
+    return stream.str().c_str();
+}
+
+std::array<uint8_t, 32> rawHashFromHex(const QString& hex) {
+    std::array<uint8_t, 32> hash{};
+    xpx_chain_sdk::ParseHexStringIntoContainer(hex.toStdString().c_str(), hex.size(), hash);
+    return hash;
+};
