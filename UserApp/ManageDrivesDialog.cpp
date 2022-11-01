@@ -34,8 +34,8 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
 
     connect(ui->m_addBtn, &QPushButton::released, this, [this] ()
     {
-        AddDriveDialog dialog(this);
-        dialog.exec();
+//        AddDriveDialog dialog(this);
+//        dialog.exec();
     });
 
     connect(ui->m_editBtn, &QPushButton::released, this, [this] ()
@@ -44,8 +44,8 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
 
         if ( rows.size() > 0 )
         {
-            AddDriveDialog dialog( this, rows[0].row() );
-            dialog.exec();
+//            AddDriveDialog dialog( this, rows[0].row() );
+//            dialog.exec();
         }
     });
 

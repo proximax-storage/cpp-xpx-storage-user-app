@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include "OnChainClient.h"
 
 namespace Ui { class AddDriveDialog; }
 
@@ -10,7 +11,8 @@ public:
     Q_OBJECT
 
 public:
-    explicit AddDriveDialog( QWidget *parent, int editDriveIndex = -1 );
+    explicit AddDriveDialog( OnChainClient* onChainClient,
+                             QWidget *parent, int editDriveIndex = -1 );
     ~AddDriveDialog() override;
 
 protected:
@@ -27,4 +29,5 @@ private:
     Ui::AddDriveDialog* ui;
 
     int m_editDriveIndex;
+    OnChainClient* mp_onChainClient;
 };

@@ -7,10 +7,12 @@
 
 #include <random>
 
-AddDriveDialog::AddDriveDialog( QWidget *parent, int editDriveIndex ) :
+AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
+                                QWidget *parent, int editDriveIndex ) :
     QDialog( parent ),
     ui( new Ui::AddDriveDialog() ),
-    m_editDriveIndex(editDriveIndex)
+    m_editDriveIndex(editDriveIndex),
+    mp_onChainClient(onChainClient)
 {
 
     ui->setupUi(this);
@@ -42,7 +44,7 @@ AddDriveDialog::AddDriveDialog( QWidget *parent, int editDriveIndex ) :
 
     connect( ui->m_key, &QLineEdit::textChanged, this, [this] ()
     {
-        verify();
+        //verify();
     });
 
 
@@ -123,6 +125,11 @@ void AddDriveDialog::accept()
             ui->m_maxDriveSize->setReadOnly(true);
             ui->m_key->setReadOnly(true);
         }
+
+        mp_onChainClient->addDrive(ui->m_driveName->text().toStdString(),
+                                   ui->m_maxDriveSize->text().toULongLong(),
+                                   ui->m_replicatorNumber->text().toULongLong());
+
         QDialog::accept();
     }
 }
