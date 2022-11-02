@@ -28,12 +28,14 @@ class TransactionsEngine : public QObject
 
 
     signals:
-        void createDownloadTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
-        void createDownloadTransactionFailed(const QString& channelId, const QString& errorText);
-        void finishDownloadTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
-        void finishDownloadTransactionFailed(const QString& errorText);
-        void createDriveTransactionConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveId);
-        void createDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
+        void createDownloadChannelFailed(const QString& channelId, const QString& errorText);
+        void closeDownloadChannelConfirmed(const std::array<uint8_t, 32>& channelId);
+        void closeDownloadChannelFailed(const QString& errorText);
+        void createDriveConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveId);
+        void createDriveFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void closeDriveConfirmed(const std::array<uint8_t, 32>& driveId);
+        void closeDriveFailed(const QString& errorText);
 
     private:
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;

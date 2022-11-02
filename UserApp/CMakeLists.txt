@@ -66,7 +66,8 @@ set(PROJECT_SOURCES
 		ManageDrivesDialog.h        Fstreeitem.cpp
         Fstreeitem.h                Fstreemodel.cpp
         Fstreemodel.h               Utils.cpp
-        Utils.h
+        Utils.h                     CloseDriveDialog.cpp
+        CloseDriveDialog.h
         ${TS_FILES}
 )
 

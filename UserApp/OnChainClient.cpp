@@ -45,28 +45,36 @@ OnChainClient::OnChainClient(const std::string& privateKey, const std::string& a
 
     mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadTransactionConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
         emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadTransactionFailed, this, [this](auto channelId, auto errorText) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
         emit downloadChannelOpenTransactionFailed(channelId, errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::finishDownloadTransactionConfirmed, this, [this](auto channelId) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDownloadChannelConfirmed, this, [this](auto channelId) {
         emit downloadChannelCloseTransactionConfirmed(channelId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::finishDownloadTransactionFailed, this, [this](auto errorText) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDownloadChannelFailed, this, [this](auto errorText) {
         emit downloadChannelCloseTransactionFailed(errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveTransactionConfirmed, this, [this](auto alias, auto driveId) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveConfirmed, this, [this](auto alias, auto driveId) {
         emit prepareDriveTransactionConfirmed(alias, driveId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveTransactionFailed, this, [this](auto alias, auto driveKey, auto errorText) {
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveFailed, this, [this](auto alias, auto driveKey, auto errorText) {
         emit prepareDriveTransactionFailed(alias, driveKey, errorText);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveConfirmed, this, [this](auto driveId) {
+        emit closeDriveTransactionConfirmed(driveId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
+        emit closeDriveTransactionFailed(errorText);
     });
 }
 

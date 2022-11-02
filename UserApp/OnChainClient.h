@@ -39,6 +39,8 @@ class OnChainClient : public QObject
         void downloadChannelCloseTransactionFailed(const QString& errorText);
         void prepareDriveTransactionConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey);
         void prepareDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void closeDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
+        void closeDriveTransactionFailed(const QString& errorText);
 
     private:
         std::shared_ptr<BlockchainEngine> mpBlockchainEngine;

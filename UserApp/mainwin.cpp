@@ -16,6 +16,7 @@
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
 #include "AddDriveDialog.h"
+#include "CloseDriveDialog.h"
 #include "ManageDrivesDialog.h"
 #include "ProgressBarDialog.h"
 #include "OnChainClient.h"
@@ -145,7 +146,6 @@ MainWin::MainWin(QWidget *parent)
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
-            ///addChannel();
                onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
         }, Qt::QueuedConnection);
 
@@ -160,7 +160,8 @@ MainWin::MainWin(QWidget *parent)
         });
 
         connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
-            // todo
+            CloseDriveDialog dialog(m_onChainClient, ui->m_driveCBox->currentText(), this);
+            dialog.exec();
         });
 
         connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto alias, auto driveKey) {
