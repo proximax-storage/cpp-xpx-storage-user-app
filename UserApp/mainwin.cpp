@@ -10,6 +10,7 @@
 #include "DriveTreeModel.h"
 #include "DiffTableModel.h"
 
+#include "Settings.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
 #include "AddDownloadChannelDialog.h"
@@ -82,9 +83,10 @@ MainWin::MainWin(QWidget *parent)
         dialog.exec();
     });
 
-    const std::string privateKey = "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4";
-    const std::string address = "54.151.169.225";
-    const std::string port = "3000";
+    const std::string privateKey = gSettings.config().m_privateKeyStr;
+    const auto gatewayEndpoint = QString(gSettings.config().m_restBootstrap.c_str()).split(":");
+    const std::string address = gatewayEndpoint[0].toStdString();
+    const std::string port = gatewayEndpoint[1].toStdString();
 
     if (!STANDALONE_TEST) {
         m_onChainClient = new OnChainClient(privateKey, address, port, this);
@@ -95,6 +97,7 @@ MainWin::MainWin(QWidget *parent)
 
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
+            connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
             dialog.exec();
         });
 
@@ -412,10 +415,10 @@ void MainWin::updateChannelsCBox()
     ui->m_channels->setCurrentIndex( Model::currentDnChannelIndex() );
 }
 
-void MainWin::addChannel( const std::string&             channelName,
-                          const std::string&             channelKey,
-                          const std::string&             driveKey,
-                          const std::vector<std::string> allowedPublicKeys )
+void MainWin::addChannel( const std::string&              channelName,
+                          const std::string&              channelKey,
+                          const std::string&              driveKey,
+                          const std::vector<std::string>& allowedPublicKeys )
 {
     auto& channels = Model::dnChannels();
     auto creationTime = std::chrono::steady_clock::now();
@@ -427,7 +430,7 @@ void MainWin::addChannel( const std::string&             channelName,
                                         creationTime
                            } );
 
-    Model::setCurrentDnChannelIndex( channels.size()-1 );
+    Model::setCurrentDnChannelIndex( (int)channels.size()-1 );
 
     updateChannelsCBox();
 }
@@ -565,7 +568,7 @@ void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array
 
 void MainWin::setupDrivesTab()
 {
-    ui->m_calcDiffBtn->setEnabled(false);
+    //ui->m_calcDiffBtn->setEnabled(false);
 
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
     {
