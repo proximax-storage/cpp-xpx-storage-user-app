@@ -2,18 +2,18 @@
 #include "ui_adddownloadchanneldialog.h"
 #include "Utils.h"
 #include "Model.h"
+#include "mainwin.h"
 
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
-                                                   const QStringList& drives,
-                                                   QWidget *parent) :
+                                                   MainWin *parent) :
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
+    m_mainWin(parent),
     mpOnChainClient(onChainClient)
 {
     ui->setupUi(this);
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Send");
-    ui->myDrives->addItems(drives);
 
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
@@ -44,12 +44,18 @@ void AddDownloadChannelDialog::accept() {
         qInfo() << "listOfAllowedPublicKeys is empty";
     }
 
+    //auto channelHash =
     mpOnChainClient->addDownloadChannel(
-                ui->alias->text().toStdString(),
+                ui->name->text().toStdString(),
                 listOfAllowedPublicKeys,
-                rawHashFromHex(ui->drive->text()),
+                rawHashFromHex(ui->driveKey->text()),
                 ui->prepaidAmountLine->text().toULongLong(),
                 0); // feedback is unused for now
+
+//    m_mainWin->addChannel( ui->name->text().toStdString(),
+//                           ui->driveKey->text().toStdString(),
+//                           sirius::drive::toString(channelHash),
+//                           {} );
 
     QDialog::accept();
 }

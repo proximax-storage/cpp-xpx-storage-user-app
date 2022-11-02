@@ -102,6 +102,19 @@
     </rect>
    </property>
   </widget>
+  <widget class="QPushButton" name="m_copyHashBtn">
+   <property name="geometry">
+    <rect>
+     <x>432</x>
+     <y>296</y>
+     <width>100</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Copy Hash</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

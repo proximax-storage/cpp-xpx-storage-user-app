@@ -5,6 +5,35 @@
 #include "StorageEngine.h"
 #include "utils/HexParser.h"
 
+#if ! __MINGW32__
+    #include <unistd.h>
+    #include <sys/types.h>
+    #include <pwd.h>
+#endif
+
+bool Model::isZeroHash( const std::array<uint8_t,32>& hash )
+{
+    static const std::array<uint8_t,32> zeroHash = {0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
+    return hash == zeroHash;
+}
+
+fs::path Model::homeFolder()
+{
+#if __MINGW32__
+    //todo: not tested
+    return getenv("HOMEPATH");
+#else
+    const char *homedir;
+
+    if ( const char* homedir = getenv("HOME"); homedir != nullptr )
+    {
+        return homedir;
+    }
+
+    return getpwuid(getuid())->pw_dir;
+#endif
+}
+
 bool Model::loadSettings()
 {
     return gSettings.load("");
@@ -40,6 +69,50 @@ std::vector<DownloadInfo>& Model::downloads()
     return gSettings.config().m_downloads;
 }
 
+void Model::addDrive( const std::string& driveHash,
+                      const std::string& driveName,
+                      const std::string& localFolder )
+{
+    gSettings.config().m_drives.emplace_back( DriveInfo{ driveHash, driveName, localFolder, 0, 0, false } );
+}
+
+void Model::setCurrentDriveIndex( int index )
+{
+    if ( index < 0 || index >= gSettings.config().m_drives.size() )
+    {
+        qDebug() << "setCurrentDriveIndex: invalid index: " << index;
+    }
+    else
+    {
+        gSettings.config().m_currentDriveIndex = index;
+    }
+}
+
+int Model::currentDriveIndex()
+{
+    return gSettings.config().m_currentDriveIndex;
+}
+
+void Model::onDrivesLoaded( const QStringList& driveList )
+{
+    auto& drives = gSettings.config().m_drives;
+
+    for( auto& driveHash : driveList )
+    {
+        std::string hash = driveHash.toStdString();
+
+        auto it = std::find_if( drives.begin(), drives.end(), [&hash] (const auto& driveInfo)
+        {
+            return driveInfo.m_driveKey == hash;
+        });
+
+        if ( it == drives.end() )
+        {
+            Model::addDrive( hash, hash, Model::homeFolder() / hash );
+        }
+    }
+}
+
 std::vector<DriveInfo>& Model::drives()
 {
     return gSettings.config().m_drives;
@@ -47,6 +120,8 @@ std::vector<DriveInfo>& Model::drives()
 
 DriveInfo* Model::currentDriveInfoPtr()
 {
+    qDebug() << "currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
+
     if ( gSettings.config().m_currentDriveIndex >= 0 && gSettings.config().m_currentDriveIndex < gSettings.config().m_drives.size() )
     {
         return & gSettings.config().m_drives[ gSettings.config().m_currentDriveIndex ];

@@ -13,14 +13,15 @@ namespace Ui {
 class AddDownloadChannelDialog;
 }
 
+class MainWin;
+
 class AddDownloadChannelDialog : public QDialog
 {
     Q_OBJECT
 
 public:
     explicit AddDownloadChannelDialog(OnChainClient* onChainClient,
-                                      const QStringList& drives,
-                                      QWidget *parent = nullptr);
+                                      MainWin *parent = nullptr);
     ~AddDownloadChannelDialog();
 
 public:
@@ -28,8 +29,9 @@ public:
     void reject() override;
 
 private:
-    Ui::AddDownloadChannelDialog *ui;
-    OnChainClient* mpOnChainClient;
+    Ui::AddDownloadChannelDialog*   ui;
+    MainWin*                        m_mainWin;
+    OnChainClient*                  mpOnChainClient;
 };
 
 #endif // ADDDOWNLOADCHANNELDIALOG_H

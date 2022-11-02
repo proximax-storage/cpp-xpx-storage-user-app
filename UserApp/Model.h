@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QStringList>
+
 #include <vector>
 #include <string>
 #include <array>
@@ -12,7 +14,7 @@
 #include "drive/FsTree.h"
 
 #ifdef __APPLE__
-inline bool STANDALONE_TEST = true;
+inline bool STANDALONE_TEST = false;//true;
 inline const char* ROOT_HASH1 = "096975e6f49b924078e443e6c208283034d043dd42b4db9ccd1dffd795577e5d";
 inline const char* ROOT_HASH2 = "83f8349b1623008b58fd9e2ee678e47842787834e0671e4cd2f6634d8ebfd2e6";
 #else
@@ -100,7 +102,7 @@ struct DriveInfo
     std::string m_name;
     std::string m_localDriveFolder;
     uint64_t    m_maxDriveSize = 0;
-    uint32_t    m_replicatorNumber;
+    uint32_t    m_replicatorNumber = 0;
     bool        m_isCreating = true;
     bool        m_isDeleting = false;
 
@@ -130,6 +132,9 @@ public: // tmp
 class Model
 {
 public:
+
+    static bool     isZeroHash( const std::array<uint8_t,32>& hash );
+    static fs::path homeFolder();
 
     //
     // Settings
@@ -163,6 +168,16 @@ public:
     //
     // Drives
     //
+    static void                     onDrivesLoaded( const QStringList& drives );
+
+    static void                     addDrive( const std::string& driveHash,
+                                              const std::string& driveName,
+                                              const std::string& localFolder );
+
+    static void                     setCurrentDriveIndex( int );
+    static int                      currentDriveIndex();
+
+
     static std::vector<DriveInfo>&  drives();
     static DriveInfo*               currentDriveInfoPtr();
     static void                     removeFromDownloads( int rowIndex );

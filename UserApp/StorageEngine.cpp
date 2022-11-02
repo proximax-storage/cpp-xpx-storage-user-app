@@ -77,7 +77,12 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
-//    qDebug() << "downloadFsTree(): after mutex";
+    if ( Model::isZeroHash(fsTreeHash) )
+    {
+        qDebug() << "zero fstree received";
+        onFsTreeReceived( driveHash, fsTreeHash, {} );
+        return;
+    }
 
     std::array<uint8_t,32> channelId;
     sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );

@@ -27,7 +27,7 @@
 #include <QScreen>
 #include <QComboBox>
 #include <QMessageBox>
-
+#include <QDesktopServices>
 #include <thread>
 
 MainWin::MainWin(QWidget *parent)
@@ -94,17 +94,11 @@ MainWin::MainWin(QWidget *parent)
         });
 
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
-            QStringList drives;
-            drives.reserve(ui->m_driveCBox->count());
-            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
-                drives.push_back(ui->m_driveCBox->itemText(i));
-            }
-
-            AddDownloadChannelDialog dialog(m_onChainClient, drives, this);
+            AddDownloadChannelDialog dialog(m_onChainClient, this);
             dialog.exec();
         });
 
-        const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
+        //const QStringList driveStructureHeaders = {tr("Name"), tr("Size (Bytes)"), tr("Type"), tr("Date Modified")};
         //m_fsTreeModel->setHeaders(driveStructureHeaders);
 
         //ui->m_fsTreeTableView->setModel( m_fsTreeModel );
@@ -132,9 +126,11 @@ MainWin::MainWin(QWidget *parent)
             });
         });
 
-        connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives) {
-            ui->m_driveCBox->clear();
-            ui->m_driveCBox->addItems(drives);
+        connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives)
+        {
+            // add drives created on another devices
+            Model::onDrivesLoaded(drives);
+            updateDrivesCBox();
 
             for (int i = 0; i < ui->m_driveCBox->count(); i++) {
                 m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
@@ -571,6 +567,23 @@ void MainWin::setupDrivesTab()
 {
     ui->m_calcDiffBtn->setEnabled(false);
 
+    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
+    {
+        qDebug() << "openLocalFolderBtn";
+
+        auto* driveInfo = Model::currentDriveInfoPtr();
+        if ( driveInfo != nullptr )
+        {
+            qDebug() << "driveInfo->m_localDriveFolder: " << driveInfo->m_localDriveFolder.c_str();
+            std::error_code ec;
+            if ( ! fs::exists(driveInfo->m_localDriveFolder, ec) )
+            {
+                fs::create_directories( driveInfo->m_localDriveFolder, ec );
+            }
+            QDesktopServices::openUrl( QString::fromStdString( "file://" + driveInfo->m_localDriveFolder));
+        }
+    });
+
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
     {
         Model::calcDiff();
@@ -649,6 +662,11 @@ void MainWin::updateDrivesCBox()
         ui->m_driveCBox->addItem( QString::fromStdString( channelInfo.m_name) );
     }
 
-//    onChannelChanged(0);
+    if ( Model::currentDriveInfoPtr() == nullptr &&  Model::drives().size() > 0 )
+    {
+        Model::setCurrentDriveIndex(0);
+    }
+
+    ui->m_driveCBox->setCurrentIndex( Model::currentDriveIndex() );
 }
 

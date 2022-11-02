@@ -4,6 +4,7 @@
 #include "./ui_ManageDrivesDialog.h"
 
 #include <QIntValidator>
+#include <QClipboard>
 
 #include <random>
 
@@ -53,14 +54,34 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
         //TODO
     });
 
+    connect(ui->m_copyHashBtn, &QPushButton::released, this, [this] ()
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         const auto& drives = gSettings.config().m_drives;
 
+        int currentRow = ui->m_table->currentRow();
+
+        qDebug() << "currentRow: " << currentRow;
+
+        if ( currentRow >= 0 && currentRow < drives.size()  )
+        {
+            QClipboard* clipboard = QApplication::clipboard();
+            clipboard->setText( QString::fromStdString(drives[currentRow].m_driveKey) );
+            qDebug() << "clipboard->setText: " << QString::fromStdString(drives[currentRow].m_driveKey);
+        }
+    });
+
+    {
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        const auto& drives = gSettings.config().m_drives;
+        qDebug() << "drives.size: " << drives.size();
+
         int i=0;
         for( const auto& drive : drives )
         {
+            qDebug() << "driveKey: " << drive.m_driveKey.c_str();
             ui->m_table->insertRow(i);
             ui->m_table->setItem(i,0, new QTableWidgetItem( QString::fromStdString(drive.m_name)));
             auto maxSize = std::to_string( drive.m_maxDriveSize ) + " MB";
