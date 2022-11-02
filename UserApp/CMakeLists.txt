@@ -50,24 +50,30 @@ set(PROJECT_SOURCES
         Settings.h                  Settings.cpp                progressbardialog.ui
         StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
         FsTreeTableModel.h          FsTreeTableModel.cpp        ManageDrivesDialog.ui
+        FsTreeTableModel.h          FsTreeTableModel.cpp        ManageDrivesDialog.ui
+        SelectDriveDialog.h         SelectDriveDialog.cpp       SelectDriveDialog.ui
+
         DownloadsTableModel.h       DownloadsTableModel.cpp
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
-        LocalDriveItem.h            BlockchainEngine.cpp
-        BlockchainEngine.h          Worker.cpp
-        Worker.h                    TransactionsEngine.cpp
-        TransactionsEngine.h        AddDownloadChannelDialog.cpp
-        AddDownloadChannelDialog.h  CloseChannelDialog.cpp
-        CloseChannelDialog.h        ProgressBarDialog.cpp
-        ProgressBarDialog.h         OnChainClient.cpp
-        OnChainClient.h				AddDriveDialog.cpp
-		AddDriveDialog.h			ManageDrivesDialog.cpp
-		ManageDrivesDialog.h        Fstreeitem.cpp
-        Fstreeitem.h                Fstreemodel.cpp
-        Fstreemodel.h               Utils.cpp
-        Utils.h                     CloseDriveDialog.cpp
-        CloseDriveDialog.h
+
+        LocalDriveItem.h
+        BlockchainEngine.cpp        BlockchainEngine.h
+        Worker.cpp                  Worker.h
+        TransactionsEngine.cpp      TransactionsEngine.h
+        AddDownloadChannelDialog.cpp AddDownloadChannelDialog.h
+        CloseChannelDialog.cpp      CloseChannelDialog.h
+        ProgressBarDialog.cpp       ProgressBarDialog.h
+        OnChainClient.cpp           OnChainClient.h
+
+        AddDriveDialog.h            AddDriveDialog.cpp
+        ManageDrivesDialog.h        ManageDrivesDialog.cpp
+        Fstreeitem.h                Fstreeitem.cpp
+        Fstreemodel.h               Fstreemodel.cpp
+        Utils.h                     Utils.cpp
+        CloseDriveDialog.h          CloseDriveDialog.cpp
+
         ${TS_FILES}
 )
 

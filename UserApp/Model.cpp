@@ -49,6 +49,25 @@ fs::path Model::downloadFolder()
     return gSettings.downloadFolder();
 }
 
+void Model::onChannelLoaded( const std::string& channelKey,
+                             const std::string& driveKey,
+                             const std::vector<std::string>& listOfPublicKeys )
+{
+    auto& channels = gSettings.config().m_dnChannels;
+
+    auto it = std::find_if( channels.begin(), channels.end(), [&channelKey] (const auto& channelInfo)
+    {
+        return channelInfo.m_hash == channelKey;
+    });
+
+    if ( it == channels.end() )
+    {
+        auto creationTime = std::chrono::steady_clock::now(); //todo
+
+        gSettings.config().m_dnChannels.emplace_back( ChannelInfo{ channelKey, channelKey, driveKey, listOfPublicKeys, false, false, creationTime } );
+    }
+}
+
 std::vector<ChannelInfo>& Model::dnChannels()
 {
     return gSettings.config().m_dnChannels;

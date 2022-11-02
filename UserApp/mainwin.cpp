@@ -89,12 +89,15 @@ MainWin::MainWin(QWidget *parent)
     const std::string address = gatewayEndpoint[0].toStdString();
     const std::string port = gatewayEndpoint[1].toStdString();
 
-    if (!STANDALONE_TEST) {
+    if (!STANDALONE_TEST)
+    {
         m_onChainClient = new OnChainClient(privateKey, address, port, this);
-        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
-            ui->m_channels->clear();
-            ui->m_channels->addItems(channels);
-        });
+
+//        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
+//            qDebug() << "downloadChannelsLoaded1: " << channels;
+//            ui->m_channels->clear();
+//            ui->m_channels->addItems(channels);
+//        });
 
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
@@ -108,12 +111,18 @@ MainWin::MainWin(QWidget *parent)
         //ui->m_fsTreeTableView->setModel( m_fsTreeModel );
         //ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels)
+        {
+            qDebug() << "downloadChannelsLoaded2: " << channels;
+
             m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
                 if (!isSuccess) {
                     qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
                     return;
                 }
+
+                Model::onChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
+                updateChannelsCBox();
 
                 m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
                     if (!isSuccess) {
@@ -413,6 +422,11 @@ void MainWin::updateChannelsCBox()
         }
     }
 
+    if ( Model::currentChannelInfoPtr() == nullptr &&  Model::dnChannels().size() > 0 )
+    {
+        onCurrentChannelChanged(0);
+    }
+
     ui->m_channels->setCurrentIndex( Model::currentDnChannelIndex() );
 }
 
@@ -594,6 +608,30 @@ void MainWin::setupDrivesTab()
         m_driveTreeModel->updateModel();
         ui->m_driveTreeView->expandAll();
         m_diffTableModel->updateModel();
+    });
+
+    connect( ui->m_applyChangesBtn, &QPushButton::released, this, [this]
+    {
+        auto* drive = Model::currentDriveInfoPtr();
+
+        if ( drive != nullptr )
+        {
+            auto& actionList = drive->m_actionList;
+
+            if ( actionList.size() == 0 )
+            {
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "There is no differece.") );
+                msgBox.setStandardButtons( QMessageBox::Ok );
+                msgBox.exec();
+                return;
+            }
+
+            // todo
+//            m_onChainClient->startModification( drive->m_driveKey, [this] ( bool completedWithError, const std::string& errorText ) {
+//                qDebug() << "Modification completed: " << completedWithError;
+//            });
+        }
     });
 
     if ( STANDALONE_TEST )

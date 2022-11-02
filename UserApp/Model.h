@@ -143,6 +143,13 @@ public:
     static void     saveSettings();
     static fs::path downloadFolder();
 
+    //
+    // Channels
+    //
+    static void                         onChannelLoaded( const std::string& channelKey,
+                                                         const std::string& driveKey,
+                                                         const std::vector<std::string>& listOfPublicKeys );
+
     static std::vector<ChannelInfo>&    dnChannels();
     static void                         setCurrentDnChannelIndex( int );
     static int                          currentDnChannelIndex();
@@ -150,19 +157,6 @@ public:
     static ChannelInfo*                 findChannel( const std::string& channelKey );
 
     static std::vector<DownloadInfo>&   downloads();
-
-    //
-    // StorageEngine
-    //
-    static void startStorageEngine();
-
-    static void downloadFsTree( const std::string&             driveHash,
-                                const std::string&             dnChannelId,
-                                const std::array<uint8_t,32>&  fsTreeHash,
-                                FsTreeHandler                  onFsTreeReceived );
-
-    static sirius::drive::lt_handle downloadFile( const std::string&            channelId,
-                                                  const std::array<uint8_t,32>& fileHash );
 
 
     //
@@ -182,11 +176,24 @@ public:
     static DriveInfo*               currentDriveInfoPtr();
     static void                     removeFromDownloads( int rowIndex );
 
+    static void                     calcDiff();
+
+    //
+    // StorageEngine
+    //
+    static void startStorageEngine();
+
+    static void downloadFsTree( const std::string&             driveHash,
+                                const std::string&             dnChannelId,
+                                const std::array<uint8_t,32>&  fsTreeHash,
+                                FsTreeHandler                  onFsTreeReceived );
+
+    static sirius::drive::lt_handle downloadFile( const std::string&            channelId,
+                                                  const std::array<uint8_t,32>& fileHash );
+
     static void                     onFsTreeForDriveReceived( const std::string&           driveHash,
                                                               const std::array<uint8_t,32> fsTreeHash,
                                                               const sirius::drive::FsTree& fsTree );
-
-    static void                     calcDiff();
 
     //
     // Standalone test

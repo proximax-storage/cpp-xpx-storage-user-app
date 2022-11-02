@@ -1,4 +1,5 @@
 #include "AddDownloadChannelDialog.h"
+#include "SelectDriveDialog.h"
 #include "ui_adddownloadchanneldialog.h"
 #include "Utils.h"
 #include "Model.h"
@@ -18,6 +19,15 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDownloadChannelDialog::reject);
+
+    connect(ui->m_selectMyDriveBtn, &QPushButton::released, this, [this] ()
+    {
+        SelectDriveDialog dialog( [this] (const QString& hash)
+        {
+            ui->driveKey->setText(hash);
+        });
+        dialog.exec();
+    });
 
     setWindowTitle("Add new download channel");
     setFocus();
