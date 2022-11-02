@@ -116,11 +116,11 @@ std::shared_ptr<BlockchainEngine> OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
 }
 
-void OnChainClient::addDownloadChannel(const std::string& channelAlias,
+std::string OnChainClient::addDownloadChannel(const std::string& channelAlias,
                                        const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
                                        const std::array<uint8_t, 32> &drivePubKey, const uint64_t &prepaidSize,
                                        const uint64_t &feedbacksNumber) {
-    mpTransactionsEngine->addDownloadChannel(channelAlias, listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
+    return mpTransactionsEngine->addDownloadChannel(channelAlias, listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
 }
 
 void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {

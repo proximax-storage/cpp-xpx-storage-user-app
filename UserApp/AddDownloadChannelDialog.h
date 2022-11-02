@@ -28,6 +28,12 @@ public:
     void accept() override;
     void reject() override;
 
+signals:
+    void addDownloadChannel(const std::string&             channelName,
+                            const std::string&             channelKey,
+                            const std::string&             driveKey,
+                            const std::vector<std::string> allowedPublicKeys);
+
 private:
     Ui::AddDownloadChannelDialog*   ui;
     MainWin*                        m_mainWin;

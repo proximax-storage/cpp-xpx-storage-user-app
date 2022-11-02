@@ -44,18 +44,21 @@ void AddDownloadChannelDialog::accept() {
         qInfo() << "listOfAllowedPublicKeys is empty";
     }
 
-    //auto channelHash =
-    mpOnChainClient->addDownloadChannel(
+
+    auto channelHash = mpOnChainClient->addDownloadChannel(
                 ui->name->text().toStdString(),
                 listOfAllowedPublicKeys,
                 rawHashFromHex(ui->driveKey->text()),
                 ui->prepaidAmountLine->text().toULongLong(),
                 0); // feedback is unused for now
 
-//    m_mainWin->addChannel( ui->name->text().toStdString(),
-//                           ui->driveKey->text().toStdString(),
-//                           sirius::drive::toString(channelHash),
-//                           {} );
+    std::vector<std::string> publicKeys;
+    keys.reserve((int)listOfAllowedPublicKeys.size());
+    for (const auto& key : listOfAllowedPublicKeys) {
+        publicKeys.push_back(rawHashToHex(key).toStdString());
+    }
+
+    emit addDownloadChannel(ui->name->text().toStdString(), channelHash, ui->driveKey->text().toStdString(), publicKeys);
 
     QDialog::accept();
 }

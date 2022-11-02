@@ -15,11 +15,11 @@ class TransactionsEngine : public QObject
         ~TransactionsEngine() = default;
 
     public:
-        void addDownloadChannel(const std::string& channelAlias,
-                                const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
-                                const std::array<uint8_t, 32>& drivePubKey,
-                                const uint64_t& prepaidSize,
-                                const uint64_t& feedbacksNumber);
+        std::string addDownloadChannel(const std::string& channelAlias,
+                                       const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
+                                       const std::array<uint8_t, 32>& drivePubKey,
+                                       const uint64_t& prepaidSize,
+                                       const uint64_t& feedbacksNumber);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);

@@ -11,10 +11,10 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mpChainAccount(account)
 {}
 
-void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
-                                            const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
-                                            const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
-                                            const uint64_t &feedbacksNumber) {
+std::string TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
+                                                   const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
+                                                   const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
+                                                   const uint64_t &feedbacksNumber) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
 
     xpx_chain_sdk::Key driveKey;
@@ -55,7 +55,7 @@ void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
         qCritical() << errorCode.message().c_str();
     });
 
-    const std::string hash = rawHashToHex(downloadTransaction->hash()).toStdString();
+    std::string hash = rawHashToHex(downloadTransaction->hash()).toStdString();
 
     downloadNotifier.set([this, channelAlias, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](
             const auto& id,
@@ -88,6 +88,8 @@ void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
     };
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadNotifier }, onSuccess, onError);
+
+    return hash;
 }
 
 void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
