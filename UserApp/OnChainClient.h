@@ -5,6 +5,7 @@
 #include <memory>
 #include <xpxchaincpp/sdk.h>
 
+#include "StorageEngine.h"
 #include "BlockchainEngine.h"
 #include "TransactionsEngine.h"
 #include "Utils.h"
@@ -43,6 +44,7 @@ class OnChainClient : public QObject
         void closeDriveTransactionFailed(const QString& errorText);
 
     private:
+        std::shared_ptr<StorageEngine> mpStorageEngine;
         std::shared_ptr<BlockchainEngine> mpBlockchainEngine;
         std::shared_ptr<TransactionsEngine> mpTransactionsEngine;
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;

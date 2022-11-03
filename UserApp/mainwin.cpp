@@ -175,7 +175,7 @@ MainWin::MainWin(QWidget *parent)
         m_onChainClient->loadDrives();
     }
 
-    connect(ui->m_refresh, &QPushButton::released, this, [this]()  {
+    connect(ui->m_refresh, &QPushButton::released, this, [this]() {
         m_onChainClient->loadDrives();
         ui->m_fsTreeTableView->update();
     });

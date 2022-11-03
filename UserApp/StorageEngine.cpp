@@ -1,4 +1,5 @@
 #include "StorageEngine.h"
+#include "TransactionsEngine.h"
 #include "Settings.h"
 #include "mainwin.h"
 #include "drive/ClientSession.h"
@@ -14,13 +15,12 @@ void StorageEngine::start()
         endpoint_list bootstraps;
         std::vector<std::string> addressAndPort;
         boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
-        bootstraps.push_back( { boost::asio::ip::make_address(addressAndPort[0]),
-                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
+        bootstraps.push_back( { boost::asio::ip::make_address("192.168.20.20"), 7914 } );
 
     if ( !STANDALONE_TEST )
     {
         gStorageEngine->initClientSession( *gSettings.config().m_keyPair,
-                                           "0.0.0.0:" + gSettings.config().m_udpPort,
+                                           "192.168.20.30:" + gSettings.config().m_udpPort,
                                            bootstraps );
     }
     else
@@ -43,7 +43,7 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
     if ( STANDALONE_TEST )
     {
         m_session = sirius::drive::createClientSession( keyPair,
-                                                        "192.168.2.200:2000",
+                                                        "192.168.20.30:5555",
                                                         []( const lt::alert* ) {},
                                                         bootstraps,
                                                         false,
@@ -62,7 +62,7 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
                                                          "client_session" );
     }
 
-    m_session->setTorrentDeletedHandler( [this] ( lt::torrent_handle handle )
+    m_session->setTorrentDeletedHandler( [] ( lt::torrent_handle handle )
     {
         gSettings.onDownloadCompleted( handle );
     });

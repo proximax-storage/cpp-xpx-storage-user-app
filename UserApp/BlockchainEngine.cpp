@@ -7,6 +7,8 @@ BlockchainEngine::BlockchainEngine(std::shared_ptr<xpx_chain_sdk::IClient> chain
     , mpThread(new QThread)
 {
     qRegisterMetaType<std::array<uint8_t,32>>("std::array<uint8_t,32>");
+    qRegisterMetaType<sirius::drive::ActionList>("ActionList");
+    qRegisterMetaType<sirius::Key>("sirius_Key");
 }
 
 void BlockchainEngine::init(int delay) {
