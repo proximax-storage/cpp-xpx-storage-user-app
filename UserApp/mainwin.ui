@@ -349,7 +349,7 @@
        <string>Update Local Drive With Remoute</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_10">
+     <widget class="QPushButton" name="m_applyChangesBtn">
       <property name="geometry">
        <rect>
         <x>560</x>
