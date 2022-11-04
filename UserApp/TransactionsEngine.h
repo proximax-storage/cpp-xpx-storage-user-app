@@ -26,10 +26,11 @@ class TransactionsEngine : public QObject
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
         void addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
-        void applyDataModification(const std::array<uint8_t, 32>& driveKey,
+        void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::array<uint8_t, 32> &channelId,
-                                   const std::string& sandboxFolder);
+                                   const std::string& sandboxFolder,
+                                   const std::vector<xpx_chain_sdk::Address>& replicators);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
 
     signals:
@@ -44,10 +45,10 @@ class TransactionsEngine : public QObject
         void downloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId);
         void downloadPaymentFailed(const QString& errorText);
 
-//        void addActions(const sirius::drive::ActionList& actionList,
-//                        const sirius::Key& drivePublicKey,
-//                        const std::string& sandboxFolder,
-//                        std::function<void(uint64_t totalModifySize, const std::array<uint8_t, 32>&)> callback);
+        void addActions(const sirius::drive::ActionList& actionList,
+                        const sirius::Key& drivePublicKey,
+                        const std::string& sandboxFolder,
+                        std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
         void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId, const std::string& fileStructureCdi);
         void dataModificationApprovalFailed();
@@ -55,12 +56,20 @@ class TransactionsEngine : public QObject
         void dataModificationFailed(const std::array<uint8_t, 32>& modificationId);
 
     private:
+        void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
+                                    const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification>& notifier,
+                                    const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification>& statusNotifier);
+        void unsubscribeFromReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
+                                        const std::string& notifierId,
+                                        const std::string& statusNotifierId);
+
         void sendModification(const std::array<uint8_t, 32>& driveId,
                               const std::array<uint8_t, 32>& channelId,
                               const std::array<uint8_t, 32>& infoHash,
                               const sirius::drive::ActionList& actionList,
                               uint64_t totalModifySize,
-                              const std::string& sandboxFolder);
+                              const std::string& sandboxFolder,
+                              const std::vector<xpx_chain_sdk::Address>& replicators);
 
         void removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
                                           const std::string& id,

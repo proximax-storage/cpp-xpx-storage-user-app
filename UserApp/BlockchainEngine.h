@@ -10,6 +10,7 @@
 #include <thread>
 #include <iostream>
 
+#include <drive/FsTree.h>
 #include <drive/ActionList.h>
 #include <xpxchaincpp/sdk.h>
 
@@ -90,7 +91,6 @@ private:
 };
 
 typedef std::array<uint8_t,32> stdArrayUint8_t32;
-typedef sirius::drive::InfoHash siriusKey;
 
 Q_DECLARE_METATYPE(QUuid)
 Q_DECLARE_METATYPE(std::function<QVariant()>)
@@ -101,6 +101,7 @@ Q_DECLARE_METATYPE(xpx_chain_sdk::ErrorMessage)
 Q_DECLARE_METATYPE(std::string)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Block)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Drive)
+Q_DECLARE_METATYPE(sirius::drive::FsTree)
 Q_DECLARE_METATYPE(xpx_chain_sdk::DownloadChannel)
 Q_DECLARE_METATYPE(xpx_chain_sdk::drives_page::DrivesPage)
 Q_DECLARE_METATYPE(xpx_chain_sdk::download_channels_page::DownloadChannelsPage)

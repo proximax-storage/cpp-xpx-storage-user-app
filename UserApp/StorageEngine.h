@@ -6,6 +6,7 @@
 #include <functional>
 #include "crypto/KeyPair.h"
 #include "drive/FsTree.h"
+#include "drive/ActionList.h"
 
 #include "Model.h"
 
@@ -25,6 +26,11 @@ class StorageEngine
 public:
     StorageEngine() {}
 
+    sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,
+                                       const sirius::Key& driveId,
+                                       const std::string& sandboxFolder,
+                                       uint64_t& modifySize);
+
     void start();
 
     void restart();
@@ -40,9 +46,9 @@ public:
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
 
 private:
-    void initClientSession( const sirius::crypto::KeyPair&  keyPair,
-                            const std::string&              address,
-                            const endpoint_list&            bootstraps );
+    void init(const sirius::crypto::KeyPair&  keyPair,
+              const std::string&              address,
+              const endpoint_list&            bootstraps );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
 };

@@ -1,8 +1,13 @@
 #include "OnChainClient.h"
 #include <QDebug>
 
-OnChainClient::OnChainClient(const std::string& privateKey, const std::string& address, const std::string& port,  QObject* parent)
+OnChainClient::OnChainClient(std::shared_ptr<StorageEngine> storage,
+                             const std::string& privateKey,
+                             const std::string& address,
+                             const std::string& port,
+                             QObject* parent)
     : QObject(parent)
+    , mpStorageEngine(storage)
 {
     // API node
     auto config = std::shared_ptr<xpx_chain_sdk::Config>(&xpx_chain_sdk::GetConfig());
@@ -76,6 +81,29 @@ OnChainClient::OnChainClient(const std::string& privateKey, const std::string& a
     connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
         emit closeDriveTransactionFailed(errorText);
     });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {
+        uint64_t modificationsSize = 0;
+        auto hash = mpStorageEngine->addActions(actionList, driveId,  sandboxFolder, modificationsSize);
+        callback(modificationsSize, hash.array());
+    }, Qt::QueuedConnection);
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationConfirmed, this, [this](auto modificationId) {
+        emit dataModificationTransactionConfirmed(modificationId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationFailed, this, [this](auto modificationId) {
+        emit dataModificationTransactionFailed(modificationId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationApprovalConfirmed, this,
+            [this](auto driveId, auto channelId, auto fileStructureCdi) {
+        auto callback = [this](const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree){
+            emit fsTreeDownloaded(driveId, fsTreeHash, fsTree);
+        };
+
+        mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(), rawHashToHex(channelId).toStdString(), rawHashFromHex(fileStructureCdi.c_str()), callback);
+    }, Qt::QueuedConnection);
 }
 
 void OnChainClient::loadDrives() {
@@ -141,4 +169,33 @@ void OnChainClient::addDrive(const std::string &driveAlias, const uint64_t &driv
 
 void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
     mpTransactionsEngine->closeDrive(driveKey);
+}
+
+void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
+                                          const sirius::drive::ActionList &actions,
+                                          const std::array<uint8_t, 32> &channelId,
+                                          const std::string &sandboxFolder) {
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
+                                     [this, driveId, actions, channelId, sandboxFolder]
+                                     (auto drive, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
+            return;
+        }
+
+        if (drive.data.replicators.empty()) {
+            qWarning() << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
+            return;
+        }
+
+        std::vector<xpx_chain_sdk::Address> addresses;
+        addresses.reserve(drive.data.replicators.size());
+        for (const auto& replicator : drive.data.replicators) {
+            xpx_chain_sdk::Key key;
+            xpx_chain_sdk::ParseHexStringIntoContainer(replicator.c_str(), replicator.size(), key);
+            addresses.emplace_back(key);
+        }
+
+        mpTransactionsEngine->applyDataModification(driveId, actions, channelId, sandboxFolder, addresses);
+    });
 }

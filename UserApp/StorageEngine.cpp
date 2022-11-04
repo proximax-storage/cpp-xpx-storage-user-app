@@ -10,6 +10,13 @@
 
 #include <boost/algorithm/string.hpp>
 
+sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
+                                                  const sirius::Key &driveId,
+                                                  const std::string &sandboxFolder,
+                                                  uint64_t &modifySize) {
+    return m_session->addActionListToSession(actions, driveId, {}, sandboxFolder, modifySize);
+}
+
 void StorageEngine::start()
 {
 
@@ -20,9 +27,9 @@ void StorageEngine::start()
         boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
         bootstraps.push_back( { boost::asio::ip::make_address("192.168.20.20"), 7914 } );
 
-        gStorageEngine->initClientSession( *gSettings.config().m_keyPair,
-                                           "192.168.20.30:" + gSettings.config().m_udpPort,
-                                           bootstraps );
+        gStorageEngine->init(*gSettings.config().m_keyPair,
+                             "192.168.20.30:" + gSettings.config().m_udpPort,
+                             bootstraps);
     }
     else
     {
@@ -33,9 +40,9 @@ void StorageEngine::start()
 //                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
         bootstraps.push_back( { boost::asio::ip::make_address("192.168.2.101"), 5001 } );
 
-        gStorageEngine->initClientSession( *gSettings.config().m_keyPair,
-                                           "192.168.2.201:2001",
-                                           bootstraps );
+        gStorageEngine->init(*gSettings.config().m_keyPair,
+                             "192.168.2.201:2001",
+                             bootstraps);
     }
 }
 
@@ -44,9 +51,9 @@ void StorageEngine::restart()
     //todo
 }
 
-void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
-                                        const std::string&              address,
-                                        const endpoint_list&            bootstraps )
+void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
+                         const std::string&              address,
+                         const endpoint_list&            bootstraps )
 {
     if ( STANDALONE_TEST )
     {

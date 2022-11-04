@@ -93,7 +93,7 @@ MainWin::MainWin(QWidget *parent)
 
     if (!STANDALONE_TEST)
     {
-        m_onChainClient = new OnChainClient(privateKey, address, port, this);
+        m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
 
 //        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
 //            qDebug() << "downloadChannelsLoaded1: " << channels;
@@ -189,6 +189,39 @@ MainWin::MainWin(QWidget *parent)
         connect(m_onChainClient, &OnChainClient::prepareDriveTransactionFailed, this, [this](auto alias, auto driveKey, auto errorText) {
             onDriveCreationFailed( alias, sirius::drive::toString( driveKey ), errorText.toStdString() );
         }, Qt::QueuedConnection);
+
+        connect( ui->m_applyChangesBtn, &QPushButton::released, this, [this]
+        {
+            auto* drive = Model::currentDriveInfoPtr();
+            if (drive)
+            {
+                auto& actionList = drive->m_actionList;
+                if ( actionList.empty() )
+                {
+                    QMessageBox msgBox;
+                    msgBox.setText( QString::fromStdString( "There is no differece.") );
+                    msgBox.setStandardButtons( QMessageBox::Ok );
+                    msgBox.exec();
+                    return;
+                }
+
+                if (ui->m_channels->count() == 0) {
+                    qWarning() << "bad download channel";
+                    return;
+                }
+
+                auto actions = drive->m_actionList;
+                if (actions.empty()) {
+                    qWarning() << "no actions to apply";
+                    return;
+                }
+
+                auto channelId = rawHashFromHex(ui->m_channels->currentText());
+                const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
+                auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
+                m_onChainClient->applyDataModification(driveKeyHex, actions, channelId, sandbox);
+            }
+        });
 
         m_onChainClient->loadDrives();
     }
@@ -618,30 +651,6 @@ void MainWin::setupDrivesTab()
         m_driveTreeModel->updateModel();
         ui->m_driveTreeView->expandAll();
         m_diffTableModel->updateModel();
-    });
-
-    connect( ui->m_applyChangesBtn, &QPushButton::released, this, [this]
-    {
-        auto* drive = Model::currentDriveInfoPtr();
-
-        if ( drive != nullptr )
-        {
-            auto& actionList = drive->m_actionList;
-
-            if ( actionList.size() == 0 )
-            {
-                QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "There is no differece.") );
-                msgBox.setStandardButtons( QMessageBox::Ok );
-                msgBox.exec();
-                return;
-            }
-
-            // todo
-//            m_onChainClient->startModification( drive->m_driveKey, [this] ( bool completedWithError, const std::string& errorText ) {
-//                qDebug() << "Modification completed: " << completedWithError;
-//            });
-        }
     });
 
     if ( STANDALONE_TEST )
