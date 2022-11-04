@@ -22,8 +22,16 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
 
             if ( calculateHashes )
             {
-                auto& hash = sirius::drive::calculateInfoHash( path / entryName, sirius::Key(*driveKey) ).array();
-                parent.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash, {}, fs::last_write_time(entry) };
+                sirius::drive::InfoHash hash;
+                if ( entry.file_size() == 0 )
+                {
+                    std::memset( &hash[0], 0, sizeof(hash) );
+                }
+                else
+                {
+                    hash = sirius::drive::calculateInfoHash( path / entryName, sirius::Key(*driveKey) ).array();
+                }
+                parent.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, fs::last_write_time(entry) };
             }
             else
             {
@@ -67,13 +75,22 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
                 auto modifyTime = fs::last_write_time( fsPath/entryName );
                 if ( modifyTime == oldIt->second.m_modifyTime )
                 {
-                    newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, oldIt->second.m_hash, {}, modifyTime };
+                    newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, oldIt->second.m_fileHash, {}, modifyTime };
                     continue;
                 }
-
             }
-            auto& hash = sirius::drive::calculateInfoHash( fsPath / entryName, sirius::Key(driveKey) ).array();
-            newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash, {}, fs::last_write_time(entry) };
+
+            sirius::drive::InfoHash hash;
+            if ( entry.file_size() == 0 )
+            {
+                std::memset( &hash[0], 0, sizeof(hash) );
+            }
+            else
+            {
+                auto hash = sirius::drive::calculateInfoHash( fsPath / entryName, sirius::Key(driveKey) ).array();
+            }
+
+            newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, fs::last_write_time(entry) };
         }
     }
 }
@@ -150,17 +167,27 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
 
                     // add local file
-                    m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
-                    localChild.m_ldiStatus = ldi_added;
+                    if ( localChild.m_size > 0 )
+                    {
+                        m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                        localChild.m_ldiStatus = ldi_added;
+                    }
                 }
                 else
                 {
-                    if ( localChild.m_hash != getFile(fsIt->second).hash().array() )
+                    if ( localChild.m_fileHash != getFile(fsIt->second).hash().array() )
                     {
                         // Replace file
 
                         // add (upload) local file
-                        m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                        if ( localChild.m_size == 0 )
+                        {
+                            m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                        }
+                        else
+                        {
+                            m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                        }
                         localChild.m_ldiStatus = ldi_changed;
 
                         isChanged = true;
@@ -181,8 +208,11 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             else
             {
                 // add (upload) local file
-                m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
-                localChild.m_ldiStatus = ldi_added;
+                if ( localChild.m_size > 0 )
+                {
+                    m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                    localChild.m_ldiStatus = ldi_added;
+                }
             }
             isChanged = true;
         }
@@ -278,8 +308,11 @@ void Diff::addFolderWithChilds( LocalDriveItem& localFolder,
         }
         else
         {
-            m_diffActionList.push_back( sirius::drive::Action::upload( localFolderPath / name, path /name ) );
-            item.m_ldiStatus = ldi_added;
+            if ( item.m_size > 0 )
+            {
+                m_diffActionList.push_back( sirius::drive::Action::upload( localFolderPath / name, path /name ) );
+                item.m_ldiStatus = ldi_added;
+            }
         }
     }
 }

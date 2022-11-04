@@ -1,16 +1,16 @@
 #include "Settings.h"
 #include "AddDriveDialog.h"
-#include "ManageDrivesDialog.h"
-#include "./ui_ManageDrivesDialog.h"
+#include "ManageChannelsDialog.h"
+#include "./ui_ManageChannelsDialog.h"
 
 #include <QIntValidator>
 #include <QClipboard>
 
 #include <random>
 
-ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
+ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
     QDialog( parent ),
-    ui( new Ui::ManageDrivesDialog() )
+    ui( new Ui::ManageChannelsDialog() )
 {
 
     ui->setupUi(this);
@@ -75,16 +75,14 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        const auto& drives = gSettings.config().m_drives;
-        qDebug() << "drives.size: " << drives.size();
+        const auto& channels = gSettings.config().m_dnChannels;
 
         int i=0;
-        for( const auto& drive : drives )
+        for( const auto& channel : channels )
         {
-            qDebug() << "driveKey: " << drive.m_driveKey.c_str();
             ui->m_table->insertRow(i);
-            ui->m_table->setItem(i,0, new QTableWidgetItem( QString::fromStdString(drive.m_name)));
-            ui->m_table->setItem(i,1, new QTableWidgetItem( QString::fromStdString(drive.m_driveKey)));
+            ui->m_table->setItem( i,0, new QTableWidgetItem( QString::fromStdString(channel.m_name)) );
+            ui->m_table->setItem( i,1, new QTableWidgetItem( QString::fromStdString(channel.m_hash)) );
         }
 
         ui->m_table->resizeColumnsToContents();
@@ -93,12 +91,12 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
     }
 }
 
-ManageDrivesDialog::~ManageDrivesDialog()
+ManageChannelsDialog::~ManageChannelsDialog()
 {
     delete ui;
 }
 
-void ManageDrivesDialog::accept()
+void ManageChannelsDialog::accept()
 {
     if ( verify() )
     {
@@ -107,12 +105,12 @@ void ManageDrivesDialog::accept()
     }
 }
 
-void ManageDrivesDialog::reject()
+void ManageChannelsDialog::reject()
 {
     QDialog::reject();
 }
 
-bool ManageDrivesDialog::verify()
+bool ManageChannelsDialog::verify()
 {
 //    if ( verifyDriveName() && verifyLocalDriveFolder() && verifyKey() )
 //    {

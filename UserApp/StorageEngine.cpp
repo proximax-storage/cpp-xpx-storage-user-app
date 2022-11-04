@@ -12,19 +12,27 @@
 
 void StorageEngine::start()
 {
+
+    if ( !STANDALONE_TEST )
+    {
         endpoint_list bootstraps;
         std::vector<std::string> addressAndPort;
         boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
         bootstraps.push_back( { boost::asio::ip::make_address("192.168.20.20"), 7914 } );
 
-    if ( !STANDALONE_TEST )
-    {
         gStorageEngine->initClientSession( *gSettings.config().m_keyPair,
                                            "192.168.20.30:" + gSettings.config().m_udpPort,
                                            bootstraps );
     }
     else
     {
+        endpoint_list bootstraps;
+//        std::vector<std::string> addressAndPort;
+//        boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
+//        bootstraps.push_back( { boost::asio::ip::make_address(addressAndPort[0]),
+//                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
+        bootstraps.push_back( { boost::asio::ip::make_address("192.168.2.101"), 5001 } );
+
         gStorageEngine->initClientSession( *gSettings.config().m_keyPair,
                                            "192.168.2.201:2001",
                                            bootstraps );
@@ -43,15 +51,14 @@ void StorageEngine::initClientSession(  const sirius::crypto::KeyPair&  keyPair,
     if ( STANDALONE_TEST )
     {
         m_session = sirius::drive::createClientSession( keyPair,
-                                                        "192.168.20.30:5555",
-                                                        []( const lt::alert* ) {},
-                                                        bootstraps,
-                                                        false,
-                                                        "client0" );
+                                                                "192.168.2.201:2001",
+                                                                []( const lt::alert* ) {},
+                                                                bootstraps,
+                                                                false,
+                                                                "client0" );
         lt::settings_pack pack;
         pack.set_int( lt::settings_pack::download_rate_limit, 500*1024 );
-        m_session->setSessionSettings( pack, true );
-    }
+        m_session->setSessionSettings( pack, true );    }
     else
     {
         m_session = sirius::drive::createClientSession(  keyPair,

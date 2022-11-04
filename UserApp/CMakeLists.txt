@@ -49,10 +49,11 @@ set(PROJECT_SOURCES
         Model.h                     Model.cpp                   adddownloadchanneldialog.ui
         Settings.h                  Settings.cpp                progressbardialog.ui
         StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
-        FsTreeTableModel.h          FsTreeTableModel.cpp        ManageDrivesDialog.ui
-        FsTreeTableModel.h          FsTreeTableModel.cpp        ManageDrivesDialog.ui
         SelectDriveDialog.h         SelectDriveDialog.cpp       SelectDriveDialog.ui
+        ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
+        ManageChannelsDialog.h      ManageChannelsDialog.cpp    ManageChannelsDialog.ui
 
+        FsTreeTableModel.h          FsTreeTableModel.cpp
         DownloadsTableModel.h       DownloadsTableModel.cpp
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
@@ -68,7 +69,6 @@ set(PROJECT_SOURCES
         OnChainClient.cpp           OnChainClient.h
 
         AddDriveDialog.h            AddDriveDialog.cpp
-        ManageDrivesDialog.h        ManageDrivesDialog.cpp
         Fstreeitem.h                Fstreeitem.cpp
         Fstreemodel.h               Fstreemodel.cpp
         Utils.h                     Utils.cpp

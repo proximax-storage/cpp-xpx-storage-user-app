@@ -18,6 +18,7 @@
 #include "AddDriveDialog.h"
 #include "CloseDriveDialog.h"
 #include "ManageDrivesDialog.h"
+#include "ManageChannelsDialog.h"
 #include "ProgressBarDialog.h"
 #include "OnChainClient.h"
 
@@ -76,7 +77,8 @@ MainWin::MainWin(QWidget *parent)
     m_downloadUpdateTimer->start(500); // 2 times per second
 
 	connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
-        //TODO
+        ManageChannelsDialog dialog(this);
+        dialog.exec();
     });
 
     connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
@@ -130,11 +132,18 @@ MainWin::MainWin(QWidget *parent)
                         return;
                     }
 
-                    ChannelInfo channelInfo;
-                    channelInfo.m_hash = channel.data.id;
-                    channelInfo.m_driveHash = channel.data.drive;
-                    Model::dnChannels().push_back(channelInfo);
-                    onFsTreeHashReceived(channelInfo, rawHashFromHex(drive.data.rootHash.c_str()));
+//                    ChannelInfo channelInfo;
+//                    channelInfo.m_hash = channel.data.id;
+//                    channelInfo.m_driveHash = channel.data.drive;
+//                    Model::dnChannels().push_back(channelInfo);
+
+                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+                    ChannelInfo* channelInfo = Model::findChannel( channel.data.id );
+                    if ( channelInfo )
+                    {
+                        onFsTreeHashReceived( *channelInfo, rawHashFromHex(drive.data.rootHash.c_str()) );
+                    }
                 });
             });
         });
@@ -598,7 +607,8 @@ void MainWin::setupDrivesTab()
             {
                 fs::create_directories( driveInfo->m_localDriveFolder, ec );
             }
-            QDesktopServices::openUrl( QString::fromStdString( "file://" + driveInfo->m_localDriveFolder));
+//            QDesktopServices::openUrl( QString::fromStdString( "file://" + driveInfo->m_localDriveFolder));
+            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->m_localDriveFolder )));
         }
     });
 
