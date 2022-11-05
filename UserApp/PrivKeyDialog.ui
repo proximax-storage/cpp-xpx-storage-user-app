@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>540</width>
-    <height>306</height>
+    <height>380</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>248</y>
+     <y>320</y>
      <width>480</width>
      <height>32</height>
     </rect>
@@ -33,13 +33,13 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>48</y>
+     <y>120</y>
      <width>480</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
-    <string>Enter Private Key:</string>
+    <string>Private Key:</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
@@ -49,7 +49,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>78</y>
+     <y>150</y>
      <width>480</width>
      <height>21</height>
     </rect>
@@ -59,7 +59,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>122</y>
+     <y>194</y>
      <width>280</width>
      <height>32</height>
     </rect>
@@ -72,7 +72,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>169</y>
+     <y>241</y>
      <width>280</width>
      <height>32</height>
     </rect>
@@ -85,7 +85,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>212</y>
+     <y>284</y>
      <width>481</width>
      <height>25</height>
     </rect>
@@ -105,7 +105,39 @@
     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
    </property>
   </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>28</x>
+     <y>48</y>
+     <width>480</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Account Name:</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="m_accountName">
+   <property name="geometry">
+    <rect>
+     <x>28</x>
+     <y>78</y>
+     <width>480</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
+ <tabstops>
+  <tabstop>m_accountName</tabstop>
+  <tabstop>m_pkField</tabstop>
+  <tabstop>m_generateKeysBtn</tabstop>
+  <tabstop>m_loadFromFileBtn</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

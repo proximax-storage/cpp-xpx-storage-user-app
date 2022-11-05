@@ -20,28 +20,34 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
 void StorageEngine::start()
 {
 
-    if ( !STANDALONE_TEST )
+    if ( ALEX_LOCAL_TEST )
     {
         endpoint_list bootstraps;
-        std::vector<std::string> addressAndPort;
-        boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
+        bootstraps.push_back( { boost::asio::ip::make_address("192.168.2.101"), 5001 } );
+
+        gStorageEngine->init(*gSettings.config().m_keyPair,
+                             "192.168.2.201:2001",
+                             bootstraps);
+    }
+    else if ( VICTOR_LOCAL_TEST )
+    {
+        endpoint_list bootstraps;
         bootstraps.push_back( { boost::asio::ip::make_address("192.168.20.20"), 7914 } );
 
         gStorageEngine->init(*gSettings.config().m_keyPair,
-                             "192.168.20.30:" + gSettings.config().m_udpPort,
+                             "192.168.20.30:" + gSettings.m_udpPort,
                              bootstraps);
     }
     else
     {
         endpoint_list bootstraps;
-//        std::vector<std::string> addressAndPort;
-//        boost::split( addressAndPort, gSettings.config().m_replicatorBootstrap, [](char c){ return c==':'; } );
-//        bootstraps.push_back( { boost::asio::ip::make_address(addressAndPort[0]),
-//                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
-        bootstraps.push_back( { boost::asio::ip::make_address("192.168.2.101"), 5001 } );
+        std::vector<std::string> addressAndPort;
+        boost::split( addressAndPort, gSettings.m_replicatorBootstrap, [](char c){ return c==':'; } );
+        bootstraps.push_back( { boost::asio::ip::make_address(addressAndPort[0]),
+                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
 
         gStorageEngine->init(*gSettings.config().m_keyPair,
-                             "192.168.2.201:2001",
+                             "0.0.0.0:" + gSettings.m_udpPort,
                              bootstraps);
     }
 }
@@ -55,26 +61,17 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const std::string&              address,
                          const endpoint_list&            bootstraps )
 {
-    if ( STANDALONE_TEST )
-    {
-        m_session = sirius::drive::createClientSession( keyPair,
-                                                                "192.168.2.201:2001",
-                                                                []( const lt::alert* ) {},
-                                                                bootstraps,
-                                                                false,
-                                                                "client0" );
-        lt::settings_pack pack;
-        pack.set_int( lt::settings_pack::download_rate_limit, 500*1024 );
-        m_session->setSessionSettings( pack, true );    }
-    else
-    {
-        m_session = sirius::drive::createClientSession(  keyPair,
-                                                         address,
-                                                         []( const lt::alert* ) {},
-                                                         bootstraps,
-                                                         false,
-                                                         "client_session" );
-    }
+    qDebug() << "createClientSession: address: " << address.c_str();
+    qDebug() << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
+    m_session = sirius::drive::createClientSession(  keyPair,
+                                                     address,
+                                                     []( const lt::alert* alert )
+                                                     {
+                                                        qDebug() << "createClientSession: socketError?" << alert->message();
+                                                     },
+                                                     bootstraps,
+                                                     false,
+                                                     "client_session" );
 
     m_session->setTorrentDeletedHandler( [] ( lt::torrent_handle handle )
     {

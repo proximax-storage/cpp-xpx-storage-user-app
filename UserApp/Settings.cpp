@@ -55,10 +55,8 @@ Settings::Account::Account( const Account& a )
 
 Settings::Account& Settings::Account::operator=( const Account& a )
 {
-    m_restBootstrap         = a.m_restBootstrap;
-    m_replicatorBootstrap   = a.m_replicatorBootstrap;
-    m_udpPort               = a.m_udpPort;
-    m_privateKeyStr         = a.m_privateKeyStr;
+    initAccount( a.m_accountName, a.m_privateKeyStr );
+
     m_dnChannels            = a.m_dnChannels;
     m_currentDnChannelIndex = a.m_currentDnChannelIndex;
     m_downloadFolder        = a.m_downloadFolder;
@@ -66,8 +64,25 @@ Settings::Account& Settings::Account::operator=( const Account& a )
     m_drives                = a.m_drives;
     m_currentDriveIndex     = a.m_currentDriveIndex;
 
-    updateKeyPair( m_privateKeyStr );
     return *this;
+}
+
+void Settings::initForTests()
+{
+    if ( Model::homeFolder() == "/Users/alex" )
+    {
+        gSettings.m_restBootstrap       = "54.151.169.225:3000";
+
+        m_accounts.push_back({});
+        setCurrentAccountIndex( m_accounts.size()-1 );
+        config().initAccount( "test_genkins", "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4" );
+        config().m_downloadFolder = "/Users/alex/000-Downloads";
+
+        m_accounts.push_back({});
+        setCurrentAccountIndex( m_accounts.size()-1 );
+        config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
+        config().m_downloadFolder = "/Users/alex/000-Downloads";
+    }
 }
 
 bool Settings::load( const std::string& pwd )
@@ -110,6 +125,9 @@ bool Settings::load( const std::string& pwd )
                 return false;
             }
 
+            iarchive( m_restBootstrap );
+            iarchive( m_replicatorBootstrap );
+            iarchive( m_udpPort );
             iarchive( m_currentAccountIndex );
             iarchive( m_accounts );
         }
@@ -132,7 +150,7 @@ bool Settings::load( const std::string& pwd )
 
         for( auto& account: m_accounts )
         {
-            account.updateKeyPair( account.m_privateKeyStr );
+            account.initAccount( account.m_accountName, account.m_privateKeyStr );
             qDebug() << "account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
@@ -176,6 +194,9 @@ void Settings::save()
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
         archive( m_settingsVersion );
+        archive( m_restBootstrap );
+        archive( m_replicatorBootstrap );
+        archive( m_udpPort );
         archive( m_currentAccountIndex );
         archive( m_accounts );
 
@@ -202,7 +223,7 @@ std::vector<std::string> Settings::accountList()
 
     for( const auto& account : m_accounts )
     {
-        list.push_back( account.m_publicKeyStr );
+        list.push_back( account.m_accountName );
     }
     return list;
 }

@@ -22,11 +22,13 @@ class Settings
 {
 public:
 
+    std::string     m_restBootstrap;
+    std::string     m_replicatorBootstrap;
+    std::string     m_udpPort  = "6846";
+
     struct Account
     {
-        std::string                 m_restBootstrap       = "google.com:7001"; //TODO!!!
-        std::string                 m_replicatorBootstrap = "192.168.2.101:5001"; //TODO!!!
-        std::string                 m_udpPort             = "6846";
+        std::string                 m_accountName;
 
         std::string                 m_privateKeyStr;
         std::string                 m_publicKeyStr;
@@ -48,9 +50,7 @@ public:
         template<class Archive>
         void serialize( Archive &ar )
         {
-            ar( m_restBootstrap,
-                m_replicatorBootstrap,
-                m_udpPort,
+            ar(
                 m_privateKeyStr,
                 m_dnChannels,
                 m_currentDnChannelIndex,
@@ -59,8 +59,9 @@ public:
 
         std::optional<sirius::crypto::KeyPair>  m_keyPair;
 
-        void updateKeyPair( std::string privateKeyStr )
+        void initAccount( std::string name, std::string privateKeyStr )
         {
+            m_accountName   = name;
             m_privateKeyStr = privateKeyStr;
 
             if ( m_privateKeyStr.size() == 64 )
@@ -78,6 +79,8 @@ public:
 public:
 
     Settings() {}
+
+    void initForTests();
 
     bool load( const std::string& pwd );
     void save();

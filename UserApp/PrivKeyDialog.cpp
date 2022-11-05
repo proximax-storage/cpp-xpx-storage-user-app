@@ -56,6 +56,17 @@ PrivKeyDialog::~PrivKeyDialog()
 
 void PrivKeyDialog::verify()
 {
+    auto accountName = ui->m_accountName->text().toStdString();
+
+    // Verify account name
+    //
+    if ( accountName.size() == 0 )
+    {
+        ui->m_errorText->setText("Account name is not set");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        return;
+    }
+
     auto pkString = ui->m_pkField->text().toStdString();
 
     // Verify private key
@@ -143,8 +154,10 @@ void PrivKeyDialog::onLoadFromFileBtn()
 void PrivKeyDialog::accept()
 {
     std::string privateKeyStr = ui->m_pkField->text().toStdString();
-//    qDebug() << "privateKeyStr: " << privateKeyStr.c_str();
+    std::string accountName   = ui->m_accountName->text().toStdString();
 
+    // Check unique key
+    //
     auto it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
     {
         return account.m_privateKeyStr == privateKeyStr;
@@ -158,13 +171,27 @@ void PrivKeyDialog::accept()
         msgBox.exec();
         return;
     }
-    else
+
+    // Check unique name
+    //
+    it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
     {
-        m_settings.m_accounts.emplace_back( Settings::Account{} );
-        qDebug() << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
-        m_settings.setCurrentAccountIndex( m_settings.m_accounts.size()-1 );
-        m_settings.config().updateKeyPair( privateKeyStr );
+        return account.m_accountName == accountName;
+    } );
+
+    if ( it != m_settings.m_accounts.end() )
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Account with same name\n already exists");
+        msgBox.setStandardButtons(QMessageBox::Close);
+        msgBox.exec();
+        return;
     }
+
+    m_settings.m_accounts.emplace_back( Settings::Account{} );
+    qDebug() << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
+    m_settings.setCurrentAccountIndex( m_settings.m_accounts.size()-1 );
+    m_settings.config().initAccount( accountName, privateKeyStr );
 
     QDialog::accept();
 }
