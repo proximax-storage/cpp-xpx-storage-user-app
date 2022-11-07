@@ -44,6 +44,8 @@ class OnChainClient : public QObject
                                    const std::string& sandboxFolder);
 
     signals:
+        void initializedSuccessfully();
+        void initializedFailed(const QString& error);
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const QStringList& drives);

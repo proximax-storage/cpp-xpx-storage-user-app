@@ -121,6 +121,10 @@ MainWin::MainWin(QWidget *parent)
     {
         m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
 
+        connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
+            m_onChainClient->loadDrives();
+        });
+
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
             connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
@@ -238,13 +242,17 @@ MainWin::MainWin(QWidget *parent)
             }
         });
 
-        m_onChainClient->loadDrives();
+        connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
+            ui->m_refresh->setEnabled(true);
+        });
     }
 
     connect(ui->m_refresh, &QPushButton::released, this, [this]() {
         m_onChainClient->loadDrives();
         ui->m_fsTreeTableView->update();
     });
+
+    ui->m_refresh->setDisabled(true);
 }
 
 MainWin::~MainWin()

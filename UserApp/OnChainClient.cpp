@@ -189,6 +189,7 @@ void OnChainClient::init(const std::string& address,
     mpBlockchainEngine->getNetworkInfo([this, config, privateKey](auto info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << __FILE__ << "message: " << message.c_str() << " code: " << code.c_str();
+            emit initializedFailed(message.c_str());
             return;
         }
 
@@ -211,6 +212,7 @@ void OnChainClient::init(const std::string& address,
         mpBlockchainEngine->getBlockByHeight(1, [this, config, privateKey](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                emit initializedFailed(message.c_str());
                 return;
             }
 
@@ -218,6 +220,7 @@ void OnChainClient::init(const std::string& address,
             initAccount(privateKey);
             mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
             initConnects();
+            emit initializedSuccessfully();
         });
     });
 }
