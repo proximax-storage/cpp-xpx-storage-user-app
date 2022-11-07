@@ -12,6 +12,7 @@
 #include "libtorrent/torrent_handle.hpp"
 
 #include "Model.h"
+#include "Utils.h"
 
 std::filesystem::path settingsFolder();
 
@@ -111,7 +112,7 @@ public:
 
     void setCurrentAccountIndex( int currentAccountIndex )
     {
-        qDebug() << "setCurrentAccountIndex: " << currentAccountIndex;
+        qDebug() << LOG_SOURCE << "setCurrentAccountIndex: " << currentAccountIndex;
         m_currentAccountIndex = currentAccountIndex;
         assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
     }

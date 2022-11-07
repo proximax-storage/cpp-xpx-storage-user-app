@@ -43,7 +43,7 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
     std::string hash = rawHashToHex(downloadTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, downloadNotifierId = downloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), downloadNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -53,14 +53,14 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
-        qCritical() << errorCode.message().c_str();
+        qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
     downloadNotifier.set([this, channelAlias, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed downloadTransaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed downloadTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -80,7 +80,7 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
 void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
     QString channelIdHex = rawHashToHex(channelId);
     if( channelId.empty()) {
-        qWarning() << "bad channelId: empty!";
+        qWarning() << LOG_SOURCE << "bad channelId: empty!";
         return;
     }
 
@@ -97,7 +97,7 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     const std::string hash = rawHashToHex(finishDownloadTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, finishDownloadNotifierId = finishDownloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), finishDownloadNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -107,12 +107,12 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
-        qCritical() << errorCode.message().c_str();
+        qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
     finishDownloadNotifier.set([this, hash, channelId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed finishDownloadTransaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed finishDownloadTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -144,7 +144,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     const std::string hash = rawHashToHex(downloadPaymentTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, downloadPaymentNotifierId = downloadPaymentNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), downloadPaymentNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -154,12 +154,12 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [this](auto errorCode) {
-        qCritical() << errorCode.message().c_str();
+        qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
     downloadPaymentNotifier.set([this, hash, channelId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed downloadPaymentTransaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed downloadPaymentTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -184,7 +184,7 @@ void TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t&
     const std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, driveAlias, prepareDriveNotifierId = prepareDriveNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), prepareDriveNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -194,14 +194,14 @@ void TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t&
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
-        qCritical() << errorCode.message().c_str();
+        qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
     prepareDriveNotifier.set([this, hash, driveAlias, statusNotifierId = statusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed PrepareDrive transaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed PrepareDrive transaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -230,7 +230,7 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
     const std::string hash = rawHashToHex(driveClosureTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, drivePubKey, driveClosureNotifierId = driveClosureNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            qWarning() << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), driveClosureNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -240,12 +240,12 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
-        qCritical() << errorCode.message().c_str();
+        qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
     driveClosureNotifier.set([this, hash, rawDrivePubKey, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed driveClosureTransaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed driveClosureTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -265,18 +265,18 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
                                                const std::string& sandboxFolder,
                                                const std::vector<xpx_chain_sdk::Address>& replicators) {
     if (!isValidHash(driveId)) {
-        qWarning() << "bad driveId: empty!";
+        qWarning() << LOG_SOURCE << "bad driveId: empty!";
         return;
     }
 
     if (!isValidHash(channelId)) {
-        qWarning() << "bad channelId: empty!";
+        qWarning() << LOG_SOURCE << "bad channelId: empty!";
         return;
     }
 
     auto callback = [this, driveId, channelId, actions, sandboxFolder, replicators](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
-            qWarning() << "invalid info hash: " << rawHashToHex(infoHash);
+            qWarning() << LOG_SOURCE << "invalid info hash: " << rawHashToHex(infoHash);
             return;
         }
 
@@ -314,7 +314,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                           const std::string& sandboxFolder,
                                           const std::vector<xpx_chain_sdk::Address>& replicators) {
     const QString actionListFileName = rawHashToHex(infoHash);
-    qInfo() << "action list downloadDataCDI: " << actionListFileName;
+    qInfo() << LOG_SOURCE << "action list downloadDataCDI: " << actionListFileName;
 
     const QString downloadDataCDIHex = rawHashToHex(infoHash);
 
@@ -323,19 +323,19 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     const QString pathToActionList = findFile(actionListFileName, sandboxFolder.c_str());
     if (pathToActionList.isEmpty()) {
-        qWarning() << " actionList.bin not found: " << pathToActionList;
+        qWarning() << LOG_SOURCE << " actionList.bin not found: " << pathToActionList;
         return;
     } else {
-        qInfo() << " actionList.bin found: " << pathToActionList;
+        qInfo() << LOG_SOURCE << " actionList.bin found: " << pathToActionList;
     }
 
     for (int i = 0; i < actions.size(); i++) {
         if (actions[i].m_actionId == sirius::drive::action_list_id::upload) {
             const QString path = actions[i].m_param1.c_str();
-            qInfo() << "path for upload: " << path;
+            qInfo() << LOG_SOURCE << "path for upload: " << path;
 
             if (!QFile::exists(path)) {
-                qWarning() << "local file not found: " << path;
+                qWarning() << LOG_SOURCE << "local file not found: " << path;
             }
         }
     }
@@ -350,7 +350,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         uploadSize = (totalModifyDataSize - 1) / (bytesPerMegabyte) + 1;
     }
 
-    qInfo() << "Upload Size: " << uploadSize << " total modify data size: " << totalModifyDataSize;
+    qInfo() << LOG_SOURCE << "Upload Size: " << uploadSize << " total modify data size: " << totalModifyDataSize;
 
     const QString driveKeyHex = rawHashToHex(driveId);
 
@@ -381,19 +381,19 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
             unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId);
 
-            qWarning() << "drive key: " + driveKeyHex << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
+            qWarning() << LOG_SOURCE << "drive key: " + driveKeyHex << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
             emit dataModificationFailed(modificationId);
         }
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
-                                                       [](auto errorCode) {qCritical() << errorCode.message().c_str(); });
+                                                       [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
 
     dataModificationNotifier.set([this, hash, statusNotifierId = statusNotifier.getId(), modificationId] (
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
-            qInfo() << "confirmed dataModificationTransaction hash: " << hash.c_str();
+            qInfo() << LOG_SOURCE << "confirmed dataModificationTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -403,7 +403,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     });
 
     replicatorsStatusNotifier.set([](const auto&, const xpx_chain_sdk::TransactionStatusNotification& n) {
-        qInfo() << "(replicators) transaction status notification is received : " << n.status.c_str() << n.hash.c_str();
+        qInfo() << LOG_SOURCE << "(replicators) transaction status notification is received : " << n.status.c_str() << n.hash.c_str();
     });
 
     dataModificationApprovalTransactionNotifier.set([
@@ -411,17 +411,17 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (xpx_chain_sdk::TransactionType::Data_Modification_Approval != notification.data.type) {
-            qInfo() << "other transactions confirmed (skip!) : " << rawHashToHex(modificationId);
+            qInfo() << LOG_SOURCE << "other transactions confirmed (skip!) : " << rawHashToHex(modificationId);
             return;
         }
 
-        qInfo() << "confirmed DataModificationApproval transaction hash: " << notification.meta.hash.c_str();
+        qInfo() << LOG_SOURCE << "confirmed DataModificationApproval transaction hash: " << notification.meta.hash.c_str();
         if (!mDataModificationApprovals.contains(driveId)) {
             mDataModificationApprovals.insert({ driveId, {} });
         }
 
         if (mDataModificationApprovals[driveId].contains(modificationId)) {
-            qWarning() << "modificationId already exists (skip!) : " << rawHashToHex(modificationId);
+            qWarning() << LOG_SOURCE << "modificationId already exists (skip!) : " << rawHashToHex(modificationId);
             return;
         }
 
@@ -430,35 +430,35 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                                [this, driveId, modificationId, notification,
                                                 id, channelId, replicators, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
-                qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
+                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                 return;
             }
 
             if (!transaction) {
-                qWarning() << "bad pointer to dataModificationApprovalTransaction info";
+                qWarning() << LOG_SOURCE << "bad pointer to dataModificationApprovalTransaction info";
                 return;
             }
 
             auto dataModificationApprovalTransaction = reinterpret_cast<xpx_chain_sdk::transactions_info::DataModificationApprovalTransaction*>(transaction.get());
             if (!dataModificationApprovalTransaction) {
-                qWarning() << "bad pointer to dataModificationApprovalTransaction";
+                qWarning() << LOG_SOURCE << "bad pointer to dataModificationApprovalTransaction";
                 return;
             }
 
             if (dataModificationApprovalTransaction->driveKey != rawHashToHex(driveId).toStdString()) {
-                qInfo() << "dataModificationApprovalTransaction is received for another drive: " << dataModificationApprovalTransaction->driveKey.c_str();
+                qInfo() << LOG_SOURCE << "dataModificationApprovalTransaction is received for another drive: " << dataModificationApprovalTransaction->driveKey.c_str();
                 return;
             }
 
             if (dataModificationApprovalTransaction->dataModificationId != rawHashToHex(modificationId).toStdString()) {
-                qInfo() << "other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
+                qInfo() << LOG_SOURCE << "other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
                 return;
             }
 
             // TODO: fix libtorrent logic to avoid this
             std::this_thread::sleep_for(std::chrono::seconds(30));
 
-            qInfo() << "confirmed dataModificationApprovalTransaction hash: "
+            qInfo() << LOG_SOURCE << "confirmed dataModificationApprovalTransaction hash: "
                     << notification.meta.hash.c_str() << " modificationId: "
                     << rawHashToHex(modificationId) << " fileStructureCdi: "
                     << dataModificationApprovalTransaction->fileStructureCdi.c_str();
@@ -491,7 +491,7 @@ void TransactionsEngine::removeConfirmedAddedNotifier(const xpx_chain_sdk::Addre
                                                       std::function<void()> onSuccess,
                                                       std::function<void(boost::beast::error_code)> onError) {
     mpChainClient->notifications()->removeConfirmedAddedNotifiers(address, onSuccess, onError ? onError : [](auto code) {
-        qWarning() << code.message().c_str();
+        qWarning() << LOG_SOURCE << code.message().c_str();
     }, { id });
 }
 
@@ -500,20 +500,20 @@ void TransactionsEngine::removeStatusNotifier(const xpx_chain_sdk::Address& addr
                                               std::function<void()> onSuccess,
                                               std::function<void(boost::beast::error_code)> onError) {
     mpChainClient->notifications()->removeStatusNotifiers(address, onSuccess, onError ? onError : [](auto code) {
-        qWarning() << code.message().c_str();
+        qWarning() << LOG_SOURCE << code.message().c_str();
     }, { id });
 }
 
 void TransactionsEngine::announceTransaction(const std::vector<uint8_t> &data) {
     mpBlockchainEngine->announceNewTransaction(data, [](auto isAnnounced, auto isSuccess, auto message, auto code){
         if (!isSuccess) {
-            qWarning() << message.c_str() << " : " << code.c_str();
+            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
         }
     });
 }
 
 void TransactionsEngine::onError(const std::string& transactionId, boost::beast::error_code errorCode) {
-    qCritical() << errorCode.message().c_str() << " hash: " << transactionId.c_str();
+    qCritical() << LOG_SOURCE << errorCode.message().c_str() << " hash: " << transactionId.c_str();
 }
 
 QString TransactionsEngine::findFile(const QString& fileName, const QString& directory) {
@@ -541,8 +541,8 @@ void TransactionsEngine::subscribeOnReplicators(
         const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification>& notifier,
         const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification>& statusNotifier) {
     for (const auto& address : addresses) {
-        mpChainClient->notifications()->addStatusNotifiers(address, { statusNotifier }, {}, [](auto errorCode) { qCritical() << errorCode.message().c_str(); });
-        mpChainClient->notifications()->addConfirmedAddedNotifiers(address, { notifier }, {}, [](auto errorCode) { qCritical() << errorCode.message().c_str(); });
+        mpChainClient->notifications()->addStatusNotifiers(address, { statusNotifier }, {}, [](auto errorCode) { qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
+        mpChainClient->notifications()->addConfirmedAddedNotifiers(address, { notifier }, {}, [](auto errorCode) { qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
     }
 }
 

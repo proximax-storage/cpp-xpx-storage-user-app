@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define LOG_SOURCE \
+    __FILE__ << __LINE__
 #include <QMessageLogger>
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);

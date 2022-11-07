@@ -99,7 +99,7 @@ void Model::setCurrentDriveIndex( int index )
 {
     if ( index < 0 || index >= gSettings.config().m_drives.size() )
     {
-        qDebug() << "setCurrentDriveIndex: invalid index: " << index;
+        qDebug() << LOG_SOURCE << "setCurrentDriveIndex: invalid index: " << index;
     }
     else
     {
@@ -139,7 +139,7 @@ std::vector<DriveInfo>& Model::drives()
 
 DriveInfo* Model::currentDriveInfoPtr()
 {
-    qDebug() << "currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
+    qDebug() << LOG_SOURCE << "currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
 
     if ( gSettings.config().m_currentDriveIndex >= 0 && gSettings.config().m_currentDriveIndex < gSettings.config().m_drives.size() )
     {
@@ -227,7 +227,7 @@ void Model::calcDiff()
 
     if ( drive == nullptr )
     {
-        qDebug() << "currentDriveInfoPtr() == nullptr";
+        qDebug() << LOG_SOURCE << "currentDriveInfoPtr() == nullptr";
         return;
     }
 

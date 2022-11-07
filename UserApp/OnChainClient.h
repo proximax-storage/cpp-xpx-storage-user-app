@@ -59,6 +59,13 @@ class OnChainClient : public QObject
         void closeDriveTransactionFailed(const QString& errorText);
 
     private:
+        void initConnects();
+        void initAccount(const std::string& privateKey);
+        void init(const std::string& address,
+                  const std::string& port,
+                  const std::string& privateKey);
+
+    private:
         std::shared_ptr<StorageEngine> mpStorageEngine;
         std::shared_ptr<BlockchainEngine> mpBlockchainEngine;
         std::shared_ptr<TransactionsEngine> mpTransactionsEngine;

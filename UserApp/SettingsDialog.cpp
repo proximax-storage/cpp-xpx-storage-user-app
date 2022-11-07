@@ -44,11 +44,11 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
         //todo
-        qDebug() << "Settings::QComboBox::currentIndexChanged: " << index;
+        qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
         if ( gSettingsCopy.accountList().size() > size_t(index) )
         {
-            qDebug() << "selected: " << QString::fromStdString( gSettingsCopy.accountList()[index] );
-            qDebug() << "2 selected: " << QString::fromStdString( gSettingsCopy.config().m_publicKeyStr );
+            qDebug() << LOG_SOURCE << "selected: " << QString::fromStdString( gSettingsCopy.accountList()[index] );
+            qDebug() << LOG_SOURCE << "2 selected: " << QString::fromStdString( gSettingsCopy.config().m_publicKeyStr );
             gSettingsCopy.setCurrentAccountIndex(index);
             updateAccountFields();
         }

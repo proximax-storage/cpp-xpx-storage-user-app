@@ -21,7 +21,7 @@ fs::path settingsFolder()
 {
     fs::path path;
 #ifdef _WIN32
-    qDebug() << "!NOT IMPLEMNTED! FOR WIN32: settingsPath()";
+    qDebug() << LOG_SOURCE << "!NOT IMPLEMNTED! FOR WIN32: settingsPath()";
     exit(1);
 #else
     const char* homePath = getenv("HOME");
@@ -133,10 +133,10 @@ bool Settings::load( const std::string& pwd )
         for( auto& account: m_accounts )
         {
             account.updateKeyPair( account.m_privateKeyStr );
-            qDebug() << "account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
+            qDebug() << LOG_SOURCE << "account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
-        qDebug() << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
+        qDebug() << LOG_SOURCE << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
     }
     catch( std::runtime_error& err )
     {
@@ -193,7 +193,7 @@ void Settings::save()
         exit(1);
     }
 
-    qDebug() << "Settings saved";
+    qDebug() << LOG_SOURCE << "Settings saved";
 }
 
 std::vector<std::string> Settings::accountList()
@@ -211,7 +211,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 {
     std::thread( [ this, handle ]
     {
-        qDebug() << "onDownloadCompleted: before lock";
+        qDebug() << LOG_SOURCE << "onDownloadCompleted: before lock";
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto& downloads = config().m_downloads;
@@ -225,7 +225,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 counter++;
             }
         }
-        qDebug() << "onDownloadCompleted: counter: " << counter;
+        qDebug() << LOG_SOURCE << "onDownloadCompleted: counter: " << counter;
 
         for( auto& dnInfo: downloads )
         {
@@ -250,18 +250,18 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
                 if ( --counter == 0 )
                 {
-                    qDebug() << "onDownloadCompleted: rename(): " << srcPath << " : " << destPath;
+                    qDebug() << LOG_SOURCE << "onDownloadCompleted: rename(): " << srcPath << " : " << destPath;
                     fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
-                    qDebug() << "onDownloadCompleted: copy(): " << srcPath << " : " << destPath;
+                    qDebug() << LOG_SOURCE << "onDownloadCompleted: copy(): " << srcPath << " : " << destPath;
                     fs::copy( srcPath, destPath, ec );
                 }
 
                 if ( ec )
                 {
-                    qDebug() << "onDownloadCompleted: Cannot save file: " << ec.message();
+                    qDebug() << LOG_SOURCE << "onDownloadCompleted: Cannot save file: " << ec.message();
 
                     QMessageBox msgBox;
                     msgBox.setText( QString::fromStdString( "Cannot save file: " + std::string(destPath.filename()) ) );
@@ -285,7 +285,7 @@ void Settings::removeFromDownloads( int index )
 
     if ( index < 0 || index >= downloads.size() )
     {
-        qDebug() << "removeFromDownloads: invalid index: " << index << "; downloads.size()=" << downloads.size();
+        qDebug() << LOG_SOURCE << "removeFromDownloads: invalid index: " << index << "; downloads.size()=" << downloads.size();
         return;
     }
 
@@ -301,7 +301,7 @@ void Settings::removeFromDownloads( int index )
         }
     }
 
-    qDebug() << "hashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
+    qDebug() << LOG_SOURCE << "hashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
 
     if ( hashCounter == 1 )
     {
@@ -313,12 +313,12 @@ void Settings::removeFromDownloads( int index )
     if ( dnInfo.isCompleted() )
     {
         fs::remove( downloadFolder() / dnInfo.m_fileName, ec );
-        qDebug() << "remove: " << (downloadFolder() / dnInfo.m_fileName).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / dnInfo.m_fileName).string().c_str() << " ec=" << ec.message().c_str();
     }
     else if ( hashCounter == 1 )
     {
         fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash), ec );
-        qDebug() << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash)).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash)).string().c_str() << " ec=" << ec.message().c_str();
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );

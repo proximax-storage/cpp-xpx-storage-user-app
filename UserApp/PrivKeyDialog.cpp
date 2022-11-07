@@ -67,8 +67,8 @@ void PrivKeyDialog::verify()
         return;
     }
 
-//    qDebug() << "pkString.size(): " << pkString.size();
-//    qDebug() << "pkString.find_first_not_of: " << pkString.find_first_not_of("0123456789abcdefABCDEF");
+//    qDebug() << LOG_SOURCE << "pkString.size(): " << pkString.size();
+//    qDebug() << LOG_SOURCE << "pkString.find_first_not_of: " << pkString.find_first_not_of("0123456789abcdefABCDEF");
 
     if ( pkString.size() != 64 || pkString.find_first_not_of("0123456789abcdefABCDEF") < pkString.size() )
     {
@@ -143,7 +143,7 @@ void PrivKeyDialog::onLoadFromFileBtn()
 void PrivKeyDialog::accept()
 {
     std::string privateKeyStr = ui->m_pkField->text().toStdString();
-//    qDebug() << "privateKeyStr: " << privateKeyStr.c_str();
+//    qDebug() << LOG_SOURCE << "privateKeyStr: " << privateKeyStr.c_str();
 
     auto it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
     {
@@ -161,7 +161,7 @@ void PrivKeyDialog::accept()
     else
     {
         m_settings.m_accounts.emplace_back( Settings::Account{} );
-        qDebug() << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
+        qDebug() << LOG_SOURCE << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
         m_settings.setCurrentAccountIndex( m_settings.m_accounts.size()-1 );
         m_settings.config().updateKeyPair( privateKeyStr );
     }

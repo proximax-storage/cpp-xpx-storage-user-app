@@ -96,7 +96,7 @@ MainWin::MainWin(QWidget *parent)
         m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
 
 //        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
-//            qDebug() << "downloadChannelsLoaded1: " << channels;
+//            qDebug() << LOG_SOURCE << "downloadChannelsLoaded1: " << channels;
 //            ui->m_channels->clear();
 //            ui->m_channels->addItems(channels);
 //        });
@@ -115,11 +115,11 @@ MainWin::MainWin(QWidget *parent)
 
         connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels)
         {
-            qDebug() << "downloadChannelsLoaded2: " << channels;
+            qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
 
             m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
                 if (!isSuccess) {
-                    qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
+                    qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                     return;
                 }
 
@@ -128,7 +128,7 @@ MainWin::MainWin(QWidget *parent)
 
                 m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
                     if (!isSuccess) {
-                        qWarning() << "message: " << message.c_str() << " code: " << code.c_str();
+                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                         return;
                     }
 
@@ -206,13 +206,13 @@ MainWin::MainWin(QWidget *parent)
                 }
 
                 if (ui->m_channels->count() == 0) {
-                    qWarning() << "bad download channel";
+                    qWarning() << LOG_SOURCE << "bad download channel";
                     return;
                 }
 
                 auto actions = drive->m_actionList;
                 if (actions.empty()) {
-                    qWarning() << "no actions to apply";
+                    qWarning() << LOG_SOURCE << "no actions to apply";
                     return;
                 }
 
@@ -250,7 +250,7 @@ void MainWin::setupDownloadsTab()
 
     connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
-        qDebug() << index;
+        qDebug() << LOG_SOURCE << index;
         onCurrentChannelChanged( index );
     });
 
@@ -269,7 +269,7 @@ void MainWin::setupFsTreeTable()
 {
     connect( ui->m_fsTreeTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
-        //qDebug() << index;
+        //qDebug() << LOG_SOURCE << index;
         int toBeSelectedRow = m_fsTreeTableModel->onDoubleClick( index.row() );
         ui->m_fsTreeTableView->selectRow( toBeSelectedRow );
         ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
@@ -370,7 +370,7 @@ void MainWin::setupDownloadsTable()
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        qDebug() << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
+        qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
 
         auto rows = ui->m_downloadsTableView->selectionModel()->selectedRows();
 
@@ -413,7 +413,7 @@ void MainWin::setupDownloadsTable()
 
 void MainWin::selectDownloadRow( int row )
 {
-    //qDebug() << "selectDownloadRow: " << row;
+    //qDebug() << LOG_SOURCE << "selectDownloadRow: " << row;
     m_downloadsTableModel->m_selectedRow = row;
     ui->m_downloadsTableView->selectRow( row );
     ui->m_removeDownloadBtn->setEnabled( row >= 0 );
@@ -428,10 +428,10 @@ bool MainWin::requestPrivateKey()
 
         if ( pKeyDialog.result() != QDialog::Accepted )
         {
-            qDebug() << "not accepted";
+            qDebug() << LOG_SOURCE << "not accepted";
             return false;
         }
-        qDebug() << "accepted";
+        qDebug() << LOG_SOURCE << "accepted";
     }
 
     SettingsDialog settingsDialog( this, true );
@@ -568,7 +568,7 @@ void MainWin::onCurrentChannelChanged( int index )
     {
         std::thread( [this,index]
         {
-            qDebug() << "onChannelChanged: " << index;
+            qDebug() << LOG_SOURCE << "onChannelChanged: " << index;
 
             std::array<uint8_t,32> fsTreeHash;
 
@@ -591,7 +591,7 @@ void MainWin::onCurrentChannelChanged( int index )
 
 void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
 {
-    qDebug() << "onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
+    qDebug() << LOG_SOURCE << "onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
 
     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
     Model::downloadFsTree( channel.m_driveHash,
@@ -601,7 +601,7 @@ void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array
                                     const std::array<uint8_t,32> fsTreeHash,
                                     const sirius::drive::FsTree& fsTree )
     {
-        qDebug() << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
+        qDebug() << LOG_SOURCE << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
 
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
@@ -629,12 +629,12 @@ void MainWin::setupDrivesTab()
 
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
     {
-        qDebug() << "openLocalFolderBtn";
+        qDebug() << LOG_SOURCE << "openLocalFolderBtn";
 
         auto* driveInfo = Model::currentDriveInfoPtr();
         if ( driveInfo != nullptr )
         {
-            qDebug() << "driveInfo->m_localDriveFolder: " << driveInfo->m_localDriveFolder.c_str();
+            qDebug() << LOG_SOURCE << "driveInfo->m_localDriveFolder: " << driveInfo->m_localDriveFolder.c_str();
             std::error_code ec;
             if ( ! fs::exists(driveInfo->m_localDriveFolder, ec) )
             {
@@ -668,7 +668,7 @@ void MainWin::setupDrivesTab()
         sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
                                                         64, fsTreeHash );
 
-        qDebug() << "driveHash: " << driveInfoPtr->m_driveKey.c_str();
+        qDebug() << LOG_SOURCE << "driveHash: " << driveInfoPtr->m_driveKey.c_str();
 
         Model::downloadFsTree( driveInfoPtr->m_driveKey,
                                "0000000000000000000000000000000000000000000000000000000000000000",
@@ -679,11 +679,11 @@ void MainWin::setupDrivesTab()
         {
             Model::onFsTreeForDriveReceived( driveHash, fsTreeHash, fsTree );
 
-            qDebug() << "driveHash: " << driveHash.c_str();
+            qDebug() << LOG_SOURCE << "driveHash: " << driveHash.c_str();
 
             if ( driveHash == Model::currentDriveInfoPtr()->m_driveKey )
             {
-                qDebug() << "m_calcDiffBtn->setEnabled: " << driveHash.c_str();
+                qDebug() << LOG_SOURCE << "m_calcDiffBtn->setEnabled: " << driveHash.c_str();
                 ui->m_calcDiffBtn->setEnabled(true);
             }
         });

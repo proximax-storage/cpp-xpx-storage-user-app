@@ -49,16 +49,16 @@ void FsTreeTableModel::updateRows()
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-            qDebug() << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
+            qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
             m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
         }
         else
         {
             const auto& file = sirius::drive::getFile(child.second);
-            qDebug() << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
+            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
                      << sirius::drive::toString( file.hash().array() ).c_str();
             m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
-            qDebug() << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
+            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
         }
     }
 
@@ -67,11 +67,11 @@ void FsTreeTableModel::updateRows()
 
 int FsTreeTableModel::onDoubleClick( int row )
 {
-    qDebug() << "onDoubleClick: " << row;
+    qDebug() << LOG_SOURCE << "onDoubleClick: " << row;
 
     if ( row == 0 )
     {
-        //qDebug() << "m_currentPath.size(): " << m_currentPath.size();
+        //qDebug() << LOG_SOURCE << "m_currentPath.size(): " << m_currentPath.size();
         if ( m_currentPath.empty() )
         {
             // do not change selected row
@@ -117,7 +117,7 @@ int FsTreeTableModel::onDoubleClick( int row )
 
 std::string FsTreeTableModel::currentPath() const
 {
-//    qDebug() << "currentPath: ";
+//    qDebug() << LOG_SOURCE << "currentPath: ";
 
     std::string path = "";
     if ( m_currentPath.size() == 0 )
@@ -144,12 +144,12 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
 
         if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
         {
-            qDebug() << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
-            qDebug() << "rowCount: 1";
+            qDebug() << LOG_SOURCE << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
+            qDebug() << LOG_SOURCE << "rowCount: 1";
             return 1;
         }
     }
-    qDebug() << "rowCount: " << m_rows.size();
+    qDebug() << LOG_SOURCE << "rowCount: " << m_rows.size();
     return m_rows.size();
 }
 

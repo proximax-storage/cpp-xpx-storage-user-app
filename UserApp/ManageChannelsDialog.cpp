@@ -62,13 +62,13 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
 
         int currentRow = ui->m_table->currentRow();
 
-        qDebug() << "currentRow: " << currentRow;
+        qDebug() << LOG_SOURCE << "currentRow: " << currentRow;
 
         if ( currentRow >= 0 && currentRow < drives.size()  )
         {
             QClipboard* clipboard = QApplication::clipboard();
             clipboard->setText( QString::fromStdString(drives[currentRow].m_driveKey) );
-            qDebug() << "clipboard->setText: " << QString::fromStdString(drives[currentRow].m_driveKey);
+            qDebug() << LOG_SOURCE << "clipboard->setText: " << QString::fromStdString(drives[currentRow].m_driveKey);
         }
     });
 

@@ -34,7 +34,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
     }
     catch( const std::runtime_error& err )
     {
-        qDebug() << "scanFolderR: error: " << err.what();
+        qDebug() << LOG_SOURCE << "scanFolderR: error: " << err.what();
     }
 }
 

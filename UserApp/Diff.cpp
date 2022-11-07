@@ -1,6 +1,7 @@
 #include "Diff.h"
 #include "drive/Session.h"
 #include "drive/Utils.h"
+#include "Utils.h"
 
 #include <QDebug>
 
@@ -117,7 +118,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
         // Logic path of file/folder on the drive
         fs::path childPath = localFolderPath / name;
         fs::path fsChildPath = fsPath.empty() ? fs::path(localChild.m_name) : fsPath / name;
-        qDebug() << "!!! fsChildPath: " << fsChildPath.string().c_str();
+        qDebug() << LOG_SOURCE << "!!! fsChildPath: " << fsChildPath.string().c_str();
 
         // check that file (or folder) exists on the drive
         //
@@ -229,7 +230,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             {
                 // Remove folder
                 fs::path fsChildPath = fsPath.empty() ? fs::path(getFolder(fsChild).name()) : fsPath / getFolder(fsChild).name();
-                qDebug() << "! fsChildPath: " << fsChildPath.string().c_str() << " ?: " << getFolder(fsChild).name().c_str();
+                qDebug() << LOG_SOURCE << "! fsChildPath: " << fsChildPath.string().c_str() << " ?: " << getFolder(fsChild).name().c_str();
 
                 // remov folder content (from drive)
                 LocalDriveItem removedFolder{ true,name,0,{},{},{},ldi_removed};
@@ -246,7 +247,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             {
                 // Remove file
                 fs::path fsChildPath = fsPath.empty() ? fs::path(fsFolder.name()) : fsPath / getFile(fsChild).name();
-                qDebug() << "! fsChildPath: " << fsChildPath.string().c_str();
+                qDebug() << LOG_SOURCE << "! fsChildPath: " << fsChildPath.string().c_str();
 
                 // save removed file into 'removedItems'
                 removedItems.push_back( LocalDriveItem{ false,name,getFile(fsChild).size(),{},{},{},ldi_removed} );

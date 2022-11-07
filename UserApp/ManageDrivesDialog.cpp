@@ -62,13 +62,13 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
 
         int currentRow = ui->m_table->currentRow();
 
-        qDebug() << "currentRow: " << currentRow;
+        qDebug() << LOG_SOURCE << "currentRow: " << currentRow;
 
         if ( currentRow >= 0 && currentRow < drives.size()  )
         {
             QClipboard* clipboard = QApplication::clipboard();
             clipboard->setText( QString::fromStdString(drives[currentRow].m_driveKey) );
-            qDebug() << "clipboard->setText: " << QString::fromStdString(drives[currentRow].m_driveKey);
+            qDebug() << LOG_SOURCE << "clipboard->setText: " << QString::fromStdString(drives[currentRow].m_driveKey);
         }
     });
 
@@ -76,12 +76,12 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         const auto& drives = gSettings.config().m_drives;
-        qDebug() << "drives.size: " << drives.size();
+        qDebug() << LOG_SOURCE << "drives.size: " << drives.size();
 
         int i=0;
         for( const auto& drive : drives )
         {
-            qDebug() << "driveKey: " << drive.m_driveKey.c_str();
+            qDebug() << LOG_SOURCE << "driveKey: " << drive.m_driveKey.c_str();
             ui->m_table->insertRow(i);
             ui->m_table->setItem(i,0, new QTableWidgetItem( QString::fromStdString(drive.m_name)));
             ui->m_table->setItem(i,1, new QTableWidgetItem( QString::fromStdString(drive.m_driveKey)));

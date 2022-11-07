@@ -87,13 +87,13 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                     const std::array<uint8_t,32>&   fsTreeHash,
                                     FsTreeHandler                   onFsTreeReceived )
 {
-    qDebug() << "downloadFsTree(): channelId: " << driveHash;
+    qDebug() << LOG_SOURCE << "downloadFsTree(): channelId: " << driveHash;
 
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
     if ( Model::isZeroHash(fsTreeHash) )
     {
-        qDebug() << "zero fstree received";
+        qDebug() << LOG_SOURCE << "zero fstree received";
         onFsTreeReceived( driveHash, fsTreeHash, {} );
         return;
     }
@@ -101,10 +101,10 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
     std::array<uint8_t,32> channelId;
     sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );
 
-//    qDebug() << "downloadFsTree(): 1";
+//    qDebug() << LOG_SOURCE << "downloadFsTree(): 1";
     m_session->addDownloadChannel( channelId );
 
-    qDebug() << "downloadFsTree(): m_session->download(...";
+    qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
     auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
 
@@ -119,7 +119,7 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                                 size_t /*fileSize*/,
                                                 const std::string& /*errorText*/)
                                             {
-                                                qDebug() << "fstree received: " << std::string(fsTreeSaveFolder);
+                                                qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
                                                 sirius::drive::FsTree fsTree;
                                                 fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
                                                 onFsTreeReceived( driveHash, infoHash.array(), fsTree );
@@ -135,12 +135,12 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
                                                       const std::array<uint8_t,32>& fileHash )
 {
-    qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
+    qDebug() << LOG_SOURCE << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 
     m_session->addDownloadChannel( channelId );
 
-    qDebug() << "downloadFile(): m_session->download(...";
-    qDebug() << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
+    qDebug() << LOG_SOURCE << "downloadFile(): m_session->download(...";
+    qDebug() << LOG_SOURCE << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
     auto handle = m_session->download( sirius::drive::DownloadContext(
                                     sirius::drive::DownloadContext::file_from_drive,
 
@@ -151,7 +151,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                                         size_t fileSize,
                                         const std::string& /*errorText*/)
                                     {
-//                                        qDebug() << "file downloaded: " << downloaded << "/" << fileSize << " " << std::string(filePath).c_str();
+//                                        qDebug() << LOG_SOURCE << "file downloaded: " << downloaded << "/" << fileSize << " " << std::string(filePath).c_str();
 //                                        QMetaObject::invokeMethod( &MainWin::instanse(), "onDownloadCompleted", Qt::QueuedConnection,
 //                                            Q_ARG( QString, QString::fromStdString( sirius::drive::toString(infoHash) )));
                                     },

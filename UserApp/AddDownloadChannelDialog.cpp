@@ -51,7 +51,7 @@ void AddDownloadChannelDialog::accept() {
     }
 
     if (listOfAllowedPublicKeys.empty()) {
-        qInfo() << "listOfAllowedPublicKeys is empty";
+        qInfo() << LOG_SOURCE << "listOfAllowedPublicKeys is empty";
     }
 
 

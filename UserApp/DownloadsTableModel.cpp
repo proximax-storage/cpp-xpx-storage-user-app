@@ -14,7 +14,7 @@ DownloadsTableModel::DownloadsTableModel( QObject *parent, std::function<void(in
 
 int DownloadsTableModel::rowCount(const QModelIndex &) const
 {
-    //qDebug() << "m_downloads.size: " << gSettings.config().m_downloads.size();
+    //qDebug() << LOG_SOURCE << "m_downloads.size: " << gSettings.config().m_downloads.size();
     return gSettings.config().m_downloads.size();
 }
 
@@ -60,12 +60,12 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                     const auto& dnInfo = gSettings.config().m_downloads[index.row()];
                     if ( dnInfo.isCompleted() )
                     {
-                        //qDebug() << "isCompleted:"
+                        //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("done");
                     }
                     if ( ! dnInfo.m_ltHandle.is_valid() )
                     {
-                        //qDebug() << "isCompleted:"
+                        //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("0%");
                     }
                     return QString::fromStdString( std::to_string( (dnInfo.m_progress+5)/10 ) ) + "%";
@@ -106,10 +106,10 @@ void DownloadsTableModel::updateProgress()
             uint64_t dnBytes = 0;
             uint64_t totalBytes = 0;
 
-            //qDebug() << "fp.size(): " << fp.size();
+            //qDebug() << LOG_SOURCE << "fp.size(): " << fp.size();
             for( uint32_t i=0; i<fp.size(); i++ )
             {
-                //qDebug() << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
+                //qDebug() << LOG_SOURCE << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
                 auto fsize = dnInfo.m_ltHandle.torrent_file()->files().file_size(i);
                 dnBytes    += fp[i];
                 totalBytes += fsize;
@@ -117,7 +117,7 @@ void DownloadsTableModel::updateProgress()
 
 
             double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
-            //qDebug() << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
+            //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
             dnInfo.m_progress = progress;
 
             if ( totalBytes>0 && totalBytes==dnBytes )
