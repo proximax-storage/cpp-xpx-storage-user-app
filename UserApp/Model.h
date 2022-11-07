@@ -13,15 +13,11 @@
 #include "drive/ClientSession.h"
 #include "drive/FsTree.h"
 
-#ifdef __APPLE__
-inline bool STANDALONE_TEST = false;//true;
+inline bool ALEX_LOCAL_TEST = false;
+inline bool VICTOR_LOCAL_TEST = true;
+
 inline const char* ROOT_HASH1 = "096975e6f49b924078e443e6c208283034d043dd42b4db9ccd1dffd795577e5d";
 inline const char* ROOT_HASH2 = "83f8349b1623008b58fd9e2ee678e47842787834e0671e4cd2f6634d8ebfd2e6";
-#else
-inline const char* ROOT_HASH1 = "096975e6f49b924078e443e6c208283034d043dd42b4db9ccd1dffd795577e5d";
-inline const char* ROOT_HASH2 = "83f8349b1623008b58fd9e2ee678e47842787834e0671e4cd2f6634d8ebfd2e6";
-inline bool STANDALONE_TEST = false;
-#endif
 
 inline std::recursive_mutex gSettingsMutex;
 

@@ -47,9 +47,10 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
         if ( gSettingsCopy.accountList().size() > size_t(index) )
         {
-            qDebug() << LOG_SOURCE << "selected: " << QString::fromStdString( gSettingsCopy.accountList()[index] );
-            qDebug() << LOG_SOURCE << "2 selected: " << QString::fromStdString( gSettingsCopy.config().m_publicKeyStr );
             gSettingsCopy.setCurrentAccountIndex(index);
+            qDebug() << LOG_SOURCE << "selected name: " << QString::fromStdString( gSettingsCopy.config().m_accountName );
+            qDebug() << LOG_SOURCE << "selected key: " << QString::fromStdString( gSettingsCopy.config().m_publicKeyStr );
+            qDebug() << LOG_SOURCE << "selected privateKey: " << QString::fromStdString( gSettingsCopy.config().m_privateKeyStr );
             updateAccountFields();
         }
     });
@@ -79,10 +80,10 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::updateAccountFields()
 {
-    ui->m_restBootAddrField->setText( QString::fromStdString( gSettingsCopy.config().m_restBootstrap ));
-    ui->m_replicatorBootAddrField->setText( QString::fromStdString( gSettingsCopy.config().m_replicatorBootstrap ));
+    ui->m_restBootAddrField->setText( QString::fromStdString( gSettingsCopy.m_restBootstrap ));
+    ui->m_replicatorBootAddrField->setText( QString::fromStdString( gSettingsCopy.m_replicatorBootstrap ));
     ui->m_portField->setValidator( new QIntValidator(1025, 65535, this) );
-    ui->m_portField->setText( QString::fromStdString( gSettingsCopy.config().m_udpPort ));
+    ui->m_portField->setText( QString::fromStdString( gSettingsCopy.m_udpPort ));
     ui->m_dnFolderField->setText( QString::fromStdString( gSettingsCopy.downloadFolder() ));
 }
 
@@ -90,10 +91,9 @@ void SettingsDialog::accept()
 {
     if ( verify() )
     {
-
-        bool ltSessionMustRestart = ( gSettings.config().m_replicatorBootstrap !=   gSettingsCopy.config().m_replicatorBootstrap )
-                                ||  ( gSettings.config().m_udpPort             !=   gSettingsCopy.config().m_udpPort )
-                                ||  ( gSettings.config().m_privateKeyStr       !=   gSettingsCopy.config().m_privateKeyStr );
+        bool ltSessionMustRestart = ( gSettings.m_replicatorBootstrap       !=   gSettingsCopy.m_replicatorBootstrap )
+                                ||  ( gSettings.m_udpPort                   !=   gSettingsCopy.m_udpPort )
+                                ||  ( gSettings.config().m_privateKeyStr    !=   gSettingsCopy.config().m_privateKeyStr );
 
         if ( ltSessionMustRestart && gSettings.loaded() )
         {
@@ -108,12 +108,16 @@ void SettingsDialog::accept()
             }
         }
 
-        gSettings.config().m_restBootstrap          = gSettingsCopy.config().m_restBootstrap;
-        gSettings.config().m_replicatorBootstrap    = gSettingsCopy.config().m_replicatorBootstrap;
-        gSettings.config().m_downloadFolder         = gSettingsCopy.config().m_downloadFolder;
-        gSettings.m_accounts                        = gSettingsCopy.m_accounts;
+        gSettings.m_restBootstrap           = gSettingsCopy.m_restBootstrap;
+        gSettings.m_replicatorBootstrap     = gSettingsCopy.m_replicatorBootstrap;
+        gSettings.config().m_downloadFolder = gSettingsCopy.config().m_downloadFolder;
+        gSettings.m_accounts                = gSettingsCopy.m_accounts;
         gSettings.setCurrentAccountIndex( gSettingsCopy.m_currentAccountIndex );
         gSettings.save();
+
+        qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( gSettings.config().m_accountName );
+        qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( gSettings.config().m_publicKeyStr );
+        qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( gSettings.config().m_privateKeyStr );
 
         QDialog::accept();
     }
@@ -153,16 +157,16 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
 bool SettingsDialog::verify()
 {
-    gSettingsCopy.config().m_restBootstrap       = ui->m_restBootAddrField->text().toStdString();
-    gSettingsCopy.config().m_replicatorBootstrap = ui->m_replicatorBootAddrField->text().toStdString();
-    gSettingsCopy.config().m_udpPort             = ui->m_portField->text().toStdString();
-    gSettingsCopy.config().m_downloadFolder      = ui->m_dnFolderField->text().toStdString();
+    gSettingsCopy.m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
+    gSettingsCopy.m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
+    gSettingsCopy.m_udpPort                 = ui->m_portField->text().toStdString();
+    gSettingsCopy.config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
 
     //
     // Verify restBootstrap endpoint
     //
     std::vector<std::string> addressAndPort;
-    boost::split( addressAndPort, gSettingsCopy.config().m_restBootstrap, [](char c) { return c==':'; } );
+    boost::split( addressAndPort, gSettingsCopy.m_restBootstrap, [](char c) { return c==':'; } );
     if ( addressAndPort.size() != 2 )
     {
         ui->m_errorText->setText( QString::fromStdString("Invalid REST Server Address" ));
@@ -172,7 +176,7 @@ bool SettingsDialog::verify()
     //
     // Verify replicatorBootstrap endpoint
     //
-    boost::split( addressAndPort, gSettingsCopy.config().m_replicatorBootstrap, [](char c) { return c==':'; } );
+    boost::split( addressAndPort, gSettingsCopy.m_replicatorBootstrap, [](char c) { return c==':'; } );
     if ( addressAndPort.size() != 2 )
     {
         ui->m_errorText->setText("Invalid Replicator Booststrap Address");

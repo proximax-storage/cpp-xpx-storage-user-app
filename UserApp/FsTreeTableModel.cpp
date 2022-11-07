@@ -144,12 +144,12 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
 
         if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
         {
-            qDebug() << LOG_SOURCE << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
-            qDebug() << LOG_SOURCE << "rowCount: 1";
+            //qDebug() << LOG_SOURCE << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
+            //qDebug() << LOG_SOURCE << "rowCount: 1";
             return 1;
         }
     }
-    qDebug() << LOG_SOURCE << "rowCount: " << m_rows.size();
+    //qDebug() << "rowCount: " << m_rows.size();
     return m_rows.size();
 }
 

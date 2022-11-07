@@ -39,15 +39,23 @@ MainWin::MainWin(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect( ui->m_settingsBtn, &QPushButton::released, this, [this]
+    if ( Model::homeFolder() != "/Users/alex" )
     {
-        SettingsDialog settingsDialog( this );
-        settingsDialog.exec();
-    });
+        ALEX_LOCAL_TEST = false;
+    }
+
+    if ( Model::homeFolder() != "/home/cempl" )
+    {
+        VICTOR_LOCAL_TEST = false;
+    }
 
     if ( ! Model::loadSettings() )
     {
-        if ( ! requestPrivateKey() )
+        if ( Model::homeFolder() == "/Users/alex" )
+        {
+            gSettings.initForTests();
+        }
+        else if ( ! requestPrivateKey() )
         {
             m_mustExit = true;
         }
@@ -56,6 +64,18 @@ MainWin::MainWin(QWidget *parent)
     if ( m_mustExit )
     {
         return;
+    }
+
+    if ( Model::homeFolder() == "/Users/alex" )
+    {
+        if ( ALEX_LOCAL_TEST )
+        {
+            gSettings.m_replicatorBootstrap = "192.168.2.101:5001";
+        }
+        else
+        {
+            gSettings.m_replicatorBootstrap = "15.206.164.53:7904";
+        }
     }
 
     Model::startStorageEngine();
@@ -76,7 +96,13 @@ MainWin::MainWin(QWidget *parent)
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
 
-	connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
+    connect( ui->m_settingsBtn, &QPushButton::released, this, [this]
+    {
+        SettingsDialog settingsDialog( this );
+        settingsDialog.exec();
+    });
+
+    connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
         ManageChannelsDialog dialog(this);
         dialog.exec();
     });
@@ -87,19 +113,13 @@ MainWin::MainWin(QWidget *parent)
     });
 
     const std::string privateKey = gSettings.config().m_privateKeyStr;
-    const auto gatewayEndpoint = QString(gSettings.config().m_restBootstrap.c_str()).split(":");
+    const auto gatewayEndpoint = QString(gSettings.m_restBootstrap.c_str()).split(":");
     const std::string address = gatewayEndpoint[0].toStdString();
     const std::string port = gatewayEndpoint[1].toStdString();
 
-    if (!STANDALONE_TEST)
+    if ( !ALEX_LOCAL_TEST )
     {
         m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
-
-//        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels) {
-//            qDebug() << LOG_SOURCE << "downloadChannelsLoaded1: " << channels;
-//            ui->m_channels->clear();
-//            ui->m_channels->addItems(channels);
-//        });
 
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
@@ -131,11 +151,6 @@ MainWin::MainWin(QWidget *parent)
                         qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                         return;
                     }
-
-//                    ChannelInfo channelInfo;
-//                    channelInfo.m_hash = channel.data.id;
-//                    channelInfo.m_driveHash = channel.data.drive;
-//                    Model::dnChannels().push_back(channelInfo);
 
                     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
@@ -239,7 +254,7 @@ MainWin::~MainWin()
 
 void MainWin::setupDownloadsTab()
 {
-    if ( STANDALONE_TEST )
+    if ( ALEX_LOCAL_TEST )
     {
         Model::stestInitChannels();
     }
@@ -553,19 +568,10 @@ void MainWin::onCurrentChannelChanged( int index )
 {
     Model::setCurrentDnChannelIndex( index );
 
-    if ( STANDALONE_TEST ) {
+    if ( ALEX_LOCAL_TEST )
+    {
         Model::currentChannelInfoPtr()->m_waitingFsTree = true;
-    }
 
-    m_fsTreeTableModel->setFsTree( {}, {} );
-
-
-    if ( !STANDALONE_TEST )
-    {
-        //assert( !"todo request FsTree hash" );
-    }
-    else
-    {
         std::thread( [this,index]
         {
             qDebug() << LOG_SOURCE << "onChannelChanged: " << index;
@@ -587,6 +593,8 @@ void MainWin::onCurrentChannelChanged( int index )
             onFsTreeHashReceived( Model::dnChannels()[index], fsTreeHash );
         }).detach();
     }
+
+    m_fsTreeTableModel->setFsTree( {}, {} );
 }
 
 void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
@@ -653,7 +661,7 @@ void MainWin::setupDrivesTab()
         m_diffTableModel->updateModel();
     });
 
-    if ( STANDALONE_TEST )
+    if ( ALEX_LOCAL_TEST )
     {
         Model::stestInitDrives();
     }
@@ -661,7 +669,7 @@ void MainWin::setupDrivesTab()
     updateDrivesCBox();
 
     // request FsTree info-hash
-    if ( STANDALONE_TEST )
+    if ( ALEX_LOCAL_TEST )
     {
         auto* driveInfoPtr = Model::currentDriveInfoPtr();
         std::array<uint8_t,32> fsTreeHash;
@@ -687,10 +695,6 @@ void MainWin::setupDrivesTab()
                 ui->m_calcDiffBtn->setEnabled(true);
             }
         });
-    }
-    else
-    {
-
     }
 
     m_driveTreeModel = new DriveTreeModel();
