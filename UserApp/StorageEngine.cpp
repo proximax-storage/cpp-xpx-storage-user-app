@@ -61,13 +61,13 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const std::string&              address,
                          const endpoint_list&            bootstraps )
 {
-    qDebug() << "createClientSession: address: " << address.c_str();
-    qDebug() << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
+    qDebug() << LOG_SOURCE << "createClientSession: address: " << address.c_str();
+    qDebug() << LOG_SOURCE << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
     m_session = sirius::drive::createClientSession(  keyPair,
                                                      address,
                                                      []( const lt::alert* alert )
                                                      {
-                                                        qDebug() << "createClientSession: socketError?" << alert->message();
+                                                         qDebug() << LOG_SOURCE << "createClientSession: socketError?" << alert->message();
                                                      },
                                                      bootstraps,
                                                      false,

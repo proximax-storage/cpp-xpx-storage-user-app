@@ -189,7 +189,7 @@ void PrivKeyDialog::accept()
     }
 
     m_settings.m_accounts.emplace_back( Settings::Account{} );
-    qDebug() << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
+    qDebug() << LOG_SOURCE << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
     m_settings.setCurrentAccountIndex( m_settings.m_accounts.size()-1 );
     m_settings.config().initAccount( accountName, privateKeyStr );
 
