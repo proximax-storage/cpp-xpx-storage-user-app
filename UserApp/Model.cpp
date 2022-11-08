@@ -49,9 +49,9 @@ fs::path Model::downloadFolder()
     return gSettings.downloadFolder();
 }
 
-void Model::onChannelLoaded( const std::string& channelKey,
-                             const std::string& driveKey,
-                             const std::vector<std::string>& listOfPublicKeys )
+void Model::onSomeChannelLoaded( const std::string& channelKey,
+                                 const std::string& driveKey,
+                                 const std::vector<std::string>& listOfPublicKeys )
 {
     auto& channels = gSettings.config().m_dnChannels;
 
@@ -144,6 +144,20 @@ DriveInfo* Model::currentDriveInfoPtr()
     if ( gSettings.config().m_currentDriveIndex >= 0 && gSettings.config().m_currentDriveIndex < gSettings.config().m_drives.size() )
     {
         return & gSettings.config().m_drives[ gSettings.config().m_currentDriveIndex ];
+    }
+    return nullptr;
+}
+
+DriveInfo* Model::findDrive( const std::string& driveKey )
+{
+    auto& drives = gSettings.config().m_drives;
+    auto it = std::find_if( drives.begin(), drives.end(), [&driveKey] (const DriveInfo& info) {
+        return info.m_driveKey == driveKey;
+    });
+
+    if ( it != drives.end() )
+    {
+        return &(*it);
     }
     return nullptr;
 }

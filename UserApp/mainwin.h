@@ -31,9 +31,6 @@ public:
                      const std::string&              driveKey,
                      const std::vector<std::string>& allowedPublicKeys );
 
-    signals:
-        void updateFsTree();
-
 private:
     bool requestPrivateKey();
 
@@ -56,7 +53,7 @@ private:
     void onDriveDeleted( const std::string& driveKey );
     void onDriveChanged( int index );
 
-    void onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
+    void onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );
 

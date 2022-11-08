@@ -47,6 +47,8 @@ struct ChannelInfo
     timepoint                   m_tobeDeletedTimepoint;
     endpoint_list               m_endpointList = {};
 
+    std::array<uint8_t,32>              m_fsTreeHash;
+    sirius::drive::FsTree               m_fsTree;
     bool                                m_waitingFsTree              = true;
     std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
     std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
@@ -142,9 +144,9 @@ public:
     //
     // Channels
     //
-    static void                         onChannelLoaded( const std::string& channelKey,
-                                                         const std::string& driveKey,
-                                                         const std::vector<std::string>& listOfPublicKeys );
+    static void                         onSomeChannelLoaded( const std::string& channelKey,
+                                                             const std::string& driveKey,
+                                                             const std::vector<std::string>& listOfPublicKeys );
 
     static std::vector<ChannelInfo>&    dnChannels();
     static void                         setCurrentDnChannelIndex( int );
@@ -170,6 +172,7 @@ public:
 
     static std::vector<DriveInfo>&  drives();
     static DriveInfo*               currentDriveInfoPtr();
+    static DriveInfo*               findDrive( const std::string& driveKey );
     static void                     removeFromDownloads( int rowIndex );
 
     static void                     calcDiff();

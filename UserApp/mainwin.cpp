@@ -147,23 +147,23 @@ MainWin::MainWin(QWidget *parent)
                     return;
                 }
 
-                Model::onChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
+                Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
                 updateChannelsCBox();
 
-                m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
-                    if (!isSuccess) {
-                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                        return;
-                    }
+//                m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
+//                    if (!isSuccess) {
+//                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+//                        return;
+//                    }
 
-                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+//                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-                    ChannelInfo* channelInfo = Model::findChannel( channel.data.id );
-                    if ( channelInfo )
-                    {
-                        onFsTreeHashReceived( *channelInfo, rawHashFromHex(drive.data.rootHash.c_str()) );
-                    }
-                });
+//                    ChannelInfo* channelInfo = Model::findChannel( channel.data.id );
+//                    if ( channelInfo )
+//                    {
+//                        onFsTreeHashReceived( *channelInfo, rawHashFromHex(drive.data.rootHash.c_str()) );
+//                    }
+//                });
             });
         });
 
@@ -247,9 +247,12 @@ MainWin::MainWin(QWidget *parent)
         });
     }
 
-    connect(ui->m_refresh, &QPushButton::released, this, [this]() {
-        m_onChainClient->loadDrives();
-        ui->m_fsTreeTableView->update();
+    connect(ui->m_refresh, &QPushButton::released, this, [this]()
+    {
+        if ( Model::currentDnChannelIndex() >= 0 )
+        {
+            onCurrentChannelChanged( Model::currentDnChannelIndex() );
+        }
     });
 
     ui->m_refresh->setDisabled(true);
@@ -273,7 +276,7 @@ void MainWin::setupDownloadsTab()
 
     connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
-        qDebug() << LOG_SOURCE << index;
+        qDebug() << LOG_SOURCE << "Channel index: " <<index;
         onCurrentChannelChanged( index );
     });
 
@@ -517,20 +520,34 @@ void MainWin::addChannel( const std::string&              channelName,
 
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
-    ChannelInfo channelInfo;
-    channelInfo.m_name = alias;
-    channelInfo.m_hash = channelKey;
-    channelInfo.m_driveHash = driveKey;
+    auto* channel = Model::findChannel( channelKey );
+
+    if ( channel != nullptr )
+    {
+        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+        channel->m_isCreating = false;
+        Model::saveSettings();
+    }
+    else
+    {
+        ChannelInfo channelInfo;
+        channelInfo.m_name = alias;
+        channelInfo.m_hash = channelKey;
+        channelInfo.m_driveHash = driveKey;
+
+        channelInfo.m_isCreating = false;
+
+        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+        Model::dnChannels().push_back(channelInfo);
+        Model::saveSettings();
+    }
+
+    updateChannelsCBox();
 
     QMessageBox msgBox;
     msgBox.setText( QString::fromStdString( "Channel '" + alias + "' created successfully.") );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
-
-    channelInfo.m_isCreating = false;
-
-    Model::dnChannels().push_back(channelInfo);
-    updateChannelsCBox();
 }
 
 void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
@@ -562,7 +579,8 @@ void MainWin::onDriveCreationConfirmed(const std::string &alias, const std::stri
     updateDrivesCBox();
 }
 
-void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText) {
+void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
+{
     QMessageBox msgBox;
     msgBox.setText( QString::fromStdString( "Drive creation failed (" + alias + ")\n It will be removed.") );
     msgBox.setInformativeText( QString::fromStdString( errorText ) );
@@ -574,9 +592,41 @@ void MainWin::onDriveCreationFailed(const std::string& alias, const std::string&
 
 void MainWin::onCurrentChannelChanged( int index )
 {
+    qDebug() << "onCurrentChannelChanged: " << index;
+
     Model::setCurrentDnChannelIndex( index );
 
-    if ( ALEX_LOCAL_TEST )
+    if ( !ALEX_LOCAL_TEST )
+    {
+        m_fsTreeTableModel->setFsTree( {}, {} );
+
+        auto* channel = Model::currentChannelInfoPtr();
+        if ( channel != nullptr )
+        {
+            channel->m_waitingFsTree = true;
+
+            auto* drive = Model::findDrive( channel->m_driveHash );
+            if ( drive != nullptr )
+            {
+                m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash, [this, channelHash=channel->m_hash] (auto drive, auto isSuccess, auto message, auto code )
+                {
+                    if (!isSuccess) {
+                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                        return;
+                    }
+
+                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+                    ChannelInfo* channelInfo = Model::findChannel( channelHash );
+                    if ( channelInfo != nullptr )
+                    {
+                        onFsTreeHashReceived( *channelInfo, rawHashFromHex( drive.data.rootHash.c_str() ));
+                    }
+                });
+            }
+        }
+    }
+    else //if ( ALEX_LOCAL_TEST )
     {
         Model::currentChannelInfoPtr()->m_waitingFsTree = true;
 
@@ -601,13 +651,24 @@ void MainWin::onCurrentChannelChanged( int index )
             onFsTreeHashReceived( Model::dnChannels()[index], fsTreeHash );
         }).detach();
     }
-
-    m_fsTreeTableModel->setFsTree( {}, {} );
 }
 
-void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
+void MainWin::onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
 {
     qDebug() << LOG_SOURCE << "onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
+
+    auto channelInfo = Model::currentChannelInfoPtr();
+    if ( channelInfo != nullptr && channelInfo->m_hash == channel.m_hash )
+    {
+        if ( channel.m_fsTreeHash == fsTreeHash )
+        {
+            qDebug() << LOG_SOURCE << "Used already downloaded fsTree";
+
+            channel.m_waitingFsTree = false;
+            m_fsTreeTableModel->setFsTree( channel.m_fsTree, {} );
+            return;
+        }
+    }
 
     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
     Model::downloadFsTree( channel.m_driveHash,
@@ -617,25 +678,21 @@ void MainWin::onFsTreeHashReceived( const ChannelInfo& channel, const std::array
                                     const std::array<uint8_t,32> fsTreeHash,
                                     const sirius::drive::FsTree& fsTree )
     {
-        qDebug() << LOG_SOURCE << "m_fsTreeTableModel->setFsTree( fsTree, {} );";
+        qDebug() << LOG_SOURCE << "on FsTree downloaded: " << sirius::drive::toString(fsTreeHash).c_str();
 
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channelInfo = Model::currentChannelInfoPtr();
         if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
         {
-            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
             channelInfo->m_waitingFsTree = false;
+            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
+            channelInfo->m_fsTreeHash = fsTreeHash;
+            channelInfo->m_fsTree = fsTree;
             lock.unlock();
 
             m_fsTreeTableModel->setFsTree( fsTree, {} );
         }
-
-//        connect(this, &MainWin::updateFsTree, m_fsTreeTableModel, [this, fsTree](){
-            m_fsTreeTableModel->setFsTree( fsTree, {} );
-//        });
-
-//        emit updateFsTree();
     });
 }
 

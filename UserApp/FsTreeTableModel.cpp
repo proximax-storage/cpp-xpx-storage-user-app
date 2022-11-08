@@ -27,7 +27,6 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const FsT
     }
 
     updateRows();
-//    QMetaObject::invokeMethod( this, "layoutChanged" );
 }
 
 void FsTreeTableModel::update()

@@ -52,6 +52,7 @@ public:
         void serialize( Archive &ar )
         {
             ar(
+                m_accountName,
                 m_privateKeyStr,
                 m_dnChannels,
                 m_currentDnChannelIndex,
