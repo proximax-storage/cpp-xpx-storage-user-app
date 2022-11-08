@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
 
-if ( APPLE)
+if (APPLE)
     set(CMAKE_PREFIX_PATH "~/Qt/6.2.4/macos")
 
     find_package(Threads REQUIRED)

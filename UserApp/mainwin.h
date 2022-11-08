@@ -52,6 +52,8 @@ private:
     void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
     void onDriveDeleted( const std::string& driveKey );
     void onDriveChanged( int index );
+    void onApplyChanges();
+    void onRefresh();
 
     void onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 

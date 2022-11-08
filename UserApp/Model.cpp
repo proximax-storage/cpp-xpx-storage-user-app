@@ -155,11 +155,7 @@ DriveInfo* Model::findDrive( const std::string& driveKey )
         return info.m_driveKey == driveKey;
     });
 
-    if ( it != drives.end() )
-    {
-        return &(*it);
-    }
-    return nullptr;
+    return it == drives.end() ? nullptr : &(*it);
 }
 
 void Model::removeFromDownloads( int rowIndex )
@@ -175,18 +171,12 @@ ChannelInfo* Model::currentChannelInfoPtr()
 ChannelInfo* Model::findChannel( const std::string& channelKey )
 {
     auto& channels = gSettings.config().m_dnChannels;
-
     auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
     {
         return channelKey==channelInfo.m_hash;
     });
 
-    if ( it == channels.end() )
-    {
-        return nullptr;
-    }
-
-    return &(*it);
+    return it == channels.end() ? nullptr : &(*it);
 }
 
 void Model::startStorageEngine()

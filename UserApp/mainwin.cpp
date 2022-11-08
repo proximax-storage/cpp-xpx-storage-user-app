@@ -121,10 +121,6 @@ MainWin::MainWin(QWidget *parent)
     {
         m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
 
-        connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
-            m_onChainClient->loadDrives();
-        });
-
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
             connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
@@ -149,21 +145,6 @@ MainWin::MainWin(QWidget *parent)
 
                 Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
                 updateChannelsCBox();
-
-//                m_onChainClient->getBlockchainEngine()->getDriveById(channel.data.drive, [this, channel](auto drive, auto isSuccess, auto message, auto code) {
-//                    if (!isSuccess) {
-//                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-//                        return;
-//                    }
-
-//                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-//                    ChannelInfo* channelInfo = Model::findChannel( channel.data.id );
-//                    if ( channelInfo )
-//                    {
-//                        onFsTreeHashReceived( *channelInfo, rawHashFromHex(drive.data.rootHash.c_str()) );
-//                    }
-//                });
             });
         });
 
@@ -187,7 +168,13 @@ MainWin::MainWin(QWidget *parent)
         }, Qt::QueuedConnection);
 
         connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
-            CloseChannelDialog dialog(m_onChainClient, ui->m_channels->currentText(), this);
+            auto channel = Model::currentChannelInfoPtr();
+            if (!channel) {
+                qWarning() << LOG_SOURCE << "bad channel";
+                return;
+            }
+
+            CloseChannelDialog dialog(m_onChainClient, channel->m_hash.c_str(), this);
             dialog.exec();
         }, Qt::QueuedConnection);
 
@@ -197,7 +184,13 @@ MainWin::MainWin(QWidget *parent)
         });
 
         connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
-            CloseDriveDialog dialog(m_onChainClient, ui->m_driveCBox->currentText(), this);
+            auto drive = Model::currentDriveInfoPtr();
+            if (!drive) {
+                qWarning() << LOG_SOURCE << "bad drive";
+                return;
+            }
+
+            CloseDriveDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), this);
             dialog.exec();
         });
 
@@ -209,51 +202,31 @@ MainWin::MainWin(QWidget *parent)
             onDriveCreationFailed( alias, sirius::drive::toString( driveKey ), errorText.toStdString() );
         }, Qt::QueuedConnection);
 
-        connect( ui->m_applyChangesBtn, &QPushButton::released, this, [this]
-        {
-            auto* drive = Model::currentDriveInfoPtr();
-            if (drive)
-            {
-                auto& actionList = drive->m_actionList;
-                if ( actionList.empty() )
-                {
-                    QMessageBox msgBox;
-                    msgBox.setText( QString::fromStdString( "There is no differece.") );
-                    msgBox.setStandardButtons( QMessageBox::Ok );
-                    msgBox.exec();
-                    return;
-                }
-
-                if (ui->m_channels->count() == 0) {
-                    qWarning() << LOG_SOURCE << "bad download channel";
-                    return;
-                }
-
-                auto actions = drive->m_actionList;
-                if (actions.empty()) {
-                    qWarning() << LOG_SOURCE << "no actions to apply";
-                    return;
-                }
-
-                auto channelId = rawHashFromHex(ui->m_channels->currentText());
-                const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
-                auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
-                m_onChainClient->applyDataModification(driveKeyHex, actions, channelId, sandbox);
-            }
-        });
+        connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges);
 
         connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
+            m_onChainClient->loadDrives();
             ui->m_refresh->setEnabled(true);
         });
+
+        connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, [this](){
+            //
+        });
+
+        connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, [this](){
+            //
+        });
+
+//        connect(m_onChainClient, &OnChainClient::app, this, [this](){
+//
+//        });
+//
+//        connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, [this](){
+//
+//        });
     }
 
-    connect(ui->m_refresh, &QPushButton::released, this, [this]()
-    {
-        if ( Model::currentDnChannelIndex() >= 0 )
-        {
-            onCurrentChannelChanged( Model::currentDnChannelIndex() );
-        }
-    });
+    connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh);
 
     ui->m_refresh->setDisabled(true);
 }
@@ -399,8 +372,7 @@ void MainWin::setupDownloadsTable()
         qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
 
         auto rows = ui->m_downloadsTableView->selectionModel()->selectedRows();
-
-        if ( rows.size() <= 0 )
+        if ( rows.empty() )
         {
             return;
         }
@@ -590,41 +562,96 @@ void MainWin::onDriveCreationFailed(const std::string& alias, const std::string&
     //todo!!!
 }
 
+void MainWin::onApplyChanges() {
+    auto drive = Model::currentDriveInfoPtr();
+    if (!drive) {
+        qWarning() << LOG_SOURCE << "bad drive";
+        return;
+    }
+
+    auto& actionList = drive->m_actionList;
+    if ( actionList.empty() )
+    {
+        QMessageBox msgBox;
+        msgBox.setText( QString::fromStdString( "There is no differece.") );
+        msgBox.setStandardButtons( QMessageBox::Ok );
+        msgBox.exec();
+        return;
+    }
+
+    if (ui->m_channels->count() == 0) {
+        qWarning() << LOG_SOURCE << "bad download channel";
+        return;
+    }
+
+    auto actions = drive->m_actionList;
+    if (actions.empty()) {
+        qWarning() << LOG_SOURCE << "no actions to apply";
+        return;
+    }
+
+    auto channel = Model::currentChannelInfoPtr();
+    if (!channel) {
+        qWarning() << LOG_SOURCE << "bad channel";
+        return;
+    }
+
+    auto channelId = rawHashFromHex(channel->m_hash.c_str());
+    const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
+    auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
+    m_onChainClient->applyDataModification(driveKeyHex, actions, channelId, sandbox);
+}
+
+void MainWin::onRefresh() {
+    onCurrentChannelChanged( Model::currentDnChannelIndex() );
+}
+
 void MainWin::onCurrentChannelChanged( int index )
 {
-    qDebug() << "onCurrentChannelChanged: " << index;
+    if (index < 0) {
+        qWarning() << LOG_SOURCE << "bad index";
+        return;
+    }
 
     Model::setCurrentDnChannelIndex( index );
-
     if ( !ALEX_LOCAL_TEST )
     {
         m_fsTreeTableModel->setFsTree( {}, {} );
 
-        auto* channel = Model::currentChannelInfoPtr();
-        if ( channel != nullptr )
-        {
-            channel->m_waitingFsTree = true;
-
-            auto* drive = Model::findDrive( channel->m_driveHash );
-            if ( drive != nullptr )
-            {
-                m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash, [this, channelHash=channel->m_hash] (auto drive, auto isSuccess, auto message, auto code )
-                {
-                    if (!isSuccess) {
-                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                        return;
-                    }
-
-                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-                    ChannelInfo* channelInfo = Model::findChannel( channelHash );
-                    if ( channelInfo != nullptr )
-                    {
-                        onFsTreeHashReceived( *channelInfo, rawHashFromHex( drive.data.rootHash.c_str() ));
-                    }
-                });
-            }
+        auto channel = Model::currentChannelInfoPtr();
+        if (!channel) {
+            qWarning() << LOG_SOURCE << "bad channel";
+            return;
         }
+
+        channel->m_waitingFsTree = true;
+
+        auto drive = Model::findDrive( channel->m_driveHash );
+        if (!drive)
+        {
+            qWarning() << LOG_SOURCE << "bad drive";
+            return;
+        }
+
+        m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash,
+                                                              [this, channelHash=channel->m_hash]
+                                                              (auto drive, auto isSuccess, auto message, auto code )
+        {
+            if (!isSuccess) {
+                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                return;
+            }
+
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+            auto channel = Model::findChannel( channelHash );
+            if (!channel)
+            {
+                qWarning() << LOG_SOURCE << "bad channel";
+                return;
+            }
+
+            onFsTreeHashReceived( *channel, rawHashFromHex( drive.data.rootHash.c_str() ));
+        });
     }
     else //if ( ALEX_LOCAL_TEST )
     {

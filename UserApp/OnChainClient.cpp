@@ -162,7 +162,7 @@ void OnChainClient::initConnects() {
                 mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(),
                                                 rawHashToHex(channelId).toStdString(),
                                                 rawHashFromHex(fileStructureCdi.c_str()), callback);
-            }, Qt::QueuedConnection);
+    }, Qt::QueuedConnection);
 }
 
 void OnChainClient::initAccount(const std::string &privateKey) {
