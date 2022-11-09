@@ -31,7 +31,7 @@ public:
                                        const std::string& sandboxFolder,
                                        uint64_t& modifySize);
 
-    void start();
+    void start( std::function<void()> addressAlreadyInUseHandler );
 
     void restart();
 
@@ -48,7 +48,8 @@ public:
 private:
     void init(const sirius::crypto::KeyPair&  keyPair,
               const std::string&              address,
-              const endpoint_list&            bootstraps );
+              const endpoint_list&            bootstraps,
+              std::function<void()>           addressAlreadyInUseHandler );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
 };

@@ -46,7 +46,7 @@ set(PROJECT_SOURCES
         mainwin.h                   mainwin.cpp                 mainwin.ui
         SettingsDialog.h            SettingsDialog.cpp          SettingsDialog.ui
         PrivKeyDialog.h             PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                     Model.cpp                   adddownloadchanneldialog.ui
+        Model.h                     Model.cpp                   AddDownloadChannelDialog.ui
         Settings.h                  Settings.cpp                progressbardialog.ui
         StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
         SelectDriveDialog.h         SelectDriveDialog.cpp       SelectDriveDialog.ui

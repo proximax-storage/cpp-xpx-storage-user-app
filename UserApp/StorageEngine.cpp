@@ -7,6 +7,7 @@
 #include "utils/HexParser.h"
 
 #include <QMetaObject>
+#include <QMessageBox>
 
 #include <boost/algorithm/string.hpp>
 
@@ -17,7 +18,7 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
     return m_session->addActionListToSession(actions, driveId, {}, sandboxFolder, modifySize);
 }
 
-void StorageEngine::start()
+void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
 {
 
     if ( ALEX_LOCAL_TEST )
@@ -27,7 +28,8 @@ void StorageEngine::start()
 
         gStorageEngine->init(*gSettings.config().m_keyPair,
                              "192.168.2.201:2001",
-                             bootstraps);
+                             bootstraps,
+                             addressAlreadyInUseHandler );
     }
     else if ( VICTOR_LOCAL_TEST )
     {
@@ -36,7 +38,8 @@ void StorageEngine::start()
 
         gStorageEngine->init(*gSettings.config().m_keyPair,
                              "192.168.20.30:" + gSettings.m_udpPort,
-                             bootstraps);
+                             bootstraps,
+                             addressAlreadyInUseHandler );
     }
     else
     {
@@ -48,7 +51,8 @@ void StorageEngine::start()
 
         gStorageEngine->init(*gSettings.config().m_keyPair,
                              "0.0.0.0:" + gSettings.m_udpPort,
-                             bootstraps);
+                             bootstraps,
+                             addressAlreadyInUseHandler );
     }
 }
 
@@ -59,15 +63,18 @@ void StorageEngine::restart()
 
 void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const std::string&              address,
-                         const endpoint_list&            bootstraps )
+                         const endpoint_list&            bootstraps,
+                         std::function<void()>           addressAlreadyInUseHandler )
 {
     qDebug() << LOG_SOURCE << "createClientSession: address: " << address.c_str();
     qDebug() << LOG_SOURCE << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
     m_session = sirius::drive::createClientSession(  keyPair,
                                                      address,
-                                                     []( const lt::alert* alert )
+                                                     [addressAlreadyInUseHandler]( const lt::alert* alert )
                                                      {
                                                          qDebug() << LOG_SOURCE << "createClientSession: socketError?" << alert->message();
+
+                                                         addressAlreadyInUseHandler();
                                                      },
                                                      bootstraps,
                                                      false,

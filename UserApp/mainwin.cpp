@@ -38,7 +38,10 @@ MainWin::MainWin(QWidget *parent)
     , ui(new Ui::MainWin)
 {
     ui->setupUi(this);
+}
 
+void MainWin::init()
+{
     if ( Model::homeFolder() != "/Users/alex" )
     {
         ALEX_LOCAL_TEST = false;
@@ -71,14 +74,25 @@ MainWin::MainWin(QWidget *parent)
         if ( ALEX_LOCAL_TEST )
         {
             gSettings.m_replicatorBootstrap = "192.168.2.101:5001";
+            gSettings.setCurrentAccountIndex(1);
         }
         else
         {
             gSettings.m_replicatorBootstrap = "15.206.164.53:7904";
+            gSettings.setCurrentAccountIndex(0);
         }
     }
 
-    Model::startStorageEngine();
+    Model::startStorageEngine( [this]
+    {
+//         QMessageBox msgBox(this);
+//         msgBox.setText( QString::fromStdString( "Address already in use") );
+//         msgBox.setInformativeText( QString::fromStdString( "Port: " + gSettings.m_udpPort ) );
+//         msgBox.setStandardButtons( QMessageBox::Ok );
+//         msgBox.exec();
+
+         exit(1);
+    });
 
     setupDownloadsTab();
     setupDrivesTab();
@@ -113,6 +127,7 @@ MainWin::MainWin(QWidget *parent)
     });
 
     const std::string privateKey = gSettings.config().m_privateKeyStr;
+    qDebug() << LOG_SOURCE << "privateKey: " << privateKey;
     const auto gatewayEndpoint = QString(gSettings.m_restBootstrap.c_str()).split(":");
     const std::string address = gatewayEndpoint[0].toStdString();
     const std::string port = gatewayEndpoint[1].toStdString();
@@ -150,6 +165,8 @@ MainWin::MainWin(QWidget *parent)
 
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives)
         {
+            qDebug() << "drivesLoaded";
+
             // add drives created on another devices
             Model::onDrivesLoaded(drives);
             updateDrivesCBox();
@@ -205,6 +222,7 @@ MainWin::MainWin(QWidget *parent)
         connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges);
 
         connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
+            qDebug() << "initializedSuccessfully";
             m_onChainClient->loadDrives();
             ui->m_refresh->setEnabled(true);
         });
@@ -492,6 +510,9 @@ void MainWin::addChannel( const std::string&              channelName,
 
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
+    qDebug() << "onChannelCreationConfirmed: alias:" << alias;
+    qDebug() << "onChannelCreationConfirmed: channelKey:" << channelKey;
+
     auto* channel = Model::findChannel( channelKey );
 
     if ( channel != nullptr )
@@ -502,6 +523,8 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     }
     else
     {
+        qDebug() << "onChannelCreationConfirmed: channel not found!!! " << channelKey;
+
         ChannelInfo channelInfo;
         channelInfo.m_name = alias;
         channelInfo.m_hash = channelKey;
@@ -602,8 +625,12 @@ void MainWin::onApplyChanges() {
     m_onChainClient->applyDataModification(driveKeyHex, actions, channelId, sandbox);
 }
 
-void MainWin::onRefresh() {
-    onCurrentChannelChanged( Model::currentDnChannelIndex() );
+void MainWin::onRefresh()
+{
+    if ( Model::currentDnChannelIndex() >= 0 )
+    {
+        onCurrentChannelChanged( Model::currentDnChannelIndex() );
+    }
 }
 
 void MainWin::onCurrentChannelChanged( int index )

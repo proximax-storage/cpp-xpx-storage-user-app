@@ -5,6 +5,8 @@
 #include "StorageEngine.h"
 #include "utils/HexParser.h"
 
+#include <boost/algorithm/string.hpp>
+
 #if ! __MINGW32__
     #include <unistd.h>
     #include <sys/types.h>
@@ -57,7 +59,7 @@ void Model::onSomeChannelLoaded( const std::string& channelKey,
 
     auto it = std::find_if( channels.begin(), channels.end(), [&channelKey] (const auto& channelInfo)
     {
-        return channelInfo.m_hash == channelKey;
+        return boost::iequals( channelInfo.m_hash, channelKey );
     });
 
     if ( it == channels.end() )
@@ -122,7 +124,7 @@ void Model::onDrivesLoaded( const QStringList& driveList )
 
         auto it = std::find_if( drives.begin(), drives.end(), [&hash] (const auto& driveInfo)
         {
-            return driveInfo.m_driveKey == hash;
+            return boost::iequals( driveInfo.m_driveKey, hash );
         });
 
         if ( it == drives.end() )
@@ -152,7 +154,7 @@ DriveInfo* Model::findDrive( const std::string& driveKey )
 {
     auto& drives = gSettings.config().m_drives;
     auto it = std::find_if( drives.begin(), drives.end(), [&driveKey] (const DriveInfo& info) {
-        return info.m_driveKey == driveKey;
+        return boost::iequals( info.m_driveKey, driveKey );
     });
 
     return it == drives.end() ? nullptr : &(*it);
@@ -173,16 +175,16 @@ ChannelInfo* Model::findChannel( const std::string& channelKey )
     auto& channels = gSettings.config().m_dnChannels;
     auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
     {
-        return channelKey==channelInfo.m_hash;
+        return boost::iequals( channelKey, channelInfo.m_hash );
     });
 
     return it == channels.end() ? nullptr : &(*it);
 }
 
-void Model::startStorageEngine()
+void Model::startStorageEngine( std::function<void()> addressAlreadyInUseHandler )
 {
     gStorageEngine = std::make_shared<StorageEngine>();
-    gStorageEngine->start();
+    gStorageEngine->start( addressAlreadyInUseHandler );
 }
 
 void Model::downloadFsTree( const std::string&             driveHash,
@@ -213,7 +215,7 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
 
     auto it = std::find_if( drives.begin(), drives.end(), [driveHash] (const auto& driveInfo)
     {
-        return driveHash==driveInfo.m_driveKey;
+        return boost::iequals( driveHash, driveInfo.m_driveKey );
     });
 
     if ( it == drives.end() )

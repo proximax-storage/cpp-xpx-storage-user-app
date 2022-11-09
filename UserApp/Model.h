@@ -180,7 +180,7 @@ public:
     //
     // StorageEngine
     //
-    static void startStorageEngine();
+    static void startStorageEngine( std::function<void()> addressAlreadyInUseHandler );
 
     static void downloadFsTree( const std::string&             driveHash,
                                 const std::string&             dnChannelId,

@@ -24,6 +24,8 @@ public:
     MainWin(QWidget *parent = nullptr);
     ~MainWin();
 
+    void init();
+
     void selectDownloadRow( int );
 
     void addChannel( const std::string&              channelName,

@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     //a.setStyleSheet("QLineEdit { background: yellow }");
 
     MainWin w;
+    w.init();
     if ( w.m_mustExit )
     {
         return 0;

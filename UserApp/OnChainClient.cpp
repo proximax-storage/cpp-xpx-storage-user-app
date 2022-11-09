@@ -13,6 +13,7 @@ OnChainClient::OnChainClient(std::shared_ptr<StorageEngine> storage,
 }
 
 void OnChainClient::loadDrives() {
+    qDebug() << LOG_SOURCE << "loadDrive: started";
     mpBlockchainEngine->getDrives([this](auto drivesPage, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
@@ -23,12 +24,16 @@ void OnChainClient::loadDrives() {
 
         QStringList loadedDrives;
         for (const auto &drive: drivesPage.data.drives) {
+            qDebug() << LOG_SOURCE << "loadDrive: " << drive.data.multisig.c_str();
+            qDebug() << LOG_SOURCE << "loadDrive: owner: " << drive.data.owner.c_str();
+            qDebug() << LOG_SOURCE << "loadDrive: pubKey: " << publicKey.toStdString().c_str();
             if (drive.data.owner == publicKey.toStdString()) {
                 loadedDrives.push_back(drive.data.multisig.c_str());
             }
         }
 
         if (!loadedDrives.empty()) {
+            qDebug() << LOG_SOURCE << "loadDrive: emit drivesLoaded: " << loadedDrives.size();
             emit drivesLoaded(loadedDrives);
         }
     });
