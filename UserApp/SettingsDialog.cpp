@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QClipboard>
+#include <QToolTip>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -28,14 +29,12 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     setModal(true);
 
-    ui->m_errorText->clear();
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
     {
         if (text.trimmed().isEmpty()) {
-            ui->m_errorText->setText("Invalid rest gateway address!");
+            QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         } else {
-            ui->m_errorText->clear();
             ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         }
     });
@@ -43,10 +42,9 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
     {
         if (text.trimmed().isEmpty()) {
-            ui->m_errorText->setText("Invalid replicator address!");
+            QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         } else {
-            ui->m_errorText->clear();
             ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         }
     });
@@ -54,10 +52,9 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_portField, &QLineEdit::textChanged, this, [this] (auto text)
     {
         if (text.trimmed().isEmpty()) {
-            ui->m_errorText->setText("Invalid port!");
+            QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid port!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         } else {
-            ui->m_errorText->clear();
             ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         }
     });
@@ -111,22 +108,23 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     connect(ui->m_dnFolderField, &QLineEdit::textChanged, this, [this](auto text){
         if (text.trimmed().isEmpty()) {
-            ui->m_errorText->show();
-            ui->m_errorText->setText("Invalid download folder path!");
+            QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid path!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         } else {
-            ui->m_errorText->clear();
             ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         }
     });
 
     if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
-        ui->m_errorText->show();
-        ui->m_errorText->setText("Invalid download folder path!");
+
+        QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid download folder path!"));
+//        ui->m_errorText->show();
+//        ui->m_errorText->setText("Invalid download folder path!");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     }
 
+    setToolTipDuration(10);
     fillAccountCbox( initSettings );
     setWindowTitle("Settings");
     setFocus();
@@ -223,7 +221,7 @@ bool SettingsDialog::verify()
     boost::split( addressAndPort, gSettingsCopy.m_restBootstrap, [](char c) { return c==':'; } );
     if ( addressAndPort.size() != 2 )
     {
-        ui->m_errorText->setText( QString::fromStdString("Invalid REST Server Address" ));
+        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
         return false;
     }
 
@@ -233,7 +231,7 @@ bool SettingsDialog::verify()
     boost::split( addressAndPort, gSettingsCopy.m_replicatorBootstrap, [](char c) { return c==':'; } );
     if ( addressAndPort.size() != 2 )
     {
-        ui->m_errorText->setText("Invalid Replicator Booststrap Address");
+        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
         return false;
     }
 
