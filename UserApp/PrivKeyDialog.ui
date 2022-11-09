@@ -6,138 +6,92 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>540</width>
-    <height>380</height>
+    <width>538</width>
+    <height>158</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>320</y>
-     <width>480</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>120</y>
-     <width>480</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Private Key:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_pkField">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>150</y>
-     <width>480</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="m_generateKeysBtn">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>194</y>
-     <width>280</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Generate Key</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="m_loadFromFileBtn">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>241</y>
-     <width>280</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Load From File</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="m_errorText">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>284</y>
-     <width>481</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>15</pointsize>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">color : #cc0000</string>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>48</y>
-     <width>480</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Account Name:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_accountName">
-   <property name="geometry">
-    <rect>
-     <x>28</x>
-     <y>78</y>
-     <width>480</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Private Key:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="m_pkField"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Account Name:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="m_generateKeysBtn">
+         <property name="text">
+          <string>Generate Key</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="m_loadFromFileBtn">
+         <property name="text">
+          <string>Load From File</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="m_accountName"/>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="m_errorText">
+       <property name="font">
+        <font>
+         <pointsize>15</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color : #cc0000</string>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
- <tabstops>
-  <tabstop>m_accountName</tabstop>
-  <tabstop>m_pkField</tabstop>
-  <tabstop>m_generateKeysBtn</tabstop>
-  <tabstop>m_loadFromFileBtn</tabstop>
- </tabstops>
  <resources/>
  <connections>
   <connection>
