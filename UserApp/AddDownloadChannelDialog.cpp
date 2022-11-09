@@ -1,6 +1,6 @@
 #include "AddDownloadChannelDialog.h"
 #include "SelectDriveDialog.h"
-#include "ui_adddownloadchanneldialog.h"
+#include "ui_AddDownloadChannelDialog.h"
 #include "Utils.h"
 #include "Model.h"
 #include "mainwin.h"
