@@ -6,240 +6,150 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>531</width>
-    <height>499</height>
+    <width>623</width>
+    <height>290</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>440</y>
-     <width>480</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>58</x>
-     <y>40</y>
-     <width>211</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>REST Server Address:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_restBootAddrField">
-   <property name="geometry">
-    <rect>
-     <x>288</x>
-     <y>40</y>
-     <width>181</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>58</x>
-     <y>80</y>
-     <width>211</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Replicator Booststrap Address:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_replicatorBootAddrField">
-   <property name="geometry">
-    <rect>
-     <x>288</x>
-     <y>80</y>
-     <width>181</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>58</x>
-     <y>120</y>
-     <width>211</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Local UDP Port:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_portField">
-   <property name="geometry">
-    <rect>
-     <x>288</x>
-     <y>120</y>
-     <width>61</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>56</x>
-     <y>182</y>
-     <width>211</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Account Name:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="m_dnFolderField">
-   <property name="geometry">
-    <rect>
-     <x>27</x>
-     <y>332</y>
-     <width>473</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>56</x>
-     <y>302</y>
-     <width>211</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Download Folder:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="m_dnFolderBtn">
-   <property name="geometry">
-    <rect>
-     <x>359</x>
-     <y>362</y>
-     <width>141</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Choose directory</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="m_newAccountBtn">
-   <property name="geometry">
-    <rect>
-     <x>348</x>
-     <y>244</y>
-     <width>153</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>New Account</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="m_errorText">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>410</y>
-     <width>480</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>15</pointsize>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">color : #cc0000</string>
-   </property>
-   <property name="text">
-    <string>T</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="m_accountCbox">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>208</y>
-     <width>489</width>
-     <height>32</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="m_newAccountBtn_2">
-   <property name="geometry">
-    <rect>
-     <x>24</x>
-     <y>244</y>
-     <width>161</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Copy Account Key</string>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="m_replicatorBootAddrField">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="m_dnFolderField">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="m_restBootAddrField"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Download Folder:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Account Name:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>REST Server Address:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QPushButton" name="m_newAccountBtn">
+         <property name="text">
+          <string>New Account</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="m_copyKeyBtn">
+         <property name="text">
+          <string>Copy Account Key</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="6" column="1">
+      <widget class="QPushButton" name="m_dnFolderBtn">
+       <property name="text">
+        <string>Choose directory</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="m_accountCbox"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Local UDP Port:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="m_portField">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Replicator Booststrap Address:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="m_errorText">
+       <property name="font">
+        <font>
+         <pointsize>15</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color : #cc0000</string>
+       </property>
+       <property name="text">
+        <string>T</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
- <tabstops>
-  <tabstop>m_restBootAddrField</tabstop>
-  <tabstop>m_replicatorBootAddrField</tabstop>
-  <tabstop>m_portField</tabstop>
-  <tabstop>m_dnFolderField</tabstop>
-  <tabstop>m_newAccountBtn</tabstop>
-  <tabstop>m_dnFolderBtn</tabstop>
- </tabstops>
  <resources/>
  <connections>
   <connection>

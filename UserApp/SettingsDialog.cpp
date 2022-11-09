@@ -8,6 +8,7 @@
 #include <QIntValidator>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QClipboard>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -27,19 +28,38 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     setModal(true);
 
-    ui->m_errorText->setText("");
+    ui->m_errorText->clear();
+    connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
+    {
+        if (text.trimmed().isEmpty()) {
+            ui->m_errorText->setText("Invalid rest gateway address!");
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        } else {
+            ui->m_errorText->clear();
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        }
+    });
 
-    connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this] ()
+    connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
     {
-        ui->m_errorText->setText("");
+        if (text.trimmed().isEmpty()) {
+            ui->m_errorText->setText("Invalid replicator address!");
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        } else {
+            ui->m_errorText->clear();
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        }
     });
-    connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this] ()
+
+    connect(ui->m_portField, &QLineEdit::textChanged, this, [this] (auto text)
     {
-        ui->m_errorText->setText("");
-    });
-    connect(ui->m_portField, &QLineEdit::textChanged, this, [this] ()
-    {
-        ui->m_errorText->setText("");
+        if (text.trimmed().isEmpty()) {
+            ui->m_errorText->setText("Invalid port!");
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        } else {
+            ui->m_errorText->clear();
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        }
     });
 
     connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
@@ -61,8 +81,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         const QString path = QFileDialog::getExistingDirectory(this,
                                                                tr("Choose directory"), "/",
                                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-
-        ui->m_dnFolderField->setText(path);
+        ui->m_dnFolderField->setText(path.isEmpty() ? gSettingsCopy.config().m_downloadFolder.c_str() : path);
     });
 
     connect(ui->m_newAccountBtn, SIGNAL (released()), this, SLOT( onNewAccountBtn() ) );
@@ -74,6 +93,38 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     {
         ui->m_newAccountBtn->setEnabled(false);
         ui->m_newAccountBtn->setStyleSheet("QPushButton { color: grey;}" );
+    }
+
+    connect(ui->m_copyKeyBtn, &QPushButton::released, this, [](){
+        QClipboard* clipboard = QApplication::clipboard();
+        if (!clipboard) {
+            qWarning() << LOG_SOURCE << "bad clipboard";
+            return;
+        }
+
+        const QString publicKey = gSettingsCopy.config().m_publicKeyStr.c_str();
+        clipboard->setText(publicKey, QClipboard::Clipboard);
+        if (clipboard->supportsSelection()) {
+            clipboard->setText(publicKey, QClipboard::Selection);
+        }
+    });
+
+    connect(ui->m_dnFolderField, &QLineEdit::textChanged, this, [this](auto text){
+        if (text.trimmed().isEmpty()) {
+            ui->m_errorText->show();
+            ui->m_errorText->setText("Invalid download folder path!");
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        } else {
+            ui->m_errorText->clear();
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        }
+    });
+
+    if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
+        ui->m_errorText->show();
+        ui->m_errorText->setText("Invalid download folder path!");
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     }
 
     fillAccountCbox( initSettings );
@@ -134,11 +185,6 @@ void SettingsDialog::accept()
 void SettingsDialog::reject()
 {
     QDialog::reject();
-
-//    if ( ! gSettings.loaded() )
-//    {
-//        qApp->exit(0);
-//    }
 }
 
 void SettingsDialog::fillAccountCbox( bool initSettings )
