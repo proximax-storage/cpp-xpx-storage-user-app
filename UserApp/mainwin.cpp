@@ -152,7 +152,8 @@ void MainWin::init()
         {
             qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
 
-            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code) {
+            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code)
+            {
                 if (!isSuccess) {
                     qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                     return;

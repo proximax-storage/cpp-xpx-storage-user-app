@@ -55,6 +55,10 @@ void Model::onSomeChannelLoaded( const std::string& channelKey,
                                  const std::string& driveKey,
                                  const std::vector<std::string>& listOfPublicKeys )
 {
+
+    qDebug() << "onSomeChannelLoaded: channelKey: " << channelKey;
+    qDebug() << "onSomeChannelLoaded: driveKey: " << driveKey;
+
     auto& channels = gSettings.config().m_dnChannels;
 
     auto it = std::find_if( channels.begin(), channels.end(), [&channelKey] (const auto& channelInfo)
