@@ -161,14 +161,14 @@
   <widget class="QPushButton" name="m_dnFolderBtn">
    <property name="geometry">
     <rect>
-     <x>400</x>
+     <x>359</x>
      <y>362</y>
-     <width>100</width>
+     <width>141</width>
      <height>32</height>
     </rect>
    </property>
    <property name="text">
-    <string>Change</string>
+    <string>Choose directory</string>
    </property>
   </widget>
   <widget class="QPushButton" name="m_newAccountBtn">

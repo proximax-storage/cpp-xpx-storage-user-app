@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>636</width>
-    <height>208</height>
+    <height>212</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,6 +46,18 @@
        </item>
        <item row="2" column="1">
         <widget class="QPushButton" name="m_selectMyDriveBtn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Select my drive</string>
          </property>

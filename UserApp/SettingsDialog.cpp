@@ -7,6 +7,7 @@
 
 #include <QIntValidator>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -55,6 +56,15 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         }
     });
 
+    connect(ui->m_dnFolderBtn, &QPushButton::released, this, [this]()
+    {
+        const QString path = QFileDialog::getExistingDirectory(this,
+                                                               tr("Choose directory"), "/",
+                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+        ui->m_dnFolderField->setText(path);
+    });
+
     connect(ui->m_newAccountBtn, SIGNAL (released()), this, SLOT( onNewAccountBtn() ) );
 
     ui->buttonBox->disconnect(this);
@@ -67,8 +77,6 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     }
 
     fillAccountCbox( initSettings );
-
-
     setWindowTitle("Settings");
     setFocus();
 }

@@ -90,6 +90,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -133,6 +134,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -166,6 +168,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -185,6 +188,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -214,6 +218,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -416,6 +421,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -568,7 +574,7 @@ color : #aa6600</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

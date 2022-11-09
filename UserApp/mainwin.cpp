@@ -628,10 +628,7 @@ void MainWin::onApplyChanges() {
 
 void MainWin::onRefresh()
 {
-    if ( Model::currentDnChannelIndex() >= 0 )
-    {
-        onCurrentChannelChanged( Model::currentDnChannelIndex() );
-    }
+    onCurrentChannelChanged( Model::currentDnChannelIndex() );
 }
 
 void MainWin::onCurrentChannelChanged( int index )
