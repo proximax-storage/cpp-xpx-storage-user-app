@@ -13,6 +13,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
 
 if (APPLE)
+    # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
+    # the property added to Info.plist
+    set(MACOSX_BUNDLE_ICON_FILE icon.png)
+
+    # And this part tells CMake where to find and install the file itself
+    set(APP_ICON_MACOSX ./resources/icons/icon.png)
+    set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
+            MACOSX_PACKAGE_LOCATION "resources/icons")
+
     set(CMAKE_PREFIX_PATH "~/Qt/6.2.4/macos")
 
     find_package(Threads REQUIRED)
@@ -83,7 +92,7 @@ set(PROJECT_SOURCES
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(StorageClientApp
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
+        ${PROJECT_SOURCES} main.cpp ${APP_ICON_MACOSX}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET StorageClientApp APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -99,9 +108,7 @@ else()
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(StorageClientApp
-            ${PROJECT_SOURCES}
-        )
+        add_executable(StorageClientApp ${PROJECT_SOURCES} main.cpp ${APP_ICON_MACOSX})
     endif()
 
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})

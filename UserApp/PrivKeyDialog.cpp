@@ -2,8 +2,6 @@
 #include "Settings.h"
 #include "mainwin.h"
 #include "ui_PrivKeyDialog.h"
-
-#include "crypto/Signer.h"
 #include "drive/Utils.h"
 
 #include <random>
