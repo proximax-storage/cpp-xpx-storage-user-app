@@ -35,7 +35,7 @@ class OnChainClient : public QObject
                                        const uint64_t& feedbacksNumber);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
-        void addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
+        std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
 
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,

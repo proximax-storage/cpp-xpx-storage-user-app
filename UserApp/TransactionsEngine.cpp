@@ -173,7 +173,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t& driveSize, const ushort replicatorsCount) {
+std::string TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t& driveSize, const ushort replicatorsCount) {
     xpx_chain_sdk::Amount verificationFeeAmount = 100;
     auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
     mpChainAccount->signTransaction(prepareDriveTransaction.get());
@@ -213,6 +213,7 @@ void TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t&
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { prepareDriveNotifier },
                                                                [this, data = prepareDriveTransaction->binary()]() { announceTransaction(data); },
                                                                [this, hash](auto error) { onError(hash, error); });
+    return hash;
 }
 
 void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey) {

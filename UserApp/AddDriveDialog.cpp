@@ -124,15 +124,14 @@ void AddDriveDialog::accept()
         {
             // Create drive
 
-            //auto hash =
-            mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
-                                        ui->m_maxDriveSize->text().toULongLong(),
-                                        ui->m_replicatorNumber->text().toULongLong() );
+            auto hash = mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
+                                                    ui->m_maxDriveSize->text().toULongLong(),
+                                                    ui->m_replicatorNumber->text().toULongLong() );
 
             DriveInfo drive;
 
             drive.m_name             = ui->m_driveName->text().toStdString();
-            //drive.m_driveKey         = hash;
+            drive.m_driveKey         = hash;
             drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
             drive.m_maxDriveSize     = ui->m_maxDriveSize->text().toInt();
             drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
