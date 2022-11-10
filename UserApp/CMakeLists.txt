@@ -53,8 +53,8 @@ set(PROJECT_SOURCES
         ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
         ManageChannelsDialog.h      ManageChannelsDialog.cpp    ManageChannelsDialog.ui
 
-        FsTreeTableModel.h          FsTreeTableModel.cpp
-        DownloadsTableModel.h       DownloadsTableModel.cpp
+        FsTreeTableModel.h          FsTreeTableModel.cpp        DownloadPaymentDialog.ui
+        DownloadsTableModel.h       DownloadsTableModel.cpp     StoragePaymentDialog.ui
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
@@ -73,6 +73,8 @@ set(PROJECT_SOURCES
         Fstreemodel.h               Fstreemodel.cpp
         Utils.h                     Utils.cpp
         CloseDriveDialog.h          CloseDriveDialog.cpp
+        DownloadPaymentDialog.h     DownloadPaymentDialog.cpp
+        StoragePaymentDialog.h      StoragePaymentDialog.cpp
 
         ${TS_FILES}
 )
