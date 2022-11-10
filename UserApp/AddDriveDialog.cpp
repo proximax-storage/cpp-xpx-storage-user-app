@@ -4,6 +4,7 @@
 #include "./ui_AddDriveDialog.h"
 
 #include <QIntValidator>
+#include <QFileDialog>
 
 #include <random>
 
@@ -45,6 +46,17 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect( ui->m_key, &QLineEdit::textChanged, this, [this] ()
     {
         //verify();
+    });
+
+    connect(ui->m_localFolderBtn, &QPushButton::released, this, [this]()
+    {
+        const QString path = QFileDialog::getExistingDirectory(this,
+                                                               tr("Choose directory"), "/",
+                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        if ( ! path.isEmpty() )
+        {
+            ui->m_localDriveFolder->setText( path );
+        }
     });
 
 
@@ -108,27 +120,43 @@ void AddDriveDialog::accept()
 {
     if ( verify() )
     {
-        //TODO
-
-        if ( m_editDriveIndex >= 0 )
+        if ( m_editDriveIndex < 0 )
         {
+            // Create drive
+
+            //auto hash =
+            mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
+                                        ui->m_maxDriveSize->text().toULongLong(),
+                                        ui->m_replicatorNumber->text().toULongLong() );
+
+            DriveInfo drive;
+
+            drive.m_name             = ui->m_driveName->text().toStdString();
+            //drive.m_driveKey         = hash;
+            drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
+            drive.m_maxDriveSize     = ui->m_maxDriveSize->text().toInt();
+            drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
+
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            Model::drives().push_back( drive );
+            Model::setCurrentDriveIndex( Model::drives().size()-1 );
+            gSettings.save();
+
+        }
+        else
+        {
+            // Edit drive info
             std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
             auto& drive = Model::drives()[m_editDriveIndex];
 
-            drive.m_name = ui->m_driveName->text().toStdString();
-//            drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
-//            drive.m_maxDriveSize = ui->m_maxDriveSize->text().toInt();
+            drive.m_name             = ui->m_driveName->text().toStdString();
             drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
-
-            ui->m_replicatorNumber->setReadOnly(true);
-            ui->m_maxDriveSize->setReadOnly(true);
-            ui->m_key->setReadOnly(true);
+            gSettings.save();
         }
 
-        mp_onChainClient->addDrive(ui->m_driveName->text().toStdString(),
-                                   ui->m_maxDriveSize->text().toULongLong(),
-                                   ui->m_replicatorNumber->text().toULongLong());
+        emit updateDrivesCBox();
 
         QDialog::accept();
     }

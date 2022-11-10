@@ -7,6 +7,11 @@
 
 void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calculateHashes, std::array<uint8_t,32>* driveKey )
 {
+    if ( ! fs::exists(path) || ! fs::is_directory(path) )
+    {
+        return;
+    }
+
     for( const auto& entry : std::filesystem::directory_iterator(path) )
     {
         const auto entryName = entry.path().filename().string();

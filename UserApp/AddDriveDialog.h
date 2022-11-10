@@ -15,6 +15,9 @@ public:
                              QWidget *parent, int editDriveIndex = -1 );
     ~AddDriveDialog() override;
 
+signals:
+    void updateDrivesCBox();
+
 protected:
     void accept() override;
     void reject() override;
