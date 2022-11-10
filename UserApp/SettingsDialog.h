@@ -2,6 +2,7 @@
 #define SETTINGDIALOG_H
 
 #include <QDialog>
+#include <QRegExp>
 
 namespace Ui { class SettingsDialog; }
 
@@ -24,7 +25,7 @@ private slots:
 private:
     void updateAccountFields();
     void fillAccountCbox( bool initSettings );
-    bool verify();
+    void validate();
 
 private:
     Ui::SettingsDialog* ui;

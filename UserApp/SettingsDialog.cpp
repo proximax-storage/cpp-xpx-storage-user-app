@@ -3,18 +3,11 @@
 #include "PrivKeyDialog.h"
 #include "./ui_SettingsDialog.h"
 
-#include "drive/Utils.h"
-
 #include <QIntValidator>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QClipboard>
 #include <QToolTip>
-//#include <QProcess>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/asio.hpp>
-
 
 // not saved properties
 Settings gSettingsCopy;
@@ -31,36 +24,53 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     setModal(true);
 
+    QRegExp addressTemplate(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})");
+    addressTemplate.setCaseSensitivity(Qt::CaseInsensitive);
+    addressTemplate.setPatternSyntax(QRegExp::RegExp);
+
+    QRegExp portTemplate(R"([0-9]{1,5})");
+    portTemplate.setCaseSensitivity(Qt::CaseInsensitive);
+    portTemplate.setPatternSyntax(QRegExp::RegExp);
+
     fillAccountCbox( initSettings );
     updateAccountFields();
 
-    connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
+    connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
     {
-        if (text.trimmed().isEmpty()) {
+        if (!addressTemplate.exactMatch(text)) {
             QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_restBootAddrField->setProperty("is_valid", false);
         } else {
-            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+            QToolTip::hideText();
+            ui->m_restBootAddrField->setProperty("is_valid", true);
+            validate();
         }
     });
 
-    connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
+    connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this, addressTemplate] (auto text)
     {
-        if (text.trimmed().isEmpty()) {
+        if (!addressTemplate.exactMatch(text)) {
             QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_replicatorBootAddrField->setProperty("is_valid", false);
         } else {
-            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+            QToolTip::hideText();
+            ui->m_replicatorBootAddrField->setProperty("is_valid", true);
+            validate();
         }
     });
 
-    connect(ui->m_portField, &QLineEdit::textChanged, this, [this] (auto text)
+    connect(ui->m_portField, &QLineEdit::textChanged, this, [this, portTemplate] (auto text)
     {
-        if (text.trimmed().isEmpty()) {
+        if (!portTemplate.exactMatch(text)) {
             QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid port!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_portField->setProperty("is_valid", false);
         } else {
-            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+            QToolTip::hideText();
+            ui->m_portField->setProperty("is_valid", true);
+            validate();
         }
     });
 
@@ -115,18 +125,56 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         if (text.trimmed().isEmpty()) {
             QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid path!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_dnFolderField->setProperty("is_valid", false);
         } else {
-            ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+            QToolTip::hideText();
+            ui->m_dnFolderField->setProperty("is_valid", true);
+            validate();
         }
     });
 
-    if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
+    if (!addressTemplate.exactMatch(ui->m_restBootAddrField->text())) {
+        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_restBootAddrField->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_restBootAddrField->setProperty("is_valid", true);
+        validate();
+    }
 
+    if (!addressTemplate.exactMatch(ui->m_replicatorBootAddrField->text())) {
+        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_replicatorBootAddrField->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_replicatorBootAddrField->setProperty("is_valid", true);
+        validate();
+    }
+
+    if (!portTemplate.exactMatch(ui->m_portField->text())) {
+        QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_portField->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_portField->setProperty("is_valid", true);
+        validate();
+    }
+
+    if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
         QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid download folder path!"));
-//        ui->m_errorText->show();
-//        ui->m_errorText->setText("Invalid download folder path!");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        ui->m_dnFolderField->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->m_dnFolderField->setProperty("is_valid", true);
+        validate();
     }
 
     setToolTipDuration(10);
@@ -150,42 +198,41 @@ void SettingsDialog::updateAccountFields()
 
 void SettingsDialog::accept()
 {
-    if ( verify() )
-    {
-        bool ltSessionMustRestart = ( gSettings.m_replicatorBootstrap       !=   gSettingsCopy.m_replicatorBootstrap )
+    gSettingsCopy.m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
+    gSettingsCopy.m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
+    gSettingsCopy.m_udpPort                 = ui->m_portField->text().toStdString();
+    gSettingsCopy.config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
+
+    bool ltSessionMustRestart = ( gSettings.m_replicatorBootstrap       !=   gSettingsCopy.m_replicatorBootstrap )
                                 ||  ( gSettings.m_udpPort                   !=   gSettingsCopy.m_udpPort )
                                 ||  ( gSettings.config().m_privateKeyStr    !=   gSettingsCopy.config().m_privateKeyStr );
 
-        if ( ltSessionMustRestart && gSettings.loaded() )
+    if ( ltSessionMustRestart && gSettings.loaded() )
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Account changed.\nApplication should be restarted");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int reply = msgBox.exec();
+        if ( reply == QMessageBox::Cancel )
         {
-            QMessageBox msgBox;
-            msgBox.setText("Account changed.\nApplication should be restarted");
-            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-            msgBox.setDefaultButton(QMessageBox::Cancel);
-            int reply = msgBox.exec();
-            if ( reply == QMessageBox::Cancel )
-            {
-                return;
-            }
+            return;
         }
-
-        gSettings.m_restBootstrap           = gSettingsCopy.m_restBootstrap;
-        gSettings.m_replicatorBootstrap     = gSettingsCopy.m_replicatorBootstrap;
-        gSettings.config().m_downloadFolder = gSettingsCopy.config().m_downloadFolder;
-        gSettings.m_accounts                = gSettingsCopy.m_accounts;
-        gSettings.setCurrentAccountIndex( gSettingsCopy.m_currentAccountIndex );
-        gSettings.save();
-
-        qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( gSettings.config().m_accountName );
-        qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( gSettings.config().m_publicKeyStr );
-        qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( gSettings.config().m_privateKeyStr );
-
-        QCoreApplication::exit(1024);
-//        qApp->quit();
-//        QProcess::startDetached( qApp->arguments()[0], qApp->arguments() );
-
-        QDialog::accept();
     }
+
+    gSettings.m_restBootstrap           = gSettingsCopy.m_restBootstrap;
+    gSettings.m_replicatorBootstrap     = gSettingsCopy.m_replicatorBootstrap;
+    gSettings.config().m_downloadFolder = gSettingsCopy.config().m_downloadFolder;
+    gSettings.m_accounts                = gSettingsCopy.m_accounts;
+    gSettings.setCurrentAccountIndex( gSettingsCopy.m_currentAccountIndex );
+    gSettings.save();
+
+    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( gSettings.config().m_accountName );
+    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( gSettings.config().m_publicKeyStr );
+    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( gSettings.config().m_privateKeyStr );
+
+    QCoreApplication::exit(1024);
+    QDialog::accept();
 }
 
 void SettingsDialog::reject()
@@ -216,37 +263,6 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
     ui->m_accountCbox->setCurrentIndex(index);
 }
 
-bool SettingsDialog::verify()
-{
-    gSettingsCopy.m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
-    gSettingsCopy.m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
-    gSettingsCopy.m_udpPort                 = ui->m_portField->text().toStdString();
-    gSettingsCopy.config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
-
-    //
-    // Verify restBootstrap endpoint
-    //
-    std::vector<std::string> addressAndPort;
-    boost::split( addressAndPort, gSettingsCopy.m_restBootstrap, [](char c) { return c==':'; } );
-    if ( addressAndPort.size() != 2 )
-    {
-        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
-        return false;
-    }
-
-    //
-    // Verify replicatorBootstrap endpoint
-    //
-    boost::split( addressAndPort, gSettingsCopy.m_replicatorBootstrap, [](char c) { return c==':'; } );
-    if ( addressAndPort.size() != 2 )
-    {
-        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
-        return false;
-    }
-
-    return true;
-}
-
 void SettingsDialog::onNewAccountBtn()
 {
     PrivKeyDialog pKeyDialog( this, gSettingsCopy );
@@ -257,5 +273,16 @@ void SettingsDialog::onNewAccountBtn()
         ui->m_accountCbox->addItem( QString::fromStdString( gSettingsCopy.config().m_publicKeyStr ));
         int index = gSettingsCopy.m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
+    }
+}
+
+void SettingsDialog::validate() {
+    if (ui->m_restBootAddrField->property("is_valid").toBool() &&
+        ui->m_replicatorBootAddrField->property("is_valid").toBool() &&
+        ui->m_portField->property("is_valid").toBool() &&
+        ui->m_dnFolderField->property("is_valid").toBool()) {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    } else {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
     }
 }
