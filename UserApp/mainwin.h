@@ -36,6 +36,7 @@ public:
 private:
     bool requestPrivateKey();
 
+    void setupIcons();
     void setupDownloadsTab();
     void setupFsTreeTable();
     void setupDownloadsTable();

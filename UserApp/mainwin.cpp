@@ -93,23 +93,16 @@ void MainWin::init()
          exit(1);
     });
 
+    setupIcons();
     setupDownloadsTab();
     setupDrivesTab();
-
-    // Set current download channel
-    int dnChannelIndex = Model::currentDnChannelIndex();
-    if ( dnChannelIndex >= 0 )
-    {
-        ui->m_channels->setCurrentIndex( dnChannelIndex );
-        onCurrentChannelChanged( dnChannelIndex );
-    }
 
     // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
     m_downloadUpdateTimer->start(500); // 2 times per second
 
-    connect( ui->m_settingsBtn, &QPushButton::released, this, [this]
+    connect( ui->m_settingsButton, &QPushButton::released, this, [this]
     {
         SettingsDialog settingsDialog( this );
         settingsDialog.exec();
@@ -168,12 +161,12 @@ void MainWin::init()
             qDebug() << "drivesLoaded";
 
             // add drives created on another devices
-//            Model::onDrivesLoaded(drives);
-//            updateDrivesCBox();
+            Model::onDrivesLoaded(drives);
+            updateDrivesCBox();
 
-//            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
-//                m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
-//            }
+            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
+                m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
+            }
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
@@ -226,6 +219,14 @@ void MainWin::init()
             qDebug() << "initializedSuccessfully";
             m_onChainClient->loadDrives();
             ui->m_refresh->setEnabled(true);
+
+            // Set current download channel
+            int dnChannelIndex = Model::currentDnChannelIndex();
+            if ( dnChannelIndex >= 0 )
+            {
+                ui->m_channels->setCurrentIndex( dnChannelIndex );
+                onCurrentChannelChanged( dnChannelIndex );
+            }
         });
 
         connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, [this](){
@@ -253,6 +254,14 @@ void MainWin::init()
 MainWin::~MainWin()
 {
     delete ui;
+}
+
+void MainWin::setupIcons() {
+    QIcon settingsButtonIcon("./resources/icons/settings.svg");
+    ui->m_settingsButton->setStyleSheet("background-color: #FFFFFF;");
+    ui->m_settingsButton->setIcon(settingsButtonIcon);
+    ui->m_settingsButton->setFixedWidth(40);
+    ui->m_settingsButton->setFixedHeight(40);
 }
 
 void MainWin::setupDownloadsTab()
@@ -674,7 +683,7 @@ void MainWin::onCurrentChannelChanged( int index )
         if (!drive)
         {
             qWarning() << LOG_SOURCE << "bad drive";
-            return;
+            //return;
         }
 
         m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash,
@@ -705,7 +714,7 @@ void MainWin::onCurrentChannelChanged( int index )
         {
             qDebug() << LOG_SOURCE << "onChannelChanged: " << index;
 
-            std::array<uint8_t,32> fsTreeHash;
+            std::array<uint8_t,32> fsTreeHash{};
 
             if ( index == 0 )
             {

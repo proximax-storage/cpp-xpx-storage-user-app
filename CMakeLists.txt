@@ -55,3 +55,8 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/cpp-xpx-chain-sdk)
 include_directories(${PROJECT_SOURCE_DIR}/cpp-xpx-chain-sdk/include)
 
 add_subdirectory(UserApp)
+
+# copy resources
+if (NOT WIN32)
+    file(COPY resources DESTINATION ${CMAKE_BINARY_DIR}/UserApp)
+endif()

@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 {
 restart_label:
     QApplication a(argc, argv);
+    QApplication::setWindowIcon(QIcon("./resources/icons/icon.png"));
     qInstallMessageHandler(customMessageHandler);
 
     QTranslator translator;

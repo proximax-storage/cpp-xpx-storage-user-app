@@ -90,6 +90,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -133,6 +134,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -166,6 +168,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -185,6 +188,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -214,6 +218,7 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
+        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -416,6 +421,7 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -502,29 +508,6 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QPushButton" name="m_settingsBtn">
-    <property name="geometry">
-     <rect>
-      <x>949</x>
-      <y>10</y>
-      <width>31</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>.AppleSystemUIFont</family>
-      <pointsize>32</pointsize>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">border-radius: 10px;
-color : #aa6600</string>
-    </property>
-    <property name="text">
-     <string>⚙︎</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
@@ -561,6 +544,19 @@ color : #aa6600</string>
      <string>Balance:</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="m_settingsButton">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>10</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -568,7 +564,7 @@ color : #aa6600</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
