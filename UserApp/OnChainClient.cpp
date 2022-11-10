@@ -74,8 +74,8 @@ void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelI
     mpTransactionsEngine->closeDownloadChannel(channelId);
 }
 
-void OnChainClient::addDrive(const std::string &driveAlias, const uint64_t &driveSize, ushort replicatorsCount) {
-    mpTransactionsEngine->addDrive(driveAlias, driveSize, replicatorsCount);
+std::string OnChainClient::addDrive(const std::string &driveAlias, const uint64_t &driveSize, ushort replicatorsCount) {
+    return mpTransactionsEngine->addDrive(driveAlias, driveSize, replicatorsCount);
 }
 
 void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
