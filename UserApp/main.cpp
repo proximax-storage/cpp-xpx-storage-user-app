@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[])
 {
+restart_label:
     QApplication a(argc, argv);
     qInstallMessageHandler(customMessageHandler);
 
@@ -30,5 +31,8 @@ int main(int argc, char *argv[])
     }
     w.show();
 
-    return a.exec();
+    auto rc = a.exec();
+
+    if ( rc == 1024 )
+        goto restart_label;
 }

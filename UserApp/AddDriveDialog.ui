@@ -126,7 +126,7 @@
     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
    </property>
   </widget>
-  <widget class="QPushButton" name="m_dnFolderBtn">
+  <widget class="QPushButton" name="m_localFolderBtn">
    <property name="geometry">
     <rect>
      <x>560</x>
@@ -231,7 +231,7 @@
   <tabstop>m_maxDriveSize</tabstop>
   <tabstop>m_localDriveFolder</tabstop>
   <tabstop>m_key</tabstop>
-  <tabstop>m_dnFolderBtn</tabstop>
+  <tabstop>m_localFolderBtn</tabstop>
  </tabstops>
  <resources/>
  <connections>

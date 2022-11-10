@@ -32,7 +32,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="m_downloadsTab">
      <attribute name="title">
@@ -90,7 +90,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -134,7 +133,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -168,7 +166,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -188,7 +185,6 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -218,7 +214,6 @@
       <property name="font">
        <font>
         <family>.AppleSystemUIFont</family>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -421,7 +416,6 @@
        <font>
         <family>.AppleSystemUIFont</family>
         <pointsize>15</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -574,7 +568,7 @@ color : #aa6600</string>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>23</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>

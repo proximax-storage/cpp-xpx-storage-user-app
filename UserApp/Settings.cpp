@@ -80,6 +80,11 @@ void Settings::initForTests()
 
         m_accounts.push_back({});
         setCurrentAccountIndex( m_accounts.size()-1 );
+        config().initAccount( "test_genkins_2", "b04fbd908d0fd4315efc4e970bb899d5f82f3828256b7b1f3d4782fef02820e1" );
+        config().m_downloadFolder = "/Users/alex/000-Downloads";
+
+        m_accounts.push_back({});
+        setCurrentAccountIndex( m_accounts.size()-1 );
         config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
     }
@@ -155,6 +160,7 @@ bool Settings::load( const std::string& pwd )
         }
 
         qDebug() << LOG_SOURCE << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
+        qDebug() << LOG_SOURCE << "currentAccountIndex: " << m_currentAccountIndex;
     }
     catch( std::runtime_error& err )
     {

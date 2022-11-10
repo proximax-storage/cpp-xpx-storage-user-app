@@ -71,15 +71,14 @@ void MainWin::init()
 
     if ( Model::homeFolder() == "/Users/alex" )
     {
-        if ( ALEX_LOCAL_TEST )
+        if ( gSettings.config().m_accountName == "alex_local_test" )
         {
             gSettings.m_replicatorBootstrap = "192.168.2.101:5001";
-            gSettings.setCurrentAccountIndex(1);
+            gSettings.setCurrentAccountIndex(2);
         }
         else
         {
             gSettings.m_replicatorBootstrap = "15.206.164.53:7904";
-            gSettings.setCurrentAccountIndex(0);
         }
     }
 
@@ -169,12 +168,12 @@ void MainWin::init()
             qDebug() << "drivesLoaded";
 
             // add drives created on another devices
-            Model::onDrivesLoaded(drives);
-            updateDrivesCBox();
+//            Model::onDrivesLoaded(drives);
+//            updateDrivesCBox();
 
-            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
-                m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
-            }
+//            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
+//                m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
+//            }
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
@@ -198,6 +197,7 @@ void MainWin::init()
 
         connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
             AddDriveDialog dialog(m_onChainClient, this);
+            connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, &MainWin::updateDrivesCBox );
             dialog.exec();
         });
 
@@ -514,11 +514,12 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     qDebug() << "onChannelCreationConfirmed: alias:" << alias;
     qDebug() << "onChannelCreationConfirmed: channelKey:" << channelKey;
 
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     auto* channel = Model::findChannel( channelKey );
 
     if ( channel != nullptr )
     {
-        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
         channel->m_isCreating = false;
         Model::saveSettings();
     }
@@ -533,10 +534,11 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
 
         channelInfo.m_isCreating = false;
 
-        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
         Model::dnChannels().push_back(channelInfo);
         Model::saveSettings();
     }
+
+    lock.unlock();
 
     updateChannelsCBox();
 
@@ -559,19 +561,36 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
     //todo!!!
 }
 
-void MainWin::onDriveCreationConfirmed(const std::string &alias, const std::string &driveKey) {
-    DriveInfo driveInfo;
-    driveInfo.m_name = alias;
-    driveInfo.m_driveKey = driveKey;
+void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::string &driveKey )
+{
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    auto* drive = Model::findDrive( driveKey );
+
+    if ( drive != nullptr )
+    {
+        drive->m_isCreating = false;
+        gSettings.save();
+    }
+    else
+    {
+        DriveInfo driveInfo;
+        driveInfo.m_name = alias;
+        driveInfo.m_driveKey = driveKey;
+
+        driveInfo.m_isCreating = false;
+
+        Model::drives().push_back(driveInfo);
+        gSettings.save();
+    }
+
+    lock.unlock();
 
     QMessageBox msgBox;
     msgBox.setText( QString::fromStdString( "Drive '" + alias + "' created successfully.") );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
-    driveInfo.m_isCreating = false;
-
-    Model::drives().push_back(driveInfo);
     updateDrivesCBox();
 }
 
@@ -839,9 +858,21 @@ void MainWin::setupDrivesTab()
 void MainWin::updateDrivesCBox()
 {
     ui->m_driveCBox->clear();
-    for( const auto& channelInfo: Model::drives() )
+
+    for( const auto& drive: Model::drives() )
     {
-        ui->m_driveCBox->addItem( QString::fromStdString( channelInfo.m_name) );
+        if ( drive.m_isCreating )
+        {
+            ui->m_driveCBox->addItem( QString::fromStdString( drive.m_name + "(creating...)") );
+        }
+        else if ( drive.m_isDeleting )
+        {
+            ui->m_driveCBox->addItem( QString::fromStdString( drive.m_name + "(...deleting)" ) );
+        }
+        else
+        {
+            ui->m_driveCBox->addItem( QString::fromStdString( drive.m_name) );
+        }
     }
 
     if ( Model::currentDriveInfoPtr() == nullptr &&  Model::drives().size() > 0 )

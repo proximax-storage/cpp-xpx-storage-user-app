@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QClipboard>
 #include <QToolTip>
+//#include <QProcess>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -23,11 +24,15 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     ui( new Ui::SettingsDialog() )
 {
     gSettingsCopy = gSettings;
+    qDebug() << "gSettings.m_currentAccountIndex: " << gSettings.m_currentAccountIndex << " " << gSettingsCopy.m_currentAccountIndex;
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 
     setModal(true);
+
+    fillAccountCbox( initSettings );
+    updateAccountFields();
 
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this] (auto text)
     {
@@ -125,7 +130,6 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     }
 
     setToolTipDuration(10);
-    fillAccountCbox( initSettings );
     setWindowTitle("Settings");
     setFocus();
 }
@@ -155,7 +159,7 @@ void SettingsDialog::accept()
         if ( ltSessionMustRestart && gSettings.loaded() )
         {
             QMessageBox msgBox;
-            msgBox.setText("Changed\nApplication will be restarted");
+            msgBox.setText("Account changed.\nApplication should be restarted");
             msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
             msgBox.setDefaultButton(QMessageBox::Cancel);
             int reply = msgBox.exec();
@@ -176,6 +180,10 @@ void SettingsDialog::accept()
         qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( gSettings.config().m_publicKeyStr );
         qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( gSettings.config().m_privateKeyStr );
 
+        QCoreApplication::exit(1024);
+//        qApp->quit();
+//        QProcess::startDetached( qApp->arguments()[0], qApp->arguments() );
+
         QDialog::accept();
     }
 }
@@ -189,8 +197,8 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 {
     if ( initSettings )
     {
-        auto currentAccountKeyStr = gSettingsCopy.config().m_publicKeyStr;
-        ui->m_accountCbox->addItem( QString::fromStdString(currentAccountKeyStr) );
+        auto name = gSettingsCopy.config().m_accountName;
+        ui->m_accountCbox->addItem( QString::fromStdString(name) );
     }
     else
     {
@@ -204,6 +212,7 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
     int index = gSettingsCopy.m_currentAccountIndex;
     assert( index >= 0 );
+    qDebug() << "ui->m_accountCbox->setCurrentIndex: " << index;
     ui->m_accountCbox->setCurrentIndex(index);
 }
 
