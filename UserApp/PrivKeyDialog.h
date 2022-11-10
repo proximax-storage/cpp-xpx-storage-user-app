@@ -14,7 +14,7 @@ class PrivKeyDialog : public QDialog
 public:
     explicit PrivKeyDialog( QWidget *parent );
     explicit PrivKeyDialog( QWidget *parent, Settings& );
-    ~PrivKeyDialog();
+    ~PrivKeyDialog() override;
 
 protected:
     void accept() override;
@@ -26,7 +26,8 @@ private slots:
 
 private:
     void init();
-    void verify();
+    void validate();
+    bool isAccountExists();
 
 private:
     Ui::PrivKeyDialog*  ui;

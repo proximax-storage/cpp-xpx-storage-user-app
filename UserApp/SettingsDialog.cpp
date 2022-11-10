@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QClipboard>
 #include <QToolTip>
+#include <QRegExp>
 
 // not saved properties
 Settings gSettingsCopy;
@@ -27,10 +28,6 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     QRegExp addressTemplate(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})");
     addressTemplate.setCaseSensitivity(Qt::CaseInsensitive);
     addressTemplate.setPatternSyntax(QRegExp::RegExp);
-
-    QRegExp portTemplate(R"([0-9]{1,5})");
-    portTemplate.setCaseSensitivity(Qt::CaseInsensitive);
-    portTemplate.setPatternSyntax(QRegExp::RegExp);
 
     fillAccountCbox( initSettings );
     updateAccountFields();
@@ -60,6 +57,10 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
             validate();
         }
     });
+
+    QRegExp portTemplate(R"([0-9]{1,5})");
+    portTemplate.setCaseSensitivity(Qt::CaseInsensitive);
+    portTemplate.setPatternSyntax(QRegExp::RegExp);
 
     connect(ui->m_portField, &QLineEdit::textChanged, this, [this, portTemplate] (auto text)
     {

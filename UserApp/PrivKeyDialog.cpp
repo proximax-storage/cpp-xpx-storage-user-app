@@ -7,10 +7,11 @@
 #include "drive/Utils.h"
 
 #include <random>
-#include <stdio.h>
+#include <cstdio>
 
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QToolTip>
 
 PrivKeyDialog::PrivKeyDialog( QWidget *parent ) :
     QDialog(parent),
@@ -31,7 +32,6 @@ PrivKeyDialog::PrivKeyDialog( QWidget *parent, Settings& settings) :
 void PrivKeyDialog::init()
 {
     ui->setupUi(this);
-
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 
     setModal(true);
@@ -39,14 +39,61 @@ void PrivKeyDialog::init()
     connect( ui->m_generateKeysBtn, SIGNAL (released()), this, SLOT( onGenerateKeysBtn() ));
     connect( ui->m_loadFromFileBtn, SIGNAL (released()), this, SLOT( onLoadFromFileBtn() ));
 
-    connect( ui->m_pkField, &QLineEdit::textChanged, this, [this] ()
+    QRegExp nameTemplate(R"([a-zA-Z0-9_]{1,40})");
+    nameTemplate.setCaseSensitivity(Qt::CaseInsensitive);
+    nameTemplate.setPatternSyntax(QRegExp::RegExp);
+
+    connect(ui->m_accountName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-        ui->m_errorText->setText("");
-        verify();
+        if (!nameTemplate.exactMatch(text)) {
+            QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_accountName->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_accountName->setProperty("is_valid", true);
+            validate();
+        }
     });
 
-    ui->m_errorText->setText("");
-    verify();
+    QRegExp keyTemplate(R"([a-zA-Z0-9]{64})");
+    keyTemplate.setCaseSensitivity(Qt::CaseInsensitive);
+    keyTemplate.setPatternSyntax(QRegExp::RegExp);
+
+    connect(ui->m_pkField, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+    {
+        if (!keyTemplate.exactMatch(text)) {
+            QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_pkField->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_pkField->setProperty("is_valid", true);
+            validate();
+        }
+    });
+
+    if (!nameTemplate.exactMatch(ui->m_accountName->text())) {
+        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_accountName->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_accountName->setProperty("is_valid", true);
+        validate();
+    }
+
+    if (!keyTemplate.exactMatch(ui->m_pkField->text())) {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_pkField->setProperty("is_valid", false);
+        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_pkField->setProperty("is_valid", true);
+        validate();
+    }
 }
 
 PrivKeyDialog::~PrivKeyDialog()
@@ -54,54 +101,40 @@ PrivKeyDialog::~PrivKeyDialog()
     delete ui;
 }
 
-void PrivKeyDialog::verify()
-{
-    auto accountName = ui->m_accountName->text().toStdString();
-
-    // Verify account name
-    //
-    if ( accountName.size() == 0 )
-    {
-        ui->m_errorText->setText("Account name is not set");
+void PrivKeyDialog::validate() {
+    if (ui->m_accountName->property("is_valid").toBool() &&
+        ui->m_pkField->property("is_valid").toBool() &&
+        !isAccountExists()) {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    } else {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
+    }
+}
+
+bool PrivKeyDialog::isAccountExists() {
+    auto nameIterator = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [this]( auto account )
+    {
+        return account.m_accountName == ui->m_accountName->text().toStdString();
+    });
+
+    if ( nameIterator != m_settings.m_accounts.end() )
+    {
+        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Account with same name already exists!"));
+        return true;
     }
 
-    auto pkString = ui->m_pkField->text().toStdString();
-
-    // Verify private key
-    //
-    if ( pkString.size() == 0 )
+    auto keyIterator = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [this]( auto account )
     {
-        ui->m_errorText->setText("Private key is not set");
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
+        return account.m_privateKeyStr == ui->m_pkField->text().toStdString();
+    });
+
+    if ( keyIterator != m_settings.m_accounts.end() )
+    {
+        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Account with same private key already exists!"));
+        return true;
     }
 
-//    qDebug() << LOG_SOURCE << "pkString.size(): " << pkString.size();
-//    qDebug() << LOG_SOURCE << "pkString.find_first_not_of: " << pkString.find_first_not_of("0123456789abcdefABCDEF");
-
-    if ( pkString.size() != 64 || pkString.find_first_not_of("0123456789abcdefABCDEF") < pkString.size() )
-    {
-        ui->m_errorText->setText("Invalid private key");
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
-    }
-
-    auto it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
-    {
-        return account.m_privateKeyStr == pkString;
-    } );
-
-    if ( it != m_settings.m_accounts.end() )
-    {
-        ui->m_errorText->setText("Account with same private key already exists");
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
-    }
-
-
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(false);
+    return false;
 }
 
 void PrivKeyDialog::onGenerateKeysBtn()
@@ -110,7 +143,7 @@ void PrivKeyDialog::onGenerateKeysBtn()
     std::seed_seq        seed({dev(), dev(), dev(), dev()});
     std::mt19937         rng(seed);
 
-    std::array<uint8_t,32> buffer;
+    std::array<uint8_t,32> buffer{};
 
     std::generate( buffer.begin(), buffer.end(), [&]
     {
@@ -136,7 +169,7 @@ void PrivKeyDialog::onLoadFromFileBtn()
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
         }
-        std::array<uint8_t,32> buffer;
+        std::array<uint8_t,32> buffer{};
         auto size = fread( buffer.data(), 1, 32, file );
         if ( size != 32)
         {
@@ -190,7 +223,7 @@ void PrivKeyDialog::accept()
 
     m_settings.m_accounts.emplace_back( Settings::Account{} );
     qDebug() << LOG_SOURCE << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
-    m_settings.setCurrentAccountIndex( m_settings.m_accounts.size()-1 );
+    m_settings.setCurrentAccountIndex( (int)m_settings.m_accounts.size() - 1 );
     m_settings.config().initAccount( accountName, privateKeyStr );
 
     QDialog::accept();
