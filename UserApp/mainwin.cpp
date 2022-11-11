@@ -182,6 +182,11 @@ void MainWin::init()
             updateChannelsCBox();
         }, Qt::QueuedConnection);
 
+        connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionConfirmed, this, &MainWin::onDownloadPaymentConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionFailed, this, &MainWin::onDownloadPaymentFailed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::storagePaymentTransactionConfirmed, this, &MainWin::onStoragePaymentConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::storagePaymentTransactionFailed, this, &MainWin::onStoragePaymentFailed, Qt::QueuedConnection);
+
         connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
             auto channel = Model::currentChannelInfoPtr();
             if (!channel) {
@@ -257,21 +262,10 @@ void MainWin::init()
             dialog.exec();
         });
 
-        connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, [this](){
-            //
-        });
-
-        connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, [this](){
-            //
-        });
-
-//        connect(m_onChainClient, &OnChainClient::app, this, [this](){
-//
-//        });
-//
-//        connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, [this](){
-//
-//        });
+        connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, &MainWin::onDataModificationTransactionConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
     }
 
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh);
@@ -686,6 +680,143 @@ void MainWin::onApplyChanges() {
 void MainWin::onRefresh()
 {
     onCurrentChannelChanged( Model::currentDnChannelIndex() );
+}
+
+void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId) {
+    std::string alias = rawHashToHex(channelId).toStdString();
+    auto channel = Model::findChannel(alias);
+    if (channel) {
+        alias = channel->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
+    }
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Your payment for the following channel was successful: '" + alias) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
+    std::string alias = rawHashToHex(channelId).toStdString();
+    auto channel = Model::findChannel(alias);
+    if (channel) {
+        alias = channel->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
+    }
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey) {
+    std::string alias = rawHashToHex(driveKey).toStdString();
+    auto drive = Model::findDrive(alias);
+    if (drive) {
+        alias = drive->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
+    }
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Your payment for the following drive was successful: '" + alias) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString &errorText) {
+    std::string alias = rawHashToHex(driveKey).toStdString();
+    auto drive = Model::findDrive(alias);
+    if (drive) {
+        alias = drive->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
+    }
+
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32> &modificationId) {
+    QMessageBox msgBox;
+    msgBox.setText( "Your modifications was accepted: '" + rawHashToHex(modificationId) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32> &modificationId) {
+    QMessageBox msgBox;
+    msgBox.setText( "Your modifications was declined: '" + rawHashToHex(modificationId) );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32> &driveId,
+                                                             const std::array<uint8_t, 32> &channelId,
+                                                             const std::string &fileStructureCdi) {
+    std::string driveAlias = rawHashToHex(driveId).toStdString();
+    auto drive = Model::findDrive(driveAlias);
+    if (drive) {
+        driveAlias = drive->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
+    }
+
+    std::string channelAlias = rawHashToHex(channelId).toStdString();
+    auto channel = Model::findChannel(channelAlias);
+    if (channel) {
+        channelAlias = channel->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << channelAlias;
+    }
+
+    QString message;
+    message.append("Your modifications was APPLIED. Drive: ");
+    message.append(driveAlias.c_str());
+    message.append(" Channel: ");
+    message.append(channelAlias.c_str());
+    message.append(" CDI: ");
+    message.append(fileStructureCdi.c_str());
+
+    QMessageBox msgBox;
+    msgBox.setText(message);
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId,
+                                                          const std::array<uint8_t, 32> &channelId) {
+    std::string driveAlias = rawHashToHex(driveId).toStdString();
+    auto drive = Model::findDrive(driveAlias);
+    if (drive) {
+        driveAlias = drive->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
+    }
+
+    std::string channelAlias = rawHashToHex(channelId).toStdString();
+    auto channel = Model::findChannel(channelAlias);
+    if (channel) {
+        channelAlias = channel->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << channelAlias;
+    }
+
+    QString message;
+    message.append("Your modifications was DECLINED. Drive: ");
+    message.append(driveAlias.c_str());
+    message.append(" Channel: ");
+    message.append(channelAlias.c_str());
+
+    QMessageBox msgBox;
+    msgBox.setText(message);
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
 }
 
 void MainWin::onCurrentChannelChanged( int index )

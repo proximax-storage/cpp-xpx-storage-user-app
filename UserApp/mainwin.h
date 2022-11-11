@@ -57,6 +57,14 @@ private:
     void onCurrentDriveChanged( int index );
     void onApplyChanges();
     void onRefresh();
+    void onDownloadPaymentConfirmed(const std::array<uint8_t, 32>& channelId);
+    void onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
+    void onStoragePaymentConfirmed(const std::array<uint8_t, 32>& driveKey);
+    void onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString& errorText);
+    void onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
+    void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
+    void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId, const std::string& fileStructureCdi);
+    void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId);
 
     void onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 

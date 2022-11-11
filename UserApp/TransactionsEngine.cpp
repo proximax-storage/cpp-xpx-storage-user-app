@@ -142,14 +142,14 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadPaymentNotifier;
 
     const std::string hash = rawHashToHex(downloadPaymentTransaction->hash()).toStdString();
-    statusNotifier.set([this, hash, downloadPaymentNotifierId = downloadPaymentNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+    statusNotifier.set([this, hash, downloadPaymentNotifierId = downloadPaymentNotifier.getId(), channelId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), downloadPaymentNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit downloadPaymentFailed(notification.status.c_str());
+            emit downloadPaymentFailed(channelId, notification.status.c_str());
         }
     });
 
@@ -185,13 +185,13 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> storagePaymentNotifier;
 
-    statusNotifier.set([this, storagePaymentNotifierId = storagePaymentNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+    statusNotifier.set([this, storagePaymentNotifierId = storagePaymentNotifier.getId(), driveId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
         removeConfirmedAddedNotifier(mpChainAccount->address(), storagePaymentNotifierId);
         removeStatusNotifier(mpChainAccount->address(), id);
 
-        emit storagePaymentFailed(notification.status.c_str());
+        emit storagePaymentFailed(driveId, notification.status.c_str());
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {

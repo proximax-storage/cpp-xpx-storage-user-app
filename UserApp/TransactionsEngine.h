@@ -44,9 +44,9 @@ class TransactionsEngine : public QObject
         void closeDriveConfirmed(const std::array<uint8_t, 32>& driveId);
         void closeDriveFailed(const QString& errorText);
         void downloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId);
-        void downloadPaymentFailed(const QString& errorText);
+        void downloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
         void storagePaymentConfirmed(const std::array<uint8_t, 32> &driveId);
-        void storagePaymentFailed(const QString& errorText);
+        void storagePaymentFailed(const std::array<uint8_t, 32> &driveId, const QString& errorText);
 
         void addActions(const sirius::drive::ActionList& actionList,
                         const sirius::Key& drivePublicKey,

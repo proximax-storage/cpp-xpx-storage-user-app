@@ -156,16 +156,16 @@ void OnChainClient::initConnects() {
         emit downloadPaymentTransactionConfirmed(channelId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentFailed, this, [this](auto errorText) {
-        emit downloadPaymentTransactionFailed(errorText);
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentFailed, this, [this](auto channelId, auto errorText) {
+        emit downloadPaymentTransactionFailed(channelId, errorText);
     });
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentConfirmed, this, [this](auto driveId) {
         emit storagePaymentTransactionConfirmed(driveId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentFailed, this, [this](auto errorText) {
-        emit storagePaymentTransactionFailed(errorText);
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentFailed, this, [this](auto driveId, auto errorText) {
+        emit storagePaymentTransactionFailed(driveId, errorText);
     });
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {
@@ -184,6 +184,7 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto channelId, auto fileStructureCdi) {
+                emit dataModificationApprovalTransactionConfirmed(driveId, channelId, fileStructureCdi);
                 auto callback = [this](const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree) {
                     emit fsTreeDownloaded(driveId, fsTreeHash, fsTree);
                 };
