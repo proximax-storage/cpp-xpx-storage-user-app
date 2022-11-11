@@ -4,7 +4,6 @@
 #include "./ui_mainwin.h"
 
 #include "Model.h"
-#include "Fstreemodel.h"
 #include "FsTreeTableModel.h"
 #include "DownloadsTableModel.h"
 #include "DriveTreeModel.h"

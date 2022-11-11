@@ -78,8 +78,6 @@ set(PROJECT_SOURCES
         OnChainClient.cpp           OnChainClient.h
 
         AddDriveDialog.h            AddDriveDialog.cpp
-        Fstreeitem.h                Fstreeitem.cpp
-        Fstreemodel.h               Fstreemodel.cpp
         Utils.h                     Utils.cpp
         CloseDriveDialog.h          CloseDriveDialog.cpp
         DownloadPaymentDialog.h     DownloadPaymentDialog.cpp

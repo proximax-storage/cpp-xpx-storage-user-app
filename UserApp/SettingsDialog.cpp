@@ -8,13 +8,7 @@
 #include <QFileDialog>
 #include <QClipboard>
 #include <QToolTip>
-
-#include <QtGlobal>
-#if QT_VERSION >= 0x050000
-    #include <QRegularExpression>
-#else
-    #include <QRegExp>
-#endif
+#include <QRegularExpression>
 
 // not saved properties
 Settings gSettingsCopy;
@@ -31,24 +25,13 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     setModal(true);
 
-#if QT_VERSION >= 0x050000
-    QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
-#else
-    QRegularExpression addressTemplate(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})");
-    addressTemplate.setCaseSensitivity(Qt::CaseInsensitive);
-    addressTemplate.setPatternSyntax(QRegExp::RegExp);
-#endif
-
     fillAccountCbox( initSettings );
     updateAccountFields();
 
+    QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
     {
-#if QT_VERSION >= 0x050000
         if (!addressTemplate.match(text).hasMatch()) {
-#else
-        if (!addressTemplate.exactMatch(text)) {
-#endif
             QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_restBootAddrField->setProperty("is_valid", false);
@@ -61,11 +44,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this, addressTemplate] (auto text)
     {
-#if QT_VERSION >= 0x050000
         if (!addressTemplate.match(text).hasMatch()) {
-#else
-        if (!addressTemplate.exactMatch(text)) {
-#endif
             QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_replicatorBootAddrField->setProperty("is_valid", false);
@@ -76,21 +55,10 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         }
     });
 
-#if QT_VERSION >= 0x050000
     QRegularExpression portTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,5})")));
-#else
-    QRegExp portTemplate(R"([0-9]{1,5})");
-    portTemplate.setCaseSensitivity(Qt::CaseInsensitive);
-    portTemplate.setPatternSyntax(QRegExp::RegExp);
-#endif
-
     connect(ui->m_portField, &QLineEdit::textChanged, this, [this, portTemplate] (auto text)
     {
-#if QT_VERSION >= 0x050000
         if (!portTemplate.match(text).hasMatch()) {
-#else
-        if (!portTemplate.exactMatch(text)) {
-#endif
             QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid port!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_portField->setProperty("is_valid", false);
@@ -160,11 +128,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         }
     });
 
-#if QT_VERSION >= 0x050000
-        if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
-#else
-        if (!addressTemplate.exactMatch(ui->m_restBootAddrField->text())) {
-#endif
+    if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
         QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_restBootAddrField->setProperty("is_valid", false);
@@ -175,11 +139,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         validate();
     }
 
-#if QT_VERSION >= 0x050000
-        if (!addressTemplate.match(ui->m_replicatorBootAddrField->text()).hasMatch()) {
-#else
-        if (!addressTemplate.exactMatch(ui->m_replicatorBootAddrField->text())) {
-#endif
+    if (!addressTemplate.match(ui->m_replicatorBootAddrField->text()).hasMatch()) {
         QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_replicatorBootAddrField->setProperty("is_valid", false);
@@ -190,11 +150,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         validate();
     }
 
-#if QT_VERSION >= 0x050000
     if (!portTemplate.match(ui->m_portField->text()).hasMatch()) {
-#else
-        if (!portTemplate.exactMatch(ui->m_portField->text())) {
-#endif
         QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid address!"));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_portField->setProperty("is_valid", false);

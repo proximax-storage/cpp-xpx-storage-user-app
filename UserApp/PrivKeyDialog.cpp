@@ -10,13 +10,8 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QToolTip>
-
-#include <QtGlobal>
-#if QT_VERSION >= 0x050000
 #include <QRegularExpression>
-#else
-#include <QRegExp>
-#endif
+
 
 PrivKeyDialog::PrivKeyDialog( QWidget *parent ) :
     QDialog(parent),
@@ -44,21 +39,10 @@ void PrivKeyDialog::init()
     connect( ui->m_generateKeysBtn, SIGNAL (released()), this, SLOT( onGenerateKeysBtn() ));
     connect( ui->m_loadFromFileBtn, SIGNAL (released()), this, SLOT( onLoadFromFileBtn() ));
 
-#if QT_VERSION >= 0x050000
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
-#else
-    QRegExp nameTemplate(R"([a-zA-Z0-9_]{1,40})");
-    nameTemplate.setCaseSensitivity(Qt::CaseInsensitive);
-    nameTemplate.setPatternSyntax(QRegExp::RegExp);
-#endif
-
     connect(ui->m_accountName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-#if QT_VERSION >= 0x050000
         if (!nameTemplate.match(text).hasMatch()) {
-#else
-        if (!nameTemplate.exactMatch(text)) {
-#endif
             QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_accountName->setProperty("is_valid", false);
@@ -69,21 +53,10 @@ void PrivKeyDialog::init()
         }
     });
 
-#if QT_VERSION >= 0x050000
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-#else
-    QRegExp keyTemplate(R"([a-zA-Z0-9]{64})");
-    keyTemplate.setCaseSensitivity(Qt::CaseInsensitive);
-    keyTemplate.setPatternSyntax(QRegExp::RegExp);
-#endif
-
     connect(ui->m_pkField, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
-#if QT_VERSION >= 0x050000
         if (!keyTemplate.match(text).hasMatch()) {
-#else
-        if (!keyTemplate.exactMatch(text)) {
-#endif
             QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_pkField->setProperty("is_valid", false);
@@ -94,11 +67,7 @@ void PrivKeyDialog::init()
         }
     });
 
-#if QT_VERSION >= 0x050000
     if (!keyTemplate.match(ui->m_accountName->text()).hasMatch()) {
-#else
-    if (!nameTemplate.exactMatch(ui->m_accountName->text())) {
-#endif
         QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_accountName->setProperty("is_valid", false);
@@ -109,11 +78,7 @@ void PrivKeyDialog::init()
         validate();
     }
 
-#if QT_VERSION >= 0x050000
     if (!keyTemplate.match(ui->m_pkField->text()).hasMatch()) {
-#else
-    if (!keyTemplate.exactMatch(ui->m_pkField->text())) {
-#endif
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_pkField->setProperty("is_valid", false);
         QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));

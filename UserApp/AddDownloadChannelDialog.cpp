@@ -41,11 +41,7 @@ AddDownloadChannelDialog::~AddDownloadChannelDialog()
 void AddDownloadChannelDialog::accept() {
     std::vector<std::array<uint8_t, 32>> listOfAllowedPublicKeys;
 
-#if __MINGW32__ || __APPLE__
     QStringList keys = ui->keysLine->text().trimmed().split(",", Qt::SkipEmptyParts);
-#else
-    QStringList keys = ui->keysLine->text().trimmed().split(",", QString::SkipEmptyParts);
-#endif
     for (const auto& key : keys) {
         listOfAllowedPublicKeys.emplace_back(rawHashFromHex(key));
     }
