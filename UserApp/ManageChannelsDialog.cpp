@@ -28,7 +28,7 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
     ui->m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     QStringList headers;
        headers.append("name");
-       headers.append("max size");
+       headers.append("drive hash");
     ui->m_table->setHorizontalHeaderLabels(headers);
     ui->m_table->horizontalHeader()->setStretchLastSection(true);
     ui->m_table->setEditTriggers(QTableWidget::NoEditTriggers);
@@ -82,7 +82,7 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
         {
             ui->m_table->insertRow(i);
             ui->m_table->setItem( i,0, new QTableWidgetItem( QString::fromStdString(channel.m_name)) );
-            ui->m_table->setItem( i,1, new QTableWidgetItem( QString::fromStdString(channel.m_hash)) );
+            ui->m_table->setItem( i,1, new QTableWidgetItem( QString::fromStdString(channel.m_driveHash)) );
         }
 
         ui->m_table->resizeColumnsToContents();

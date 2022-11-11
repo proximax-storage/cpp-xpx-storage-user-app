@@ -153,6 +153,7 @@ public:
     static int                          currentDnChannelIndex();
     static ChannelInfo*                 currentChannelInfoPtr();
     static ChannelInfo*                 findChannel( const std::string& channelKey );
+    static void                         removeChannel( const std::string& channelKey );
 
     static std::vector<DownloadInfo>&   downloads();
 
@@ -173,6 +174,8 @@ public:
     static std::vector<DriveInfo>&  drives();
     static DriveInfo*               currentDriveInfoPtr();
     static DriveInfo*               findDrive( const std::string& driveKey );
+    static void                     removeDrive( const std::string& driveKey );
+
     static void                     removeFromDownloads( int rowIndex );
 
     static void                     calcDiff();

@@ -4,13 +4,15 @@
 
 namespace Ui { class ManageDrivesDialog; }
 
+class OnChainClient;
+
 class ManageDrivesDialog : public QDialog
 {
 public:
     Q_OBJECT
 
 public:
-    explicit ManageDrivesDialog( QWidget *parent );
+    explicit ManageDrivesDialog( OnChainClient* onChainClient, QWidget *parent );
     ~ManageDrivesDialog() override;
 
 protected:
@@ -22,4 +24,5 @@ private:
 
 private:
     Ui::ManageDrivesDialog* ui;
+    OnChainClient*          m_onChainClient;
 };

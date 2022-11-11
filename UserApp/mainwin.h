@@ -54,7 +54,7 @@ private:
     void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
     void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
     void onDriveDeleted( const std::string& driveKey );
-    void onDriveChanged( int index );
+    void onCurrentDriveChanged( int index );
     void onApplyChanges();
     void onRefresh();
 

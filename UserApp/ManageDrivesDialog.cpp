@@ -1,6 +1,8 @@
 #include "Settings.h"
 #include "AddDriveDialog.h"
+#include "CloseDriveDialog.h"
 #include "ManageDrivesDialog.h"
+#include "OnChainClient.h"
 #include "./ui_ManageDrivesDialog.h"
 
 #include <QIntValidator>
@@ -8,9 +10,10 @@
 
 #include <random>
 
-ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
+ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *parent ) :
     QDialog( parent ),
-    ui( new Ui::ManageDrivesDialog() )
+    ui( new Ui::ManageDrivesDialog() ),
+    m_onChainClient(onChainClient)
 {
 
     ui->setupUi(this);
@@ -28,30 +31,37 @@ ManageDrivesDialog::ManageDrivesDialog( QWidget *parent ) :
     ui->m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     QStringList headers;
        headers.append("name");
-       headers.append("max size");
+       headers.append("drive key");
     ui->m_table->setHorizontalHeaderLabels(headers);
     ui->m_table->horizontalHeader()->setStretchLastSection(true);
     ui->m_table->setEditTriggers(QTableWidget::NoEditTriggers);
 
     connect(ui->m_addBtn, &QPushButton::released, this, [this] ()
     {
-//        AddDriveDialog dialog(this);
-//        dialog.exec();
+        AddDriveDialog dialog( m_onChainClient, this );
+        dialog.exec();
     });
 
     connect(ui->m_editBtn, &QPushButton::released, this, [this] ()
     {
-        auto rows = ui->m_table->selectionModel()->selectedRows();
+        auto index = ui->m_table->selectionModel()->currentIndex();
 
-        if ( rows.size() > 0 )
+        if ( index.row() > 0 && index.row() < Model::drives().size() )
         {
-//            AddDriveDialog dialog( this, rows[0].row() );
-//            dialog.exec();
+            AddDriveDialog dialog( m_onChainClient, this, &Model::drives()[index.row()] );
+            dialog.exec();
         }
     });
 
-    connect(ui->m_removeBtn, &QPushButton::released, this, [this] () {
-        //TODO
+    connect(ui->m_removeBtn, &QPushButton::released, this, [this] ()
+    {
+        auto index = ui->m_table->selectionModel()->currentIndex();
+
+        if ( index.row() > 0 && index.row() < Model::drives().size() )
+        {
+            CloseDriveDialog dialog( m_onChainClient, Model::drives()[index.row()].m_driveKey.c_str(), this);
+            dialog.exec();
+        }
     });
 
     connect(ui->m_copyHashBtn, &QPushButton::released, this, [this] ()

@@ -2,6 +2,7 @@
 
 #include <QDialog>
 #include "OnChainClient.h"
+#include "Model.h"
 
 namespace Ui { class AddDriveDialog; }
 
@@ -12,7 +13,7 @@ public:
 
 public:
     explicit AddDriveDialog( OnChainClient* onChainClient,
-                             QWidget *parent, int editDriveIndex = -1 );
+                             QWidget *parent, DriveInfo* editDrivePtr = nullptr );
     ~AddDriveDialog() override;
 
 signals:
@@ -31,6 +32,6 @@ private:
 private:
     Ui::AddDriveDialog* ui;
 
-    int m_editDriveIndex;
-    OnChainClient* mp_onChainClient;
+    std::optional<DriveInfo> m_editDriveInfo;
+    OnChainClient*           mp_onChainClient;
 };

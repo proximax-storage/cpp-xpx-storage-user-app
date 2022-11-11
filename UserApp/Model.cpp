@@ -164,6 +164,30 @@ DriveInfo* Model::findDrive( const std::string& driveKey )
     return it == drives.end() ? nullptr : &(*it);
 }
 
+void Model::removeDrive( const std::string& driveKey )
+{
+    auto& drives = gSettings.config().m_drives;
+
+    auto it = std::find_if( drives.begin(), drives.end(), [driveKey] (const auto& driveInfo)
+    {
+        return boost::iequals( driveKey, driveInfo.m_driveKey );
+    });
+
+    if ( it == drives.end() )
+    {
+        return;
+    }
+
+    drives.erase(it);
+
+    if ( gSettings.config().m_currentDriveIndex >= drives.size() )
+    {
+        gSettings.config().m_currentDriveIndex = drives.size()-1;
+    }
+
+    gSettings.save();
+}
+
 void Model::removeFromDownloads( int rowIndex )
 {
     gSettings.removeFromDownloads(rowIndex);
@@ -183,6 +207,30 @@ ChannelInfo* Model::findChannel( const std::string& channelKey )
     });
 
     return it == channels.end() ? nullptr : &(*it);
+}
+
+void Model::removeChannel( const std::string& channelKey )
+{
+    auto& channels = gSettings.config().m_dnChannels;
+
+    auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
+    {
+        return boost::iequals( channelKey, channelInfo.m_hash );
+    });
+
+    if ( it == channels.end() )
+    {
+        return;
+    }
+
+    channels.erase(it);
+
+    if ( gSettings.config().m_currentDnChannelIndex >= channels.size() )
+    {
+        gSettings.config().m_currentDnChannelIndex = channels.size()-1;
+    }
+
+    gSettings.save();
 }
 
 void Model::startStorageEngine( std::function<void()> addressAlreadyInUseHandler )
@@ -211,6 +259,7 @@ sirius::drive::lt_handle Model::downloadFile( const std::string&            chan
     return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
+//TODO: remove it
 void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
                                       const std::array<uint8_t,32> fsTreeHash,
                                       const sirius::drive::FsTree& fsTree )

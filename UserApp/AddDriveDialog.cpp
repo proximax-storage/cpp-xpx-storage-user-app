@@ -9,12 +9,15 @@
 #include <random>
 
 AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
-                                QWidget *parent, int editDriveIndex ) :
+                                QWidget *parent, DriveInfo* editDrivePtr ) :
     QDialog( parent ),
     ui( new Ui::AddDriveDialog() ),
-    m_editDriveIndex(editDriveIndex),
     mp_onChainClient(onChainClient)
 {
+    if ( editDrivePtr != nullptr )
+    {
+        m_editDriveInfo = *editDrivePtr;
+    }
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
@@ -70,11 +73,11 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     ui->m_maxDriveSize->setValidator( new QIntValidator( 1, 100*1024*1024, this) );
     ui->m_maxDriveSize->setText( QString::fromStdString( "100" ));
 
-    if ( m_editDriveIndex >= 0 )
+    if ( editDrivePtr )
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        const auto& drive = Model::drives()[m_editDriveIndex];
+        const auto& drive = *m_editDriveInfo;
 
         ui->m_driveName->setText( QString::fromStdString( drive.m_name ));
         ui->m_replicatorNumber->setText( QString::fromStdString( std::to_string(drive.m_replicatorNumber) ));
@@ -120,7 +123,7 @@ void AddDriveDialog::accept()
 {
     if ( verify() )
     {
-        if ( m_editDriveIndex < 0 )
+        if ( ! m_editDriveInfo )
         {
             // Create drive
 
@@ -148,11 +151,12 @@ void AddDriveDialog::accept()
             // Edit drive info
             std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-            auto& drive = Model::drives()[m_editDriveIndex];
-
-            drive.m_name             = ui->m_driveName->text().toStdString();
-            drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
-            gSettings.save();
+            if ( auto* drivePtr = Model::findDrive( m_editDriveInfo->m_driveKey ); drivePtr != nullptr )
+            {
+                drivePtr->m_name             = ui->m_driveName->text().toStdString();
+                drivePtr->m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
+                gSettings.save();
+            }
         }
 
         emit updateDrivesCBox();
@@ -191,10 +195,15 @@ bool AddDriveDialog::verifyDriveName()
     const auto& drives = gSettings.config().m_drives;
 
     // check drive name
-    auto it = std::find_if( drives.begin(), drives.end(), [driveName] (const auto& driveInfo)
+    auto it = std::find_if( drives.begin(), drives.end(), [driveName,this] (const auto& driveInfo)
     {
+        if ( m_editDriveInfo )
+        {
+            return (driveInfo.m_name == driveName) && (driveInfo.m_driveKey != m_editDriveInfo->m_driveKey);
+        }
         return driveInfo.m_name == driveName;
     });
+
     if ( it != drives.end() )
     {
         ui->m_errorText->setText( QString::fromStdString("Drive with the same name already exists" ));
