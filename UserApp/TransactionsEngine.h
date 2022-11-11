@@ -24,6 +24,7 @@ class TransactionsEngine : public QObject
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
+        void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
         std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
@@ -44,6 +45,8 @@ class TransactionsEngine : public QObject
         void closeDriveFailed(const QString& errorText);
         void downloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId);
         void downloadPaymentFailed(const QString& errorText);
+        void storagePaymentConfirmed(const std::array<uint8_t, 32> &driveId);
+        void storagePaymentFailed(const QString& errorText);
 
         void addActions(const sirius::drive::ActionList& actionList,
                         const sirius::Key& drivePublicKey,

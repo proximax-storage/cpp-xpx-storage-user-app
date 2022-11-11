@@ -248,12 +248,12 @@ void MainWin::init()
         });
 
         connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
-            StoragePaymentDialog dialog(this);
+            StoragePaymentDialog dialog(m_onChainClient, this);
             dialog.exec();
         });
 
         connect(ui->m_topupChannel, &QPushButton::released, this, [this] {
-            DownloadPaymentDialog dialog(this);
+            DownloadPaymentDialog dialog(m_onChainClient, this);
             dialog.exec();
         });
 

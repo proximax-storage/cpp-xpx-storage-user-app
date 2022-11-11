@@ -58,7 +58,7 @@ set(PROJECT_SOURCES
         Model.h                     Model.cpp                   AddDownloadChannelDialog.ui
         Settings.h                  Settings.cpp                progressbardialog.ui
         StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
-        SelectDriveDialog.h         SelectDriveDialog.cpp       SelectDriveDialog.ui
+        SelectEntityDialog.h        SelectEntityDialog.cpp      SelectEntityDialog.ui
         ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
         ManageChannelsDialog.h      ManageChannelsDialog.cpp    ManageChannelsDialog.ui
 

@@ -43,6 +43,9 @@ class OnChainClient : public QObject
                                    const std::array<uint8_t, 32> &channelId,
                                    const std::string& sandboxFolder);
 
+        void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
+        void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
+
     signals:
         void initializedSuccessfully();
         void initializedFailed(const QString& error);
@@ -59,6 +62,10 @@ class OnChainClient : public QObject
         void prepareDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void closeDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
         void closeDriveTransactionFailed(const QString& errorText);
+        void downloadPaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
+        void downloadPaymentTransactionFailed(const QString& errorText);
+        void storagePaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
+        void storagePaymentTransactionFailed(const QString& errorText);
 
     private:
         void initConnects();

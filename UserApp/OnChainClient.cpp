@@ -111,6 +111,14 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
     });
 }
 
+void OnChainClient::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t amount) {
+    mpTransactionsEngine->downloadPayment(channelId, amount);
+}
+
+void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t &amount) {
+    mpTransactionsEngine->storagePayment(driveId, amount);
+}
+
 void OnChainClient::initConnects() {
     connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
         emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
@@ -142,6 +150,22 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
         emit closeDriveTransactionFailed(errorText);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentConfirmed, this, [this](auto channelId) {
+        emit downloadPaymentTransactionConfirmed(channelId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentFailed, this, [this](auto errorText) {
+        emit downloadPaymentTransactionFailed(errorText);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentConfirmed, this, [this](auto driveId) {
+        emit storagePaymentTransactionConfirmed(driveId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentFailed, this, [this](auto errorText) {
+        emit storagePaymentTransactionFailed(errorText);
     });
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {

@@ -153,7 +153,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
         }
     });
 
-    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [this](auto errorCode) {
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
         qCritical() << LOG_SOURCE << errorCode.message().c_str();
     });
 
@@ -170,6 +170,47 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadPaymentNotifier },
                                                                [this, data = downloadPaymentTransaction->binary()]() { announceTransaction(data); },
+                                                               [this, hash](auto error) { onError(hash, error); });
+}
+
+void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount) {
+    QString drivePubKey = rawHashToHex(driveId);
+
+    xpx_chain_sdk::Key driveKey;
+    xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
+
+    auto storagePaymentTransaction = xpx_chain_sdk::CreateStoragePaymentTransaction(driveKey, amount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    mpChainAccount->signTransaction(storagePaymentTransaction.get());
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> storagePaymentNotifier;
+
+    statusNotifier.set([this, storagePaymentNotifierId = storagePaymentNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+        qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
+
+        removeConfirmedAddedNotifier(mpChainAccount->address(), storagePaymentNotifierId);
+        removeStatusNotifier(mpChainAccount->address(), id);
+
+        emit storagePaymentFailed(notification.status.c_str());
+    });
+
+    mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {}, [](auto errorCode) {
+        qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
+
+    const std::string hash = rawHashToHex(storagePaymentTransaction->hash()).toStdString();
+    storagePaymentNotifier.set([this, hash, statusNotifierId = statusNotifier.getId(), driveId](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
+        if (notification.meta.hash == hash) {
+            qInfo() << LOG_SOURCE << "confirmed storagePaymentTransaction hash: " << hash.c_str();
+
+            removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
+            removeConfirmedAddedNotifier(mpChainAccount->address(), id);
+
+            emit storagePaymentConfirmed(driveId);
+        }
+    });
+
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { storagePaymentNotifier },
+                                                               [this, data = storagePaymentTransaction->binary()]() { announceTransaction(data); },
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 

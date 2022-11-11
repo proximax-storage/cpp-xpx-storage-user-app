@@ -160,39 +160,39 @@
     <name>DownloadPaymentDialog</name>
     <message>
         <location filename="DownloadPaymentDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="111"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="92"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="DownloadPaymentDialog.ui" line="22"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="112"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="93"/>
         <source>Channel key (required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="DownloadPaymentDialog.ui" line="39"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="113"/>
+        <location filename="DownloadPaymentDialog.ui" line="42"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="95"/>
         <source>Prepaid amount (required)</source>
         <oldsource>Prepaid size (required)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="DownloadPaymentDialog.ui" line="52"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="114"/>
-        <source>Select my drive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="DownloadPaymentDialog.ui" line="62"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="115"/>
-        <source>Drive key (required)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="DownloadPaymentDialog.ui" line="75"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="116"/>
+        <location filename="DownloadPaymentDialog.ui" line="35"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="94"/>
         <source>Select my channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="DownloadPaymentDialog.cpp" line="30"/>
+        <location filename="DownloadPaymentDialog.cpp" line="55"/>
+        <source>Invalid channel!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="DownloadPaymentDialog.cpp" line="44"/>
+        <location filename="DownloadPaymentDialog.cpp" line="66"/>
+        <source>Invalid units amount!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -530,10 +530,10 @@
     </message>
 </context>
 <context>
-    <name>SelectDriveDialog</name>
+    <name>SelectEntityDialog</name>
     <message>
-        <location filename="SelectDriveDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SelectDriveDialog.h" line="59"/>
+        <location filename="SelectEntityDialog.ui" line="14"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SelectEntityDialog.h" line="59"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -656,6 +656,18 @@
         <location filename="StoragePaymentDialog.ui" line="48"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="95"/>
         <source>Select my drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="StoragePaymentDialog.cpp" line="30"/>
+        <location filename="StoragePaymentDialog.cpp" line="55"/>
+        <source>Invalid key!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="StoragePaymentDialog.cpp" line="44"/>
+        <location filename="StoragePaymentDialog.cpp" line="66"/>
+        <source>Invalid units amount!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

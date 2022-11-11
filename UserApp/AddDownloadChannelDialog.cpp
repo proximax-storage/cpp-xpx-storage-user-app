@@ -1,8 +1,7 @@
 #include "AddDownloadChannelDialog.h"
-#include "SelectDriveDialog.h"
+#include "SelectEntityDialog.h"
 #include "ui_AddDownloadChannelDialog.h"
 #include "Utils.h"
-#include "Model.h"
 #include "mainwin.h"
 
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
@@ -22,10 +21,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     connect(ui->m_selectMyDriveBtn, &QPushButton::released, this, [this] ()
     {
-        SelectDriveDialog dialog( [this] (const QString& hash)
-        {
-            ui->driveKey->setText(hash);
-        });
+        SelectEntityDialog dialog(SelectEntityDialog::Entity::Drive, [this] (const QString& hash) { ui->driveKey->setText(hash); });
         dialog.exec();
     });
 
