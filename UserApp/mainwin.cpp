@@ -648,7 +648,7 @@ void MainWin::onApplyChanges() {
     if ( actionList.empty() )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "There is no differece.") );
+        msgBox.setText( QString::fromStdString( "There is no difference.") );
         msgBox.setStandardButtons( QMessageBox::Ok );
         msgBox.exec();
         return;
