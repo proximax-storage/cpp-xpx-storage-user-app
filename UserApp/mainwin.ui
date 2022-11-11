@@ -24,6 +24,18 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLabel" name="m_networkName">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="text">
            <string>Network</string>
           </property>
@@ -47,13 +59,13 @@
           <property name="minimumSize">
            <size>
             <width>90</width>
-            <height>0</height>
+            <height>30</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>90</width>
-            <height>16777215</height>
+            <height>30</height>
            </size>
           </property>
           <property name="font">
@@ -68,6 +80,18 @@
         </item>
         <item>
          <widget class="QLabel" name="m_balanceValue">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>16</pointsize>
@@ -82,14 +106,14 @@
          <widget class="QPushButton" name="m_settingsButton">
           <property name="minimumSize">
            <size>
-            <width>50</width>
-            <height>50</height>
+            <width>40</width>
+            <height>40</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>50</width>
-            <height>50</height>
+            <width>40</width>
+            <height>40</height>
            </size>
           </property>
           <property name="text">
@@ -531,6 +555,18 @@
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <item>
          <widget class="QLabel" name="label_6">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>.AppleSystemUIFont</family>
@@ -550,6 +586,18 @@
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <widget class="QPushButton" name="pushButton_20">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
             <property name="text">
              <string>Onboard Replicator</string>
             </property>
@@ -557,6 +605,18 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_14">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
             <property name="text">
              <string>-</string>
             </property>
@@ -568,10 +628,16 @@
          <layout class="QHBoxLayout" name="horizontalLayout_10">
           <item>
            <widget class="QLabel" name="label_2">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>250</width>
-              <height>16777215</height>
+              <height>30</height>
              </size>
             </property>
             <property name="font">
@@ -587,10 +653,16 @@
           </item>
           <item>
            <widget class="QLabel" name="label_7">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>200</width>
-              <height>16777215</height>
+              <height>30</height>
              </size>
             </property>
             <property name="font">

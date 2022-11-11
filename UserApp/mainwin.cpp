@@ -274,8 +274,8 @@ MainWin::~MainWin()
 }
 
 void MainWin::setupIcons() {
-    QIcon settingsButtonIcon("./resources/icons/settings.svg");
-    ui->m_settingsButton->setStyleSheet("background: transparent;");
+    QIcon settingsButtonIcon("./resources/icons/settings.png");
+    ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIcon(settingsButtonIcon);
     ui->m_settingsButton->setFixedWidth(40);
     ui->m_settingsButton->setFixedHeight(40);
