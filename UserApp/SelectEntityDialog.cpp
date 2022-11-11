@@ -9,7 +9,11 @@ SelectEntityDialog::SelectEntityDialog(Entity entity, std::function<void(const Q
 {
     ui->setupUi(this);
 
-    setWindowTitle( "Select drive" );
+    if (Entity::Drive == entity) {
+        setWindowTitle( "Select drive" );
+    } else {
+        setWindowTitle( "Select channel" );
+    }
 
     ui->m_table->setColumnCount(2);
     ui->m_table->setShowGrid(true);
