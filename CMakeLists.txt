@@ -46,7 +46,7 @@ endif()
 
 find_package(Threads REQUIRED)
 find_package(Boost 1.71.0 REQUIRED)
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
+find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/cpp-xpx-storage-sdk)
