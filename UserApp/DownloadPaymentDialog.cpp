@@ -84,6 +84,7 @@ DownloadPaymentDialog::~DownloadPaymentDialog()
 
 void DownloadPaymentDialog::accept() {
     mpOnChainClient->downloadPayment(rawHashFromHex(ui->m_channelKey->text()), ui->m_prepaid->text().toULongLong());
+    QDialog::accept();
 }
 
 void DownloadPaymentDialog::reject() {

@@ -84,6 +84,7 @@ StoragePaymentDialog::~StoragePaymentDialog()
 
 void StoragePaymentDialog::accept() {
     mpOnChainClient->storagePayment(rawHashFromHex(ui->m_driveKy->text()), ui->m_unitsAmount->text().toULongLong());
+    QDialog::accept();
 }
 
 void StoragePaymentDialog::reject() {
