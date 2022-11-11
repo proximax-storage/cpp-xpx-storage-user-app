@@ -18,7 +18,8 @@
 #include "CloseDriveDialog.h"
 #include "ManageDrivesDialog.h"
 #include "ManageChannelsDialog.h"
-#include "ProgressBarDialog.h"
+#include "DownloadPaymentDialog.h"
+#include "StoragePaymentDialog.h"
 #include "OnChainClient.h"
 
 #include "crypto/Signer.h"
@@ -244,6 +245,16 @@ void MainWin::init()
                 ui->m_channels->setCurrentIndex( dnChannelIndex );
                 onCurrentChannelChanged( dnChannelIndex );
             }
+        });
+
+        connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
+            StoragePaymentDialog dialog(this);
+            dialog.exec();
+        });
+
+        connect(ui->m_topupChannel, &QPushButton::released, this, [this] {
+            DownloadPaymentDialog dialog(this);
+            dialog.exec();
         });
 
         connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, [this](){
@@ -701,7 +712,7 @@ void MainWin::onCurrentChannelChanged( int index )
         if (!drive)
         {
             qWarning() << LOG_SOURCE << "bad drive";
-            //return;
+            return;
         }
 
         m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash,

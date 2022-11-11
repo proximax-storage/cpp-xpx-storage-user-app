@@ -181,7 +181,7 @@ std::string TransactionsEngine::addDrive(const std::string& driveAlias, const ui
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> prepareDriveNotifier;
 
-    const std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
+    std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, driveAlias, prepareDriveNotifierId = prepareDriveNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();

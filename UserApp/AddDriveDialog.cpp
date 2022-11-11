@@ -142,7 +142,7 @@ void AddDriveDialog::accept()
             std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
             Model::drives().push_back( drive );
-            Model::setCurrentDriveIndex( Model::drives().size()-1 );
+            Model::setCurrentDriveIndex( (int)Model::drives().size()-1 );
             gSettings.save();
 
         }
