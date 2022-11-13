@@ -188,6 +188,21 @@ void Model::removeDrive( const std::string& driveKey )
     gSettings.save();
 }
 
+void Model::applyForDrive( const std::string& driveKey, std::function<void(DriveInfo&)> func )
+{
+    auto& drives = gSettings.config().m_drives;
+
+    auto it = std::find_if( drives.begin(), drives.end(), [driveKey] (const auto& driveInfo)
+    {
+        return boost::iequals( driveKey, driveInfo.m_driveKey );
+    });
+
+    if ( it != drives.end() )
+    {
+        func( *it );
+    }
+}
+
 void Model::removeFromDownloads( int rowIndex )
 {
     gSettings.removeFromDownloads(rowIndex);
@@ -233,10 +248,26 @@ void Model::removeChannel( const std::string& channelKey )
     gSettings.save();
 }
 
+void Model::applyForChannels( const std::string& driveKey, std::function<void(ChannelInfo&)> func )
+{
+    for( auto& channelInfo : gSettings.config().m_dnChannels )
+    {
+        if ( channelInfo.m_driveHash == driveKey )
+        {
+            func( channelInfo );
+        }
+    }
+}
+
 void Model::startStorageEngine( std::function<void()> addressAlreadyInUseHandler )
 {
     gStorageEngine = std::make_shared<StorageEngine>();
     gStorageEngine->start( addressAlreadyInUseHandler );
+}
+
+void Model::endStorageEngine()
+{
+    gStorageEngine.reset();
 }
 
 void Model::downloadFsTree( const std::string&             driveHash,

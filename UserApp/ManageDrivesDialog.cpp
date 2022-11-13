@@ -17,7 +17,7 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
 {
 
     ui->setupUi(this);
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Close");
 
     setModal(true);
 
@@ -46,7 +46,7 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
     {
         auto index = ui->m_table->selectionModel()->currentIndex();
 
-        if ( index.row() > 0 && index.row() < Model::drives().size() )
+        if ( index.row() >= 0 && index.row() < Model::drives().size() )
         {
             AddDriveDialog dialog( m_onChainClient, this, &Model::drives()[index.row()] );
             dialog.exec();
@@ -57,10 +57,13 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
     {
         auto index = ui->m_table->selectionModel()->currentIndex();
 
-        if ( index.row() > 0 && index.row() < Model::drives().size() )
+        if ( index.row() >= 0 && index.row() < Model::drives().size() )
         {
             CloseDriveDialog dialog( m_onChainClient, Model::drives()[index.row()].m_driveKey.c_str(), this);
-            dialog.exec();
+            if ( dialog.exec() == QDialog::Accepted )
+            {
+                emit updateDrives();
+            }
         }
     });
 
@@ -129,5 +132,5 @@ bool ManageDrivesDialog::verify()
 //        ui->m_errorText->setText( QString::fromStdString("") );
 //        return true;
 //    }
-    return false;
+    return true;
 }

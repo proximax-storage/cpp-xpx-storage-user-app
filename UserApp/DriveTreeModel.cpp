@@ -105,4 +105,8 @@ void DriveTreeModel::updateModel()
         parseR( driveRoot, *localDrive->m_localDrive );
         endResetModel();
     }
+    else if ( localDrive != nullptr )
+    {
+        scanFolderR( driveRoot, localDrive->m_localDriveFolder );
+    }
 }

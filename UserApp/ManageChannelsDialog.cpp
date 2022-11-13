@@ -14,7 +14,7 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
 {
 
     ui->setupUi(this);
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Close");
 
     setModal(true);
 
@@ -41,12 +41,15 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
 
     connect(ui->m_editBtn, &QPushButton::released, this, [this] ()
     {
-        auto rows = ui->m_table->selectionModel()->selectedRows();
+        auto index = ui->m_table->selectionModel()->currentIndex();
 
-        if ( rows.size() > 0 )
+        if ( index.row() >= 0 && index.row() < Model::dnChannels().size() )
         {
-//            AddDriveDialog dialog( this, rows[0].row() );
-//            dialog.exec();
+            //RenameChannelDialog dialog( this, Model::dnChannels()[index.row()] );
+//            if ( dialog.exec() == QDialog::Accepted )
+//            {
+//                emit updateChannels();
+//            }
         }
     });
 

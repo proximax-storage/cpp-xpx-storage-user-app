@@ -17,6 +17,9 @@ protected:
     void accept() override;
     void reject() override;
 
+signals:
+    void updateChannels();
+
 private:
     bool verify();
 

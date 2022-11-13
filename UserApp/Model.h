@@ -37,9 +37,9 @@ struct ChannelInfo
 {
     using timepoint = std::chrono::time_point<std::chrono::steady_clock>;
 
-    std::string                 m_name;
-    std::string                 m_hash;
-    std::string                 m_driveHash;
+    std::string                 m_name;             // user friendly name
+    std::string                 m_hash;             // channel key
+    std::string                 m_driveHash;        // driveKey
     std::vector<std::string>    m_allowedPublicKeys;
     bool                        m_isCreating = true;
     bool                        m_isDeleting = false;
@@ -47,9 +47,11 @@ struct ChannelInfo
     timepoint                   m_tobeDeletedTimepoint;
     endpoint_list               m_endpointList = {};
 
-    std::array<uint8_t,32>              m_fsTreeHash;
-    sirius::drive::FsTree               m_fsTree;
-    bool                                m_waitingFsTree              = true;
+    std::optional<std::array<uint8_t,32>>   m_fsTreeHash;
+    sirius::drive::FsTree                   m_fsTree;
+    bool                                    m_waitingFsTree = false;
+
+    //???
     std::optional<lt::torrent_handle>   m_tmpRequestingFsTreeTorrent = {};
     std::array<uint8_t,32>              m_tmpRequestingFsTreeHash    = {};
 
@@ -107,6 +109,9 @@ struct DriveInfo
 public: // tmp
     std::optional<std::array<uint8_t,32>>   m_rootHash;
     sirius::drive::FsTree                   m_fsTree;
+    bool                                    m_downloadingFsTree = false;
+    bool                                    m_calclDiffIsWaitingFsTree = false;
+
     // diff
     std::shared_ptr<LocalDriveItem>         m_localDrive;
     sirius::drive::ActionList               m_actionList;
@@ -155,6 +160,9 @@ public:
     static ChannelInfo*                 findChannel( const std::string& channelKey );
     static void                         removeChannel( const std::string& channelKey );
 
+    static void                         applyForChannels( const std::string& driveKey, std::function<void(ChannelInfo&)> );
+
+
     static std::vector<DownloadInfo>&   downloads();
 
 
@@ -176,6 +184,8 @@ public:
     static DriveInfo*               findDrive( const std::string& driveKey );
     static void                     removeDrive( const std::string& driveKey );
 
+    static void                     applyForDrive( const std::string& driveKey, std::function<void(DriveInfo&)> );
+
     static void                     removeFromDownloads( int rowIndex );
 
     static void                     calcDiff();
@@ -184,6 +194,7 @@ public:
     // StorageEngine
     //
     static void startStorageEngine( std::function<void()> addressAlreadyInUseHandler );
+    static void endStorageEngine();
 
     static void downloadFsTree( const std::string&             driveHash,
                                 const std::string&             dnChannelId,

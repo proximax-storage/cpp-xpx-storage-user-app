@@ -15,6 +15,9 @@ public:
     explicit ManageDrivesDialog( OnChainClient* onChainClient, QWidget *parent );
     ~ManageDrivesDialog() override;
 
+signals:
+    void updateDrives();
+
 protected:
     void accept() override;
     void reject() override;

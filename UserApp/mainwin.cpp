@@ -94,13 +94,6 @@ void MainWin::init()
     });
 
     setupIcons();
-    setupDownloadsTab();
-    setupDrivesTab();
-
-    // Start update-timer for downloads
-    m_downloadUpdateTimer = new QTimer();
-    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
-    m_downloadUpdateTimer->start(500); // 2 times per second
 
     connect( ui->m_settingsButton, &QPushButton::released, this, [this]
     {
@@ -110,12 +103,16 @@ void MainWin::init()
 
     connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
         ManageChannelsDialog dialog(this);
+        connect( &dialog, &ManageChannelsDialog::updateChannels, this, &MainWin::updateChannelsCBox );
         dialog.exec();
+        updateChannelsCBox();
     });
 
     connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
         ManageDrivesDialog dialog( this->m_onChainClient, this);
+        connect( &dialog, &ManageDrivesDialog::updateDrives, this, &MainWin::updateDrivesCBox );
         dialog.exec();
+        updateDrivesCBox();
     });
 
     const std::string privateKey = gSettings.config().m_privateKeyStr;
@@ -199,6 +196,7 @@ void MainWin::init()
             if ( rc==QDialog::Accepted )
             {
                 channel->m_isDeleting = true;
+                updateChannelsCBox();
             }
         }, Qt::QueuedConnection);
 
@@ -220,6 +218,7 @@ void MainWin::init()
             if ( rc==QDialog::Accepted )
             {
                 drive->m_isDeleting = true;
+                updateDrivesCBox();
             }
         });
 
@@ -269,6 +268,14 @@ void MainWin::init()
     }
 
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh);
+
+    setupDownloadsTab();
+    setupDrivesTab();
+
+    // Start update-timer for downloads
+    m_downloadUpdateTimer = new QTimer();
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
+    m_downloadUpdateTimer->start(500); // 2 times per second
 
     ui->m_refresh->setDisabled(true);
 }
@@ -337,7 +344,7 @@ void MainWin::setupFsTreeTable()
     m_fsTreeTableModel = new FsTreeTableModel();
 
     ui->m_fsTreeTableView->setModel( m_fsTreeTableModel );
-    ui->m_fsTreeTableView->setColumnWidth(0,350);
+    ui->m_fsTreeTableView->setColumnWidth(0,300);
     ui->m_fsTreeTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
@@ -519,6 +526,15 @@ void MainWin::updateChannelsCBox()
     }
 
     ui->m_channels->setCurrentIndex( Model::currentDnChannelIndex() );
+
+    if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr )
+    {
+        m_lastSelectedChannelKey = channelPtr->m_hash;
+    }
+    else
+    {
+        m_lastSelectedChannelKey.clear();
+    }
 }
 
 void MainWin::addChannel( const std::string&              channelName,
@@ -637,7 +653,8 @@ void MainWin::onDriveCreationFailed(const std::string& alias, const std::string&
     //todo!!!
 }
 
-void MainWin::onApplyChanges() {
+void MainWin::onApplyChanges()
+{
     auto drive = Model::currentDriveInfoPtr();
     if (!drive) {
         qWarning() << LOG_SOURCE << "bad drive";
@@ -827,114 +844,70 @@ void MainWin::onCurrentChannelChanged( int index )
     }
 
     Model::setCurrentDnChannelIndex( index );
+
     if ( !ALEX_LOCAL_TEST )
     {
         m_fsTreeTableModel->setFsTree( {}, {} );
 
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
         auto channel = Model::currentChannelInfoPtr();
-        if (!channel) {
+
+        if ( channel == nullptr )
+        {
             qWarning() << LOG_SOURCE << "bad channel";
             return;
         }
 
-        channel->m_waitingFsTree = true;
-
-        auto drive = Model::findDrive( channel->m_driveHash );
-        if (!drive)
+        if ( ! channel->m_fsTreeHash )
         {
-            qWarning() << LOG_SOURCE << "bad drive";
-            return;
+            downloadLatestFsTree( channel->m_driveHash );
         }
-
-        m_onChainClient->getBlockchainEngine()->getDriveById( channel->m_driveHash,
-                                                              [this, channelHash=channel->m_hash]
-                                                              (auto drive, auto isSuccess, auto message, auto code )
-        {
-            if (!isSuccess) {
-                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                return;
-            }
-
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-            auto channel = Model::findChannel( channelHash );
-            if (!channel)
-            {
-                qWarning() << LOG_SOURCE << "bad channel";
-                return;
-            }
-
-            onFsTreeHashReceived( *channel, rawHashFromHex( drive.data.rootHash.c_str() ));
-        });
-    }
-    else //if ( ALEX_LOCAL_TEST )
-    {
-        Model::currentChannelInfoPtr()->m_waitingFsTree = true;
-
-        std::thread( [this,index]
-        {
-            qDebug() << LOG_SOURCE << "onChannelChanged: " << index;
-
-            std::array<uint8_t,32> fsTreeHash{};
-
-            if ( index == 0 )
-            {
-                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
-                                                            64, fsTreeHash );
-            }
-            else if ( index == 1 )
-            {
-                sirius::utils::ParseHexStringIntoContainer( ROOT_HASH2,
-                                                            64, fsTreeHash );
-            }
-
-            sleep(1);
-            onFsTreeHashReceived( Model::dnChannels()[index], fsTreeHash );
-        }).detach();
     }
 }
 
 void MainWin::onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash )
 {
-    qDebug() << LOG_SOURCE << "@ onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
-    qDebug() << LOG_SOURCE << "@ onFsTreeHashReceived: for drive: " << channel.m_driveHash.c_str();
+//    qDebug() << LOG_SOURCE << "@ onFsTreeHashReceived: " << sirius::drive::toString(fsTreeHash).c_str();
+//    qDebug() << LOG_SOURCE << "@ onFsTreeHashReceived: for drive: " << channel.m_driveHash.c_str();
 
-    auto channelInfo = Model::currentChannelInfoPtr();
-    if ( channelInfo != nullptr && channelInfo->m_hash == channel.m_hash )
-    {
-        if ( channel.m_fsTreeHash == fsTreeHash )
-        {
-            qDebug() << LOG_SOURCE << "Used already downloaded fsTree";
+//    auto channelInfo = Model::currentChannelInfoPtr();
+//    if ( channelInfo != nullptr && channelInfo->m_hash == channel.m_hash )
+//    {
+//        if ( channel.m_fsTreeHash == fsTreeHash )
+//        {
+//            qDebug() << LOG_SOURCE << "Used already downloaded fsTree";
 
-            channel.m_waitingFsTree = false;
-            m_fsTreeTableModel->setFsTree( channel.m_fsTree, {} );
-            return;
-        }
-    }
+//            channel.m_waitingFsTree = false;
+//            m_fsTreeTableModel->setFsTree( channel.m_fsTree, {} );
+//            return;
+//        }
+//    }
 
-    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-    Model::downloadFsTree( channel.m_driveHash,
-                           channel.m_hash,
-                           fsTreeHash,
-                           [this] ( const std::string&  driveHash,
-                                    const std::array<uint8_t,32> fsTreeHash,
-                                    const sirius::drive::FsTree& fsTree )
-    {
-        qDebug() << LOG_SOURCE << "on FsTree downloaded: " << sirius::drive::toString(fsTreeHash).c_str();
+//    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+//    Model::downloadFsTree( channel.m_driveHash,
+//                           channel.m_hash,
+//                           fsTreeHash,
+//                           [this] ( const std::string&  driveHash,
+//                                    const std::array<uint8_t,32> fsTreeHash,
+//                                    const sirius::drive::FsTree& fsTree )
+//    {
+//        qDebug() << LOG_SOURCE << "on FsTree downloaded: " << sirius::drive::toString(fsTreeHash).c_str();
 
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+//        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        auto channelInfo = Model::currentChannelInfoPtr();
-        if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
-        {
-            channelInfo->m_waitingFsTree = false;
-            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
-            channelInfo->m_fsTreeHash = fsTreeHash;
-            channelInfo->m_fsTree = fsTree;
-            lock.unlock();
+//        auto channelInfo = Model::currentChannelInfoPtr();
+//        if ( channelInfo != nullptr && channelInfo->m_driveHash == driveHash )
+//        {
+//            channelInfo->m_waitingFsTree = false;
+//            channelInfo->m_tmpRequestingFsTreeTorrent.reset();
+//            channelInfo->m_fsTreeHash = fsTreeHash;
+//            channelInfo->m_fsTree = fsTree;
+//            lock.unlock();
 
-            m_fsTreeTableModel->setFsTree( fsTree, {} );
-        }
-    });
+//            m_fsTreeTableModel->setFsTree( fsTree, {} );
+//        }
+//    });
 }
 
 void MainWin::onCurrentDriveChanged( int index )
@@ -976,10 +949,13 @@ void MainWin::setupDrivesTab()
 
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
     {
-        Model::calcDiff();
-        m_driveTreeModel->updateModel();
-        ui->m_driveTreeView->expandAll();
-        m_diffTableModel->updateModel();
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
+        {
+            drivePtr->m_calclDiffIsWaitingFsTree = true;
+            downloadLatestFsTree( drivePtr->m_driveKey );
+        }
     });
 
     if ( ALEX_LOCAL_TEST )
@@ -990,33 +966,33 @@ void MainWin::setupDrivesTab()
     updateDrivesCBox();
 
     // request FsTree info-hash
-    if ( ALEX_LOCAL_TEST )
-    {
-        auto* driveInfoPtr = Model::currentDriveInfoPtr();
-        std::array<uint8_t,32> fsTreeHash;
-        sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
-                                                        64, fsTreeHash );
+//    if ( ALEX_LOCAL_TEST )
+//    {
+//        auto* driveInfoPtr = Model::currentDriveInfoPtr();
+//        std::array<uint8_t,32> fsTreeHash;
+//        sirius::utils::ParseHexStringIntoContainer( ROOT_HASH1,
+//                                                        64, fsTreeHash );
 
-        qDebug() << LOG_SOURCE << "driveHash: " << driveInfoPtr->m_driveKey.c_str();
+//        qDebug() << LOG_SOURCE << "driveHash: " << driveInfoPtr->m_driveKey.c_str();
 
-        Model::downloadFsTree( driveInfoPtr->m_driveKey,
-                               "0000000000000000000000000000000000000000000000000000000000000000",
-                               fsTreeHash,
-                               [this] ( const std::string&           driveHash,
-                                        const std::array<uint8_t,32> fsTreeHash,
-                                        const sirius::drive::FsTree& fsTree )
-        {
-            Model::onFsTreeForDriveReceived( driveHash, fsTreeHash, fsTree );
+//        Model::downloadFsTree( driveInfoPtr->m_driveKey,
+//                               "0000000000000000000000000000000000000000000000000000000000000000",
+//                               fsTreeHash,
+//                               [this] ( const std::string&           driveHash,
+//                                        const std::array<uint8_t,32> fsTreeHash,
+//                                        const sirius::drive::FsTree& fsTree )
+//        {
+//            Model::onFsTreeForDriveReceived( driveHash, fsTreeHash, fsTree );
 
-            qDebug() << LOG_SOURCE << "driveHash: " << driveHash.c_str();
+//            qDebug() << LOG_SOURCE << "driveHash: " << driveHash.c_str();
 
-            if ( driveHash == Model::currentDriveInfoPtr()->m_driveKey )
-            {
-                qDebug() << LOG_SOURCE << "m_calcDiffBtn->setEnabled: " << driveHash.c_str();
-                ui->m_calcDiffBtn->setEnabled(true);
-            }
-        });
-    }
+//            if ( driveHash == Model::currentDriveInfoPtr()->m_driveKey )
+//            {
+//                qDebug() << LOG_SOURCE << "m_calcDiffBtn->setEnabled: " << driveHash.c_str();
+//                ui->m_calcDiffBtn->setEnabled(true);
+//            }
+//        });
+//    }
 
     m_driveTreeModel = new DriveTreeModel();
     ui->m_driveTreeView->setModel( m_driveTreeModel );
@@ -1044,6 +1020,8 @@ void MainWin::updateDrivesCBox()
 {
     ui->m_driveCBox->clear();
 
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     for( const auto& drive: Model::drives() )
     {
         if ( drive.m_isCreating )
@@ -1067,50 +1045,193 @@ void MainWin::updateDrivesCBox()
 
     ui->m_driveCBox->setCurrentIndex( Model::currentDriveIndex() );
 
-    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr && ! drivePtr->m_rootHash )
+//    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
+//    {
+//        m_driveTreeModel->rescanFolder( drivePtr->m_localDriveFolder );
+//    }
+//    else
+//    {
+//        m_driveTreeModel->rescanFolder( "" );
+//    }
+    m_driveTreeModel->updateModel();
+    ui->m_driveTreeView->expandAll();
+
+    // Update FsTree
+    //
+//    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr && ! drivePtr->m_rootHash )
+//    {
+//        if ( ! drivePtr->m_rootHash || m_lastSelectedDriveKey != drivePtr->m_driveKey )
+//        {
+//            if ( ! drivePtr->m_downloadingFsTree )
+//            {
+//                downloadLatestFsTree( drivePtr->m_driveKey );
+//            }
+//        }
+//    }
+
+    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
     {
-        qDebug() << LOG_SOURCE << "@ download FsTree: " << drivePtr->m_driveKey.c_str();
-
-        m_onChainClient->getBlockchainEngine()->getDriveById( drivePtr->m_driveKey,
-                                                              [driveKey=drivePtr->m_driveKey,this]
-                                                              (auto drive, auto isSuccess, auto message, auto code )
-        {
-            if (!isSuccess) {
-                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                return;
-            }
-
-            qDebug() << LOG_SOURCE << "@ on RootHash received: " << drive.data.rootHash.c_str();
-
-            std::array<uint8_t,32> fsTreeHash;
-            sirius::utils::ParseHexStringIntoContainer( drive.data.rootHash.c_str(), 64, fsTreeHash );
-
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-            auto drivePtr = Model::findDrive( driveKey );
-            if ( drivePtr != nullptr )
-            {
-                drivePtr->m_rootHash = fsTreeHash;
-                Model::downloadFsTree( driveKey,
-                                       driveKey,
-                                       fsTreeHash,
-                                       [this] ( const std::string&           driveHash,
-                                                const std::array<uint8_t,32> fsTreeHash,
-                                                const sirius::drive::FsTree& fsTree )
-                {
-                    qDebug() << LOG_SOURCE << "@ on FsTree received: " << driveHash.c_str();
-                    fsTree.dbgPrint();
-
-                    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-                    auto drivePtr = Model::findDrive( driveHash );
-                    if ( drivePtr != nullptr )
-                    {
-                        drivePtr->m_fsTree = fsTree;
-                    }
-                });
-            }
-        });
+        m_lastSelectedDriveKey = drivePtr->m_driveKey;
+    }
+    else
+    {
+        m_lastSelectedDriveKey.clear();
     }
 }
 
+void MainWin::downloadLatestFsTree( const std::string& driveKey )
+{
+    qDebug() << LOG_SOURCE << "@ download FsTree: " << driveKey.c_str();
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    DriveInfo* drivePtr = Model::findDrive( driveKey );
+
+    //
+    // Check that fsTree is not now downloading
+    //
+    bool isFsTreeNowDownloading = (drivePtr!=nullptr) && drivePtr->m_downloadingFsTree;
+    if ( drivePtr!=nullptr )
+    {
+        drivePtr->m_downloadingFsTree = true;
+    }
+
+    Model::applyForChannels( drivePtr->m_driveKey, [&](ChannelInfo& channelInfo)
+    {
+        isFsTreeNowDownloading = isFsTreeNowDownloading || channelInfo.m_waitingFsTree;
+        channelInfo.m_waitingFsTree = true;
+    });
+
+    if ( isFsTreeNowDownloading )
+    {
+        qDebug() << LOG_SOURCE << "@ download FsTree: isFsTreeAlreadyDownloading";
+        return;
+    }
+
+    //
+    // Get drive root hash
+    //
+    m_onChainClient->getBlockchainEngine()->getDriveById( drivePtr->m_driveKey,
+                                                          [driveKey=drivePtr->m_driveKey,this]
+                                                          (auto drive, auto isSuccess, auto message, auto code )
+    {
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        DriveInfo* drivePtr = Model::findDrive( driveKey );
+
+        if ( !isSuccess )
+        {
+            //
+            // Handle drive error
+            //
+            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+
+            if ( drivePtr!=nullptr )
+            {
+                drivePtr->m_downloadingFsTree = false;
+                drivePtr->m_calclDiffIsWaitingFsTree = false;
+            }
+
+            Model::applyForChannels( drivePtr->m_driveKey, [&](ChannelInfo& channelInfo)
+            {
+                channelInfo.m_waitingFsTree = false;
+            });
+
+            lock.unlock();
+            QMessageBox msgBox;
+            msgBox.setText( QString::fromStdString( "Cannot get drive root hash.") );
+            msgBox.setInformativeText( QString::fromStdString( "Drive: " + driveKey + "\nError: " + message ) );
+            msgBox.setStandardButtons( QMessageBox::Ok );
+            msgBox.exec();
+            return;
+        }
+
+        qDebug() << LOG_SOURCE << "@ on RootHash received: " << drive.data.rootHash.c_str();
+
+        std::array<uint8_t,32> fsTreeHash;
+        sirius::utils::ParseHexStringIntoContainer( drive.data.rootHash.c_str(), 64, fsTreeHash );
+
+        bool rootHashIsChanged = false;
+
+        if ( drivePtr != nullptr )
+        {
+            rootHashIsChanged = ! drivePtr->m_rootHash || *drivePtr->m_rootHash != fsTreeHash;
+        }
+
+        Model::applyForChannels( driveKey, [&] (const ChannelInfo& channelInfo )
+        {
+            rootHashIsChanged = rootHashIsChanged
+                                || ! channelInfo.m_fsTreeHash
+                                || channelInfo.m_fsTreeHash != fsTreeHash;
+        });
+
+        if ( ! rootHashIsChanged )
+        {
+            qDebug() << LOG_SOURCE << "Using already downloaded fsTree";
+
+            if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveKey )
+            {
+                this->m_fsTreeTableModel->updateRows();
+            }
+
+            if ( drivePtr != nullptr && drivePtr->m_calclDiffIsWaitingFsTree )
+            {
+                continueCalcDiff( *drivePtr );
+            }
+            return;
+        }
+
+        Model::downloadFsTree( driveKey,
+                               driveKey,
+                               fsTreeHash,
+                               [this] ( const std::string&           driveHash,
+                                        const std::array<uint8_t,32> fsTreeHash,
+                                        const sirius::drive::FsTree& fsTree )
+        {
+            qDebug() << LOG_SOURCE << "@ on FsTree received: " << driveHash.c_str();
+            fsTree.dbgPrint();
+
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            auto drivePtr = Model::findDrive( driveHash );
+            if ( drivePtr != nullptr )
+            {
+                drivePtr->m_rootHash = fsTreeHash;
+                drivePtr->m_fsTree   = fsTree;
+                drivePtr->m_downloadingFsTree = false;
+            }
+
+            Model::applyForChannels( driveHash, [&] (ChannelInfo& channelInfo)
+            {
+                channelInfo.m_fsTreeHash = fsTreeHash;
+                channelInfo.m_fsTree     = fsTree;
+                channelInfo.m_waitingFsTree = false;
+            });
+
+            if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveHash )
+            {
+                m_fsTreeTableModel->updateRows();
+            }
+
+            if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveHash )
+            {
+                this->m_fsTreeTableModel->updateRows();
+            }
+
+            if ( drivePtr != nullptr && drivePtr->m_calclDiffIsWaitingFsTree )
+            {
+                continueCalcDiff( *drivePtr );
+            }
+        });
+    });
+}
+
+void MainWin::continueCalcDiff( DriveInfo& drive )
+{
+    drive.m_calclDiffIsWaitingFsTree = false;
+
+    Model::calcDiff();
+    m_driveTreeModel->updateModel();
+    ui->m_driveTreeView->expandAll();
+    m_diffTableModel->updateModel();
+}

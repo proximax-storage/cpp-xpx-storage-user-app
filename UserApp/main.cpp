@@ -1,5 +1,6 @@
 #include "mainwin.h"
 #include "Utils.h"
+#include "Model.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -33,6 +34,8 @@ restart_label:
     w.show();
 
     auto rc = a.exec();
+
+    Model::endStorageEngine();
 
     if ( rc == 1024 )
         goto restart_label;

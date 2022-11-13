@@ -56,7 +56,9 @@ public:
                 m_privateKeyStr,
                 m_dnChannels,
                 m_currentDnChannelIndex,
-                m_downloadFolder );
+                m_downloadFolder,
+                m_drives,
+                m_currentDriveIndex );
         }
 
         std::optional<sirius::crypto::KeyPair>  m_keyPair;

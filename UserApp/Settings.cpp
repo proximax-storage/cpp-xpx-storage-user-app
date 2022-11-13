@@ -11,6 +11,7 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/array.hpp>
 #include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/json.hpp>
 
 #include <QDebug>
 #include <QMessageBox>
@@ -87,6 +88,11 @@ void Settings::initForTests()
         setCurrentAccountIndex( m_accounts.size()-1 );
         config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
+
+        if ( ! ALEX_LOCAL_TEST )
+        {
+            setCurrentAccountIndex( 1 );
+        }
     }
 }
 
@@ -108,6 +114,7 @@ bool Settings::load( const std::string& pwd )
 
         std::istringstream is( os.str(), std::ios::binary );
         cereal::PortableBinaryInputArchive iarchive( is );
+        //cereal::XMLInputArchive iarchive( is );
 
         bool isCorrupted = false;
 
@@ -199,6 +206,7 @@ void Settings::save()
     {
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
+        //cereal::XMLOutputArchive archive( os );
         archive( m_settingsVersion );
         archive( m_restBootstrap );
         archive( m_replicatorBootstrap );
@@ -209,6 +217,23 @@ void Settings::save()
         std::ofstream fStream( settingsFolder() / "config", std::ios::binary );
         fStream << os.str();
         fStream.close();
+
+        if (1)
+        {
+            std::ostringstream os( std::ios::binary );
+            cereal::JSONOutputArchive archive( os );
+            archive( m_settingsVersion );
+            archive( m_restBootstrap );
+            archive( m_replicatorBootstrap );
+            archive( m_udpPort );
+            archive( m_currentAccountIndex );
+            archive( m_accounts );
+
+            std::ofstream fStream( settingsFolder() / "config.json", std::ios::binary );
+            fStream << os.str();
+            fStream.close();
+
+        }
     }
     catch( const std::exception& ex )
     {

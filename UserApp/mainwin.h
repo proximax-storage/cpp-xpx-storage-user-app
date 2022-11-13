@@ -8,9 +8,9 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
 QT_END_NAMESPACE
 
-class FsTreeModel;
 class FsTreeTableModel;
 class ChannelInfo;
+class DriveInfo;
 class DownloadsTableModel;
 class DriveTreeModel;
 class DiffTableModel;
@@ -49,8 +49,6 @@ private:
 //    void onChannelDeleted( const std::string& channelKey );
     void onCurrentChannelChanged( int index );
 
-    void updateChannelsCBox();
-
     void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
     void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
     void onDriveDeleted( const std::string& driveKey );
@@ -71,6 +69,12 @@ private:
     void setDownloadPath( );
 
     void setupDrivesTab();
+
+    void downloadLatestFsTree( const std::string& driveKey );
+    void continueCalcDiff( DriveInfo& drive );
+
+private slots:
+    void updateChannelsCBox();
     void updateDrivesCBox();
 
 public:
@@ -82,10 +86,12 @@ private:
 
     QTimer*                 m_downloadUpdateTimer;
 
-    FsTreeModel*            m_fsTreeModel;
     FsTreeTableModel*       m_fsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
     OnChainClient*          m_onChainClient;
+
+    std::string             m_lastSelectedChannelKey;
+    std::string             m_lastSelectedDriveKey;
 };
