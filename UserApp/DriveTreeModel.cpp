@@ -6,6 +6,10 @@
 
 void scanFolderR( DriveTreeItem* parent, const fs::path& path )
 {
+    if ( ! fs::exists(path) || ! fs::is_directory(path ))
+    {
+        return;
+    }
     try
     {
         for( const auto& entry : std::filesystem::directory_iterator(path) )
