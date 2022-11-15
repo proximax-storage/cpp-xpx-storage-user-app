@@ -39,7 +39,7 @@ void OnChainClient::loadDrives() {
     });
 }
 
-void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
+void OnChainClient::loadDownloadChannelsByDrive(const QString& drivePubKey) {
     mpBlockchainEngine->getDownloadChannels([this, drivePubKey](auto channelsPage, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
@@ -48,13 +48,40 @@ void OnChainClient::loadDownloadChannels(const QString& drivePubKey) {
 
         QStringList loadedChannels;
         for (const auto &channel: channelsPage.data.channels) {
-            if (channel.data.drive == drivePubKey.toStdString()) {
+            if (channel.data.drive == drivePubKey.toStdString() && !channel.data.finished) {
                 loadedChannels.push_back(channel.data.id.c_str());
             }
         }
 
         if (!loadedChannels.empty()) {
-            emit downloadChannelsLoaded(loadedChannels);
+            emit downloadChannelsLoadedByDrive(loadedChannels);
+        }
+    });
+}
+
+void OnChainClient::loadDownloadChannelsByConsumer(const QString& consumerKey) {
+    mpBlockchainEngine->getDownloadChannels([this, consumerKey](auto channelsPage, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+            return;
+        }
+
+        QStringList loadedChannels;
+        for (const auto &channel: channelsPage.data.channels) {
+            if (channel.data.finished) {
+                continue;
+            }
+
+            for (const auto &key : channel.data.listOfPublicKeys) {
+                if (key == consumerKey.toStdString()) {
+                    loadedChannels.push_back(channel.data.id.c_str());
+                    break;
+                }
+            }
+        }
+
+        if (!loadedChannels.empty()) {
+            emit downloadChannelsLoadedByConsumer(loadedChannels);
         }
     });
 }

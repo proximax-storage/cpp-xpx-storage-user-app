@@ -141,7 +141,7 @@ void MainWin::init()
         //ui->m_fsTreeTableView->setModel( m_fsTreeModel );
         //ui->m_fsTreeTableView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this, [this](const auto& channels)
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoadedByDrive, this, [this](const auto& channels)
         {
             qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
 
@@ -157,6 +157,24 @@ void MainWin::init()
             });
         });
 
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoadedByConsumer, this, [this](const auto& channels)
+        {
+            qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
+
+            for (const auto& channel : channels) {
+                m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel.toStdString(), [this](auto channel, auto isSuccess, auto message, auto code)
+                {
+                    if (!isSuccess) {
+                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                        return;
+                    }
+
+                    Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
+                    updateChannelsCBox();
+                });
+            }
+        });
+
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives)
         {
             qDebug() << "drivesLoaded";
@@ -166,8 +184,10 @@ void MainWin::init()
             updateDrivesCBox();
 
             for (int i = 0; i < ui->m_driveCBox->count(); i++) {
-                m_onChainClient->loadDownloadChannels(ui->m_driveCBox->itemText(i));
+                m_onChainClient->loadDownloadChannelsByDrive(ui->m_driveCBox->itemText(i));
             }
+
+            m_onChainClient->loadDownloadChannelsByConsumer(drives[0]);
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
@@ -585,8 +605,7 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     auto* channel = Model::findChannel( channelKey );
-
-    if ( channel != nullptr )
+    if ( channel )
     {
         channel->m_isCreating = false;
         Model::saveSettings();
@@ -614,6 +633,8 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     msgBox.setText( QString::fromStdString( "Channel '" + alias + "' created successfully.") );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    onRefresh();
 }
 
 void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
@@ -781,7 +802,7 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
 
 void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32> &modificationId) {
     QMessageBox msgBox;
-    msgBox.setText( "Your modifications was accepted: '" + rawHashToHex(modificationId) );
+    msgBox.setText( "Your modifications was registered: '" + rawHashToHex(modificationId) );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 }

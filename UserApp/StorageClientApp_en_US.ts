@@ -5,40 +5,40 @@
     <name>AddDownloadChannelDialog</name>
     <message>
         <location filename="AddDownloadChannelDialog.ui" line="17"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="137"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="146"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="46"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="138"/>
+        <location filename="AddDownloadChannelDialog.ui" line="52"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="147"/>
         <source>Drive*</source>
         <oldsource>Drive (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="94"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="140"/>
+        <location filename="AddDownloadChannelDialog.ui" line="109"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="149"/>
         <source>Keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="117"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="141"/>
+        <location filename="AddDownloadChannelDialog.ui" line="135"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="150"/>
         <source>Prepaid*</source>
         <oldsource>Prepaid (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="140"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="142"/>
+        <location filename="AddDownloadChannelDialog.ui" line="158"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="151"/>
         <source>Name*</source>
         <oldsource>Name (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="87"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="139"/>
+        <location filename="AddDownloadChannelDialog.ui" line="96"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="148"/>
         <source>Select my drive</source>
         <translation type="unfinished"></translation>
     </message>

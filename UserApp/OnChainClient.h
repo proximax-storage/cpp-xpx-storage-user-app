@@ -25,7 +25,9 @@ class OnChainClient : public QObject
 
     public:
         void loadDrives();
-        void loadDownloadChannels(const QString& drivePubKey);
+        void loadDownloadChannelsByDrive(const QString& drivePubKey);
+        void loadDownloadChannelsByConsumer(const QString& consumerKey);
+
         std::shared_ptr<BlockchainEngine> getBlockchainEngine();
 
         std::string addDownloadChannel(const std::string& channelAlias,
@@ -52,7 +54,8 @@ class OnChainClient : public QObject
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const QStringList& drives);
-        void downloadChannelsLoaded(const QStringList& channels);
+        void downloadChannelsLoadedByDrive(const QStringList& channels);
+        void downloadChannelsLoadedByConsumer(const QStringList& channels);
         void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
         void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
