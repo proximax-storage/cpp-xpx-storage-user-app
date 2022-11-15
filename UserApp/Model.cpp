@@ -252,7 +252,7 @@ void Model::applyForChannels( const std::string& driveKey, std::function<void(Ch
 {
     for( auto& channelInfo : gSettings.config().m_dnChannels )
     {
-        if ( channelInfo.m_driveHash == driveKey )
+        if ( boost::iequals( channelInfo.m_driveHash, driveKey ) )
         {
             func( channelInfo );
         }
