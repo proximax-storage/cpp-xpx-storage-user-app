@@ -2,13 +2,14 @@
 
 CloseDriveDialog::CloseDriveDialog(OnChainClient* onChainClient,
                                    const QString& driveId,
+                                   const QString& alias,
                                    QWidget *parent)
     : QMessageBox(parent)
     , mDriveId(driveId)
     , mpOnChainClient(onChainClient)
 {
     setWindowTitle("Confirmation");
-    setText("Are you confirm to remove drive?");
+    setText("Please confirm drive " + alias + " removal");
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     setButtonText(QMessageBox::Ok, "Confirm");

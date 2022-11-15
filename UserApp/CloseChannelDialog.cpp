@@ -9,7 +9,7 @@ CloseChannelDialog::CloseChannelDialog(OnChainClient* onChainClient,
     , mpOnChainClient(onChainClient)
 {
     setWindowTitle("Confirmation");
-    setText("Are you confirm to remove " + alias +  " channel?");
+    setText("Please confirm channel " + alias +  " removal");
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     setButtonText(QMessageBox::Ok, "Confirm");

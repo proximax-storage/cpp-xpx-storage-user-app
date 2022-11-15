@@ -24,8 +24,6 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
     ui->m_table->setColumnCount(3);
     ui->m_table->setShowGrid(true);
 
-    ui->m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     QStringList headers;
        headers.append("name");
        headers.append("drive key");
@@ -40,7 +38,20 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
         dialog.exec();
     });
 
-    connect(ui->m_editBtn, &QPushButton::released, this, [this] ()
+    connect(ui->m_editNameBtn, &QPushButton::released, this, [this] ()
+    {
+        auto index = ui->m_table->selectionModel()->currentIndex();
+        if (index.isValid())
+        {
+            ui->m_table->setCurrentCell(index.row(), 0);
+            index = ui->m_table->selectionModel()->currentIndex();
+            if ( index.isValid() ) {
+                ui->m_table->edit(index);
+            }
+        }
+    });
+
+    connect(ui->m_editPathBtn, &QPushButton::released, this, [this] ()
     {
         auto index = ui->m_table->selectionModel()->currentIndex();
         if (!index.isValid())
@@ -49,17 +60,56 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
             return;
         }
 
-        if (index.column() == 0) {
-            ui->m_table->edit(index);
-        } else if (index.column() == 2) {
-            QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
-#ifdef Q_OS_LINUX
-            options |= QFileDialog::DontUseNativeDialog;
-#endif
-            const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
-            if (!path.trimmed().isEmpty()) {
-                ui->m_table->item(index.row(), index.column())->setText(path);
+        if (index.column() != 2) {
+            ui->m_table->setCurrentCell(index.row(), 2);
+            index = ui->m_table->selectionModel()->currentIndex();
+            if (!index.isValid())
+            {
+                qWarning () << LOG_SOURCE << "bad index";
+                return;
+            }
+        }
 
+        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+#ifdef Q_OS_LINUX
+        options |= QFileDialog::DontUseNativeDialog;
+#endif
+        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+        if (path.trimmed().isEmpty()) {
+            qWarning () << LOG_SOURCE  << "bad path";
+            return;
+        }
+
+        ui->m_table->item(index.row(), index.column())->setText(path);
+
+        int selectedRow = ui->m_table->currentRow();
+        auto selectedDrive = ui->m_table->model()->index(selectedRow, 1);
+        if (!selectedDrive.isValid()) {
+            qWarning () << LOG_SOURCE  << "bad index";
+            return;
+        }
+
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+        auto* drive = Model::findDrive( selectedDrive.data().toString().toStdString() );
+        if ( !drive )
+        {
+            qWarning () << LOG_SOURCE  << "bad drive";
+            lock.unlock();
+            return;
+        }
+
+        drive->m_localDriveFolder = path.toStdString();
+        Model::saveSettings();
+        lock.unlock();
+
+        emit updateDrives();
+    });
+
+    connect(ui->m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
+        if (item->column() == 0) {
+            qDebug () << "new name: " + item->text();
+            QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
+            if (nameTemplate.match(item->text()).hasMatch()) {
                 int selectedRow = ui->m_table->currentRow();
                 auto selectedDrive = ui->m_table->model()->index(selectedRow, 1);
                 if (!selectedDrive.isValid()) {
@@ -76,64 +126,39 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
                     return;
                 }
 
-                drive->m_localDriveFolder = path.toStdString();
+                drive->m_name = item->text().toStdString();
                 Model::saveSettings();
                 lock.unlock();
 
                 emit updateDrives();
+            } else {
+                qWarning () << "invalid new name: " + item->text();
             }
-        }
-    });
-
-    connect(ui->m_table->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this](const QItemSelection &selected, auto){
-        if (selected.isEmpty()) {
-            ui->m_removeBtn->setDisabled(true);
-        } else {
-            ui->m_removeBtn->setEnabled(true);
-        }
-    });
-
-    connect(ui->m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
-        qDebug () << "new name: " + item->text();
-        QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
-        if (nameTemplate.match(item->text()).hasMatch()) {
-            int selectedRow = ui->m_table->currentRow();
-            auto selectedDrive = ui->m_table->model()->index(selectedRow, 1);
-            if (!selectedDrive.isValid()) {
-                qWarning () << LOG_SOURCE  << "bad index";
-                return;
-            }
-
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-            auto* drive = Model::findDrive( selectedDrive.data().toString().toStdString() );
-            if ( !drive )
-            {
-                qWarning () << LOG_SOURCE  << "bad drive";
-                lock.unlock();
-                return;
-            }
-
-            drive->m_name = item->text().toStdString();
-            Model::saveSettings();
-            lock.unlock();
-
-            emit updateDrives();
-        } else {
-            qWarning () << "invalid new name: " + item->text();
         }
     });
 
     connect(ui->m_removeBtn, &QPushButton::released, this, [this] ()
     {
-        auto index = ui->m_table->selectionModel()->currentIndex();
+        int selectedRow = ui->m_table->currentRow();
+        auto selectedDrive = ui->m_table->model()->index(selectedRow, 1);
+        if (selectedDrive.isValid()) {
+            auto driveKey = selectedDrive.data().toString();
+            auto drive = Model::findDrive(driveKey.toStdString());
+            if (!drive) {
+                qWarning() << LOG_SOURCE << "bad drive";
+                return;
+            }
 
-        if ( index.row() >= 0 && index.row() < Model::drives().size() )
-        {
-            CloseDriveDialog dialog( m_onChainClient, Model::drives()[index.row()].m_driveKey.c_str(), this);
+            CloseDriveDialog dialog( m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
             if ( dialog.exec() == QDialog::Accepted )
             {
+                drive->m_isDeleting = true;
+                ui->m_table->removeRow(selectedRow);
                 emit updateDrives();
             }
+
+        } else {
+            qWarning() << LOG_SOURCE << "bad index";
         }
     });
 
@@ -171,25 +196,46 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
         const auto& drives = gSettings.config().m_drives;
         qDebug() << LOG_SOURCE << "drives.size: " << drives.size();
 
-        int i=0;
-        ui->m_table->clear();
+        int i = 0;
         for( const auto& drive : drives )
         {
-            qDebug() << LOG_SOURCE << "driveName: " << drive.m_name << "; driveKey: " << drive.m_driveKey.c_str();
             ui->m_table->insertRow(i);
-            ui->m_table->setItem(i,0, new QTableWidgetItem( QString::fromStdString(drive.m_name)));
-            ui->m_table->setItem(i,1, new QTableWidgetItem( QString::fromStdString(drive.m_driveKey)));
+            ui->m_table->setItem(i, 0, new QTableWidgetItem( QString::fromStdString(drive.m_name)));
+            ui->m_table->setItem(i, 1, new QTableWidgetItem( QString::fromStdString(drive.m_driveKey)));
+            ui->m_table->setItem(i, 2, new QTableWidgetItem( QString::fromStdString(drive.m_localDriveFolder)));
             i++;
         }
 
         ui->m_table->resizeColumnsToContents();
         ui->m_table->setSelectionMode( QAbstractItemView::SingleSelection );
-        ui->m_table->setSelectionBehavior( QAbstractItemView::SelectRows );
+        ui->m_table->setSelectionBehavior( QAbstractItemView::SelectItems );
     }
 
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ManageDrivesDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ManageDrivesDialog::reject);
+
+    connect(ui->m_table->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this](const QItemSelection &selected, auto){
+        if (selected.isEmpty()) {
+            ui->m_removeBtn->setDisabled(true);
+            ui->m_editNameBtn->setDisabled(true);
+            ui->m_editPathBtn->setDisabled(true);
+            ui->m_copyHashBtn->setDisabled(true);
+        } else {
+            ui->m_removeBtn->setEnabled(true);
+            ui->m_editNameBtn->setEnabled(true);
+            ui->m_editPathBtn->setEnabled(true);
+            ui->m_copyHashBtn->setEnabled(true);
+        }
+    });
+
+    ui->m_removeBtn->setDisabled(true);
+    ui->m_editNameBtn->setDisabled(true);
+    ui->m_editPathBtn->setDisabled(true);
+    ui->m_copyHashBtn->setDisabled(true);
+
+    setWindowTitle("Manage drives");
+    setFocus();
 }
 
 ManageDrivesDialog::~ManageDrivesDialog()

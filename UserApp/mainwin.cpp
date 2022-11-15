@@ -217,7 +217,7 @@ void MainWin::init()
                 return;
             }
 
-            CloseDriveDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), this);
+            CloseDriveDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
             auto rc = dialog.exec();
             if ( rc==QDialog::Accepted )
             {

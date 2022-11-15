@@ -60,7 +60,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="m_editBtn">
+        <widget class="QPushButton" name="m_editNameBtn">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -79,7 +79,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="m_editPathBtn">
          <property name="minimumSize">
           <size>
            <width>0</width>

@@ -26,9 +26,6 @@ signals:
                             const std::vector<std::string> allowedPublicKeys);
 
 private:
-    bool verify();
-
-private:
     Ui::ManageChannelsDialog* ui;
     OnChainClient* mpOnChainClient;
 };

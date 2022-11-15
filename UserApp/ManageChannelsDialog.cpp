@@ -22,12 +22,10 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
     ui->m_table->setColumnCount(3);
     ui->m_table->setShowGrid(true);
 
-    ui->m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     QStringList headers;
        headers.append("name");
-       headers.append("channel hash");
-       headers.append("drive hash");
+       headers.append("channel key");
+       headers.append("drive key");
     ui->m_table->setHorizontalHeaderLabels(headers);
     ui->m_table->horizontalHeader()->setStretchLastSection(true);
     ui->m_table->setEditTriggers(QTableWidget::NoEditTriggers);
@@ -51,9 +49,13 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
     connect(ui->m_editBtn, &QPushButton::released, this, [this] ()
     {
         auto index = ui->m_table->selectionModel()->currentIndex();
-        if ( index.isValid() && index.column() == 0 )
+        if (index.isValid())
         {
-            ui->m_table->edit(index);
+            ui->m_table->setCurrentCell(index.row(), 0);
+            index = ui->m_table->selectionModel()->currentIndex();
+            if ( index.isValid() ) {
+                ui->m_table->edit(index);
+            }
         }
     });
 
@@ -135,11 +137,11 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
 
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         const auto& channels = gSettings.config().m_dnChannels;
         int i = 0;
         for( const auto& channel : channels )
         {
+            ui->m_table->insertRow(i);
             ui->m_table->setItem( i, 0, new QTableWidgetItem( QString::fromStdString(channel.m_name)) );
             ui->m_table->setItem( i, 1, new QTableWidgetItem( QString::fromStdString(channel.m_hash)) );
             ui->m_table->setItem( i, 2, new QTableWidgetItem( QString::fromStdString(channel.m_driveHash)) );
@@ -147,15 +149,21 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
         }
 
         ui->m_table->resizeColumnsToContents();
-        ui->m_table->setSelectionMode( QAbstractItemView::SingleSelection );
-        ui->m_table->setSelectionBehavior( QAbstractItemView::SelectRows );
+        ui->m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+        ui->m_table->setSelectionBehavior(QAbstractItemView::SelectItems);
     }
 
     connect(ui->m_table->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this](const QItemSelection &selected, auto){
         if (selected.isEmpty()) {
+            ui->m_editBtn->setDisabled(true);
             ui->m_removeBtn->setDisabled(true);
+            ui->m_copyChannelBtn->setDisabled(true);
+            ui->m_copyDriveBtn->setDisabled(true);
         } else {
+            ui->m_editBtn->setEnabled(true);
             ui->m_removeBtn->setEnabled(true);
+            ui->m_copyChannelBtn->setEnabled(true);
+            ui->m_copyDriveBtn->setEnabled(true);
         }
     });
 
@@ -193,6 +201,12 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ManageChannelsDialog::reject);
 
     ui->m_removeBtn->setDisabled(true);
+    ui->m_editBtn->setDisabled(true);
+    ui->m_copyChannelBtn->setDisabled(true);
+    ui->m_copyDriveBtn->setDisabled(true);
+
+    setWindowTitle("Manage channels");
+    setFocus();
 }
 
 ManageChannelsDialog::~ManageChannelsDialog()
@@ -208,14 +222,4 @@ void ManageChannelsDialog::accept()
 void ManageChannelsDialog::reject()
 {
     QDialog::reject();
-}
-
-bool ManageChannelsDialog::verify()
-{
-//    if ( verifyDriveName() && verifyLocalDriveFolder() && verifyKey() )
-//    {
-//        ui->m_errorText->setText( QString::fromStdString("") );
-//        return true;
-//    }
-    return false;
 }

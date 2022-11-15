@@ -13,6 +13,7 @@ class CloseDriveDialog : public QMessageBox
 public:
     explicit CloseDriveDialog(OnChainClient* onChainClient,
                               const QString& driveId,
+                              const QString& alias,
                               QWidget *parent = nullptr);
 
     ~CloseDriveDialog() = default;
