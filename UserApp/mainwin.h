@@ -63,7 +63,7 @@ private:
     void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
     void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId, const std::string& fileStructureCdi);
     void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId);
-
+    void loadBalance();
     void onFsTreeHashReceived( ChannelInfo& channel, const std::array<uint8_t,32>& fsTreeHash );
 
     void setDownloadPath( );

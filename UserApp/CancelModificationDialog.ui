@@ -54,7 +54,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Drive (*)</string>
+        <string>Drive*</string>
        </property>
       </widget>
      </item>
@@ -80,7 +80,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Modification key (*)</string>
+        <string>Modification key*</string>
        </property>
       </widget>
      </item>

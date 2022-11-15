@@ -47,7 +47,7 @@ class OnChainClient : public QObject
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
 
     signals:
-        void initializedSuccessfully();
+        void initializedSuccessfully(const QString& networkName);
         void initializedFailed(const QString& error);
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);

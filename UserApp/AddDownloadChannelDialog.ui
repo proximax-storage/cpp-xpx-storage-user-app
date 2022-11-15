@@ -42,8 +42,17 @@
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
-          <string>Drive (*)</string>
+          <string>Drive*</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -90,8 +99,17 @@
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="keys">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Keys</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -114,7 +132,7 @@
        <item row="4" column="0">
         <widget class="QLabel" name="prepaidAmount">
          <property name="text">
-          <string>Prepaid (*)</string>
+          <string>Prepaid*</string>
          </property>
         </widget>
        </item>
@@ -137,7 +155,10 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Name (*)</string>
+          <string>Name*</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>

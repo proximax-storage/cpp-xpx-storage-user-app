@@ -12,7 +12,8 @@
     <message>
         <location filename="AddDownloadChannelDialog.ui" line="46"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="138"/>
-        <source>Drive (*)</source>
+        <source>Drive*</source>
+        <oldsource>Drive (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24,13 +25,15 @@
     <message>
         <location filename="AddDownloadChannelDialog.ui" line="117"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="141"/>
-        <source>Prepaid (*)</source>
+        <source>Prepaid*</source>
+        <oldsource>Prepaid (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="AddDownloadChannelDialog.ui" line="140"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="142"/>
-        <source>Name (*)</source>
+        <source>Name*</source>
+        <oldsource>Name (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -73,25 +76,29 @@
     <message>
         <location filename="AddDriveDialog.ui" line="60"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="134"/>
-        <source>Replicator number (*):</source>
+        <source>Replicator number*</source>
+        <oldsource>Replicator number (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="AddDriveDialog.ui" line="70"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="135"/>
-        <source>Max drive size (* MB)</source>
+        <source>Max drive size* (MB)</source>
+        <oldsource>Max drive size (* MB)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="AddDriveDialog.ui" line="80"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="136"/>
-        <source>Name (*):</source>
+        <source>Name*</source>
+        <oldsource>Name (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="AddDriveDialog.ui" line="166"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="139"/>
-        <source>Local drive folder (*):</source>
+        <source>Local drive folder*</source>
+        <oldsource>Local drive folder (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -143,13 +150,15 @@
     <message>
         <location filename="CancelModificationDialog.ui" line="57"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="109"/>
-        <source>Drive (*)</source>
+        <source>Drive*</source>
+        <oldsource>Drive (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="CancelModificationDialog.ui" line="83"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="111"/>
-        <source>Modification key (*)</source>
+        <source>Modification key*</source>
+        <oldsource>Modification key (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -201,14 +210,15 @@
     <message>
         <location filename="DownloadPaymentDialog.ui" line="22"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="100"/>
-        <source>Channel (*)</source>
-        <oldsource>Channel key (required)</oldsource>
+        <source>Channel*</source>
+        <oldsource>Channel (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="DownloadPaymentDialog.ui" line="48"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="102"/>
-        <source>Amount (*)</source>
+        <source>Amount*</source>
+        <oldsource>Amount (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -234,171 +244,183 @@
     <name>MainWin</name>
     <message>
         <location filename="mainwin.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="451"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="474"/>
         <source>Sirius Drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="140"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="466"/>
+        <location filename="mainwin.ui" line="45"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="475"/>
+        <source>Network: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwin.ui" line="69"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="476"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwin.ui" line="130"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="478"/>
+        <source>10024</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwin.ui" line="154"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="479"/>
+        <source>XPX</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwin.ui" line="193"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="491"/>
         <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="202"/>
-        <location filename="mainwin.ui" line="416"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="457"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="467"/>
+        <location filename="mainwin.ui" line="255"/>
+        <location filename="mainwin.ui" line="483"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="482"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="492"/>
         <source>+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="240"/>
-        <location filename="mainwin.ui" line="454"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="459"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="469"/>
+        <location filename="mainwin.ui" line="293"/>
+        <location filename="mainwin.ui" line="521"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="484"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="494"/>
         <source>Manage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="352"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="464"/>
+        <location filename="mainwin.ui" line="412"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="489"/>
         <source>Downloads:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="297"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="462"/>
+        <location filename="mainwin.ui" line="357"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="487"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="40"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="452"/>
-        <source>Network</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwin.ui" line="169"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="456"/>
+        <location filename="mainwin.ui" line="222"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="481"/>
         <source>Channels:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="221"/>
-        <location filename="mainwin.ui" line="435"/>
-        <location filename="mainwin.ui" line="618"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="458"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="468"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="479"/>
+        <location filename="mainwin.ui" line="274"/>
+        <location filename="mainwin.ui" line="502"/>
+        <location filename="mainwin.ui" line="699"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="483"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="493"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="504"/>
         <source>-</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="253"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="460"/>
+        <location filename="mainwin.ui" line="306"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="485"/>
         <source>Top-up channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="281"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="461"/>
+        <location filename="mainwin.ui" line="334"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="486"/>
         <source>Path:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="324"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="463"/>
+        <location filename="mainwin.ui" line="384"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="488"/>
         <source>&gt;&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="374"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="465"/>
+        <location filename="mainwin.ui" line="441"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="490"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="384"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="476"/>
+        <location filename="mainwin.ui" line="451"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="501"/>
         <source>Drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="473"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="470"/>
+        <location filename="mainwin.ui" line="540"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="495"/>
         <source>Top-up drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="487"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="471"/>
+        <location filename="mainwin.ui" line="561"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="496"/>
         <source>Open local folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="494"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="472"/>
+        <location filename="mainwin.ui" line="568"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="497"/>
         <source>Update local drive with remote</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="519"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="473"/>
+        <location filename="mainwin.ui" line="593"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="498"/>
         <source>Calculate diff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="531"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="474"/>
+        <location filename="mainwin.ui" line="612"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="499"/>
         <source>Apply changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="538"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="475"/>
+        <location filename="mainwin.ui" line="619"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="500"/>
         <source>Cancel modification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="550"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="482"/>
+        <location filename="mainwin.ui" line="631"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="507"/>
         <source>My Replicator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="575"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="477"/>
+        <location filename="mainwin.ui" line="656"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="502"/>
         <source>Drives:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="647"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="480"/>
+        <location filename="mainwin.ui" line="728"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="505"/>
         <source>Contributed 1024 GB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="672"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="481"/>
+        <location filename="mainwin.ui" line="753"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="506"/>
         <source>Used: 1024 GB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="599"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="478"/>
+        <location filename="mainwin.ui" line="680"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="503"/>
         <source>Onboard Replicator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwin.ui" line="101"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="454"/>
-        <source>10024 XPX</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwin.ui" line="77"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="453"/>
+        <location filename="mainwin.ui" line="106"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_mainwin.h" line="477"/>
         <source>Balance:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -511,14 +533,15 @@
     <message>
         <location filename="PrivKeyDialog.ui" line="22"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="117"/>
-        <source>Private key (*):</source>
-        <oldsource>Private Key:</oldsource>
+        <source>Private key*</source>
+        <oldsource>Private key (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="PrivKeyDialog.ui" line="48"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="118"/>
-        <source>Account name (*):</source>
+        <source>Account name*</source>
+        <oldsource>Account name (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -585,8 +608,8 @@
     <message>
         <location filename="SettingsDialog.ui" line="22"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="208"/>
-        <source>Account name (*):</source>
-        <oldsource>Account Name:</oldsource>
+        <source>Account name*</source>
+        <oldsource>Account name (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -598,15 +621,15 @@
     <message>
         <location filename="SettingsDialog.ui" line="49"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="210"/>
-        <source>Download folder (*):</source>
-        <oldsource>Download Folder:</oldsource>
+        <source>Download folder*</source>
+        <oldsource>Download folder (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="59"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="211"/>
-        <source>Replicator Booststrap Address (*):</source>
-        <oldsource>Replicator Booststrap Address:</oldsource>
+        <source>Replicator Booststrap Address*</source>
+        <oldsource>Replicator Booststrap Address (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -637,13 +660,15 @@
     <message>
         <location filename="SettingsDialog.ui" line="251"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="219"/>
-        <source>REST Server Address (*):</source>
+        <source>REST Server Address*</source>
+        <oldsource>REST Server Address (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="277"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="220"/>
-        <source>Local UDP Port (*):</source>
+        <source>Local UDP Port*</source>
+        <oldsource>Local UDP Port (*):</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -682,13 +707,15 @@
     <message>
         <location filename="StoragePaymentDialog.ui" line="38"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="100"/>
-        <source>Amount (*)</source>
+        <source>Amount*</source>
+        <oldsource>Amount (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="StoragePaymentDialog.ui" line="45"/>
         <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="101"/>
-        <source>Drive (*)</source>
+        <source>Drive*</source>
+        <oldsource>Drive (*)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -23,21 +23,50 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLabel" name="m_networkName">
+         <widget class="QLabel" name="m_networkLabel">
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>30</height>
+            <height>40</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>30</height>
+            <height>40</height>
            </size>
           </property>
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
           <property name="text">
-           <string>Network</string>
+           <string>Network: </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="m_networkName">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Name</string>
           </property>
          </widget>
         </item>
@@ -58,19 +87,19 @@
          <widget class="QLabel" name="m_balance">
           <property name="minimumSize">
            <size>
-            <width>90</width>
-            <height>30</height>
+            <width>65</width>
+            <height>40</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>90</width>
-            <height>30</height>
+            <width>70</width>
+            <height>40</height>
            </size>
           </property>
           <property name="font">
            <font>
-            <pointsize>16</pointsize>
+            <pointsize>11</pointsize>
            </font>
           </property>
           <property name="text">
@@ -83,22 +112,46 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>30</height>
+            <height>40</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>30</height>
+            <height>40</height>
            </size>
           </property>
           <property name="font">
            <font>
-            <pointsize>16</pointsize>
+            <pointsize>11</pointsize>
            </font>
           </property>
           <property name="text">
-           <string>10024 XPX</string>
+           <string>10024</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>XPX</string>
           </property>
          </widget>
         </item>
@@ -133,7 +186,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -283,7 +336,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QTableView" name="m_fsTreeTableView"/>
+           <widget class="QTableView" name="m_fsTreeTableView">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="m_refresh">
@@ -354,7 +414,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QTableView" name="m_downloadsTableView"/>
+           <widget class="QTableView" name="m_downloadsTableView">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="m_removeDownloadBtn">
@@ -477,7 +544,14 @@
            </layout>
           </item>
           <item>
-           <widget class="QTreeView" name="m_driveTreeView"/>
+           <widget class="QTreeView" name="m_driveTreeView">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -521,7 +595,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QTableView" name="m_diffTableView"/>
+           <widget class="QTableView" name="m_diffTableView">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_8">

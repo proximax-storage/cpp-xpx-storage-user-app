@@ -239,7 +239,7 @@ void OnChainClient::init(const std::string& address,
             config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Zero;
         }
 
-        mpBlockchainEngine->getBlockByHeight(1, [this, config, privateKey](auto block, auto isSuccess, auto message, auto code) {
+        mpBlockchainEngine->getBlockByHeight(1, [this, config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                 emit initializedFailed(message.c_str());
@@ -250,7 +250,7 @@ void OnChainClient::init(const std::string& address,
             initAccount(privateKey);
             mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
             initConnects();
-            emit initializedSuccessfully();
+            emit initializedSuccessfully(info.name.c_str());
         });
     });
 }

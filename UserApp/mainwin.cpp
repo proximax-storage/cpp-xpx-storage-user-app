@@ -241,8 +241,10 @@ void MainWin::init()
 
         connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges);
 
-        connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](){
+        connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName){
             qDebug() << "initializedSuccessfully";
+            loadBalance();
+            ui->m_networkName->setText(networkName);
             m_onChainClient->loadDrives();
 
             lockMainButtons(false);
@@ -292,10 +294,23 @@ MainWin::~MainWin()
 
 void MainWin::setupIcons() {
     QIcon settingsButtonIcon("./resources/icons/settings.png");
-    ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
+    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+    ui->m_settingsButton->setText("");
     ui->m_settingsButton->setIcon(settingsButtonIcon);
-    ui->m_settingsButton->setFixedWidth(40);
-    ui->m_settingsButton->setFixedHeight(40);
+    ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
+    ui->m_settingsButton->setIconSize(QSize(18, 18));
+
+    QPixmap networkIcon("./resources/icons/network.png");
+    ui->m_networkLabel->setPixmap(networkIcon);
+    ui->m_networkLabel->setStyleSheet("padding: 5px 5px 5px 5px;");
+    ui->m_networkLabel->setAlignment(Qt::AlignLeft);
+    ui->m_networkName->setAlignment(Qt::AlignLeft);
+    ui->m_networkName->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->m_balance->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->m_balanceValue->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->label_5->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+
+    ui->m_balance->setText("Balance:");
 }
 
 void MainWin::setupDownloadsTab()
@@ -839,6 +854,27 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+}
+
+void MainWin::loadBalance() {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto publicKey = gSettings.config().m_publicKeyStr;
+    lock.unlock();
+    m_onChainClient->getBlockchainEngine()->getAccountInfo(publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+            return;
+        }
+
+        const xpx_chain_sdk::MosaicName PRX_XPX { 992621222383397347, { "prx.xpx" } };
+        auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [PRX_XPX]( auto mosaic )
+        {
+            return mosaic.id == PRX_XPX.mosaicId;
+        });
+
+        const uint64_t balance = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
+        ui->m_balanceValue->setText(QString::number(balance));
+    });
 }
 
 void MainWin::onCurrentChannelChanged( int index )
