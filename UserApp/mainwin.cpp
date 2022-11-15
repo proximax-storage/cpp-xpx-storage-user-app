@@ -287,7 +287,6 @@ void MainWin::init()
 
 MainWin::~MainWin()
 {
-    delete m_onChainClient;
     delete ui;
 }
 
