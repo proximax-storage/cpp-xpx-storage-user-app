@@ -251,7 +251,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             else
             {
                 // Remove file
-                fs::path fsChildPath = fsPath.empty() ? fs::path(fsFolder.name()) : fsPath / getFile(fsChild).name();
+                fs::path fsChildPath = fsPath.empty() ? fs::path(getFile(fsChild).name()) : fsPath / getFile(fsChild).name();
                 qDebug() << LOG_SOURCE << "! fsChildPath: " << fsChildPath.string().c_str();
 
                 // save removed file into 'removedItems'

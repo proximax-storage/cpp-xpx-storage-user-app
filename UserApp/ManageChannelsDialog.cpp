@@ -86,6 +86,7 @@ ManageChannelsDialog::ManageChannelsDialog( QWidget *parent ) :
             ui->m_table->insertRow(i);
             ui->m_table->setItem( i,0, new QTableWidgetItem( QString::fromStdString(channel.m_name)) );
             ui->m_table->setItem( i,1, new QTableWidgetItem( QString::fromStdString(channel.m_driveHash)) );
+            i++;
         }
 
         ui->m_table->resizeColumnsToContents();

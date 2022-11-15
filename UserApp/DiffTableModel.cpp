@@ -91,10 +91,13 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                     switch( action.m_actionId )
                     {
                         case sirius::drive::action_list_id::upload:
+                            qDebug() << "upload diff[" << index.row() << "]: " << QString::fromStdString( action.m_param2 );
                             return QString::fromStdString( action.m_param2 );
                         case sirius::drive::action_list_id::remove:
+                            qDebug() << "remove diff[" << index.row() << "]: " << QString::fromStdString( action.m_param1 );
                             return QString::fromStdString( action.m_param1 );
                         default:
+                            qDebug() << "remove diff[" << index.row() << "]: ???? " << int(action.m_actionId);
                             return QString::fromStdString( "???" );
                     }
                     return QString::fromStdString( "???" );

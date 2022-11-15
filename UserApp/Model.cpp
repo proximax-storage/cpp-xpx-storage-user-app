@@ -324,7 +324,7 @@ void Model::calcDiff()
     std::array<uint8_t,32> driveKey;
     sirius::utils::ParseHexStringIntoContainer( drive->m_driveKey.c_str(), 64, driveKey );
 
-
+    qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->m_localDriveFolder;
     auto localDrive = std::make_shared<LocalDriveItem>();
     Diff::calcLocalDriveInfoR( *localDrive, drive->m_localDriveFolder, true, &driveKey );
 

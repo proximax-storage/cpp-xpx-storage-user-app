@@ -255,6 +255,16 @@ bool AddDriveDialog::verifyKey()
         return false;
     }
 
+    if ( ! m_editDriveInfo )
+    {
+        if ( Model::findDrive( key ) != nullptr )
+        {
+            ui->m_errorText->setText( QString::fromStdString("drive with same key already exists") );
+            return false;
+        }
+    }
+
+
     return true;
 }
 

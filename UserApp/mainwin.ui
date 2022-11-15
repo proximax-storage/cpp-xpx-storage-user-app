@@ -133,7 +133,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -394,21 +394,6 @@
               <height>30</height>
              </size>
             </property>
-            <item>
-             <property name="text">
-              <string>Photos</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Movies</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Jazz_songs</string>
-             </property>
-            </item>
            </widget>
           </item>
           <item>

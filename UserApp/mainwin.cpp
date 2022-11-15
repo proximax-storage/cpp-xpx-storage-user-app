@@ -90,6 +90,7 @@ void MainWin::init()
 //         msgBox.setStandardButtons( QMessageBox::Ok );
 //         msgBox.exec();
 
+        qWarning() << LOG_SOURCE << "Address already in use: udoPort: " << gSettings.m_udpPort;
          exit(1);
     });
 
@@ -282,6 +283,7 @@ void MainWin::init()
 
 MainWin::~MainWin()
 {
+    delete m_onChainClient;
     delete ui;
 }
 
@@ -847,8 +849,6 @@ void MainWin::onCurrentChannelChanged( int index )
 
     if ( !ALEX_LOCAL_TEST )
     {
-        m_fsTreeTableModel->setFsTree( {}, {} );
-
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channel = Model::currentChannelInfoPtr();
@@ -856,12 +856,17 @@ void MainWin::onCurrentChannelChanged( int index )
         if ( channel == nullptr )
         {
             qWarning() << LOG_SOURCE << "bad channel";
+            m_fsTreeTableModel->setFsTree( {}, {} );
             return;
         }
 
         if ( ! channel->m_fsTreeHash )
         {
             downloadLatestFsTree( channel->m_driveHash );
+        }
+        else
+        {
+            m_fsTreeTableModel->setFsTree( channel->m_fsTree, {} );
         }
     }
 }
@@ -963,7 +968,17 @@ void MainWin::setupDrivesTab()
         Model::stestInitDrives();
     }
 
-    updateDrivesCBox();
+    if ( gSettings.config().m_currentDriveIndex >= 0 )
+    {
+        Model::setCurrentDriveIndex( gSettings.config().m_currentDriveIndex );
+        if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
+        {
+            drivePtr->m_calclDiffIsWaitingFsTree = true;
+            downloadLatestFsTree( drivePtr->m_driveKey );
+        }
+    }
+
+//    updateDrivesCBox();
 
     // request FsTree info-hash
 //    if ( ALEX_LOCAL_TEST )
@@ -1008,10 +1023,10 @@ void MainWin::setupDrivesTab()
     m_diffTableModel = new DiffTableModel();
 
     ui->m_diffTableView->setModel( m_diffTableModel );
-    ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->hide();
-    ui->m_diffTableView->horizontalHeader()->resizeSection(0, 300);
-    ui->m_diffTableView->horizontalHeader()->resizeSection(1, 300);
+//    ui->m_diffTableView->horizontalHeader()->resizeSection(0, 250);
+//    ui->m_diffTableView->horizontalHeader()->resizeSection(1, 300);
+    ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
 }
@@ -1210,12 +1225,8 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
             if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveHash )
             {
-                m_fsTreeTableModel->updateRows();
-            }
-
-            if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveHash )
-            {
-                this->m_fsTreeTableModel->updateRows();
+                qDebug() << LOG_SOURCE << "@ on FsTree received: " << driveHash.c_str();
+                m_fsTreeTableModel->setFsTree( fsTree, {} );
             }
 
             if ( drivePtr != nullptr && drivePtr->m_calclDiffIsWaitingFsTree )
@@ -1234,4 +1245,5 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     m_driveTreeModel->updateModel();
     ui->m_driveTreeView->expandAll();
     m_diffTableModel->updateModel();
+    //ui->m_diffTableView->resizeColumnsToContents();
 }
