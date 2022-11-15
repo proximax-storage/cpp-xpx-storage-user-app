@@ -5,113 +5,129 @@
 
 #include <QIntValidator>
 #include <QFileDialog>
-
-#include <random>
+#include <QRegularExpression>
+#include <QToolTip>
 
 AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
-                                QWidget *parent, DriveInfo* editDrivePtr ) :
+                                QWidget *parent ) :
     QDialog( parent ),
     ui( new Ui::AddDriveDialog() ),
     mp_onChainClient(onChainClient)
 {
-    if ( editDrivePtr != nullptr )
-    {
-        m_editDriveInfo = *editDrivePtr;
-    }
-
     ui->setupUi(this);
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
-
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
     setModal(true);
 
-    ui->m_errorText->setText("");
-
-    connect( ui->m_driveName, &QLineEdit::textChanged, this, [this] ()
+    QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
+    connect(ui->m_driveName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-        verify();
+        if (!nameTemplate.match(text).hasMatch()) {
+            QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint()), tr("Invalid name!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_driveName->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_driveName->setProperty("is_valid", true);
+            validate();
+        }
     });
 
-    connect( ui->m_replicatorNumber, &QLineEdit::textChanged, this, [this] ()
+    QRegularExpression replicatorNumberTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,10})")));
+    connect(ui->m_replicatorNumber, &QLineEdit::textChanged, this, [this, replicatorNumberTemplate] (auto text)
     {
-//        ui->m_errorText->setText("");
+        if (!replicatorNumberTemplate.match(text).hasMatch()) {
+            QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint()), tr("Invalid replicator number amount!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_replicatorNumber->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_replicatorNumber->setProperty("is_valid", true);
+            validate();
+        }
     });
 
-    connect( ui->m_maxDriveSize, &QLineEdit::textChanged, this, [this] ()
+    QRegularExpression driveSizeTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
+    connect(ui->m_maxDriveSize, &QLineEdit::textChanged, this, [this, driveSizeTemplate] (auto text)
     {
-//        ui->m_errorText->setText("");
+        if (!driveSizeTemplate.match(text).hasMatch()) {
+            QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint()), tr("Invalid drive size!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_maxDriveSize->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_maxDriveSize->setProperty("is_valid", true);
+            validate();
+        }
     });
 
-    connect( ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this] ()
-    {
-        verify();
-    });
-
-    connect( ui->m_key, &QLineEdit::textChanged, this, [this] ()
-    {
-        //verify();
+    connect(ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this](auto text){
+        if (text.trimmed().isEmpty()) {
+            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint()), tr("Invalid path!"));
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_localDriveFolder->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_localDriveFolder->setProperty("is_valid", true);
+            validate();
+        }
     });
 
     connect(ui->m_localFolderBtn, &QPushButton::released, this, [this]()
     {
-        const QString path = QFileDialog::getExistingDirectory(this,
-                                                               tr("Choose directory"), "/",
-                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-        if ( ! path.isEmpty() )
-        {
-            ui->m_localDriveFolder->setText( path );
-        }
+        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+#ifdef Q_OS_LINUX
+        options |= QFileDialog::DontUseNativeDialog;
+#endif
+        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+        ui->m_localDriveFolder->setText(path.trimmed());
     });
-
 
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDriveDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveDialog::reject);
 
-    ui->m_replicatorNumber->setValidator( new QIntValidator( 5, 20, this) );
-    ui->m_replicatorNumber->setText( QString::fromStdString( "5" ));
-
-    ui->m_maxDriveSize->setValidator( new QIntValidator( 1, 100*1024*1024, this) );
-    ui->m_maxDriveSize->setText( QString::fromStdString( "100" ));
-
-    if ( editDrivePtr )
-    {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-        const auto& drive = *m_editDriveInfo;
-
-        ui->m_driveName->setText( QString::fromStdString( drive.m_name ));
-        ui->m_replicatorNumber->setText( QString::fromStdString( std::to_string(drive.m_replicatorNumber) ));
-        ui->m_maxDriveSize->setText( QString::fromStdString( std::to_string(drive.m_maxDriveSize) ));
-        ui->m_localDriveFolder->setText( QString::fromStdString( drive.m_localDriveFolder ));
-        ui->m_key->setText( QString::fromStdString( drive.m_driveKey ));
-
-        ui->m_replicatorNumber->setReadOnly(true);
-        ui->m_maxDriveSize->setReadOnly(true);
-        ui->m_key->setReadOnly(true);
+    if (!nameTemplate.match(ui->m_driveName->text()).hasMatch()) {
+        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint()), tr("Invalid name!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_driveName->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->m_driveName->setProperty("is_valid", true);
+        validate();
     }
-    else
-    {
-        {
-            std::random_device   dev;
-            std::seed_seq        seed({dev(), dev(), dev(), dev()});
-            std::mt19937         rng(seed);
 
-            std::array<uint8_t,32> buffer;
+    if (!replicatorNumberTemplate.match(ui->m_replicatorNumber->text()).hasMatch()) {
+        QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint()), tr("Invalid replicator number amount!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_replicatorNumber->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->m_replicatorNumber->setProperty("is_valid", true);
+        validate();
+    }
 
-            std::generate( buffer.begin(), buffer.end(), [&]
-            {
-                return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
-            });
+    if (!driveSizeTemplate.match(ui->m_maxDriveSize->text()).hasMatch()) {
+        QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint()), tr("Invalid drive size!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_maxDriveSize->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->m_maxDriveSize->setProperty("is_valid", true);
+        validate();
+    }
 
-            ui->m_key->setText( QString::fromStdString( sirius::drive::toString( buffer ) ));
-
-        }
+    if (ui->m_localDriveFolder->text().trimmed().isEmpty()) {
+        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint()), tr("Invalid path!"));
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_localDriveFolder->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->m_localDriveFolder->setProperty("is_valid", true);
+        validate();
     }
 
     setWindowTitle("Create Drive");
     setFocus();
-
-    verify();
 }
 
 AddDriveDialog::~AddDriveDialog()
@@ -119,152 +135,43 @@ AddDriveDialog::~AddDriveDialog()
     delete ui;
 }
 
+void AddDriveDialog::validate() {
+    if (ui->m_driveName->property("is_valid").toBool() &&
+        ui->m_replicatorNumber->property("is_valid").toBool() &&
+        ui->m_maxDriveSize->property("is_valid").toBool() &&
+        ui->m_localDriveFolder->property("is_valid").toBool()) {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    } else {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+    }
+}
+
 void AddDriveDialog::accept()
 {
-    if ( verify() )
-    {
-        if ( ! m_editDriveInfo )
-        {
-            // Create drive
+    auto hash = mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
+                                            ui->m_maxDriveSize->text().toULongLong(),
+                                            ui->m_replicatorNumber->text().toULongLong() );
 
-            auto hash = mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
-                                                    ui->m_maxDriveSize->text().toULongLong(),
-                                                    ui->m_replicatorNumber->text().toULongLong() );
+    DriveInfo drive;
 
-            DriveInfo drive;
+    drive.m_name             = ui->m_driveName->text().toStdString();
+    drive.m_driveKey         = hash;
+    drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
+    drive.m_maxDriveSize     = ui->m_maxDriveSize->text().toInt();
+    drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
 
-            drive.m_name             = ui->m_driveName->text().toStdString();
-            drive.m_driveKey         = hash;
-            drive.m_replicatorNumber = ui->m_replicatorNumber->text().toInt();
-            drive.m_maxDriveSize     = ui->m_maxDriveSize->text().toInt();
-            drive.m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    Model::drives().push_back( drive );
+    Model::setCurrentDriveIndex( (int)Model::drives().size()-1 );
+    gSettings.save();
 
-            Model::drives().push_back( drive );
-            Model::setCurrentDriveIndex( (int)Model::drives().size()-1 );
-            gSettings.save();
+    emit updateDrivesCBox();
 
-        }
-        else
-        {
-            // Edit drive info
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-            if ( auto* drivePtr = Model::findDrive( m_editDriveInfo->m_driveKey ); drivePtr != nullptr )
-            {
-                drivePtr->m_name             = ui->m_driveName->text().toStdString();
-                drivePtr->m_localDriveFolder = ui->m_localDriveFolder->text().toStdString();
-                gSettings.save();
-            }
-        }
-
-        emit updateDrivesCBox();
-
-        QDialog::accept();
-    }
+    QDialog::accept();
 }
 
 void AddDriveDialog::reject()
 {
     QDialog::reject();
 }
-
-bool AddDriveDialog::verify()
-{
-    if ( verifyDriveName() && verifyLocalDriveFolder() && verifyKey() )
-    {
-        ui->m_errorText->setText( QString::fromStdString("") );
-        return true;
-    }
-    return false;
-}
-
-bool AddDriveDialog::verifyDriveName()
-{
-    auto driveName = ui->m_driveName->text().toStdString();
-
-    if ( driveName.empty() )
-    {
-        ui->m_errorText->setText( QString::fromStdString("Drive name is not set" ));
-        return false;
-    }
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-    const auto& drives = gSettings.config().m_drives;
-
-    // check drive name
-    auto it = std::find_if( drives.begin(), drives.end(), [driveName,this] (const auto& driveInfo)
-    {
-        if ( m_editDriveInfo )
-        {
-            return (driveInfo.m_name == driveName) && (driveInfo.m_driveKey != m_editDriveInfo->m_driveKey);
-        }
-        return driveInfo.m_name == driveName;
-    });
-
-    if ( it != drives.end() )
-    {
-        ui->m_errorText->setText( QString::fromStdString("Drive with the same name already exists" ));
-        return false;
-    }
-
-    return true;
-}
-
-bool AddDriveDialog::verifyLocalDriveFolder()
-{
-    const auto& localFolderPath = ui->m_localDriveFolder->text().toStdString();
-
-    if ( localFolderPath.empty() )
-    {
-        ui->m_errorText->setText( QString::fromStdString("Local drive folder is not set" ));
-        return false;
-    }
-
-    std::error_code ec;
-    if ( ! fs::exists( localFolderPath, ec ) )
-    {
-        //TODO?
-        ui->m_errorText->setText( QString::fromStdString("Local drive folder not exists" ));
-        return false;
-    }
-
-    if ( ! fs::is_directory( localFolderPath, ec ) )
-    {
-        ui->m_errorText->setText( QString::fromStdString("Invalid path of local drive folder" ));
-        return false;
-    }
-
-    return true;
-}
-
-bool AddDriveDialog::verifyKey()
-{
-    const auto& key = ui->m_key->text().toStdString();
-
-    try
-    {
-        sirius::crypto::KeyPair::FromPrivate(
-            sirius::crypto::PrivateKey::FromString( key ));
-    }
-    catch(...)
-    {
-        ui->m_errorText->setText( QString::fromStdString("Invalid drive key" ));
-        return false;
-    }
-
-    if ( ! m_editDriveInfo )
-    {
-        if ( Model::findDrive( key ) != nullptr )
-        {
-            ui->m_errorText->setText( QString::fromStdString("drive with same key already exists") );
-            return false;
-        }
-    }
-
-
-    return true;
-}
-

@@ -85,10 +85,12 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     connect(ui->m_dnFolderBtn, &QPushButton::released, this, [this]()
     {
-        const QString path = QFileDialog::getExistingDirectory(this,
-                                                               tr("Choose directory"), "/",
-                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-        ui->m_dnFolderField->setText(path.isEmpty() ? gSettingsCopy.config().m_downloadFolder.c_str() : path);
+        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+#ifdef Q_OS_LINUX
+        options |= QFileDialog::DontUseNativeDialog;
+#endif
+        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+        ui->m_dnFolderField->setText(path.trimmed());
     });
 
     connect(ui->m_newAccountBtn, SIGNAL (released()), this, SLOT( onNewAccountBtn() ) );

@@ -27,5 +27,5 @@ private:
 
 private:
     Ui::ManageDrivesDialog* ui;
-    OnChainClient*          m_onChainClient;
+    OnChainClient* m_onChainClient;
 };

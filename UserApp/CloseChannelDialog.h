@@ -13,6 +13,7 @@ class CloseChannelDialog : public QMessageBox
 public:
     explicit CloseChannelDialog(OnChainClient* onChainClient,
                                 const QString& channelId,
+                                const QString& alias,
                                 QWidget *parent = nullptr);
 
     ~CloseChannelDialog() = default;

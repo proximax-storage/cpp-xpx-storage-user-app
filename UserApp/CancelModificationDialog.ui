@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>191</height>
+    <height>216</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,13 +17,32 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="2" column="1">
-      <widget class="QLineEdit" name="m_modificationKey"/>
+      <widget class="QLineEdit" name="m_modificationKey">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="3" column="1">
       <widget class="QPushButton" name="m_selectModification">
        <property name="minimumSize">
         <size>
          <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
          <height>30</height>
         </size>
        </property>
@@ -35,7 +54,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Drive key (required)</string>
+        <string>Drive (*)</string>
        </property>
       </widget>
      </item>
@@ -47,6 +66,12 @@
          <height>30</height>
         </size>
        </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="text">
         <string>Select my drive</string>
        </property>
@@ -55,15 +80,40 @@
      <item row="2" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Modification key (required)</string>
+        <string>Modification key (*)</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="m_driveKey"/>
+      <widget class="QLineEdit" name="m_driveKey">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="4" column="1">
       <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>

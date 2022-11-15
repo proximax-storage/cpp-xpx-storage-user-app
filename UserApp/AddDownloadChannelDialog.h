@@ -21,7 +21,7 @@ class AddDownloadChannelDialog : public QDialog
 
 public:
     explicit AddDownloadChannelDialog(OnChainClient* onChainClient,
-                                      MainWin *parent = nullptr);
+                                      QWidget *parent = nullptr);
     ~AddDownloadChannelDialog();
 
 public:
@@ -35,8 +35,10 @@ signals:
                             const std::vector<std::string> allowedPublicKeys);
 
 private:
+    void validate();
+
+private:
     Ui::AddDownloadChannelDialog*   ui;
-    MainWin*                        m_mainWin;
     OnChainClient*                  mpOnChainClient;
 };
 

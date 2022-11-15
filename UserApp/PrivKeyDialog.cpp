@@ -67,7 +67,7 @@ void PrivKeyDialog::init()
         }
     });
 
-    if (!keyTemplate.match(ui->m_accountName->text()).hasMatch()) {
+    if (!nameTemplate.match(ui->m_accountName->text()).hasMatch()) {
         QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_accountName->setProperty("is_valid", false);

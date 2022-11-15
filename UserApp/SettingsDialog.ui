@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
-    <height>414</height>
+    <width>699</width>
+    <height>477</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <item row="9" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Account Name:</string>
+        <string>Account name (*):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -46,7 +46,7 @@
      <item row="11" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Download Folder:</string>
+        <string>Download folder (*):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -56,7 +56,7 @@
      <item row="4" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Replicator Booststrap Address:</string>
+        <string>Replicator Booststrap Address (*):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -65,16 +65,53 @@
      </item>
      <item row="11" column="1">
       <widget class="QLineEdit" name="m_dnFolderField">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="9" column="1">
-      <widget class="QComboBox" name="m_accountCbox"/>
+      <widget class="QComboBox" name="m_accountCbox">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="4" column="1">
       <widget class="QLineEdit" name="m_replicatorBootAddrField">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -82,6 +119,18 @@
      </item>
      <item row="13" column="1">
       <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -110,6 +159,18 @@
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QPushButton" name="m_newAccountBtn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="text">
           <string>New Account</string>
          </property>
@@ -117,6 +178,18 @@
        </item>
        <item>
         <widget class="QPushButton" name="m_copyKeyBtn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="text">
           <string>Copy Account Key</string>
          </property>
@@ -136,6 +209,18 @@
      </item>
      <item row="12" column="1">
       <widget class="QPushButton" name="m_dnFolderBtn">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="text">
         <string>Choose directory</string>
        </property>
@@ -143,6 +228,18 @@
      </item>
      <item row="5" column="1">
       <widget class="QLineEdit" name="m_portField">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -151,7 +248,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>REST Server Address:</string>
+        <string>REST Server Address (*):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -159,12 +256,25 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLineEdit" name="m_restBootAddrField"/>
+      <widget class="QLineEdit" name="m_restBootAddrField">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Local UDP Port:</string>
+        <string>Local UDP Port (*):</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

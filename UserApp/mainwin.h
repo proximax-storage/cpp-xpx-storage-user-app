@@ -73,6 +73,8 @@ private:
     void downloadLatestFsTree( const std::string& driveKey );
     void continueCalcDiff( DriveInfo& drive );
 
+    void lockMainButtons(bool state);
+
 private slots:
     void updateChannelsCBox();
     void updateDrivesCBox();

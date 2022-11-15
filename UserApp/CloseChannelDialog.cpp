@@ -2,13 +2,14 @@
 
 CloseChannelDialog::CloseChannelDialog(OnChainClient* onChainClient,
                                        const QString& channelId,
+                                       const QString& alias,
                                        QWidget *parent)
     : QMessageBox(parent)
     , mChannelId(channelId)
     , mpOnChainClient(onChainClient)
 {
     setWindowTitle("Confirmation");
-    setText("Are you confirm to remove channel?");
+    setText("Are you confirm to remove " + alias +  " channel?");
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     setButtonText(QMessageBox::Ok, "Confirm");

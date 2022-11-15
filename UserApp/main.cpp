@@ -13,6 +13,13 @@ restart_label:
     QApplication::setWindowIcon(QIcon("./resources/icons/icon.png"));
     qInstallMessageHandler(customMessageHandler);
 
+    QFile styleFile( "./resources/styles/ubuntu.qss" );
+    if ( styleFile.open( QFile::ReadOnly ) ) {
+         a.setStyleSheet( styleFile.readAll() );
+    } else {
+        qWarning () << LOG_SOURCE << "default style not loaded";
+    }
+
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {

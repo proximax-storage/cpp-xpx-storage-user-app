@@ -13,25 +13,20 @@ public:
 
 public:
     explicit AddDriveDialog( OnChainClient* onChainClient,
-                             QWidget *parent, DriveInfo* editDrivePtr = nullptr );
+                             QWidget *parent = nullptr);
     ~AddDriveDialog() override;
 
 signals:
     void updateDrivesCBox();
 
-protected:
+public:
     void accept() override;
     void reject() override;
 
 private:
-    bool verifyDriveName();
-    bool verifyLocalDriveFolder();
-    bool verifyKey();
-    bool verify();
+    void validate();
 
 private:
     Ui::AddDriveDialog* ui;
-
-    std::optional<DriveInfo> m_editDriveInfo;
-    OnChainClient*           mp_onChainClient;
+    OnChainClient* mp_onChainClient;
 };

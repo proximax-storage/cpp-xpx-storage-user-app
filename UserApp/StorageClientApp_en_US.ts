@@ -5,38 +5,60 @@
     <name>AddDownloadChannelDialog</name>
     <message>
         <location filename="AddDownloadChannelDialog.ui" line="17"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="132"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="137"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="30"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="133"/>
-        <source>Name (required)</source>
+        <location filename="AddDownloadChannelDialog.ui" line="46"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="138"/>
+        <source>Drive (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="40"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="134"/>
-        <source>Drive key(required)</source>
+        <location filename="AddDownloadChannelDialog.ui" line="94"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="140"/>
+        <source>Keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="50"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="135"/>
-        <source>Keys (optional)</source>
+        <location filename="AddDownloadChannelDialog.ui" line="117"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="141"/>
+        <source>Prepaid (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="60"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="136"/>
-        <source>Prepaid (required, in mb)</source>
+        <location filename="AddDownloadChannelDialog.ui" line="140"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="142"/>
+        <source>Name (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDownloadChannelDialog.ui" line="91"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="137"/>
+        <location filename="AddDownloadChannelDialog.ui" line="87"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDownloadChannelDialog.h" line="139"/>
         <source>Select my drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDownloadChannelDialog.cpp" line="23"/>
+        <location filename="AddDownloadChannelDialog.cpp" line="34"/>
+        <source>Invalid name!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDownloadChannelDialog.cpp" line="47"/>
+        <location filename="AddDownloadChannelDialog.cpp" line="60"/>
+        <source>Invalid key!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDownloadChannelDialog.cpp" line="96"/>
+        <source>Invalid amount!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDownloadChannelDialog.cpp" line="107"/>
+        <source>Invalid units amount!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -44,51 +66,63 @@
     <name>AddDriveDialog</name>
     <message>
         <location filename="AddDriveDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="144"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="131"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="22"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="145"/>
-        <source>Name:</source>
+        <location filename="AddDriveDialog.ui" line="60"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="134"/>
+        <source>Replicator number (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="46"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="148"/>
-        <source>Local drive folder:</source>
+        <location filename="AddDriveDialog.ui" line="70"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="135"/>
+        <source>Max drive size (* MB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="63"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="150"/>
-        <source>Replicator number:</source>
+        <location filename="AddDriveDialog.ui" line="80"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="136"/>
+        <source>Name (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="73"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="151"/>
-        <source>Drive key:</source>
+        <location filename="AddDriveDialog.ui" line="166"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="139"/>
+        <source>Local drive folder (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="86"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="152"/>
-        <source>Max drive size (MB)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="AddDriveDialog.ui" line="109"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="154"/>
-        <location filename="AddDriveDialog.cpp" line="57"/>
+        <location filename="AddDriveDialog.ui" line="34"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="132"/>
+        <location filename="AddDriveDialog.cpp" line="81"/>
         <source>Choose directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="AddDriveDialog.ui" line="134"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_AddDriveDialog.h" line="155"/>
-        <source>TextLabel</source>
+        <location filename="AddDriveDialog.cpp" line="25"/>
+        <location filename="AddDriveDialog.cpp" line="90"/>
+        <source>Invalid name!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDriveDialog.cpp" line="39"/>
+        <location filename="AddDriveDialog.cpp" line="100"/>
+        <source>Invalid replicator number amount!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDriveDialog.cpp" line="53"/>
+        <location filename="AddDriveDialog.cpp" line="110"/>
+        <source>Invalid drive size!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="AddDriveDialog.cpp" line="65"/>
+        <location filename="AddDriveDialog.cpp" line="120"/>
+        <source>Invalid path!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -96,32 +130,32 @@
     <name>CancelModificationDialog</name>
     <message>
         <location filename="CancelModificationDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="99"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="107"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="CancelModificationDialog.ui" line="31"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="100"/>
+        <location filename="CancelModificationDialog.ui" line="50"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="108"/>
         <source>Select my modification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="CancelModificationDialog.ui" line="38"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="101"/>
-        <source>Drive key (required)</source>
+        <location filename="CancelModificationDialog.ui" line="57"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="109"/>
+        <source>Drive (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="CancelModificationDialog.ui" line="51"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="102"/>
+        <location filename="CancelModificationDialog.ui" line="83"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="111"/>
+        <source>Modification key (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="CancelModificationDialog.ui" line="76"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="110"/>
         <source>Select my drive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="CancelModificationDialog.ui" line="58"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_CancelModificationDialog.h" line="103"/>
-        <source>Modification key (required)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -160,26 +194,26 @@
     <name>DownloadPaymentDialog</name>
     <message>
         <location filename="DownloadPaymentDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="92"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="99"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="DownloadPaymentDialog.ui" line="22"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="93"/>
-        <source>Channel key (required)</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="100"/>
+        <source>Channel (*)</source>
+        <oldsource>Channel key (required)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="DownloadPaymentDialog.ui" line="42"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="95"/>
-        <source>Prepaid amount (required)</source>
-        <oldsource>Prepaid size (required)</oldsource>
+        <location filename="DownloadPaymentDialog.ui" line="48"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="102"/>
+        <source>Amount (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="DownloadPaymentDialog.ui" line="35"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="94"/>
+        <location filename="DownloadPaymentDialog.ui" line="41"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_DownloadPaymentDialog.h" line="101"/>
         <source>Select my channel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -391,38 +425,45 @@
     <name>ManageChannelsDialog</name>
     <message>
         <location filename="ManageChannelsDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="78"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="126"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageChannelsDialog.ui" line="50"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="79"/>
-        <source>TextLabel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="ManageChannelsDialog.ui" line="66"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="80"/>
+        <location filename="ManageChannelsDialog.ui" line="39"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="127"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageChannelsDialog.ui" line="79"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="81"/>
+        <location filename="ManageChannelsDialog.ui" line="58"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="128"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageChannelsDialog.ui" line="92"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="82"/>
-        <source>Edit</source>
+        <location filename="ManageChannelsDialog.ui" line="77"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="129"/>
+        <source>Edit name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="ManageChannelsDialog.ui" line="96"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="130"/>
+        <source>Top-up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="ManageChannelsDialog.ui" line="115"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="83"/>
-        <source>Copy Hash</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="131"/>
+        <source>Copy channel key</source>
+        <oldsource>Copy Hash</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="ManageChannelsDialog.ui" line="134"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageChannelsDialog.h" line="132"/>
+        <source>Copy drive key</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -430,38 +471,50 @@
     <name>ManageDrivesDialog</name>
     <message>
         <location filename="ManageDrivesDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="78"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="126"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageDrivesDialog.ui" line="50"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="79"/>
-        <source>TextLabel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="ManageDrivesDialog.ui" line="66"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="80"/>
+        <location filename="ManageDrivesDialog.ui" line="39"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="127"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageDrivesDialog.ui" line="79"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="81"/>
+        <location filename="ManageDrivesDialog.ui" line="58"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="128"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="ManageDrivesDialog.ui" line="92"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="82"/>
-        <source>Edit</source>
+        <location filename="ManageDrivesDialog.ui" line="77"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="129"/>
+        <source>Edit name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="ManageDrivesDialog.ui" line="96"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="130"/>
+        <source>Edit local path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="ManageDrivesDialog.ui" line="115"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="83"/>
-        <source>Copy Hash</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="131"/>
+        <source>Top-up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="ManageDrivesDialog.ui" line="134"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_ManageDrivesDialog.h" line="132"/>
+        <source>Copy drive key</source>
+        <oldsource>Copy Hash</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="ManageDrivesDialog.cpp" line="59"/>
+        <source>Choose directory</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -469,31 +522,32 @@
     <name>PrivKeyDialog</name>
     <message>
         <location filename="PrivKeyDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="106"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="116"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="PrivKeyDialog.ui" line="22"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="107"/>
-        <source>Private Key:</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="117"/>
+        <source>Private key (*):</source>
+        <oldsource>Private Key:</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PrivKeyDialog.ui" line="35"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="108"/>
-        <source>Account Name:</source>
+        <location filename="PrivKeyDialog.ui" line="48"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="118"/>
+        <source>Account name (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PrivKeyDialog.ui" line="47"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="109"/>
+        <location filename="PrivKeyDialog.ui" line="72"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="119"/>
         <source>Generate Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="PrivKeyDialog.ui" line="54"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="110"/>
+        <location filename="PrivKeyDialog.ui" line="91"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_PrivKeyDialog.h" line="120"/>
         <source>Load From File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -533,7 +587,7 @@
     <name>SelectEntityDialog</name>
     <message>
         <location filename="SelectEntityDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SelectEntityDialog.h" line="59"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SelectEntityDialog.h" line="61"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -542,77 +596,80 @@
     <name>SettingsDialog</name>
     <message>
         <location filename="SettingsDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="189"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="207"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="22"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="190"/>
-        <source>Account Name:</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="208"/>
+        <source>Account name (*):</source>
+        <oldsource>Account Name:</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="35"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="191"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="209"/>
         <source>Connectivity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="49"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="192"/>
-        <source>Download Folder:</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="210"/>
+        <source>Download folder (*):</source>
+        <oldsource>Download Folder:</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.ui" line="59"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="193"/>
-        <source>Replicator Booststrap Address:</source>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="211"/>
+        <source>Replicator Booststrap Address (*):</source>
+        <oldsource>Replicator Booststrap Address:</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="114"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="196"/>
+        <location filename="SettingsDialog.ui" line="175"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="214"/>
         <source>New Account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="121"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="197"/>
+        <location filename="SettingsDialog.ui" line="194"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="215"/>
         <source>Copy Account Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="133"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="198"/>
+        <location filename="SettingsDialog.ui" line="206"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="216"/>
         <source>Account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="140"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="199"/>
-        <location filename="SettingsDialog.cpp" line="89"/>
+        <location filename="SettingsDialog.ui" line="225"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="217"/>
+        <location filename="SettingsDialog.cpp" line="92"/>
         <source>Choose directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="154"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="201"/>
-        <source>REST Server Address:</source>
+        <location filename="SettingsDialog.ui" line="251"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="219"/>
+        <source>REST Server Address (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.ui" line="167"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="202"/>
-        <source>Local UDP Port:</source>
+        <location filename="SettingsDialog.ui" line="277"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_SettingsDialog.h" line="220"/>
+        <source>Local UDP Port (*):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="SettingsDialog.cpp" line="35"/>
         <location filename="SettingsDialog.cpp" line="48"/>
-        <location filename="SettingsDialog.cpp" line="132"/>
-        <location filename="SettingsDialog.cpp" line="143"/>
-        <location filename="SettingsDialog.cpp" line="154"/>
+        <location filename="SettingsDialog.cpp" line="134"/>
+        <location filename="SettingsDialog.cpp" line="145"/>
+        <location filename="SettingsDialog.cpp" line="156"/>
         <source>Invalid address!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -622,12 +679,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.cpp" line="121"/>
+        <location filename="SettingsDialog.cpp" line="123"/>
         <source>Invalid path!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="SettingsDialog.cpp" line="165"/>
+        <location filename="SettingsDialog.cpp" line="167"/>
         <source>Invalid download folder path!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -636,25 +693,25 @@
     <name>StoragePaymentDialog</name>
     <message>
         <location filename="StoragePaymentDialog.ui" line="14"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="92"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="99"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="StoragePaymentDialog.ui" line="25"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="93"/>
-        <source>Units amount (required)</source>
+        <location filename="StoragePaymentDialog.ui" line="38"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="100"/>
+        <source>Amount (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="StoragePaymentDialog.ui" line="32"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="94"/>
-        <source>Drive key (required)</source>
+        <location filename="StoragePaymentDialog.ui" line="45"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="101"/>
+        <source>Drive (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="StoragePaymentDialog.ui" line="48"/>
-        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="95"/>
+        <location filename="StoragePaymentDialog.ui" line="80"/>
+        <location filename="../cmake-build-debug/UserApp/StorageClientApp_autogen/include/ui_StoragePaymentDialog.h" line="102"/>
         <source>Select my drive</source>
         <translation type="unfinished"></translation>
     </message>
