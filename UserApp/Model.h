@@ -169,6 +169,10 @@ public:
     //
     // Drives
     //
+    static void                     onChannelsLoaded( const QStringList& remoteChannels,
+                                                      const std::string& driveKey,
+                                                      const std::vector<std::string>& listOfPublicKeys );
+
     static void                     onDrivesLoaded( const QStringList& drives );
 
     static void                     addDrive( const std::string& driveHash,

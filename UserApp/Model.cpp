@@ -69,7 +69,6 @@ void Model::onSomeChannelLoaded( const std::string& channelKey,
     if ( it == channels.end() )
     {
         auto creationTime = std::chrono::steady_clock::now(); //todo
-
         gSettings.config().m_dnChannels.emplace_back( ChannelInfo{ channelKey, channelKey, driveKey, listOfPublicKeys, false, false, creationTime } );
     }
 }
@@ -118,9 +117,67 @@ int Model::currentDriveIndex()
     return gSettings.config().m_currentDriveIndex;
 }
 
+void Model::onChannelsLoaded( const QStringList& remoteChannels,
+                              const std::string& driveKey,
+                              const std::vector<std::string>& listOfPublicKeys )
+{
+    auto& localChannels = gSettings.config().m_dnChannels;
+    auto localChannelsIt = localChannels.begin();
+    while(localChannelsIt != localChannels.end() )
+    {
+        bool isFound = false;
+        for (const auto& remoteChannel : remoteChannels) {
+            if (boost::iequals( remoteChannel.toStdString(), localChannelsIt->m_hash )) {
+                isFound = true;
+                break;
+            }
+        }
+
+        if (isFound) {
+            localChannelsIt++;
+        } else {
+            localChannelsIt = localChannels.erase(localChannelsIt);
+        }
+    }
+
+    for( auto& channelKey : remoteChannels )
+    {
+        std::string hash = channelKey.toStdString();
+        auto it = std::find_if( localChannels.begin(), localChannels.end(), [&hash] (const auto& channelInfo)
+        {
+            return boost::iequals( channelInfo.m_name, hash );
+        });
+
+        if ( it == localChannels.end() )
+        {
+            auto creationTime = std::chrono::steady_clock::now(); //todo
+            gSettings.config().m_dnChannels.emplace_back( ChannelInfo{ channelKey.toStdString(), channelKey.toStdString(), driveKey, listOfPublicKeys, false, false, creationTime } );
+        }
+    }
+
+    gSettings.save();
+}
+
 void Model::onDrivesLoaded( const QStringList& driveList )
 {
     auto& drives = gSettings.config().m_drives;
+    auto localDrivesIt = drives.begin();
+    while(localDrivesIt != drives.end() )
+    {
+        bool isFound = false;
+        for (const auto& remoteDrive : driveList) {
+            if (boost::iequals( remoteDrive.toStdString(), localDrivesIt->m_driveKey )) {
+                isFound = true;
+                break;
+            }
+        }
+
+        if (isFound) {
+            localDrivesIt++;
+        } else {
+            localDrivesIt = drives.erase(localDrivesIt);
+        }
+    }
 
     for( auto& driveHash : driveList )
     {
@@ -136,6 +193,8 @@ void Model::onDrivesLoaded( const QStringList& driveList )
             Model::addDrive( hash, hash, Model::homeFolder() / hash );
         }
     }
+
+    gSettings.save();
 }
 
 std::vector<DriveInfo>& Model::drives()

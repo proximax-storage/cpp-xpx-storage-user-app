@@ -139,14 +139,15 @@ void MainWin::init()
         {
             qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
 
-            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this](auto channel, auto isSuccess, auto message, auto code)
+            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this, channels](auto channel, auto isSuccess, auto message, auto code)
             {
                 if (!isSuccess) {
                     qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                     return;
                 }
 
-                Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
+                Model::onChannelsLoaded(channels, channel.data.drive, channel.data.listOfPublicKeys);
+                //Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
                 updateChannelsCBox();
             });
         });
@@ -156,14 +157,15 @@ void MainWin::init()
             qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
 
             for (const auto& channel : channels) {
-                m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel.toStdString(), [this](auto channel, auto isSuccess, auto message, auto code)
+                m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel.toStdString(), [this, channels](auto channel, auto isSuccess, auto message, auto code)
                 {
                     if (!isSuccess) {
                         qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                         return;
                     }
 
-                    Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
+                    Model::onChannelsLoaded(channels, channel.data.drive, channel.data.listOfPublicKeys);
+                    //Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
                     updateChannelsCBox();
                 });
             }
@@ -299,6 +301,8 @@ void MainWin::init()
     m_downloadUpdateTimer->start(500); // 2 times per second
 
     lockMainButtons(true);
+
+    ui->tabWidget->setTabVisible(2, false);
 }
 
 MainWin::~MainWin()
@@ -336,7 +340,7 @@ void MainWin::setupDownloadsTab()
 
     setupFsTreeTable();
     setupDownloadsTable();
-    updateChannelsCBox();
+    //updateChannelsCBox();
 
     connect( ui->m_channels, QOverload<int>::of(&QComboBox::activated), this, [this] (int index)
     {
@@ -815,15 +819,19 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
 }
 
 void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32> &modificationId) {
+    qDebug () << LOG_SOURCE << "Your last modification was registered: '" + rawHashToHex(modificationId);
+
     QMessageBox msgBox;
-    msgBox.setText( "Your modifications was registered: '" + rawHashToHex(modificationId) );
+    msgBox.setText( "Your modification was registered."  );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 }
 
 void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32> &modificationId) {
+    qDebug () << LOG_SOURCE << "Your last modification was declined: '" + rawHashToHex(modificationId);
+
     QMessageBox msgBox;
-    msgBox.setText( "Your modifications was declined: '" + rawHashToHex(modificationId) );
+    msgBox.setText( "Your modification was declined." );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 }
@@ -832,6 +840,8 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
                                                              const std::array<uint8_t, 32> &channelId,
                                                              const std::string &fileStructureCdi) {
     std::string driveAlias = rawHashToHex(driveId).toStdString();
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto drive = Model::findDrive(driveAlias);
     if (drive) {
         driveAlias = drive->m_name;
@@ -843,22 +853,30 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     auto channel = Model::findChannel(channelAlias);
     if (channel) {
         channelAlias = channel->m_name;
+        channel->m_fsTreeHash = rawHashFromHex(fileStructureCdi.c_str());
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << channelAlias;
     }
 
+    lock.unlock();
+
+    qDebug () << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
+                 QString::fromStdString(driveAlias) + " Channel: " +
+                 QString::fromStdString(channelAlias) + " CDI: " +
+                 QString::fromStdString(fileStructureCdi);
+
     QString message;
-    message.append("Your modifications was APPLIED. Drive: ");
+    message.append("Your modification was applied. Drive: ");
     message.append(driveAlias.c_str());
     message.append(" Channel: ");
     message.append(channelAlias.c_str());
-    message.append(" CDI: ");
-    message.append(fileStructureCdi.c_str());
 
     QMessageBox msgBox;
     msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    onRefresh();
 }
 
 void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId,
@@ -901,7 +919,9 @@ void MainWin::loadBalance() {
             return;
         }
 
-        const xpx_chain_sdk::MosaicName PRX_XPX { 992621222383397347, { "prx.xpx" } };
+        // 1423072717967804887 - publicTest
+        // 992621222383397347 - local
+        const xpx_chain_sdk::MosaicName PRX_XPX { 1423072717967804887, { "prx.xpx" } };
         auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [PRX_XPX]( auto mosaic )
         {
             return mosaic.id == PRX_XPX.mosaicId;
@@ -925,7 +945,7 @@ void MainWin::onCurrentChannelChanged( int index )
 
     auto channel = Model::currentChannelInfoPtr();
 
-    if ( channel == nullptr )
+    if ( !channel )
     {
         qWarning() << LOG_SOURCE << "bad channel";
         m_fsTreeTableModel->setFsTree( {}, {} );
@@ -951,6 +971,8 @@ void MainWin::onCurrentDriveChanged( int index )
 
     Model::setCurrentDriveIndex( index );
     updateDrivesCBox();
+
+    emit ui->m_calcDiffBtn->released();
 }
 
 void MainWin::setupDrivesTab()
@@ -1136,7 +1158,6 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
     qDebug() << LOG_SOURCE << "@ download FsTree: " << driveKey.c_str();
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     DriveInfo* drivePtr = Model::findDrive( driveKey );
     if (!drivePtr) {
         qWarning() << LOG_SOURCE << "bad drive";
