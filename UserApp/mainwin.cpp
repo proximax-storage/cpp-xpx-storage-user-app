@@ -730,10 +730,10 @@ void MainWin::onApplyChanges()
         return;
     }
 
-    if (ui->m_channels->count() == 0) {
-        qWarning() << LOG_SOURCE << "bad download channel";
-        return;
-    }
+//    if (ui->m_channels->count() == 0) {
+//        qWarning() << LOG_SOURCE << "bad download channel";
+//        return;
+//    }
 
     auto actions = drive->m_actionList;
     if (actions.empty()) {
@@ -741,16 +741,17 @@ void MainWin::onApplyChanges()
         return;
     }
 
-    auto channel = Model::currentChannelInfoPtr();
-    if (!channel) {
-        qWarning() << LOG_SOURCE << "bad channel";
-        return;
-    }
+//    auto channel = Model::currentChannelInfoPtr();
+//    if (!channel) {
+//        qWarning() << LOG_SOURCE << "bad channel";
+//        return;
+//    }
 
-    auto channelId = rawHashFromHex(channel->m_hash.c_str());
+//    auto channelId = rawHashFromHex(channel->m_hash.c_str());
+    auto channelId = rawHashFromHex("BA396348BB5D5A352882A7E2C79B7B42AE0074D9CBD3B7F9C32ABFC234564F27");
     const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
     auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
-    m_onChainClient->applyDataModification(driveKeyHex, actions, channelId, sandbox);
+    m_onChainClient->applyDataModification(driveKeyHex, actions, sandbox);
 }
 
 void MainWin::onRefresh()
@@ -837,11 +838,11 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32> 
 }
 
 void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32> &driveId,
-                                                             const std::array<uint8_t, 32> &channelId,
                                                              const std::string &fileStructureCdi) {
     std::string driveAlias = rawHashToHex(driveId).toStdString();
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     auto drive = Model::findDrive(driveAlias);
     if (drive) {
         driveAlias = drive->m_name;
@@ -849,27 +850,15 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
-    std::string channelAlias = rawHashToHex(channelId).toStdString();
-    auto channel = Model::findChannel(channelAlias);
-    if (channel) {
-        channelAlias = channel->m_name;
-        channel->m_fsTreeHash = rawHashFromHex(fileStructureCdi.c_str());
-    } else {
-        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << channelAlias;
-    }
-
     lock.unlock();
 
     qDebug () << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
-                 QString::fromStdString(driveAlias) + " Channel: " +
-                 QString::fromStdString(channelAlias) + " CDI: " +
+                 QString::fromStdString(driveAlias) + " CDI: " +
                  QString::fromStdString(fileStructureCdi);
 
     QString message;
     message.append("Your modification was applied. Drive: ");
     message.append(driveAlias.c_str());
-    message.append(" Channel: ");
-    message.append(channelAlias.c_str());
 
     QMessageBox msgBox;
     msgBox.setText(message);
@@ -879,8 +868,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     onRefresh();
 }
 
-void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId,
-                                                          const std::array<uint8_t, 32> &channelId) {
+void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId) {
     std::string driveAlias = rawHashToHex(driveId).toStdString();
     auto drive = Model::findDrive(driveAlias);
     if (drive) {
@@ -889,19 +877,9 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
-    std::string channelAlias = rawHashToHex(channelId).toStdString();
-    auto channel = Model::findChannel(channelAlias);
-    if (channel) {
-        channelAlias = channel->m_name;
-    } else {
-        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << channelAlias;
-    }
-
     QString message;
     message.append("Your modifications was DECLINED. Drive: ");
     message.append(driveAlias.c_str());
-    message.append(" Channel: ");
-    message.append(channelAlias.c_str());
 
     QMessageBox msgBox;
     msgBox.setText(message);

@@ -115,6 +115,7 @@ public: // tmp
     // diff
     std::shared_ptr<LocalDriveItem>         m_localDrive;
     sirius::drive::ActionList               m_actionList;
+    std::string                             m_currentModificationHash = "";
 
     template<class Archive>
     void serialize( Archive &ar )

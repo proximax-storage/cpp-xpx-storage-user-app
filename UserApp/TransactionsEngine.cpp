@@ -303,7 +303,6 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
 
 void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& driveId,
                                                const sirius::drive::ActionList& actions,
-                                               const std::array<uint8_t, 32> &channelId,
                                                const std::string& sandboxFolder,
                                                const std::vector<xpx_chain_sdk::Address>& replicators) {
     if (!isValidHash(driveId)) {
@@ -311,18 +310,13 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
         return;
     }
 
-    if (!isValidHash(channelId)) {
-        qWarning() << LOG_SOURCE << "bad channelId: empty!";
-        return;
-    }
-
-    auto callback = [this, driveId, channelId, actions, sandboxFolder, replicators](auto totalModifyDataSize, auto infoHash) {
+    auto callback = [this, driveId, actions, sandboxFolder, replicators](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
             qWarning() << LOG_SOURCE << "invalid info hash: " << rawHashToHex(infoHash);
             return;
         }
 
-        sendModification(driveId, channelId, infoHash, actions, totalModifyDataSize, sandboxFolder, replicators);
+        sendModification(driveId, infoHash, actions, totalModifyDataSize, sandboxFolder, replicators);
     };
 
     emit addActions(actions, driveId, sandboxFolder, callback);
@@ -349,7 +343,6 @@ bool TransactionsEngine::isValidHash(const std::array<uint8_t, 32> &hash) {
 }
 
 void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId,
-                                          const std::array<uint8_t, 32>& channelId,
                                           const std::array<uint8_t, 32>& infoHash,
                                           const sirius::drive::ActionList& actions,
                                           const uint64_t totalModifyDataSize,
@@ -449,7 +442,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     });
 
     dataModificationApprovalTransactionNotifier.set([
-            this, modificationId, driveId, channelId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId()](
+            this, modificationId, driveId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (xpx_chain_sdk::TransactionType::Data_Modification_Approval != notification.data.type) {
@@ -470,7 +463,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,
                                                [this, driveId, modificationId, notification,
-                                                id, channelId, replicators, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code) {
+                                                id, replicators, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                 return;
@@ -508,7 +501,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             mDataModificationApprovals[driveId].insert(modificationId);
 
             // TODO: auto update drive structure (temporary for demo)
-            emit dataModificationApprovalConfirmed(driveId, channelId, dataModificationApprovalTransaction->fileStructureCdi);
+            emit dataModificationApprovalConfirmed(driveId, dataModificationApprovalTransaction->fileStructureCdi);
 
             unsubscribeFromReplicators(replicators, id, statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);

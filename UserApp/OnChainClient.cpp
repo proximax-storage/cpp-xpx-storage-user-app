@@ -111,10 +111,9 @@ void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
                                           const sirius::drive::ActionList &actions,
-                                          const std::array<uint8_t, 32> &channelId,
                                           const std::string &sandboxFolder) {
     mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
-                                     [this, driveId, actions, channelId, sandboxFolder]
+                                     [this, driveId, actions, sandboxFolder]
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
@@ -134,7 +133,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
             addresses.emplace_back(key);
         }
 
-        mpTransactionsEngine->applyDataModification(driveId, actions, channelId, sandboxFolder, addresses);
+        mpTransactionsEngine->applyDataModification(driveId, actions, sandboxFolder, addresses);
     });
 }
 
@@ -210,14 +209,14 @@ void OnChainClient::initConnects() {
     });
 
     connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationApprovalConfirmed, this,
-            [this](auto driveId, auto channelId, auto fileStructureCdi) {
-                emit dataModificationApprovalTransactionConfirmed(driveId, channelId, fileStructureCdi);
+            [this](auto driveId, auto fileStructureCdi) {
+                emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
                 auto callback = [this](const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree) {
                     emit fsTreeDownloaded(driveId, fsTreeHash, fsTree);
                 };
 
                 mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(),
-                                                rawHashToHex(channelId).toStdString(),
+                                                "0000000000000000000000000000000000000000000000000000000000000000",
                                                 rawHashFromHex(fileStructureCdi.c_str()), callback);
     }, Qt::QueuedConnection);
 }

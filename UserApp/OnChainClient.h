@@ -42,7 +42,6 @@ class OnChainClient : public QObject
 
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
                                    const sirius::drive::ActionList& actions,
-                                   const std::array<uint8_t, 32> &channelId,
                                    const std::string& sandboxFolder);
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
@@ -69,8 +68,8 @@ class OnChainClient : public QObject
         void downloadPaymentTransactionFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
         void storagePaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
         void storagePaymentTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString& errorText);
-        void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId, const std::string& fileStructureCdi);
-        void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId);
+        void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
+        void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId );
 
     private:
         void initConnects();

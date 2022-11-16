@@ -29,7 +29,6 @@ class TransactionsEngine : public QObject
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
-                                   const std::array<uint8_t, 32> &channelId,
                                    const std::string& sandboxFolder,
                                    const std::vector<xpx_chain_sdk::Address>& replicators);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
@@ -53,7 +52,7 @@ class TransactionsEngine : public QObject
                         const std::string& sandboxFolder,
                         std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
-        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& channelId, const std::string& fileStructureCdi);
+        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
         void dataModificationApprovalFailed();
         void dataModificationConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationFailed(const std::array<uint8_t, 32>& modificationId);
@@ -67,7 +66,6 @@ class TransactionsEngine : public QObject
                                         const std::string& statusNotifierId);
 
         void sendModification(const std::array<uint8_t, 32>& driveId,
-                              const std::array<uint8_t, 32>& channelId,
                               const std::array<uint8_t, 32>& infoHash,
                               const sirius::drive::ActionList& actionList,
                               uint64_t totalModifySize,

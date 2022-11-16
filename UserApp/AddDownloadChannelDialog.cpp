@@ -153,6 +153,8 @@ void AddDownloadChannelDialog::accept() {
                 ui->prepaidAmountLine->text().toULongLong(),
                 0); // feedback is unused for now
 
+    qDebug() << LOG_SOURCE << "addChannelHash: " << channelHash.c_str();
+
     std::vector<std::string> publicKeys;
     keys.reserve((int)listOfAllowedPublicKeys.size());
     for (const auto& key : listOfAllowedPublicKeys) {
