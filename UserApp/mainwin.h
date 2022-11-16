@@ -16,6 +16,11 @@ class DriveTreeModel;
 class DiffTableModel;
 class OnChainClient;
 
+namespace sirius { namespace drive
+{
+    class FsTree;
+}}
+
 class MainWin : public QMainWindow
 {
     Q_OBJECT
@@ -70,6 +75,7 @@ private:
     void setupDrivesTab();
 
     void downloadLatestFsTree( const std::string& driveKey );
+    void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
     void continueCalcDiff( DriveInfo& drive );
 
     void lockMainButtons(bool state);

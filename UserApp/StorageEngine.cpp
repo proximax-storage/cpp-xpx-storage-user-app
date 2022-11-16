@@ -125,11 +125,19 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                             {
                                                 qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
                                                 sirius::drive::FsTree fsTree;
-                                                fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+                                                try
+                                                {
+                                                    fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+                                                } catch (const std::runtime_error& ex )
+                                                {
+                                                    qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
+                                                    fsTree = {};
+                                                    fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
+                                                }
                                                 onFsTreeReceived( driveHash, infoHash.array(), fsTree );
                                             },
                                             fsTreeHash,
-                                            channelId, 0 ),
+                                            channelId, 0),//, true ),
                                        channelId,
                                        fsTreeSaveFolder,
                                        "",
