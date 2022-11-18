@@ -27,6 +27,7 @@ class TransactionsEngine : public QObject
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
         std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
+        void cancelDataModification(const std::array<uint8_t, 32> &driveKey);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::string& sandboxFolder,
@@ -56,6 +57,8 @@ class TransactionsEngine : public QObject
         void dataModificationApprovalFailed();
         void dataModificationConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationFailed(const std::array<uint8_t, 32>& modificationId);
+        void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+        void cancelModificationFailed(const QString& modificationId);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,

@@ -1,5 +1,6 @@
 #include "OnChainClient.h"
 #include <QDebug>
+#include <boost/algorithm/string/predicate.hpp>
 
 OnChainClient::OnChainClient(std::shared_ptr<StorageEngine> storage,
                              const std::string& privateKey,
@@ -9,79 +10,113 @@ OnChainClient::OnChainClient(std::shared_ptr<StorageEngine> storage,
     : QObject(parent)
     , mpStorageEngine(storage)
 {
+    qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
+
     init(address, port, privateKey);
-}
 
-void OnChainClient::loadDrives() {
-    qDebug() << LOG_SOURCE << "loadDrive: started";
-    mpBlockchainEngine->getDrives([this](auto drivesPage, auto isSuccess, auto message, auto code) {
-        if (!isSuccess) {
-            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+    connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){
+        if (drivesPage.pagination.totalPages == 1 ) {
+            emit drivesLoaded({ drivesPage });
             return;
         }
 
-        auto publicKey = rawHashToHex(mpChainAccount->publicKey());
-
-        QStringList loadedDrives;
-        for (const auto &drive: drivesPage.data.drives) {
-            qDebug() << LOG_SOURCE << "loadDrive: " << drive.data.multisig.c_str();
-            qDebug() << LOG_SOURCE << "loadDrive: owner: " << drive.data.owner.c_str();
-            qDebug() << LOG_SOURCE << "loadDrive: pubKey: " << publicKey.toStdString().c_str();
-            if (drive.data.owner == publicKey.toStdString()) {
-                loadedDrives.push_back(drive.data.multisig.c_str());
+        if (mLoadedDrives.contains(id)) {
+            mLoadedDrives[id].push_back(drivesPage);
+            if (drivesPage.pagination.pageNumber == drivesPage.pagination.totalPages) {
+                emit drivesLoaded(mLoadedDrives[id]);
+                mLoadedDrives.erase(id);
             }
+        } else {
+            mLoadedDrives.insert({ id, { drivesPage } });
+        }
+    });
+
+    connect(this, &OnChainClient::downloadChannelsPageLoaded, this, [this](const QUuid& id, ChannelsType type, const xpx_chain_sdk::download_channels_page::DownloadChannelsPage& channelsPage){
+        if (channelsPage.pagination.totalPages == 1 ) {
+            emit downloadChannelsLoaded(type, { channelsPage });
+            return;
         }
 
-        if (!loadedDrives.empty()) {
-            qDebug() << LOG_SOURCE << "loadDrive: emit drivesLoaded: " << loadedDrives.size();
-            emit drivesLoaded(loadedDrives);
+        if (mLoadedChannels.contains(id)) {
+            mLoadedChannels[id].push_back(channelsPage);
+            if (channelsPage.pagination.pageNumber == channelsPage.pagination.totalPages) {
+                emit downloadChannelsLoaded(type, mLoadedChannels[id]);
+                mLoadedChannels.erase(id);
+            }
+        } else {
+            mLoadedChannels.insert({ id, { channelsPage } });
         }
     });
 }
 
-void OnChainClient::loadDownloadChannelsByDrive(const QString& drivePubKey) {
-    mpBlockchainEngine->getDownloadChannels([this, drivePubKey](auto channelsPage, auto isSuccess, auto message, auto code) {
+void OnChainClient::loadDrives(const xpx_chain_sdk::DrivesPageOptions& options) {
+    mpBlockchainEngine->getDrives(options, [this, options](auto drivesPage, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
             return;
         }
 
-        QStringList loadedChannels;
-        for (const auto &channel: channelsPage.data.channels) {
-            if (channel.data.drive == drivePubKey.toStdString() && !channel.data.finished) {
-                loadedChannels.push_back(channel.data.id.c_str());
-            }
-        }
+        QUuid id = QUuid::createUuid();
+        // 1 page
+        emit drivesPageLoaded(id, drivesPage);
 
-        if (!loadedChannels.empty()) {
-            emit downloadChannelsLoadedByDrive(loadedChannels);
-        }
-    });
-}
+        qDebug() << LOG_SOURCE << " drivesPageLoaded: " << " id: " << id << " pageNumber:" << drivesPage.pagination.pageNumber;
 
-void OnChainClient::loadDownloadChannelsByConsumer(const QString& consumerKey) {
-    mpBlockchainEngine->getDownloadChannels([this, consumerKey](auto channelsPage, auto isSuccess, auto message, auto code) {
-        if (!isSuccess) {
-            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
-            return;
-        }
-
-        QStringList loadedChannels;
-        for (const auto &channel: channelsPage.data.channels) {
-            if (channel.data.finished) {
-                continue;
-            }
-
-            for (const auto &key : channel.data.listOfPublicKeys) {
-                if (key == consumerKey.toStdString()) {
-                    loadedChannels.push_back(channel.data.id.c_str());
-                    break;
+        for (uint64_t pageNumber = 2; pageNumber <= drivesPage.pagination.totalPages; pageNumber++) {
+            xpx_chain_sdk::PaginationOrderingOptions paginationOptions;
+            paginationOptions.pageNumber = pageNumber;
+            xpx_chain_sdk::DrivesPageOptions newOptions;
+            newOptions.paginationOrderingOptions = paginationOptions;
+            mpBlockchainEngine->getDrives(newOptions, [this, id](auto drivesPage, auto isSuccess, auto message, auto code) {
+                if (!isSuccess) {
+                    qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+                    return;
                 }
-            }
+
+                emit drivesPageLoaded(id, drivesPage);
+
+                qDebug() << LOG_SOURCE << " drivesPageLoaded: " << " id: " << id << " pageNumber:" << drivesPage.pagination.pageNumber;
+            });
+        }
+    });
+}
+
+void OnChainClient::loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options) {
+    mpBlockchainEngine->getDownloadChannels(options, [this, options](auto channelsPage, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+            return;
         }
 
-        if (!loadedChannels.empty()) {
-            emit downloadChannelsLoadedByConsumer(loadedChannels);
+        QUuid id = QUuid::createUuid();
+        // 1 page
+        bool isSponsored = options.toMap().empty();
+        bool isMyOwn = options.consumerKey.has_value() && options.toMap().size() == 1;
+        if (isMyOwn) {
+            loadMyOwnChannels(id, channelsPage);
+        } else {
+            loadSponsoredChannels(id, channelsPage);
+        }
+
+        for (uint64_t pageNumber = 2; pageNumber <= channelsPage.pagination.totalPages; pageNumber++) {
+            xpx_chain_sdk::PaginationOrderingOptions paginationOptions;
+            paginationOptions.pageNumber = pageNumber;
+            xpx_chain_sdk::DownloadChannelsPageOptions newOptions;
+            newOptions.paginationOrderingOptions = paginationOptions;
+            mpBlockchainEngine->getDownloadChannels(newOptions, [this, isMyOwn, isSponsored, id](auto channelsPage, auto isSuccess, auto message, auto code) {
+                if (!isSuccess) {
+                    qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+                    return;
+                }
+
+                if (isMyOwn) {
+                    loadMyOwnChannels(id, channelsPage);
+                } else if(isSponsored) {
+                    loadSponsoredChannels(id, channelsPage);
+                } else {
+                    emit downloadChannelsPageLoaded(id, ChannelsType::Others, channelsPage);
+                }
+            });
         }
     });
 }
@@ -107,6 +142,10 @@ std::string OnChainClient::addDrive(const std::string &driveAlias, const uint64_
 
 void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
     mpTransactionsEngine->closeDrive(driveKey);
+}
+
+void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveId) {
+    mpTransactionsEngine->cancelDataModification(driveId);
 }
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
@@ -208,6 +247,14 @@ void OnChainClient::initConnects() {
         emit dataModificationTransactionFailed(modificationId);
     });
 
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
+        emit cancelModificationTransactionConfirmed(driveId, modificationId);
+    });
+
+    connect(mpTransactionsEngine.get(), &TransactionsEngine::cancelModificationFailed, this, [this](auto modificationId) {
+        emit cancelModificationTransactionFailed(modificationId);
+    });
+
     connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
@@ -279,4 +326,46 @@ void OnChainClient::init(const std::string& address,
             emit initializedSuccessfully(info.name.c_str());
         });
     });
+}
+
+void OnChainClient::loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
+    qDebug() << LOG_SOURCE << " loadMyOwnChannels: " << " id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
+    std::vector<xpx_chain_sdk::DownloadChannel> channels;
+    for (const auto& channel : channelsPage.data.channels) {
+        if (channel.data.finished) {
+            continue;
+        }
+
+        for (const auto& key : channel.data.listOfPublicKeys) {
+            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
+                channels.push_back(channel);
+                break;
+            }
+        }
+    }
+
+    channelsPage.data.channels = channels;
+    emit downloadChannelsPageLoaded(id, ChannelsType::MyOwn, channelsPage);
+}
+
+void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
+    qDebug() << LOG_SOURCE << " loadSponsoredChannels: " << " id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
+
+    std::vector<xpx_chain_sdk::DownloadChannel> channels;
+    for (const auto& channel : channelsPage.data.channels) {
+        bool isMyOwn = boost::iequals(channel.data.consumer, rawHashToHex(mpChainAccount->publicKey()).toStdString());
+        if (channel.data.finished || isMyOwn) {
+            continue;
+        }
+
+        for (const auto& key : channel.data.listOfPublicKeys) {
+            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
+                channels.push_back(channel);
+                break;
+            }
+        }
+    }
+
+    channelsPage.data.channels = channels;
+    emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
 }

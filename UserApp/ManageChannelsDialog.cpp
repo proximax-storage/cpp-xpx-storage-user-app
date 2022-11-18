@@ -168,7 +168,6 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
     });
 
     connect(ui->m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
-        qDebug () << "new name: " + item->text();
         QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
         if (nameTemplate.match(item->text()).hasMatch()) {
             int selectedRow = ui->m_table->currentRow();
@@ -191,8 +190,6 @@ ManageChannelsDialog::ManageChannelsDialog( OnChainClient* onChainClient, QWidge
             lock.unlock();
 
             emit updateChannels();
-        } else {
-            qWarning () << "invalid new name: " + item->text();
         }
     });
 

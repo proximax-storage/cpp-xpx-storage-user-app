@@ -64,7 +64,7 @@ set(PROJECT_SOURCES
 
         FsTreeTableModel.h          FsTreeTableModel.cpp        DownloadPaymentDialog.ui
         DownloadsTableModel.h       DownloadsTableModel.cpp     StoragePaymentDialog.ui
-        DriveTreeModel.h            DriveTreeModel.cpp          CancelModificationDialog.ui
+        DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
 

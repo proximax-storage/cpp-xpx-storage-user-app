@@ -12,9 +12,12 @@
 
 #include "drive/ClientSession.h"
 #include "drive/FsTree.h"
+#include "xpxchaincpp/model/storage/drives_page.h"
+#include "xpxchaincpp/model/storage/download_channel.h"
+#include "xpxchaincpp/model/storage/download_channels_page.h"
 
 inline bool ALEX_LOCAL_TEST = false;
-inline bool VICTOR_LOCAL_TEST = true;
+inline bool VICTOR_LOCAL_TEST = false;
 
 inline const char* ROOT_HASH1 = "096975e6f49b924078e443e6c208283034d043dd42b4db9ccd1dffd795577e5d";
 inline const char* ROOT_HASH2 = "83f8349b1623008b58fd9e2ee678e47842787834e0671e4cd2f6634d8ebfd2e6";
@@ -150,9 +153,6 @@ public:
     //
     // Channels
     //
-    static void                         onSomeChannelLoaded( const std::string& channelKey,
-                                                             const std::string& driveKey,
-                                                             const std::vector<std::string>& listOfPublicKeys );
 
     static std::vector<ChannelInfo>&    dnChannels();
     static void                         setCurrentDnChannelIndex( int );
@@ -170,11 +170,10 @@ public:
     //
     // Drives
     //
-    static void                     onChannelsLoaded( const QStringList& remoteChannels,
-                                                      const std::string& driveKey,
-                                                      const std::vector<std::string>& listOfPublicKeys );
+    static void                     onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
+    static void                     onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
 
-    static void                     onDrivesLoaded( const QStringList& drives );
+    static void                     onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages );
 
     static void                     addDrive( const std::string& driveHash,
                                               const std::string& driveName,
@@ -188,6 +187,7 @@ public:
     static DriveInfo*               currentDriveInfoPtr();
     static DriveInfo*               findDrive( const std::string& driveKey );
     static void                     removeDrive( const std::string& driveKey );
+    static void                     removeChannelByDriveKey( const std::string& driveKey );
 
     static void                     applyForDrive( const std::string& driveKey, std::function<void(DriveInfo&)> );
 

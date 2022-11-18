@@ -301,6 +301,69 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
+void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &driveKey) {
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveKey).toStdString(), [this, driveKey](xpx_chain_sdk::Drive drive, auto isSuccess, auto message, auto code){
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+            return;
+        }
+
+        if (drive.data.activeDataModifications.empty() ) {
+            qInfo() << LOG_SOURCE << "not active modifications found!";
+            return;
+        }
+
+        QString drivePubKey = rawHashToHex(driveKey);
+
+        xpx_chain_sdk::Key rawDriveKey;
+        xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), rawDriveKey);
+
+        auto lastModification = drive.data.activeDataModifications.size() - 1;
+        const QString modificationHex = drive.data.activeDataModifications[lastModification].dataModification.id.c_str();
+
+        xpx_chain_sdk::Hash256 modificationHash256;
+        xpx_chain_sdk::ParseHexStringIntoContainer(modificationHex.toStdString().c_str(), modificationHex.size(), modificationHash256);
+
+        auto dataModificationCancelTransaction = xpx_chain_sdk::CreateDataModificationCancelTransaction(rawDriveKey, modificationHash256,
+                                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+        mpChainAccount->signTransaction(dataModificationCancelTransaction.get());
+
+        xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+        xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationCancelNotifier;
+
+        statusNotifier.set([this, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), modificationHex](
+                const auto& id,
+                const xpx_chain_sdk::TransactionStatusNotification& notification) {
+            qWarning() << LOG_SOURCE << " onCancelDataModification: " << notification.status.c_str() << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
+
+            removeConfirmedAddedNotifier(mpChainAccount->address(), dataModificationCancelNotifierId);
+            removeStatusNotifier(mpChainAccount->address(), id);
+
+            emit cancelModificationFailed(modificationHex);
+        });
+
+        mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
+                                                           [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
+
+        const std::string hash = rawHashToHex(dataModificationCancelTransaction->hash()).toStdString();
+        dataModificationCancelNotifier.set([this, hash, statusNotifierId = statusNotifier.getId(), driveKey, modificationHex](
+                const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
+            if (notification.meta.hash == hash) {
+                qInfo() << LOG_SOURCE << "confirmed dataModificationCancelTransaction hash: " << hash.c_str();
+
+                removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
+                removeConfirmedAddedNotifier(mpChainAccount->address(), id);
+
+                emit cancelModificationConfirmed(driveKey, modificationHex);
+            }
+        });
+
+        mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { dataModificationCancelNotifier },
+                                                                   [this, data = dataModificationCancelTransaction->binary()]() { announceTransaction(data); },
+                                                                   [this, hash](auto error) { onError(hash, error); });
+    });
+}
+
 void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& driveId,
                                                const sirius::drive::ActionList& actions,
                                                const std::string& sandboxFolder,

@@ -136,11 +136,12 @@ void BlockchainEngine::getDownloadChannelById(const std::string &channelPublicKe
     emit runProcess(id, task);
 }
 
-void BlockchainEngine::getDownloadChannels(const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage,
+void BlockchainEngine::getDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options,
+                                           const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage,
                                            bool, std::string,std::string)> &callback) {
-    auto task = [this]() {
+    auto task = [this, options]() {
         try {
-            auto channelsPage = mpChainClient->storage()->getDownloadChannels();
+            auto channelsPage = mpChainClient->storage()->getDownloadChannels(options);
             return QVariant::fromValue(channelsPage);
         } catch (const xpx_chain_sdk::InvalidRequest& e) {
             return QVariant::fromValue(e.getErrorMessage());
@@ -204,10 +205,11 @@ void BlockchainEngine::getDriveById(const std::string &drivePublicKey,
     emit runProcess(id, task);
 }
 
-void BlockchainEngine::getDrives(const std::function<void(xpx_chain_sdk::drives_page::DrivesPage drivesPage, bool, std::string, std::string)> &callback) {
-    auto task = [this]() {
+void BlockchainEngine::getDrives(const xpx_chain_sdk::DrivesPageOptions& options,
+                                 const std::function<void(xpx_chain_sdk::drives_page::DrivesPage drivesPage, bool, std::string, std::string)> &callback) {
+    auto task = [this, options]() {
         try {
-            auto drives = mpChainClient->storage()->getDrives();
+            auto drives = mpChainClient->storage()->getDrives(options);
             return QVariant::fromValue(drives);
         } catch (const xpx_chain_sdk::InvalidRequest& e) {
             return QVariant::fromValue(e.getErrorMessage());
@@ -285,15 +287,4 @@ void BlockchainEngine::onRemoveResolver(const QUuid &id) {
 
 void BlockchainEngine::callbackResolver(const QUuid& id, const QVariant& data) {
     mResolvers[id](data);
-}
-
-BlockchainEngine::~BlockchainEngine()
-{
-    if (mpThread) {
-        mpThread->deleteLater();
-    }
-
-    if (mpWorker) {
-        mpWorker->deleteLater();
-    }
 }

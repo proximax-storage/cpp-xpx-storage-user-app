@@ -13,6 +13,7 @@
 class OnChainClient : public QObject
 {
     Q_OBJECT
+    Q_ENUM()
 
     public:
         OnChainClient(std::shared_ptr<StorageEngine> storage,
@@ -24,9 +25,11 @@ class OnChainClient : public QObject
         ~OnChainClient() = default;
 
     public:
-        void loadDrives();
-        void loadDownloadChannelsByDrive(const QString& drivePubKey);
-        void loadDownloadChannelsByConsumer(const QString& consumerKey);
+        enum ChannelsType { MyOwn, Sponsored, Others };
+
+    public:
+        void loadDrives(const xpx_chain_sdk::DrivesPageOptions& options);
+        void loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options);
 
         std::shared_ptr<BlockchainEngine> getBlockchainEngine();
 
@@ -39,7 +42,7 @@ class OnChainClient : public QObject
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
         std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
-
+        void cancelDataModification(const std::array<uint8_t, 32> &driveId);
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
                                    const sirius::drive::ActionList& actions,
                                    const std::string& sandboxFolder);
@@ -52,9 +55,8 @@ class OnChainClient : public QObject
         void initializedFailed(const QString& error);
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
-        void drivesLoaded(const QStringList& drives);
-        void downloadChannelsLoadedByDrive(const QStringList& channels);
-        void downloadChannelsLoadedByConsumer(const QStringList& channels);
+        void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);
+        void downloadChannelsLoaded(ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
         void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
@@ -70,6 +72,13 @@ class OnChainClient : public QObject
         void storagePaymentTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString& errorText);
         void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
         void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId );
+        void cancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+        void cancelModificationTransactionFailed(const QString& modificationId);
+
+    // internal signals
+    signals:
+        void downloadChannelsPageLoaded(const QUuid& id, ChannelsType type, const xpx_chain_sdk::download_channels_page::DownloadChannelsPage& drivesPages);
+        void drivesPageLoaded(const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPages);
 
     private:
         void initConnects();
@@ -77,6 +86,8 @@ class OnChainClient : public QObject
         void init(const std::string& address,
                   const std::string& port,
                   const std::string& privateKey);
+        void loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
+        void loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
 
     private:
         std::shared_ptr<StorageEngine> mpStorageEngine;
@@ -84,7 +95,10 @@ class OnChainClient : public QObject
         std::shared_ptr<TransactionsEngine> mpTransactionsEngine;
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
+        std::map<QUuid, std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>> mLoadedChannels;
+        std::map<QUuid, std::vector<xpx_chain_sdk::drives_page::DrivesPage>> mLoadedDrives;
 };
 
+Q_DECLARE_METATYPE(OnChainClient::ChannelsType)
 
 #endif //ONCHAINCLIENT_H

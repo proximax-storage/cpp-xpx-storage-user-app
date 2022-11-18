@@ -107,21 +107,19 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
 
     connect(ui->m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
         if (item->column() == 0) {
-            qDebug () << "new name: " + item->text();
             QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
             if (nameTemplate.match(item->text()).hasMatch()) {
                 int selectedRow = ui->m_table->currentRow();
                 auto selectedDrive = ui->m_table->model()->index(selectedRow, 1);
                 if (!selectedDrive.isValid()) {
-                    qWarning () << LOG_SOURCE  << "bad index";
+                    qWarning() << LOG_SOURCE << "bad index";
                     return;
                 }
 
-                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-                auto* drive = Model::findDrive( selectedDrive.data().toString().toStdString() );
-                if ( !drive )
-                {
-                    qWarning () << LOG_SOURCE  << "bad drive";
+                std::unique_lock<std::recursive_mutex> lock(gSettingsMutex);
+                auto *drive = Model::findDrive(selectedDrive.data().toString().toStdString());
+                if (!drive) {
+                    qWarning() << LOG_SOURCE << "bad drive";
                     lock.unlock();
                     return;
                 }
@@ -131,8 +129,6 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
                 lock.unlock();
 
                 emit updateDrives();
-            } else {
-                qWarning () << "invalid new name: " + item->text();
             }
         }
     });

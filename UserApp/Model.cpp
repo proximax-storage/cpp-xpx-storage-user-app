@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "StorageEngine.h"
 #include "utils/HexParser.h"
+#include "OnChainClient.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -51,28 +52,6 @@ fs::path Model::downloadFolder()
     return gSettings.downloadFolder();
 }
 
-void Model::onSomeChannelLoaded( const std::string& channelKey,
-                                 const std::string& driveKey,
-                                 const std::vector<std::string>& listOfPublicKeys )
-{
-
-    qDebug() << "onSomeChannelLoaded: channelKey: " << channelKey;
-    qDebug() << "onSomeChannelLoaded: driveKey: " << driveKey;
-
-    auto& channels = gSettings.config().m_dnChannels;
-
-    auto it = std::find_if( channels.begin(), channels.end(), [&channelKey] (const auto& channelInfo)
-    {
-        return boost::iequals( channelInfo.m_hash, channelKey );
-    });
-
-    if ( it == channels.end() )
-    {
-        auto creationTime = std::chrono::steady_clock::now(); //todo
-        gSettings.config().m_dnChannels.emplace_back( ChannelInfo{ channelKey, channelKey, driveKey, listOfPublicKeys, false, false, creationTime } );
-    }
-}
-
 std::vector<ChannelInfo>& Model::dnChannels()
 {
     return gSettings.config().m_dnChannels;
@@ -117,72 +96,87 @@ int Model::currentDriveIndex()
     return gSettings.config().m_currentDriveIndex;
 }
 
-void Model::onChannelsLoaded( const QStringList& remoteChannels,
-                              const std::string& driveKey,
-                              const std::vector<std::string>& listOfPublicKeys )
+void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages )
 {
-    auto& localChannels = gSettings.config().m_dnChannels;
-    auto localChannelsIt = localChannels.begin();
-    while(localChannelsIt != localChannels.end() )
-    {
-        bool isFound = false;
-        for (const auto& remoteChannel : remoteChannels) {
-            if (boost::iequals( remoteChannel.toStdString(), localChannelsIt->m_hash )) {
-                isFound = true;
-                break;
-            }
-        }
+    std::vector<xpx_chain_sdk::DownloadChannel> remoteChannels;
+    for (const auto& page : channelsPages) {
+        std::copy(page.data.channels.begin(), page.data.channels.end(), std::back_inserter(remoteChannels));
+    }
 
-        if (isFound) {
-            localChannelsIt++;
+    auto& localChannels = gSettings.config().m_dnChannels;
+    std::vector<ChannelInfo> validChannels;
+    for (auto &remoteChannel : remoteChannels) {
+        std::string hash = remoteChannel.data.id;
+        auto it = std::find_if(localChannels.begin(), localChannels.end(), [&hash](const auto &channelInfo) {
+            return boost::iequals(channelInfo.m_hash, hash);
+        });
+
+        // add new channel
+        if (it == localChannels.end()) {
+            ChannelInfo channelInfo;
+            channelInfo.m_name = remoteChannel.data.id;
+            channelInfo.m_hash = remoteChannel.data.id;
+            channelInfo.m_allowedPublicKeys = remoteChannel.data.listOfPublicKeys;
+            channelInfo.m_driveHash = remoteChannel.data.drive;
+            channelInfo.m_isCreating = false;
+            channelInfo.m_isDeleting = false;
+            auto creationTime = std::chrono::steady_clock::now(); //todo
+            channelInfo.m_creationTimepoint = creationTime;
+            validChannels.push_back(channelInfo);
         } else {
-            localChannelsIt = localChannels.erase(localChannelsIt);
+            // update valid channel
+            validChannels.push_back(*it);
         }
     }
 
-    for( auto& channelKey : remoteChannels )
-    {
-        std::string hash = channelKey.toStdString();
-        auto it = std::find_if( localChannels.begin(), localChannels.end(), [&hash] (const auto& channelInfo)
-        {
-            return boost::iequals( channelInfo.m_name, hash );
+    // remove closed channels from saved
+    gSettings.config().m_dnChannels = validChannels;
+    gSettings.save();
+}
+
+void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& remoteChannelsPages) {
+    std::vector<xpx_chain_sdk::DownloadChannel> remoteChannels;
+    for (const auto& page : remoteChannelsPages) {
+        std::copy(page.data.channels.begin(), page.data.channels.end(), std::back_inserter(remoteChannels));
+    }
+
+    auto& localChannels = gSettings.config().m_dnChannels;
+    for (auto &remoteChannel : remoteChannels) {
+        std::string hash = remoteChannel.data.id;
+        auto it = std::find_if(localChannels.begin(), localChannels.end(), [&hash](const auto &channelInfo) {
+            return boost::iequals(channelInfo.m_hash, hash);
         });
 
-        if ( it == localChannels.end() )
-        {
+        // add new channel
+        if (it == localChannels.end()) {
+            ChannelInfo channelInfo;
+            channelInfo.m_name = remoteChannel.data.id;
+            channelInfo.m_hash = remoteChannel.data.id;
+            channelInfo.m_allowedPublicKeys = remoteChannel.data.listOfPublicKeys;
+            channelInfo.m_driveHash = remoteChannel.data.drive;
+            channelInfo.m_isCreating = false;
+            channelInfo.m_isDeleting = false;
             auto creationTime = std::chrono::steady_clock::now(); //todo
-            gSettings.config().m_dnChannels.emplace_back( ChannelInfo{ channelKey.toStdString(), channelKey.toStdString(), driveKey, listOfPublicKeys, false, false, creationTime } );
+            channelInfo.m_creationTimepoint = creationTime;
+            gSettings.config().m_dnChannels.push_back(channelInfo);
         }
     }
 
     gSettings.save();
 }
 
-void Model::onDrivesLoaded( const QStringList& driveList )
+void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& remoteDrivesPages )
 {
-    auto& drives = gSettings.config().m_drives;
-    auto localDrivesIt = drives.begin();
-    while(localDrivesIt != drives.end() )
-    {
-        bool isFound = false;
-        for (const auto& remoteDrive : driveList) {
-            if (boost::iequals( remoteDrive.toStdString(), localDrivesIt->m_driveKey )) {
-                isFound = true;
-                break;
-            }
-        }
-
-        if (isFound) {
-            localDrivesIt++;
-        } else {
-            localDrivesIt = drives.erase(localDrivesIt);
-        }
+    std::vector<xpx_chain_sdk::Drive> remoteDrives;
+    for (const auto& page : remoteDrivesPages) {
+        std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
 
-    for( auto& driveHash : driveList )
+    auto& drives = gSettings.config().m_drives;
+    std::vector<DriveInfo> validDrives;
+    for( auto& remoteDrive : remoteDrives )
     {
-        std::string hash = driveHash.toStdString();
-
+        std::string hash = remoteDrive.data.multisig;
         auto it = std::find_if( drives.begin(), drives.end(), [&hash] (const auto& driveInfo)
         {
             return boost::iequals( driveInfo.m_driveKey, hash );
@@ -190,10 +184,27 @@ void Model::onDrivesLoaded( const QStringList& driveList )
 
         if ( it == drives.end() )
         {
-            Model::addDrive( hash, hash, Model::homeFolder() / hash );
+            DriveInfo driveInfo;
+            driveInfo.m_driveKey = remoteDrive.data.multisig;
+            driveInfo.m_name = remoteDrive.data.multisig;
+            driveInfo.m_localDriveFolder = Model::homeFolder() / hash;
+            driveInfo.m_maxDriveSize = remoteDrive.data.size;
+            driveInfo.m_replicatorNumber = remoteDrive.data.replicatorCount;
+            driveInfo.m_isCreating = false;
+            driveInfo.m_isDeleting = false;
+            validDrives.push_back(driveInfo);
+        } else {
+            // update valid drive
+            it->m_replicatorNumber = remoteDrive.data.replicatorCount;
+            auto lastModification = remoteDrive.data.activeDataModifications.size() - 1;
+            it->m_currentModificationHash = remoteDrive.data.activeDataModifications[lastModification].dataModification.id;
+            it->m_rootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
+            validDrives.push_back(*it);
         }
     }
 
+    // remove closed drives from saved
+    gSettings.config().m_drives = validDrives;
     gSettings.save();
 }
 
@@ -245,6 +256,18 @@ void Model::removeDrive( const std::string& driveKey )
     }
 
     gSettings.save();
+}
+
+void Model::removeChannelByDriveKey(const std::string &driveKey) {
+    auto& channels = gSettings.config().m_dnChannels;
+    auto begin = channels.begin();
+    while(begin != channels.end()) {
+        if (boost::iequals( begin->m_driveHash, driveKey )) {
+            begin = channels.erase(begin);
+        } else {
+            ++begin;
+        }
+    }
 }
 
 void Model::applyForDrive( const std::string& driveKey, std::function<void(DriveInfo&)> func )

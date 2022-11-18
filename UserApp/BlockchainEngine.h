@@ -20,7 +20,7 @@ class BlockchainEngine : public QObject
 
 public:
     explicit BlockchainEngine(std::shared_ptr<xpx_chain_sdk::IClient> chainClient, QObject *parent = nullptr);
-    ~BlockchainEngine() override;
+    ~BlockchainEngine() = default;
 
 public:
     void init(int delay);
@@ -39,7 +39,8 @@ public:
     void getDownloadChannelById(const std::string& channelPublicKey,
                                 const std::function<void(xpx_chain_sdk::DownloadChannel, bool, std::string, std::string)>& callback);
 
-    void getDownloadChannels(const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage, bool, std::string, std::string)>& callback);
+    void getDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options,
+                             const std::function<void(xpx_chain_sdk::download_channels_page::DownloadChannelsPage, bool, std::string, std::string)>& callback);
 
     void getBlockByHeight(
             uint64_t height,
@@ -48,7 +49,8 @@ public:
     void getDriveById(const std::string& drivePublicKey,
                       const std::function<void(xpx_chain_sdk::Drive, bool, std::string, std::string)>& callback);
 
-    void getDrives(const std::function<void(xpx_chain_sdk::drives_page::DrivesPage, bool, std::string, std::string)>& callback);
+    void getDrives(const xpx_chain_sdk::DrivesPageOptions& options,
+                   const std::function<void(xpx_chain_sdk::drives_page::DrivesPage, bool, std::string, std::string)>& callback);
 
     void getTransactionInfo(xpx_chain_sdk::TransactionGroup group,
                             const std::string &id,
@@ -104,9 +106,11 @@ Q_DECLARE_METATYPE(xpx_chain_sdk::Drive)
 Q_DECLARE_METATYPE(sirius::drive::FsTree)
 Q_DECLARE_METATYPE(sirius::drive::ActionList)
 Q_DECLARE_METATYPE(xpx_chain_sdk::DownloadChannel)
+Q_DECLARE_METATYPE(std::vector<xpx_chain_sdk::DownloadChannel>)
 Q_DECLARE_METATYPE(xpx_chain_sdk::drives_page::DrivesPage)
 Q_DECLARE_METATYPE(xpx_chain_sdk::download_channels_page::DownloadChannelsPage)
 Q_DECLARE_METATYPE(xpx_chain_sdk::Replicator)
+Q_DECLARE_METATYPE(xpx_chain_sdk::replicators_page::ReplicatorsPage)
 Q_DECLARE_METATYPE(xpx_chain_sdk::NetworkInfo)
 Q_DECLARE_METATYPE(xpx_chain_sdk::AccountInfo)
 Q_DECLARE_METATYPE(std::shared_ptr<xpx_chain_sdk::transactions_info::BasicTransaction>)

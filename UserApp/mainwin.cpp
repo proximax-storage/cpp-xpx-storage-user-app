@@ -14,6 +14,7 @@
 #include "PrivKeyDialog.h"
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
+#include "CancelModificationDialog.h"
 #include "AddDriveDialog.h"
 #include "CloseDriveDialog.h"
 #include "ManageDrivesDialog.h"
@@ -102,7 +103,7 @@ void MainWin::init()
     {
         SettingsDialog settingsDialog( this );
         settingsDialog.exec();
-    });
+    }, Qt::QueuedConnection);
 
     const std::string privateKey = gSettings.config().m_privateKeyStr;
     qDebug() << LOG_SOURCE << "privateKey: " << privateKey;
@@ -118,7 +119,7 @@ void MainWin::init()
             AddDownloadChannelDialog dialog(m_onChainClient, this);
             connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
             dialog.exec();
-        });
+        }, Qt::QueuedConnection);
 
         connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
             ManageChannelsDialog dialog(m_onChainClient, this);
@@ -126,64 +127,44 @@ void MainWin::init()
             connect( &dialog, &ManageChannelsDialog::addDownloadChannel, this, &MainWin::addChannel );
             dialog.exec();
             updateChannelsCBox();
-        });
+        }, Qt::QueuedConnection);
 
         connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
             ManageDrivesDialog dialog(m_onChainClient, this);
             connect( &dialog, &ManageDrivesDialog::updateDrives, this, &MainWin::updateDrivesCBox );
             dialog.exec();
             updateDrivesCBox();
-        });
+        }, Qt::QueuedConnection);
 
-        connect(m_onChainClient, &OnChainClient::downloadChannelsLoadedByDrive, this, [this](const auto& channels)
+        connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,
+                [this](OnChainClient::ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages)
         {
-            qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
-
-            m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channels[0].toStdString(), [this, channels](auto channel, auto isSuccess, auto message, auto code)
-            {
-                if (!isSuccess) {
-                    qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                    return;
-                }
-
-                Model::onChannelsLoaded(channels, channel.data.drive, channel.data.listOfPublicKeys);
-                //Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
-                updateChannelsCBox();
-            });
-        });
-
-        connect(m_onChainClient, &OnChainClient::downloadChannelsLoadedByConsumer, this, [this](const auto& channels)
-        {
-            qDebug() << LOG_SOURCE << "downloadChannelsLoaded2: " << channels;
-
-            for (const auto& channel : channels) {
-                m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel.toStdString(), [this, channels](auto channel, auto isSuccess, auto message, auto code)
-                {
-                    if (!isSuccess) {
-                        qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-                        return;
-                    }
-
-                    Model::onChannelsLoaded(channels, channel.data.drive, channel.data.listOfPublicKeys);
-                    //Model::onSomeChannelLoaded( channel.data.id, channel.data.drive, channel.data.listOfPublicKeys );
-                    updateChannelsCBox();
-                });
+            qDebug() << LOG_SOURCE << "downloadChannelsLoaded pages amount: " << channelsPages.size();
+            if (type == OnChainClient::ChannelsType::MyOwn) {
+                Model::onMyOwnChannelsLoaded(channelsPages);
+            } else if (type == OnChainClient::ChannelsType::Sponsored) {
+                Model::onSponsoredChannelsLoaded(channelsPages);
             }
-        });
 
-        connect(m_onChainClient, &OnChainClient::drivesLoaded, this,[this](const auto& drives)
+            updateChannelsCBox();
+        }, Qt::QueuedConnection);
+
+        connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
         {
-            qDebug() << "drivesLoaded";
+            qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
+
 
             // add drives created on another devices
-            Model::onDrivesLoaded(drives);
+            Model::onDrivesLoaded(drivesPages);
             updateDrivesCBox();
 
-            for (int i = 0; i < ui->m_driveCBox->count(); i++) {
-                m_onChainClient->loadDownloadChannelsByDrive(ui->m_driveCBox->itemText(i));
-            }
+            // load my own channels
+            xpx_chain_sdk::DownloadChannelsPageOptions options;
+            options.consumerKey = gSettings.config().m_publicKeyStr;
+            m_onChainClient->loadDownloadChannels(options);
 
-            m_onChainClient->loadDownloadChannelsByConsumer(drives[0]);
+            // load sponsored channels
+            m_onChainClient->loadDownloadChannels({});
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
@@ -220,11 +201,22 @@ void MainWin::init()
             }
         }, Qt::QueuedConnection);
 
+        connect(ui->m_cancelModification, &QPushButton::released, this, [this] () {
+            auto drive = Model::currentDriveInfoPtr();
+            if (!drive) {
+                qWarning() << LOG_SOURCE << "bad drive";
+                return;
+            }
+
+            CancelModificationDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
+            dialog.exec();
+        }, Qt::QueuedConnection);
+
         connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
             AddDriveDialog dialog(m_onChainClient, this);
             connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, &MainWin::updateDrivesCBox );
             dialog.exec();
-        });
+        }, Qt::QueuedConnection);
 
         connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
             auto drive = Model::currentDriveInfoPtr();
@@ -240,7 +232,7 @@ void MainWin::init()
                 drive->m_isDeleting = true;
                 updateDrivesCBox();
             }
-        });
+        }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto alias, auto driveKey) {
             onDriveCreationConfirmed( alias, sirius::drive::toString( driveKey ) );
@@ -253,15 +245,20 @@ void MainWin::init()
         connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, [this](auto driveKey) {
             Model::removeDrive( sirius::drive::toString(driveKey) );
             updateDrivesCBox();
+            Model::removeChannelByDriveKey(sirius::drive::toString(driveKey));
+            updateChannelsCBox();
         }, Qt::QueuedConnection);
 
-        connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges);
+        connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName){
             qDebug() << "initializedSuccessfully";
             loadBalance();
             ui->m_networkName->setText(networkName);
-            m_onChainClient->loadDrives();
+
+            xpx_chain_sdk::DrivesPageOptions options;
+            options.owner = gSettings.config().m_publicKeyStr;
+            m_onChainClient->loadDrives(options);
 
             lockMainButtons(false);
 
@@ -272,12 +269,12 @@ void MainWin::init()
                 ui->m_channels->setCurrentIndex( dnChannelIndex );
                 onCurrentChannelChanged( dnChannelIndex );
             }
-        });
+        }, Qt::QueuedConnection);
 
         connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
             StoragePaymentDialog dialog(m_onChainClient, this);
             dialog.exec();
-        });
+        }, Qt::QueuedConnection);
 
         connect(ui->m_topupChannel, &QPushButton::released, this, [this] {
             DownloadPaymentDialog dialog(m_onChainClient, this);
@@ -290,14 +287,14 @@ void MainWin::init()
         connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
     }
 
-    connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh);
+    connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
 
     setupDownloadsTab();
     setupDrivesTab();
 
     // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
-    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();} );
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();}, Qt::QueuedConnection);
     m_downloadUpdateTimer->start(500); // 2 times per second
 
     lockMainButtons(true);
@@ -346,12 +343,12 @@ void MainWin::setupDownloadsTab()
     {
         qDebug() << LOG_SOURCE << "Channel index: " <<index;
         onCurrentChannelChanged( index );
-    });
+    }, Qt::QueuedConnection);
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
     {
         onDownloadBtn();
-    });
+    }, Qt::QueuedConnection);
 
 //    connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
 //    {
@@ -367,17 +364,17 @@ void MainWin::setupFsTreeTable()
         int toBeSelectedRow = m_fsTreeTableModel->onDoubleClick( index.row() );
         ui->m_fsTreeTableView->selectRow( toBeSelectedRow );
         ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
-    });
+    }, Qt::QueuedConnection);
 
     connect( ui->m_fsTreeTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
         selectFsTreeItem( index.row() );
-    });
+    }, Qt::QueuedConnection);
 
     connect( ui->m_fsTreeTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
     {
         selectFsTreeItem( index.row() );
-    });
+    }, Qt::QueuedConnection);
 
     m_fsTreeTableModel = new FsTreeTableModel();
 

@@ -1,26 +1,26 @@
-#include "CloseChannelDialog.h"
+#include "CancelModificationDialog.h"
 
-CloseChannelDialog::CloseChannelDialog(OnChainClient* onChainClient,
-                                       const QString& channelId,
-                                       const QString& alias,
-                                       QWidget *parent)
+CancelModificationDialog::CancelModificationDialog(OnChainClient* onChainClient,
+                                                   const QString& driveId,
+                                                   const QString& alias,
+                                                   QWidget *parent)
     : QMessageBox(parent)
-    , mChannelId(channelId)
     , mpOnChainClient(onChainClient)
+    , mDriveId(driveId)
 {
     setWindowTitle("Confirmation");
-    setText("Please confirm channel " + alias +  " removal");
+    setText("Please confirm canceling last modification for drive: " + alias);
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     setButtonText(QMessageBox::Ok, "Confirm");
 
-    connect(this->button(QMessageBox::Ok), &QPushButton::released, this, &CloseChannelDialog::accept);
-    connect(this->button(QMessageBox::Cancel), &QPushButton::released, this, &CloseChannelDialog::reject);
+    connect(this->button(QMessageBox::Ok), &QPushButton::released, this, &CancelModificationDialog::accept);
+    connect(this->button(QMessageBox::Cancel), &QPushButton::released, this, &CancelModificationDialog::reject);
 }
 
-void CloseChannelDialog::accept() {
-    mpOnChainClient->closeDownloadChannel(rawHashFromHex(mChannelId));
+void CancelModificationDialog::accept() {
+    mpOnChainClient->cancelDataModification(rawHashFromHex(mDriveId));
 }
 
-void CloseChannelDialog::reject() {
+void CancelModificationDialog::reject() {
 }

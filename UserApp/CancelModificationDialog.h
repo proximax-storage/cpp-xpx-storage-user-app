@@ -1,22 +1,22 @@
-#ifndef CLOSEDRIVEDIALOG_H
-#define CLOSEDRIVEDIALOG_H
+#ifndef CANCELMODIFICATIONDIALOG_H
+#define CANCELMODIFICATIONDIALOG_H
 
 #include <QMessageBox>
 #include <QPushButton>
 
 #include "OnChainClient.h"
 
-class CloseDriveDialog : public QMessageBox
+class CancelModificationDialog : public QMessageBox
 {
     Q_OBJECT
 
 public:
-    explicit CloseDriveDialog(OnChainClient* onChainClient,
-                              const QString& driveId,
-                              const QString& alias,
-                              QWidget *parent = nullptr);
+    explicit CancelModificationDialog(OnChainClient* onChainClient,
+                                      const QString& driveId,
+                                      const QString& alias,
+                                      QWidget *parent = nullptr);
 
-    ~CloseDriveDialog() = default;
+    ~CancelModificationDialog() = default;
 
 public:
     void accept() override;
@@ -27,4 +27,4 @@ private:
     QString mDriveId;
 };
 
-#endif // CLOSEDRIVEDIALOG_H
+#endif // CANCELMODIFICATIONDIALOG_H
