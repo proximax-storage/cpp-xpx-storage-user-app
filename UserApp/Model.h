@@ -9,9 +9,10 @@
 
 #include <cereal/types/chrono.hpp>
 
-
 #include "drive/ClientSession.h"
 #include "drive/FsTree.h"
+
+//#define USE_COMMON_FS_TREE_FOLDER
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = true;
