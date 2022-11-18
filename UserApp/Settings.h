@@ -16,6 +16,8 @@
 
 std::filesystem::path settingsFolder();
 
+inline std::filesystem::path fsTreesFolder() { return settingsFolder() / "FsTrees";}
+
 inline QDebug& operator<<(QDebug& out, const std::string& str) { out << QString::fromStdString(str); return out; }
 
 

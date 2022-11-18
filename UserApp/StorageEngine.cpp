@@ -110,11 +110,19 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 
     qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
+#ifdef USE_COMMON_FS_TREE_FOLDER
+    auto fsTreeSaveFolder = fsTreesFolder()/"FsTrees";
+#else
     auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
+#endif
 
 //    auto tmpRequestingFsTreeTorrent =
                     m_session->download( sirius::drive::DownloadContext(
+                         #ifdef USE_COMMON_FS_TREE_FOLDER
+                                             sirius::drive::DownloadContext::file_from_drive,
+                         #else
                                             sirius::drive::DownloadContext::fs_tree,
+                         #endif
                                             [ onFsTreeReceived, driveHash, fsTreeSaveFolder ]
                                              ( sirius::drive::download_status::code code,
                                                 const sirius::drive::InfoHash& infoHash,
@@ -127,7 +135,11 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                                 sirius::drive::FsTree fsTree;
                                                 try
                                                 {
+                        #ifdef USE_COMMON_FS_TREE_FOLDER
+                                                    fsTree.deserialize( fsTreeSaveFolder / sirius::drive::toString(infoHash) );
+                        #else
                                                     fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+                        #endif
                                                 } catch (const std::runtime_error& ex )
                                                 {
                                                     qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();

@@ -1063,6 +1063,11 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
+
+//    static auto label = new QLabel( this );//ui->m_driveTreeView);
+//    label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
+//    label->setGeometry(QRect(100,100,100,100));
+//    label->stackUnder( ui->m_drivesTab );
 }
 
 void MainWin::updateDrivesCBox()
@@ -1226,14 +1231,23 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
         // Check previously saved FsTree-s
         {
+#ifdef USE_COMMON_FS_TREE_FOLDER
+            auto fsTreeSaveFolder = fsTreesFolder();
+            if ( fs::exists( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) ) )
+#else
             auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
             if ( fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME ) )
+#endif
             {
                 sirius::drive::FsTree fsTree;
                 try
                 {
                     qDebug() << LOG_SOURCE << "Using already saved fsTree";
+#ifdef USE_COMMON_FS_TREE_FOLDER
+                    fsTree.deserialize( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) );
+#else
                     fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+#endif
                 } catch (const std::runtime_error& ex )
                 {
                     qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();

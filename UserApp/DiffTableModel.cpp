@@ -30,7 +30,7 @@ int DiffTableModel::rowCount(const QModelIndex &) const
 
 int DiffTableModel::columnCount(const QModelIndex &parent) const
 {
-    return 2;
+    return 1;
 }
 
 QVariant DiffTableModel::data(const QModelIndex &index, int role) const
