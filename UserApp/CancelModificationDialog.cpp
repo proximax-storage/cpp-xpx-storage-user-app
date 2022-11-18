@@ -1,14 +1,26 @@
-#include "CancelModificationDialog.h"
-#include "ui_CancelModificationDialog.h"
+#include "CloseChannelDialog.h"
 
-CancelModificationDialog::CancelModificationDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::CancelModificationDialog)
+CloseChannelDialog::CloseChannelDialog(OnChainClient* onChainClient,
+                                       const QString& channelId,
+                                       const QString& alias,
+                                       QWidget *parent)
+    : QMessageBox(parent)
+    , mChannelId(channelId)
+    , mpOnChainClient(onChainClient)
 {
-    ui->setupUi(this);
+    setWindowTitle("Confirmation");
+    setText("Please confirm channel " + alias +  " removal");
+    setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    setDefaultButton(QMessageBox::Cancel);
+    setButtonText(QMessageBox::Ok, "Confirm");
+
+    connect(this->button(QMessageBox::Ok), &QPushButton::released, this, &CloseChannelDialog::accept);
+    connect(this->button(QMessageBox::Cancel), &QPushButton::released, this, &CloseChannelDialog::reject);
 }
 
-CancelModificationDialog::~CancelModificationDialog()
-{
-    delete ui;
+void CloseChannelDialog::accept() {
+    mpOnChainClient->closeDownloadChannel(rawHashFromHex(mChannelId));
+}
+
+void CloseChannelDialog::reject() {
 }
