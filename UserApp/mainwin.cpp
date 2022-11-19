@@ -85,6 +85,24 @@ void MainWin::init()
         }
     }
 
+    // Clear old fsTrees
+    //
+
+//#ifdef USE_COMMON_FS_TREE_FOLDER
+//    if ( fs::exists( fsTreesFolder() ) )
+//    {
+//        try {
+//             fs::remove_all( fsTreesFolder() );
+//        } catch( const std::runtime_error& err ) {
+//             QMessageBox msgBox(this);
+//             msgBox.setText( QString::fromStdString( "Cannot remove fsTreesFolder") );
+//             msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
+//             msgBox.setStandardButtons( QMessageBox::Ok );
+//             msgBox.exec();
+//        }
+//    }
+//#endif
+
     Model::startStorageEngine( [this]
     {
 //         QMessageBox msgBox(this);
@@ -300,6 +318,21 @@ void MainWin::init()
     lockMainButtons(true);
 
     ui->tabWidget->setTabVisible(2, false);
+
+//    static auto frame = new QFrame(this);
+//    frame->setGeometry(QRect(300,300,300,300));
+//    frame->setFrameShape( QFrame::StyledPanel );
+//    frame->setLineWidth(1);
+//    frame->setAutoFillBackground(true);
+//    frame->setBackgroundRole(QPalette::Midlight);
+//    //static auto label = new QLabel( frame );
+//    static auto button = new QPushButton( frame );
+//    button->setVisible(true);
+//    button->setText("sendButton");
+//    //label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
+//    //label->setGeometry(QRect(100,100,100,100));
+//    frame->stackUnder( this );
+
 }
 
 MainWin::~MainWin()
@@ -1063,11 +1096,6 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
-
-//    static auto label = new QLabel( this );//ui->m_driveTreeView);
-//    label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
-//    label->setGeometry(QRect(100,100,100,100));
-//    label->stackUnder( ui->m_drivesTab );
 }
 
 void MainWin::updateDrivesCBox()
