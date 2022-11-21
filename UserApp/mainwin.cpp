@@ -1244,6 +1244,13 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
         {
             qDebug() << LOG_SOURCE << "rootHash Is Not Changed";
 
+            drivePtr->m_downloadingFsTree = false;
+
+            Model::applyForChannels( driveKey, [&] (ChannelInfo& channelInfo)
+            {
+                channelInfo.m_waitingFsTree = false;
+            });
+
             if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveKey )
             {
                 this->m_fsTreeTableModel->updateRows();
