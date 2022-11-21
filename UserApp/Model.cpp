@@ -196,9 +196,12 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         } else {
             // update valid drive
             it->m_replicatorNumber = remoteDrive.data.replicatorCount;
-            auto lastModification = remoteDrive.data.activeDataModifications.size() - 1;
-            it->m_currentModificationHash = remoteDrive.data.activeDataModifications[lastModification].dataModification.id;
-            it->m_rootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
+            if ( ! remoteDrive.data.activeDataModifications.empty() )
+            {
+                auto lastModification = remoteDrive.data.activeDataModifications.size() - 1;
+                it->m_currentModificationHash = remoteDrive.data.activeDataModifications[lastModification].dataModification.id;
+            }
+            //it->m_rootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
             validDrives.push_back(*it);
         }
     }
