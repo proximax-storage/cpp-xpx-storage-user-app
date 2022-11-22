@@ -1285,7 +1285,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
                 } catch (const std::runtime_error& ex )
                 {
                     qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
-                    qDebug() << LOG_SOURCE << "Invalid fsTree: fsTreeSaveFolder:" << fsTreeSaveFolder;
+//                    qDebug() << LOG_SOURCE << "Invalid fsTree: fsTreeSaveFolder:" << fsTreeSaveFolder;
                     fsTree = {};
                     fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
                 }
