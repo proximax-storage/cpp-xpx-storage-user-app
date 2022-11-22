@@ -88,20 +88,28 @@ void MainWin::init()
     // Clear old fsTrees
     //
 
-//#ifdef USE_COMMON_FS_TREE_FOLDER
-//    if ( fs::exists( fsTreesFolder() ) )
-//    {
-//        try {
-//             fs::remove_all( fsTreesFolder() );
-//        } catch( const std::runtime_error& err ) {
-//             QMessageBox msgBox(this);
-//             msgBox.setText( QString::fromStdString( "Cannot remove fsTreesFolder") );
-//             msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
-//             msgBox.setStandardButtons( QMessageBox::Ok );
-//             msgBox.exec();
-//        }
-//    }
-//#endif
+    if ( fs::exists( fsTreesFolder() ) )
+    {
+        try {
+             fs::remove_all( fsTreesFolder() );
+        } catch( const std::runtime_error& err ) {
+             QMessageBox msgBox(this);
+             msgBox.setText( QString::fromStdString( "Cannot remove fsTreesFolder") );
+             msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
+             msgBox.setStandardButtons( QMessageBox::Ok );
+             msgBox.exec();
+        }
+    }
+
+    try {
+        fs::create_directories( fsTreesFolder() );
+    } catch( const std::runtime_error& err ) {
+         QMessageBox msgBox(this);
+         msgBox.setText( QString::fromStdString( "Cannot create fsTreesFolder") );
+         msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
+         msgBox.setStandardButtons( QMessageBox::Ok );
+         msgBox.exec();
+    }
 
     Model::startStorageEngine( [this]
     {
@@ -1266,26 +1274,18 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
         // Check previously saved FsTree-s
         {
-#ifdef USE_COMMON_FS_TREE_FOLDER
-            auto fsTreeSaveFolder = fsTreesFolder();
-            if ( fs::exists( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) ) )
-#else
-            auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
+            auto fsTreeSaveFolder = fsTreesFolder()/sirius::drive::toString(fsTreeHash);
             if ( fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME ) )
-#endif
             {
                 sirius::drive::FsTree fsTree;
                 try
                 {
                     qDebug() << LOG_SOURCE << "Using already saved fsTree";
-#ifdef USE_COMMON_FS_TREE_FOLDER
-                    fsTree.deserialize( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) );
-#else
                     fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
-#endif
                 } catch (const std::runtime_error& ex )
                 {
                     qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
+                    qDebug() << LOG_SOURCE << "Invalid fsTree: fsTreeSaveFolder:" << fsTreeSaveFolder;
                     fsTree = {};
                     fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
                 }
