@@ -85,6 +85,32 @@ void MainWin::init()
         }
     }
 
+    // Clear old fsTrees
+    //
+
+    if ( fs::exists( fsTreesFolder() ) )
+    {
+        try {
+             fs::remove_all( fsTreesFolder() );
+        } catch( const std::runtime_error& err ) {
+             QMessageBox msgBox(this);
+             msgBox.setText( QString::fromStdString( "Cannot remove fsTreesFolder") );
+             msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
+             msgBox.setStandardButtons( QMessageBox::Ok );
+             msgBox.exec();
+        }
+    }
+
+    try {
+        fs::create_directories( fsTreesFolder() );
+    } catch( const std::runtime_error& err ) {
+         QMessageBox msgBox(this);
+         msgBox.setText( QString::fromStdString( "Cannot create fsTreesFolder") );
+         msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
+         msgBox.setStandardButtons( QMessageBox::Ok );
+         msgBox.exec();
+    }
+
     Model::startStorageEngine( [this]
     {
 //         QMessageBox msgBox(this);
@@ -300,6 +326,21 @@ void MainWin::init()
     lockMainButtons(true);
 
     ui->tabWidget->setTabVisible(2, false);
+
+//    static auto frame = new QFrame(this);
+//    frame->setGeometry(QRect(300,300,300,300));
+//    frame->setFrameShape( QFrame::StyledPanel );
+//    frame->setLineWidth(1);
+//    frame->setAutoFillBackground(true);
+//    frame->setBackgroundRole(QPalette::Midlight);
+//    //static auto label = new QLabel( frame );
+//    static auto button = new QPushButton( frame );
+//    button->setVisible(true);
+//    button->setText("sendButton");
+//    //label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
+//    //label->setGeometry(QRect(100,100,100,100));
+//    frame->stackUnder( this );
+
 }
 
 MainWin::~MainWin()
@@ -1063,11 +1104,6 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
-
-//    static auto label = new QLabel( this );//ui->m_driveTreeView);
-//    label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
-//    label->setGeometry(QRect(100,100,100,100));
-//    label->stackUnder( ui->m_drivesTab );
 }
 
 void MainWin::updateDrivesCBox()
@@ -1216,6 +1252,13 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
         {
             qDebug() << LOG_SOURCE << "rootHash Is Not Changed";
 
+            drivePtr->m_downloadingFsTree = false;
+
+            Model::applyForChannels( driveKey, [&] (ChannelInfo& channelInfo)
+            {
+                channelInfo.m_waitingFsTree = false;
+            });
+
             if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveKey )
             {
                 this->m_fsTreeTableModel->updateRows();
@@ -1231,26 +1274,18 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
         // Check previously saved FsTree-s
         {
-#ifdef USE_COMMON_FS_TREE_FOLDER
-            auto fsTreeSaveFolder = fsTreesFolder();
-            if ( fs::exists( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) ) )
-#else
-            auto fsTreeSaveFolder = settingsFolder()/sirius::drive::toString(fsTreeHash);
+            auto fsTreeSaveFolder = fsTreesFolder()/sirius::drive::toString(fsTreeHash);
             if ( fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME ) )
-#endif
             {
                 sirius::drive::FsTree fsTree;
                 try
                 {
                     qDebug() << LOG_SOURCE << "Using already saved fsTree";
-#ifdef USE_COMMON_FS_TREE_FOLDER
-                    fsTree.deserialize( fsTreeSaveFolder / sirius::drive::toString(fsTreeHash) );
-#else
                     fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
-#endif
                 } catch (const std::runtime_error& ex )
                 {
                     qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
+//                    qDebug() << LOG_SOURCE << "Invalid fsTree: fsTreeSaveFolder:" << fsTreeSaveFolder;
                     fsTree = {};
                     fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
                 }

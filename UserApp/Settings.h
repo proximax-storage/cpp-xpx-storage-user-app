@@ -111,7 +111,7 @@ public:
 
     ChannelInfo* currentChannelInfoPtr()
     {
-        if ( config().m_currentDnChannelIndex < 0 && config().m_currentDnChannelIndex >= config().m_dnChannels.size() )
+        if ( config().m_currentDnChannelIndex < 0 || config().m_currentDnChannelIndex >= config().m_dnChannels.size() )
         {
             return nullptr;
         }
