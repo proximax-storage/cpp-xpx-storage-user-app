@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <boost/algorithm/string/predicate.hpp>
 
-OnChainClient::OnChainClient(std::shared_ptr<StorageEngine> storage,
+OnChainClient::OnChainClient(StorageEngine* storage,
                              const std::string& privateKey,
                              const std::string& address,
                              const std::string& port,
@@ -121,7 +121,7 @@ void OnChainClient::loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPa
     });
 }
 
-std::shared_ptr<BlockchainEngine> OnChainClient::getBlockchainEngine() {
+BlockchainEngine* OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
 }
 
@@ -185,77 +185,77 @@ void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const
 }
 
 void OnChainClient::initConnects() {
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
+    connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
         emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
         emit downloadChannelOpenTransactionFailed(channelId, errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDownloadChannelConfirmed, this, [this](auto channelId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelConfirmed, this, [this](auto channelId) {
         emit downloadChannelCloseTransactionConfirmed(channelId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDownloadChannelFailed, this, [this](auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelFailed, this, [this](auto errorText) {
         emit downloadChannelCloseTransactionFailed(errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveConfirmed, this, [this](auto alias, auto driveId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::createDriveConfirmed, this, [this](auto alias, auto driveId) {
         emit prepareDriveTransactionConfirmed(alias, driveId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::createDriveFailed, this, [this](auto alias, auto driveKey, auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::createDriveFailed, this, [this](auto alias, auto driveKey, auto errorText) {
         emit prepareDriveTransactionFailed(alias, driveKey, errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveConfirmed, this, [this](auto driveId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDriveConfirmed, this, [this](auto driveId) {
         emit closeDriveTransactionConfirmed(driveId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
         emit closeDriveTransactionFailed(errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentConfirmed, this, [this](auto channelId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::downloadPaymentConfirmed, this, [this](auto channelId) {
         emit downloadPaymentTransactionConfirmed(channelId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::downloadPaymentFailed, this, [this](auto channelId, auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::downloadPaymentFailed, this, [this](auto channelId, auto errorText) {
         emit downloadPaymentTransactionFailed(channelId, errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentConfirmed, this, [this](auto driveId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::storagePaymentConfirmed, this, [this](auto driveId) {
         emit storagePaymentTransactionConfirmed(driveId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::storagePaymentFailed, this, [this](auto driveId, auto errorText) {
+    connect(mpTransactionsEngine, &TransactionsEngine::storagePaymentFailed, this, [this](auto driveId, auto errorText) {
         emit storagePaymentTransactionFailed(driveId, errorText);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {
+    connect(mpTransactionsEngine, &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {
         uint64_t modificationsSize = 0;
         auto hash = mpStorageEngine->addActions(actionList, driveId,  sandboxFolder, modificationsSize);
         callback(modificationsSize, hash.array());
     }, Qt::QueuedConnection);
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationConfirmed, this, [this](auto modificationId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationConfirmed, this, [this](auto modificationId) {
         emit dataModificationTransactionConfirmed(modificationId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationFailed, this, [this](auto modificationId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto modificationId) {
         emit dataModificationTransactionFailed(modificationId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
         emit cancelModificationTransactionConfirmed(driveId, modificationId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::cancelModificationFailed, this, [this](auto modificationId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto modificationId) {
         emit cancelModificationTransactionFailed(modificationId);
     });
 
-    connect(mpTransactionsEngine.get(), &TransactionsEngine::dataModificationApprovalConfirmed, this,
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
                 auto callback = [this](const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree) {
@@ -276,20 +276,20 @@ void OnChainClient::initAccount(const std::string &privateKey) {
         xpx_chain_sdk::Key key;
         ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
         return xpx_chain_sdk::PrivateKey(key.data(), key.size());
-    }, mpChainClient->getConfig()->NetworkId);
+    }, mpChainClient->getConfig().NetworkId);
 }
 
 void OnChainClient::init(const std::string& address,
                          const std::string& port,
                          const std::string& privateKey) {
-    auto config = std::shared_ptr<xpx_chain_sdk::Config>(&xpx_chain_sdk::GetConfig());
-    config->nodeAddress = address;
-    config->port = port;
+    xpx_chain_sdk::Config& config = xpx_chain_sdk::GetConfig();
+    config.nodeAddress = address;
+    config.port = port;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
-    mpBlockchainEngine = std::make_shared<BlockchainEngine>(mpChainClient);
+    mpBlockchainEngine = new BlockchainEngine(mpChainClient, this);
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
-    mpBlockchainEngine->getNetworkInfo([this, config, privateKey](auto info, auto isSuccess, auto message, auto code) {
+    mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << __FILE__ << "message: " << message.c_str() << " code: " << code.c_str();
             emit initializedFailed(message.c_str());
@@ -297,31 +297,31 @@ void OnChainClient::init(const std::string& address,
         }
 
         if ("mijin" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin;
         } else if ("mijinTest" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin_Test;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin_Test;
         } else if ("private" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Private;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Private;
         } else if ("privateTest" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Private_Test;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Private_Test;
         } else if ("public" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Public;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public;
         } else if ("publicTest" == info.name) {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Public_Test;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public_Test;
         } else {
-            config->NetworkId = xpx_chain_sdk::NetworkIdentifier::Zero;
+            config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Zero;
         }
 
-        mpBlockchainEngine->getBlockByHeight(1, [this, config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
+        mpBlockchainEngine->getBlockByHeight(1, [this, &config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
                 emit initializedFailed(message.c_str());
                 return;
             }
 
-            config->GenerationHash = block.meta.generationHash;
+            config.GenerationHash = block.meta.generationHash;
             initAccount(privateKey);
-            mpTransactionsEngine = std::make_shared<TransactionsEngine>(mpChainClient, mpChainAccount, mpBlockchainEngine);
+            mpTransactionsEngine = new TransactionsEngine(mpChainClient, mpChainAccount, mpBlockchainEngine, this);
             initConnects();
             emit initializedSuccessfully(info.name.c_str());
         });

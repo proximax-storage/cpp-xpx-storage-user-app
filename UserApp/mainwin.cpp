@@ -113,7 +113,7 @@ void MainWin::init()
 
     if ( !ALEX_LOCAL_TEST )
     {
-        m_onChainClient = new OnChainClient(gStorageEngine, privateKey, address, port, this);
+        m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, address, port, this);
 
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);

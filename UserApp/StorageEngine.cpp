@@ -11,6 +11,10 @@
 
 #include <boost/algorithm/string.hpp>
 
+StorageEngine::StorageEngine(QObject *parent)
+    : QObject(parent)
+{}
+
 sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
                                                   const sirius::Key &driveId,
                                                   const std::string &sandboxFolder,

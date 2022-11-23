@@ -8,8 +8,10 @@
 
 TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client,
                                        std::shared_ptr<xpx_chain_sdk::Account> account,
-                                       std::shared_ptr<BlockchainEngine> blockchainEngine)
-    : mpChainClient(client)
+                                       BlockchainEngine* blockchainEngine,
+                                       QObject* parent)
+    : QObject(parent)
+    , mpChainClient(client)
     , mpBlockchainEngine(blockchainEngine)
     , mpChainAccount(account)
 {}
@@ -34,7 +36,7 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
 
     // TODO: fix empty list of keys
     auto downloadTransaction = xpx_chain_sdk::CreateDownloadTransaction(driveKey, prepaidSize, feedbacksNumber, listOfAllowedPks.size(), listOfAllowedPks,
-                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(downloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -88,7 +90,7 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::ParseHexStringIntoContainer(channelIdHex.toStdString().c_str(), channelIdHex.size(), channelIdKey);
 
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
-    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(finishDownloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -135,7 +137,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
 
     auto downloadPaymentTransaction = xpx_chain_sdk::CreateDownloadPaymentTransaction(channelIdKey, prepaidSize, feedbackFeeAmount,
-                                                                                      std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+                                                                                      std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(downloadPaymentTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -179,7 +181,7 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
-    auto storagePaymentTransaction = xpx_chain_sdk::CreateStoragePaymentTransaction(driveKey, amount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    auto storagePaymentTransaction = xpx_chain_sdk::CreateStoragePaymentTransaction(driveKey, amount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(storagePaymentTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -216,7 +218,7 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
 
 std::string TransactionsEngine::addDrive(const std::string& driveAlias, const uint64_t& driveSize, const ushort replicatorsCount) {
     xpx_chain_sdk::Amount verificationFeeAmount = 100;
-    auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(prepareDriveTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -263,7 +265,7 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
-    auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+    auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(driveClosureTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -325,7 +327,7 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
         xpx_chain_sdk::ParseHexStringIntoContainer(modificationHex.toStdString().c_str(), modificationHex.size(), modificationHash256);
 
         auto dataModificationCancelTransaction = xpx_chain_sdk::CreateDataModificationCancelTransaction(rawDriveKey, modificationHash256,
-                                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+                                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
         mpChainAccount->signTransaction(dataModificationCancelTransaction.get());
 
         xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -456,7 +458,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKeyRaw);
 
     auto dataModificationTransaction = xpx_chain_sdk::CreateDataModificationTransaction(driveKeyRaw, downloadDataCdi, uploadSize, feedbackFeeAmount,
-                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig()->NetworkId);
+                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;

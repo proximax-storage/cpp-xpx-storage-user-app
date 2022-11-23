@@ -16,7 +16,7 @@ class OnChainClient : public QObject
     Q_ENUM()
 
     public:
-        OnChainClient(std::shared_ptr<StorageEngine> storage,
+        OnChainClient(StorageEngine* storage,
                       const std::string& privateKey,
                       const std::string& address,
                       const std::string& port,
@@ -31,7 +31,7 @@ class OnChainClient : public QObject
         void loadDrives(const xpx_chain_sdk::DrivesPageOptions& options);
         void loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options);
 
-        std::shared_ptr<BlockchainEngine> getBlockchainEngine();
+        BlockchainEngine* getBlockchainEngine();
 
         std::string addDownloadChannel(const std::string& channelAlias,
                                        const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
@@ -90,9 +90,9 @@ class OnChainClient : public QObject
         void loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
 
     private:
-        std::shared_ptr<StorageEngine> mpStorageEngine;
-        std::shared_ptr<BlockchainEngine> mpBlockchainEngine;
-        std::shared_ptr<TransactionsEngine> mpTransactionsEngine;
+        StorageEngine* mpStorageEngine;
+        BlockchainEngine* mpBlockchainEngine;
+        TransactionsEngine* mpTransactionsEngine;
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         std::map<QUuid, std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>> mLoadedChannels;

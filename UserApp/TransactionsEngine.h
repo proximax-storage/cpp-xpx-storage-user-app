@@ -12,7 +12,10 @@ class TransactionsEngine : public QObject
     Q_OBJECT
 
     public:
-        TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client, std::shared_ptr<xpx_chain_sdk::Account> account, std::shared_ptr<BlockchainEngine> blockchainEngine);
+        TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client,
+                           std::shared_ptr<xpx_chain_sdk::Account> account,
+                           BlockchainEngine* blockchainEngine,
+                           QObject* parent = nullptr);
         ~TransactionsEngine() = default;
 
     public:
@@ -92,7 +95,7 @@ class TransactionsEngine : public QObject
     private:
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
-        std::shared_ptr<BlockchainEngine> mpBlockchainEngine;
+        BlockchainEngine* mpBlockchainEngine;
         std::map<std::array<uint8_t, 32>, std::set<std::array<uint8_t, 32>>> mDataModificationApprovals;
 };
 

@@ -1,6 +1,7 @@
 #ifndef STORAGEENGINE_H
 #define STORAGEENGINE_H
 
+#include <QObject>
 #include <memory>
 #include <string>
 #include <functional>
@@ -16,15 +17,17 @@ namespace sirius { namespace drive {
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
 
-class StorageEngine
+class StorageEngine : public QObject
 {
+    Q_OBJECT
+
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
 
     //std::vector<lt::torrent_handle>                 m_fsTreeLtHandles;
     std::recursive_mutex                            m_mutex;
 
 public:
-    StorageEngine() {}
+    StorageEngine(QObject* parent = nullptr);
 
     sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,
                                        const sirius::Key& driveId,
