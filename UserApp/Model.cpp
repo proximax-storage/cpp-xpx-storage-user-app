@@ -200,6 +200,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             {
                 auto lastModification = remoteDrive.data.activeDataModifications.size() - 1;
                 it->m_currentModificationHash = remoteDrive.data.activeDataModifications[lastModification].dataModification.id;
+                //TODO
+                it->m_modificationStatus = is_registring;
             }
             //it->m_rootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
             validDrives.push_back(*it);

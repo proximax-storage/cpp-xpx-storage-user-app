@@ -186,7 +186,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -559,13 +559,6 @@
              <widget class="QPushButton" name="m_openLocalFolderBtn">
               <property name="text">
                <string>Open local folder</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_19">
-              <property name="text">
-               <string>Update local drive with remote</string>
               </property>
              </widget>
             </item>

@@ -22,6 +22,7 @@
 #include "DownloadPaymentDialog.h"
 #include "StoragePaymentDialog.h"
 #include "OnChainClient.h"
+#include "ModifyProgressPanel.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -183,6 +184,7 @@ void MainWin::init()
             // add drives created on another devices
             Model::onDrivesLoaded(drivesPages);
             updateDrivesCBox();
+            updateModificationStatus();
 
             // load my own channels
             xpx_chain_sdk::DownloadChannelsPageOptions options;
@@ -327,25 +329,82 @@ void MainWin::init()
 
     ui->tabWidget->setTabVisible(2, false);
 
-//    static auto frame = new QFrame(this);
-//    frame->setGeometry(QRect(300,300,300,300));
-//    frame->setFrameShape( QFrame::StyledPanel );
-//    frame->setLineWidth(1);
-//    frame->setAutoFillBackground(true);
-//    frame->setBackgroundRole(QPalette::Midlight);
-//    //static auto label = new QLabel( frame );
-//    static auto button = new QPushButton( frame );
-//    button->setVisible(true);
-//    button->setText("sendButton");
-//    //label->setText("hhhhhhhhhhhhhhhhhhhhhhhh");
-//    //label->setGeometry(QRect(100,100,100,100));
-//    frame->stackUnder( this );
+    m_modifyProgressPanel = new ModifyProgressPanel( 350, 350, this, [this] { updateModificationStatus(); } );
 
+    connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus );
+
+    updateModificationStatus();
 }
 
 MainWin::~MainWin()
 {
+    delete m_modifyProgressPanel;
     delete ui;
+}
+
+void MainWin::cancelModification()
+{
+    auto drive = Model::currentDriveInfoPtr();
+    if (!drive) {
+        qWarning() << LOG_SOURCE << "bad drive";
+        return;
+    }
+
+    CancelModificationDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
+    dialog.exec();
+}
+
+void MainWin::updateModificationStatus()
+{
+    if ( ui->tabWidget->currentIndex() != 1 )
+    {
+        m_modifyProgressPanel->setVisible(false);
+    }
+    else
+    {
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo == nullptr )
+        {
+            m_modifyProgressPanel->setVisible(false);
+        }
+        else
+        {
+            switch( driveInfo->m_modificationStatus )
+            {
+            case no_modification:
+                m_modifyProgressPanel->setVisible(false);
+                break;
+            case is_registring:
+                m_modifyProgressPanel->setIsRegistring();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            case is_registred:
+                m_modifyProgressPanel->setIsRegistred();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+                //is_failed, is_canceling, is_canceled
+            case is_approved:
+                m_modifyProgressPanel->setIsApproved();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            case is_approvedWithOldRootHash:
+                m_modifyProgressPanel->setIsApprovedWithOldRootHash();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            case is_failed:
+                m_modifyProgressPanel->setIsFailed();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            case is_canceling:
+                m_modifyProgressPanel->setIsCanceling();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            case is_canceled:
+                m_modifyProgressPanel->setIsCanceled();
+                m_modifyProgressPanel->setVisible(true);
+                break;
+            }
+        }
+    }
 }
 
 void MainWin::setupIcons() {
@@ -779,14 +838,6 @@ void MainWin::onApplyChanges()
         return;
     }
 
-//    auto channel = Model::currentChannelInfoPtr();
-//    if (!channel) {
-//        qWarning() << LOG_SOURCE << "bad channel";
-//        return;
-//    }
-
-//    auto channelId = rawHashFromHex(channel->m_hash.c_str());
-    auto channelId = rawHashFromHex("BA396348BB5D5A352882A7E2C79B7B42AE0074D9CBD3B7F9C32ABFC234564F27");
     const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
     auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
     m_onChainClient->applyDataModification(driveKeyHex, actions, sandbox);
@@ -864,6 +915,12 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
     msgBox.setText( "Your modification was registered."  );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+//    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+//    for( auto& driveInfo : Model::drives() )
+//    {
+//        if ( driveInfo.m_currentModificationHash == modificationId )
+//    }
 }
 
 void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32> &modificationId) {
