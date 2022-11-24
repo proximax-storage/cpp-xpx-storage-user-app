@@ -62,6 +62,7 @@ class TransactionsEngine : public QObject
         void dataModificationFailed(const std::array<uint8_t, 32>& modificationId);
         void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void cancelModificationFailed(const QString& modificationId);
+        void modificationCreated(const QString& driveId, const QString& modificationId);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,

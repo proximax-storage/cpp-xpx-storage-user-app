@@ -467,6 +467,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> replicatorsStatusNotifier;
 
     const std::string hash = rawHashToHex(dataModificationTransaction->hash()).toStdString();
+    emit modificationCreated(driveKeyHex, hash.c_str());
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
     statusNotifier.set([this, hash, modificationId, driveKeyHex, replicators,
