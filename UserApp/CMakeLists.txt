@@ -67,6 +67,7 @@ set(PROJECT_SOURCES
         DriveTreeModel.h            DriveTreeModel.cpp
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
+        ModifyProgressPanel.h       ModifyProgressPanel.cpp
 
         LocalDriveItem.h
         BlockchainEngine.cpp        BlockchainEngine.h

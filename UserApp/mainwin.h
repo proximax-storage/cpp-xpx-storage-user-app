@@ -15,6 +15,7 @@ class DownloadsTableModel;
 class DriveTreeModel;
 class DiffTableModel;
 class OnChainClient;
+class ModifyProgressPanel;
 
 namespace sirius { namespace drive
 {
@@ -40,6 +41,9 @@ public:
 
 private:
     bool requestPrivateKey();
+
+    void updateModificationStatus();
+    void cancelModification();
 
     void setupIcons();
     void setupDownloadsTab();
@@ -98,6 +102,8 @@ private:
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
     OnChainClient*          m_onChainClient;
+
+    ModifyProgressPanel*    m_modifyProgressPanel;
 
     std::string             m_lastSelectedChannelKey;
     std::string             m_lastSelectedDriveKey;
