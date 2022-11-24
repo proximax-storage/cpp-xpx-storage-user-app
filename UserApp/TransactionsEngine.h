@@ -83,6 +83,11 @@ class TransactionsEngine : public QObject
                                           std::function<void()> onSuccess = {},
                                           std::function<void(boost::beast::error_code errorCode)> onError = {});
 
+        void removeUnconfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
+                                            const std::string &id,
+                                            std::function<void()> onSuccess = {},
+                                            std::function<void(boost::beast::error_code errorCode)> onError = {});
+
         void removeStatusNotifier(const xpx_chain_sdk::Address& address,
                                   const std::string& id,
                                   std::function<void()> onSuccess = {},

@@ -476,7 +476,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
-            removeConfirmedAddedNotifier(mpChainAccount->address(), dataModificationNotifierId);
+            removeUnconfirmedAddedNotifier(mpChainAccount->address(), dataModificationNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
             unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId);
@@ -496,7 +496,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             qInfo() << LOG_SOURCE << "confirmed dataModificationTransaction hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
-            removeConfirmedAddedNotifier(mpChainAccount->address(), id);
+            removeUnconfirmedAddedNotifier(mpChainAccount->address(), id);
 
             emit dataModificationConfirmed(modificationId);
         }
@@ -579,9 +579,9 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     auto approvalNotifierId = dataModificationApprovalTransactionNotifier.getId();
     auto statusNotifierId = replicatorsStatusNotifier.getId();
-    mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { dataModificationNotifier },
-                                                               [this, data = dataModificationTransaction->binary()]() { announceTransaction(data); },
-                                                               [this, hash, replicators, approvalNotifierId, statusNotifierId](auto error) {
+    mpChainClient->notifications()->addUnconfirmedAddedNotifiers(mpChainAccount->address(), { dataModificationNotifier },
+                                                                [this, data = dataModificationTransaction->binary()]() { announceTransaction(data); },
+                                                                [this, hash, replicators, approvalNotifierId, statusNotifierId](auto error) {
         onError(hash, error);
         unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId); });
 }
@@ -591,6 +591,15 @@ void TransactionsEngine::removeConfirmedAddedNotifier(const xpx_chain_sdk::Addre
                                                       std::function<void()> onSuccess,
                                                       std::function<void(boost::beast::error_code)> onError) {
     mpChainClient->notifications()->removeConfirmedAddedNotifiers(address, onSuccess, onError ? onError : [](auto code) {
+        qWarning() << LOG_SOURCE << code.message().c_str();
+    }, { id });
+}
+
+void TransactionsEngine::removeUnconfirmedAddedNotifier(const xpx_chain_sdk::Address &address,
+                                                        const std::string &id,
+                                                        std::function<void()> onSuccess,
+                                                        std::function<void(boost::beast::error_code)> onError) {
+    mpChainClient->notifications()->removeUnconfirmedAddedNotifiers(address, onSuccess, onError ? onError : [](auto code) {
         qWarning() << LOG_SOURCE << code.message().c_str();
     }, { id });
 }
