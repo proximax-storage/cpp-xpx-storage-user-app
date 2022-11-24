@@ -52,6 +52,8 @@ class OnChainClient : public QObject
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
+        TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
+
     signals:
         void initializedSuccessfully(const QString& networkName);
         void initializedFailed(const QString& error);

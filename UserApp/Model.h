@@ -119,8 +119,8 @@ public: // tmp
     // diff
     std::shared_ptr<LocalDriveItem>         m_localDrive;
     sirius::drive::ActionList               m_actionList;
-    std::string                             m_currentModificationHash   = "";
-    ModificationStatus                      m_modificationStatus        = no_modification;
+    std::optional<std::array<uint8_t,32>>   m_currentModificationHash;
+    ModificationStatus                      m_modificationStatus = no_modification;
 
     template<class Archive>
     void serialize( Archive &ar )
@@ -214,6 +214,8 @@ public:
     static void                     onFsTreeForDriveReceived( const std::string&           driveHash,
                                                               const std::array<uint8_t,32> fsTreeHash,
                                                               const sirius::drive::FsTree& fsTree );
+
+    static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
 
     //
     // Standalone test

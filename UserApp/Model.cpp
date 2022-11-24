@@ -198,8 +198,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             it->m_replicatorNumber = remoteDrive.data.replicatorCount;
             if ( ! remoteDrive.data.activeDataModifications.empty() )
             {
-                auto lastModification = remoteDrive.data.activeDataModifications.size() - 1;
-                it->m_currentModificationHash = remoteDrive.data.activeDataModifications[lastModification].dataModification.id;
+                auto& lastModification = remoteDrive.data.activeDataModifications.back();
+                it->m_currentModificationHash = Model::hexStringToHash( lastModification.dataModification.id );
                 //TODO
                 it->m_modificationStatus = is_registring;
             }
@@ -419,6 +419,14 @@ void Model::calcDiff()
 
     drive->m_localDrive = std::move(localDrive);
 }
+
+std::array<uint8_t,32> Model::hexStringToHash( const std::string& str )
+{
+    std::array<uint8_t,32> hash;
+    sirius::utils::ParseHexStringIntoContainer( str.c_str(), 64, hash );
+    return hash;
+}
+
 
 void Model::stestInitChannels()
 {

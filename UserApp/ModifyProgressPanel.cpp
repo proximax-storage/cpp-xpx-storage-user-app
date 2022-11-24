@@ -34,7 +34,7 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
                       driveInfo->m_modificationStatus == is_failed ||
                       driveInfo->m_modificationStatus == is_canceled )
             {
-                driveInfo->m_currentModificationHash.clear();
+                driveInfo->m_currentModificationHash.reset();
                 driveInfo->m_modificationStatus = no_modification;
                 setVisible(false);
             }
