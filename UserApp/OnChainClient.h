@@ -49,6 +49,8 @@ class OnChainClient : public QObject
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
+        void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
     signals:
         void initializedSuccessfully(const QString& networkName);
@@ -74,6 +76,10 @@ class OnChainClient : public QObject
         void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId );
         void cancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void cancelModificationTransactionFailed(const QString& modificationId);
+        void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+        void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey);
 
     // internal signals
     signals:

@@ -184,6 +184,14 @@ void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const
     mpTransactionsEngine->storagePayment(driveId, amount);
 }
 
+void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, uint64_t capacityMB) {
+    mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB);
+}
+
+void OnChainClient::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString &replicatorPrivateKey) {
+    mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey);
+}
+
 void OnChainClient::initConnects() {
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
         emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
@@ -253,6 +261,22 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto modificationId) {
         emit cancelModificationTransactionFailed(modificationId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey) {
+        emit replicatorOnBoardingTransactionConfirmed(replicatorPublicKey);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey) {
+        emit replicatorOnBoardingTransactionFailed(replicatorPublicKey);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingConfirmed, this, [this](auto replicatorPublicKey) {
+        emit replicatorOffBoardingTransactionConfirmed(replicatorPublicKey);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingFailed, this, [this](auto replicatorPublicKey) {
+        emit replicatorOffBoardingTransactionFailed(replicatorPublicKey);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,

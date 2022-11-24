@@ -35,6 +35,8 @@ class TransactionsEngine : public QObject
                                    const sirius::drive::ActionList& actions,
                                    const std::string& sandboxFolder,
                                    const std::vector<xpx_chain_sdk::Address>& replicators);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
+        void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
 
     signals:
@@ -63,6 +65,10 @@ class TransactionsEngine : public QObject
         void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void cancelModificationFailed(const QString& modificationId);
         void modificationCreated(const QString& driveId, const QString& modificationId);
+        void replicatorOffBoardingConfirmed(const QString& replicatorPublicKey);
+        void replicatorOffBoardingFailed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingConfirmed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingFailed(const QString& replicatorPublicKey);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,

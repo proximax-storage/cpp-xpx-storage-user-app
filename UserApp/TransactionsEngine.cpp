@@ -587,6 +587,117 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId); });
 }
 
+void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const uint64_t capacityMB) {
+    auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
+        xpx_chain_sdk::Key key;
+        ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
+        return xpx_chain_sdk::PrivateKey(key.data(), key.size());
+    }, mpChainClient->getConfig().NetworkId);
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> onBoardingNotifier;
+
+    statusNotifier.set([this, replicatorAccount, confirmedAddedNotifierId = onBoardingNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionStatusNotification& notification) {
+        removeConfirmedAddedNotifier(replicatorAccount->address(), confirmedAddedNotifierId);
+        removeStatusNotifier(replicatorAccount->address(), id);
+
+        auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
+        qWarning() << LOG_SOURCE << "replicator key: " + replicatorPublicKey << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
+        emit replicatorOnBoardingFailed(replicatorPublicKey);
+    });
+
+    mpChainClient->notifications()->addStatusNotifiers(replicatorAccount->address(), { statusNotifier }, {},
+                                                       [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
+
+    auto replicatorOnBoardingTransaction = xpx_chain_sdk::CreateReplicatorOnboardingTransaction(xpx_chain_sdk::Amount(capacityMB),
+                                                                                                std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    replicatorAccount->signTransaction(replicatorOnBoardingTransaction.get());
+
+    const std::string onBoardingTransactionHash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
+    onBoardingNotifier.set([this, onBoardingTransactionHash, replicatorAccount, statusNotifierId = statusNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionNotification& notification) {
+        if (notification.meta.hash == onBoardingTransactionHash) {
+            qInfo() << LOG_SOURCE << "confirmed replicatorOnBoardingTransaction hash: " << onBoardingTransactionHash.c_str();
+
+            removeConfirmedAddedNotifier(replicatorAccount->address(), id);
+            removeStatusNotifier(replicatorAccount->address(), statusNotifierId);
+
+            emit replicatorOnBoardingConfirmed(rawHashToHex(replicatorAccount->publicKey()));
+        }
+    });
+
+    const std::string hash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(replicatorAccount->address(), { onBoardingNotifier },
+                                                               [this, data = replicatorOnBoardingTransaction->binary()]() { announceTransaction(data); },
+                                                               [this, hash](auto error) { onError(hash, error); });
+}
+
+void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey) {
+    auto driveIdHex = rawHashToHex(driveId).toStdString();
+    if (!isValidHash(driveId)) {
+        qWarning() << LOG_SOURCE << "invalid hash: " << driveIdHex.c_str();
+        return;
+    }
+
+    if (replicatorPrivateKey.isEmpty()) {
+        qWarning() << LOG_SOURCE << "invalid replicator private key: " << driveIdHex.c_str();
+        return;
+    }
+
+    xpx_chain_sdk::Key rawDriveKey;
+    xpx_chain_sdk::ParseHexStringIntoContainer(driveIdHex.c_str(), driveIdHex.size(), rawDriveKey);
+
+    auto offBoardingTransaction = xpx_chain_sdk::CreateReplicatorOffboardingTransaction(rawDriveKey, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
+        xpx_chain_sdk::Key key;
+        ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
+        return xpx_chain_sdk::PrivateKey(key.data(), key.size());
+    }, mpChainClient->getConfig().NetworkId);
+
+    replicatorAccount->signTransaction(offBoardingTransaction.get());
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> offBoardingNotifier;
+
+    statusNotifier.set([this, replicatorAccount, offBoardingNotifierId = offBoardingNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionStatusNotification& notification) {
+        removeConfirmedAddedNotifier(replicatorAccount->address(), offBoardingNotifierId);
+        removeStatusNotifier(replicatorAccount->address(), id);
+
+        auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
+        qWarning() << LOG_SOURCE << "replicator key: " + replicatorPublicKey << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
+        emit replicatorOffBoardingFailed(replicatorPublicKey);
+    });
+
+    mpChainClient->notifications()->addStatusNotifiers(replicatorAccount->address(), { statusNotifier }, {},
+                                                       [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
+
+    // Success
+    const std::string hash = rawHashToHex(offBoardingTransaction->hash()).toStdString();
+
+    offBoardingNotifier.set([this, hash, replicatorAccount, statusNotifierId = statusNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionNotification& notification) {
+        if (notification.meta.hash == hash) {
+            qInfo() << LOG_SOURCE << "confirmed offBoardingTransaction hash: " << hash.c_str();
+
+            removeStatusNotifier(replicatorAccount->address(), statusNotifierId);
+            removeConfirmedAddedNotifier(replicatorAccount->address(), id);
+
+            auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
+            emit replicatorOffBoardingConfirmed(replicatorPublicKey);
+        }
+    });
+
+    mpChainClient->notifications()->addConfirmedAddedNotifiers(replicatorAccount->address(), { offBoardingNotifier },
+                                                               [this, data = offBoardingTransaction->binary()]() { announceTransaction(data); },
+                                                               [this, hash](auto error) { onError(hash, error); });
+}
+
 void TransactionsEngine::removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
                                                       const std::string &id,
                                                       std::function<void()> onSuccess,
