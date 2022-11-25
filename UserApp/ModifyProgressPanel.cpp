@@ -14,6 +14,7 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
     setBackgroundRole(QPalette::Midlight);
     setFrameStyle( QFrame::Panel | QFrame::Sunken );
 
+    m_cancelButton = new QPushButton( "Cancel modification", this );
     connect( m_cancelButton, &QPushButton::released, this, [this]
     {
         if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo == nullptr )
@@ -81,7 +82,6 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
         m_vLayout->addLayout( m_hLayout );
         {
             m_hLayout->addStretch(1);
-            m_cancelButton = new QPushButton( "Cancel modification", this );
             m_hLayout->addWidget( m_cancelButton );
             m_hLayout->addStretch(1);
         }

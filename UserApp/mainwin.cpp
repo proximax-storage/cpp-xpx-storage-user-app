@@ -36,6 +36,7 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <thread>
+#include <QListWidget>
 
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
@@ -334,11 +335,31 @@ void MainWin::init()
     connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus );
 
     updateModificationStatus();
+
+//    m_downloadsWidget = new QListWidget(this);
+//    m_downloadsWidget->setAttribute(Qt::WA_QuitOnClose);
+//    m_downloadsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+//    m_downloadsWidget->setWindowModality(Qt::NonModal);
+//    m_downloadsWidget->setFixedSize(350, 350);
+//
+//    QListWidgetItem* item1 = new QListWidgetItem(tr("item 1"), m_downloadsWidget);
+//    QListWidgetItem* item2 = new QListWidgetItem(tr("item 2"), m_downloadsWidget);
+//    QListWidgetItem* item3 = new QListWidgetItem(tr("item 3"), m_downloadsWidget);
+//
+//
+//    m_downloadsWidget->insertItem(0, item1);
+//    m_downloadsWidget->insertItem(1, item2);
+//    m_downloadsWidget->insertItem(2, item3);
+//
+//    connect(ui->m_downloadsButton, &QPushButton::released, this, [this](){
+//        QPoint point = ui->m_downloadsButton->mapToGlobal(QPoint());
+//        m_downloadsWidget->move(QPoint(point.x() - m_downloadsWidget->width() + ui->m_downloadsButton->width(), point.y() + ui->m_downloadsButton->height()));
+//        m_downloadsWidget->show();
+//    });
 }
 
 MainWin::~MainWin()
 {
-    delete m_modifyProgressPanel;
     delete ui;
 }
 

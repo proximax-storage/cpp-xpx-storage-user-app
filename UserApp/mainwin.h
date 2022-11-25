@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QFileSystemModel>
 #include <QTimer>
+#include <QListWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -104,6 +105,9 @@ private:
     OnChainClient*          m_onChainClient;
 
     ModifyProgressPanel*    m_modifyProgressPanel;
+
+    QListWidget*            m_downloadsWidget;
+    QListWidget*            m_notificationsWidget;
 
     std::string             m_lastSelectedChannelKey;
     std::string             m_lastSelectedDriveKey;
