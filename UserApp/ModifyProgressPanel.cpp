@@ -13,7 +13,7 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Midlight);
     setFrameStyle( QFrame::Panel | QFrame::Sunken );
-
+    m_cancelButton = new QPushButton( "Cancel modification", this );
     m_vLayout = new QVBoxLayout(this);
     {
         m_title = new QLabel(this);
