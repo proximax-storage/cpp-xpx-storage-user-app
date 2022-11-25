@@ -109,6 +109,7 @@ struct DriveInfo
     uint32_t    m_replicatorNumber = 0;
     bool        m_isCreating = true;
     bool        m_isDeleting = false;
+    bool        m_isConfirmed = false;
 
 public: // tmp
     std::optional<std::array<uint8_t,32>>   m_rootHash;
@@ -119,8 +120,8 @@ public: // tmp
     // diff
     std::shared_ptr<LocalDriveItem>         m_localDrive;
     sirius::drive::ActionList               m_actionList;
-    std::string                             m_currentModificationHash   = "";
-    ModificationStatus                      m_modificationStatus        = no_modification;
+    std::optional<std::array<uint8_t,32>>   m_currentModificationHash;
+    ModificationStatus                      m_modificationStatus = no_modification;
 
     template<class Archive>
     void serialize( Archive &ar )
@@ -188,6 +189,7 @@ public:
     static std::vector<DriveInfo>&  drives();
     static DriveInfo*               currentDriveInfoPtr();
     static DriveInfo*               findDrive( const std::string& driveKey );
+    static DriveInfo*               findDriveByModificationId( const std::array<uint8_t, 32>& modificationId );
     static void                     removeDrive( const std::string& driveKey );
     static void                     removeChannelByDriveKey( const std::string& driveKey );
 
@@ -214,6 +216,8 @@ public:
     static void                     onFsTreeForDriveReceived( const std::string&           driveHash,
                                                               const std::array<uint8_t,32> fsTreeHash,
                                                               const sirius::drive::FsTree& fsTree );
+
+    static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
 
     //
     // Standalone test

@@ -69,8 +69,8 @@ private:
     void onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
     void onStoragePaymentConfirmed(const std::array<uint8_t, 32>& driveKey);
     void onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString& errorText);
-    void onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
-    void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
+    void onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
+    void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
     void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
     void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId);
     void loadBalance();
@@ -82,6 +82,8 @@ private:
     void downloadLatestFsTree( const std::string& driveKey );
     void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
     void continueCalcDiff( DriveInfo& drive );
+
+    void startCalcDiff();
 
     void lockMainButtons(bool state);
 

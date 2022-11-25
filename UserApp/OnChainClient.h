@@ -52,11 +52,13 @@ class OnChainClient : public QObject
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
+        TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
+
     signals:
         void initializedSuccessfully(const QString& networkName);
         void initializedFailed(const QString& error);
-        void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& modificationId);
-        void dataModificationTransactionFailed(const std::array<uint8_t, 32>& modificationId);
+        void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
+        void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);
         void downloadChannelsLoaded(ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
@@ -75,7 +77,7 @@ class OnChainClient : public QObject
         void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
         void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId );
         void cancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
-        void cancelModificationTransactionFailed(const QString& modificationId);
+        void cancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
         void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
