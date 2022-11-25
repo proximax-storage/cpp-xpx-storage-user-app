@@ -247,20 +247,20 @@ void OnChainClient::initConnects() {
         callback(modificationsSize, hash.array());
     }, Qt::QueuedConnection);
 
-    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationConfirmed, this, [this](auto modificationId) {
-        emit dataModificationTransactionConfirmed(modificationId);
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationConfirmed, this, [this](auto driveId,auto modificationId) {
+        emit dataModificationTransactionConfirmed(driveId,modificationId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto modificationId) {
-        emit dataModificationTransactionFailed(modificationId);
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto driveId, auto modificationId) {
+        emit dataModificationTransactionFailed(driveId,modificationId);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
         emit cancelModificationTransactionConfirmed(driveId, modificationId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto modificationId) {
-        emit cancelModificationTransactionFailed(modificationId);
+    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto driveId, auto modificationId) {
+        emit cancelModificationTransactionFailed(driveId,modificationId);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey) {

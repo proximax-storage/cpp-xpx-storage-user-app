@@ -172,8 +172,10 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
 
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     auto& drives = gSettings.config().m_drives;
-    std::vector<DriveInfo> validDrives;
+
     for( auto& remoteDrive : remoteDrives )
     {
         std::string hash = remoteDrive.data.multisig;
@@ -185,31 +187,32 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         if ( it == drives.end() )
         {
             DriveInfo driveInfo;
-            driveInfo.m_driveKey = remoteDrive.data.multisig;
-            driveInfo.m_name = remoteDrive.data.multisig;
+            driveInfo.m_driveKey         = remoteDrive.data.multisig;
+            driveInfo.m_name             = remoteDrive.data.multisig;
             driveInfo.m_localDriveFolder = Model::homeFolder() / hash;
-            driveInfo.m_maxDriveSize = remoteDrive.data.size;
+            driveInfo.m_maxDriveSize     = remoteDrive.data.size;
             driveInfo.m_replicatorNumber = remoteDrive.data.replicatorCount;
             driveInfo.m_isCreating = false;
             driveInfo.m_isDeleting = false;
-            validDrives.push_back(driveInfo);
-        } else {
-            // update valid drive
-            it->m_replicatorNumber = remoteDrive.data.replicatorCount;
-            if ( ! remoteDrive.data.activeDataModifications.empty() )
-            {
-                auto& lastModification = remoteDrive.data.activeDataModifications.back();
-                it->m_currentModificationHash = Model::hexStringToHash( lastModification.dataModification.id );
-                //TODO
-                it->m_modificationStatus = is_registring;
-            }
-            //it->m_rootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
-            validDrives.push_back(*it);
+            drives.push_back(driveInfo);
+            it = drives.end()-1;
+        }
+
+        it->m_isConfirmed = true;
+        it->m_replicatorNumber = remoteDrive.data.replicatorCount;
+
+        if ( ! remoteDrive.data.activeDataModifications.empty() )
+        {
+            qWarning () << LOG_SOURCE << "drive modification status: is_registring: " << it->m_name;
+            auto& lastModification = remoteDrive.data.activeDataModifications.back();
+            it->m_currentModificationHash = Model::hexStringToHash( lastModification.dataModification.id );
+            //TODO
+            it->m_modificationStatus = is_registring;
         }
     }
 
-    // remove closed drives from saved
-    gSettings.config().m_drives = validDrives;
+    std::erase_if( drives, [](const DriveInfo& drive) { return ! drive.m_isConfirmed; } );
+
     gSettings.save();
 }
 
@@ -238,6 +241,17 @@ DriveInfo* Model::findDrive( const std::string& driveKey )
 
     return it == drives.end() ? nullptr : &(*it);
 }
+
+DriveInfo* Model::findDriveByModificationId( const std::array<uint8_t, 32>& modificationId )
+{
+    auto& drives = gSettings.config().m_drives;
+    auto it = std::find_if( drives.begin(), drives.end(), [&modificationId] (const DriveInfo& info) {
+        return *info.m_currentModificationHash == modificationId;
+    });
+
+    return it == drives.end() ? nullptr : &(*it);
+}
+
 
 void Model::removeDrive( const std::string& driveKey )
 {

@@ -161,6 +161,7 @@ void MainWin::init()
             connect( &dialog, &ManageDrivesDialog::updateDrives, this, &MainWin::updateDrivesCBox );
             dialog.exec();
             updateDrivesCBox();
+            startCalcDiff();
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,
@@ -313,6 +314,23 @@ void MainWin::init()
         connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
+
+//        connect( m_onChainClient->transactionsEngine(), &TransactionsEngine::modificationCreated, this, [this] (const QString& driveId, const std::array<uint8_t,32>& modificationId)
+//        {
+//            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+//            if ( auto* driveInfo = Model::findDrive( driveId.toStdString() ); driveInfo != nullptr )
+//            {
+//                qWarning() << LOG_SOURCE << "m_currentModificationHash: " << sirius::drive::toString(modificationId).c_str();
+//                driveInfo->m_currentModificationHash = modificationId;
+//                driveInfo->m_modificationStatus = is_registring;
+//                updateModificationStatus();
+//            }
+//            else
+//            {
+//                qWarning() << LOG_SOURCE << "unknown driveId: " << driveId;
+//            }
+
+//        }, Qt::QueuedConnection);
     }
 
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
@@ -827,11 +845,6 @@ void MainWin::onApplyChanges()
         return;
     }
 
-//    if (ui->m_channels->count() == 0) {
-//        qWarning() << LOG_SOURCE << "bad download channel";
-//        return;
-//    }
-
     auto actions = drive->m_actionList;
     if (actions.empty()) {
         qWarning() << LOG_SOURCE << "no actions to apply";
@@ -841,6 +854,9 @@ void MainWin::onApplyChanges()
     const std::string sandbox = settingsFolder().string() + "/" + drive->m_driveKey + "/modify_drive_data";
     auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
     m_onChainClient->applyDataModification(driveKeyHex, actions, sandbox);
+
+    drive->m_modificationStatus = is_registring;
+    updateModificationStatus();
 }
 
 void MainWin::onRefresh()
@@ -908,23 +924,41 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
     msgBox.exec();
 }
 
-void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32> &modificationId) {
+void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
     qDebug () << LOG_SOURCE << "Your last modification was registered: '" + rawHashToHex(modificationId);
 
-    QMessageBox msgBox;
-    msgBox.setText( "Your modification was registered."  );
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-//    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-//    for( auto& driveInfo : Model::drives() )
-//    {
-//        if ( driveInfo.m_currentModificationHash == modificationId )
-//    }
+    if ( auto drive = Model::findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
+    {
+        drive->m_modificationStatus = is_registred;
+        lock.unlock();
+
+        updateModificationStatus();
+    }
+    else
+    {
+        qDebug () << LOG_SOURCE << "Your last modification was registered: !!! drive not found";
+    }
+
+//    QMessageBox msgBox;
+//    msgBox.setText( "Your modification was registered."  );
+//    msgBox.setStandardButtons( QMessageBox::Ok );
+//    msgBox.exec();
 }
 
-void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32> &modificationId) {
+void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
     qDebug () << LOG_SOURCE << "Your last modification was declined: '" + rawHashToHex(modificationId);
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    if ( auto drive = Model::findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
+    {
+        drive->m_modificationStatus = is_failed;
+        lock.unlock();
+
+        updateModificationStatus();
+    }
 
     QMessageBox msgBox;
     msgBox.setText( "Your modification was declined." );
@@ -940,12 +974,15 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
 
     auto drive = Model::findDrive(driveAlias);
     if (drive) {
+        drive->m_modificationStatus = is_approved;
         driveAlias = drive->m_name;
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
     lock.unlock();
+
+    updateModificationStatus();
 
     qDebug () << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
                  QString::fromStdString(driveAlias) + " CDI: " +
@@ -959,6 +996,8 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    void startCalcDiff();
 
     onRefresh();
 }
@@ -980,6 +1019,8 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    void startCalcDiff();
 }
 
 void MainWin::loadBalance() {
@@ -1086,13 +1127,7 @@ void MainWin::setupDrivesTab()
 
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-        if ( auto drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
-        {
-            drivePtr->m_calclDiffIsWaitingFsTree = true;
-            downloadLatestFsTree( drivePtr->m_driveKey );
-        }
+        startCalcDiff();
     });
 
     if ( ALEX_LOCAL_TEST )
@@ -1233,7 +1268,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     DriveInfo* drivePtr = Model::findDrive( driveKey );
     if (!drivePtr) {
-        qWarning() << LOG_SOURCE << "bad drive";
+        qWarning() << LOG_SOURCE << "bad drive key: " << driveKey;
         return;
     }
 
@@ -1297,7 +1332,8 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
         std::array<uint8_t,32> fsTreeHash{};
         sirius::utils::ParseHexStringIntoContainer( drive.data.rootHash.c_str(), 64, fsTreeHash );
 
-        bool rootHashIsChanged = false;
+        bool rootHashIsChanged = !drivePtr->m_rootHash || *drivePtr->m_rootHash != fsTreeHash;
+
         Model::applyForChannels( driveKey, [&] (const ChannelInfo& channelInfo )
         {
             rootHashIsChanged = rootHashIsChanged
@@ -1409,6 +1445,18 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     m_diffTableModel->updateModel();
     //ui->m_diffTableView->resizeColumnsToContents();
 }
+
+void MainWin::startCalcDiff()
+{
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    if ( auto drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
+    {
+        drivePtr->m_calclDiffIsWaitingFsTree = true;
+        downloadLatestFsTree( drivePtr->m_driveKey );
+    }
+}
+
 
 void MainWin::lockMainButtons(bool state) {
     ui->m_refresh->setDisabled(state);

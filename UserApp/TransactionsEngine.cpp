@@ -333,7 +333,7 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
         xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
         xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationCancelNotifier;
 
-        statusNotifier.set([this, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), modificationHex](
+        statusNotifier.set([this, driveKey, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), modificationHex](
                 const auto& id,
                 const xpx_chain_sdk::TransactionStatusNotification& notification) {
             qWarning() << LOG_SOURCE << " onCancelDataModification: " << notification.status.c_str() << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
@@ -341,7 +341,7 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
             removeConfirmedAddedNotifier(mpChainAccount->address(), dataModificationCancelNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit cancelModificationFailed(modificationHex);
+            emit cancelModificationFailed(driveKey,modificationHex);
         });
 
         mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
@@ -470,7 +470,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
     emit modificationCreated(driveKeyHex, modificationId);
 
-    statusNotifier.set([this, hash, modificationId, driveKeyHex, replicators,
+    statusNotifier.set([this, driveId, hash, modificationId, driveKeyHex, replicators,
                         dataModificationNotifierId = dataModificationNotifier.getId(),
                         approvalNotifierId = dataModificationApprovalTransactionNotifier.getId(),
                         statusNotifierId = replicatorsStatusNotifier.getId()](
@@ -483,14 +483,14 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId);
 
             qWarning() << LOG_SOURCE << "drive key: " + driveKeyHex << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
-            emit dataModificationFailed(modificationId);
+            emit dataModificationFailed(driveId,modificationId);
         }
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
                                                        [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
 
-    dataModificationNotifier.set([this, hash, statusNotifierId = statusNotifier.getId(), modificationId] (
+    dataModificationNotifier.set([this, driveId, hash, statusNotifierId = statusNotifier.getId(), modificationId] (
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (notification.meta.hash == hash) {
@@ -499,7 +499,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeUnconfirmedAddedNotifier(mpChainAccount->address(), id);
 
-            emit dataModificationConfirmed(modificationId);
+            emit dataModificationConfirmed(driveId,modificationId);
         }
     });
 
