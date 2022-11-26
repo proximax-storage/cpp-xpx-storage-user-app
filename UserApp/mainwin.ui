@@ -224,7 +224,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -342,6 +342,13 @@
               </property>
               <property name="text">
                <string>Top-up channel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_moreChannelsBtn">
+              <property name="text">
+               <string>...</string>
               </property>
              </widget>
             </item>
@@ -576,6 +583,13 @@
               </property>
               <property name="text">
                <string>Top-up drive</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_moreDrivesBtn">
+              <property name="text">
+               <string>...</string>
               </property>
              </widget>
             </item>

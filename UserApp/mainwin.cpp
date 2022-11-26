@@ -23,6 +23,7 @@
 #include "StoragePaymentDialog.h"
 #include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
+#include "PopupMenu.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -37,6 +38,7 @@
 #include <QDesktopServices>
 #include <thread>
 #include <QListWidget>
+#include <QAction>
 
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
@@ -493,6 +495,38 @@ void MainWin::setupDownloadsTab()
 //    {
 //        onDownloadBtn();
 //    });
+
+    PopupMenu* menu = new PopupMenu(ui->m_moreChannelsBtn, this);
+
+    QAction* renameAction = new QAction("Rename", this);
+    menu->addAction(renameAction);
+    connect( renameAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: renameAction";
+    });
+
+    QAction* topUpAction = new QAction("Top-up", this);
+    menu->addAction(topUpAction);
+    connect( topUpAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: topUpAction";
+    });
+
+    QAction* copyChannelKeyAction = new QAction("Copy channel key", this);
+    menu->addAction(copyChannelKeyAction);
+    connect( copyChannelKeyAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: copyChannelKeyAction";
+    });
+
+    QAction* copyDriveKeyAction = new QAction("Copy drive key", this);
+    menu->addAction(copyDriveKeyAction);
+    connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: copyDriveKeyAction";
+    });
+
+    ui->m_moreChannelsBtn->setMenu(menu);
 }
 
 void MainWin::setupFsTreeTable()
@@ -1018,7 +1052,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
-    void startCalcDiff();
+    startCalcDiff();
 
     onRefresh();
 }
@@ -1041,7 +1075,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
-    void startCalcDiff();
+    startCalcDiff();
 }
 
 void MainWin::loadBalance() {
@@ -1217,6 +1251,40 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
+
+
+    PopupMenu* menu = new PopupMenu(ui->m_moreDrivesBtn, this);
+
+    QAction* renameAction = new QAction("Rename", this);
+    menu->addAction(renameAction);
+    connect( renameAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: renameAction";
+    });
+
+    QAction* changeFolderAction = new QAction("Change local folder", this);
+    menu->addAction(changeFolderAction);
+    connect( changeFolderAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: changeFolderAction";
+    });
+
+    QAction* topUpAction = new QAction("Top-up", this);
+    menu->addAction(topUpAction);
+    connect( topUpAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: topUpAction";
+    });
+
+    QAction* copyDriveKeyAction = new QAction("Copy drive key", this);
+    menu->addAction(copyDriveKeyAction);
+    connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: copyDriveKeyAction";
+    });
+
+    ui->m_moreDrivesBtn->setMenu(menu);
+
 }
 
 void MainWin::updateDrivesCBox()
