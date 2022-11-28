@@ -170,26 +170,7 @@
            </size>
           </property>
           <property name="text">
-           <string>N</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="m_downloadsButton">
-          <property name="minimumSize">
-           <size>
-            <width>40</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>40</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>D</string>
+           <string/>
           </property>
          </widget>
         </item>

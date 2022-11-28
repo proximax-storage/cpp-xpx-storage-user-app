@@ -76,8 +76,9 @@ private:
     void loadBalance();
 
     void setDownloadPath( );
-
     void setupDrivesTab();
+    void setupNotifications();
+    void addNotification(const QString& message);
 
     void downloadLatestFsTree( const std::string& driveKey );
     void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
@@ -107,8 +108,6 @@ private:
     OnChainClient*          m_onChainClient;
 
     ModifyProgressPanel*    m_modifyProgressPanel;
-
-    QListWidget*            m_downloadsWidget;
     QListWidget*            m_notificationsWidget;
 
     std::string             m_lastSelectedChannelKey;

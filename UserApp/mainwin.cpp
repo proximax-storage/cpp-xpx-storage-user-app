@@ -353,27 +353,7 @@ void MainWin::init()
     connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus );
 
     updateModificationStatus();
-
-//    m_downloadsWidget = new QListWidget(this);
-//    m_downloadsWidget->setAttribute(Qt::WA_QuitOnClose);
-//    m_downloadsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-//    m_downloadsWidget->setWindowModality(Qt::NonModal);
-//    m_downloadsWidget->setFixedSize(350, 350);
-//
-//    QListWidgetItem* item1 = new QListWidgetItem(tr("item 1"), m_downloadsWidget);
-//    QListWidgetItem* item2 = new QListWidgetItem(tr("item 2"), m_downloadsWidget);
-//    QListWidgetItem* item3 = new QListWidgetItem(tr("item 3"), m_downloadsWidget);
-//
-//
-//    m_downloadsWidget->insertItem(0, item1);
-//    m_downloadsWidget->insertItem(1, item2);
-//    m_downloadsWidget->insertItem(2, item3);
-//
-//    connect(ui->m_downloadsButton, &QPushButton::released, this, [this](){
-//        QPoint point = ui->m_downloadsButton->mapToGlobal(QPoint());
-//        m_downloadsWidget->move(QPoint(point.x() - m_downloadsWidget->width() + ui->m_downloadsButton->width(), point.y() + ui->m_downloadsButton->height()));
-//        m_downloadsWidget->show();
-//    });
+    setupNotifications();
 }
 
 MainWin::~MainWin()
@@ -453,6 +433,13 @@ void MainWin::setupIcons() {
     ui->m_settingsButton->setIcon(settingsButtonIcon);
     ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIconSize(QSize(18, 18));
+
+    QIcon notificationsButtonIcon("./resources/icons/notification.png");
+    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+    ui->m_notificationsButton->setText("");
+    ui->m_notificationsButton->setIcon(notificationsButtonIcon);
+    ui->m_notificationsButton->setStyleSheet("background: transparent; border: 0px;");
+    ui->m_notificationsButton->setIconSize(QSize(18, 18));
 
     QPixmap networkIcon("./resources/icons/network.png");
     ui->m_networkLabel->setPixmap(networkIcon);
@@ -618,7 +605,8 @@ void MainWin::setupDownloadsTable()
             lock.unlock();
 
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "'" + dnInfo.m_fileName + "' will be removed.") );
+            const QString message = QString::fromStdString("'" + dnInfo.m_fileName + "' will be removed.");
+            msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
 
@@ -627,6 +615,7 @@ void MainWin::setupDownloadsTable()
                 Model::removeFromDownloads( rowIndex );
             }
             selectDownloadRow(-1);
+            addNotification(message);
         }
     });
 
@@ -784,24 +773,32 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     updateChannelsCBox();
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Channel '" + alias + "' created successfully.") );
+    const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
     onRefresh();
+    addNotification(message);
 }
 
 void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
 {
     auto* channelInfo = Model::findChannel( channelKey );
+    if (channelInfo) {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Notification");
+        msgBox.setModal(false);
+        const QString message = QString::fromStdString( "Channel creation failed (" + channelInfo->m_name + ")\n It will be removed.");
+        msgBox.setText(message);
+        msgBox.setInformativeText( QString::fromStdString( errorText ) );
+        msgBox.setStandardButtons( QMessageBox::Ok );
+        msgBox.exec();
 
-    QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Channel creation failed (" + channelInfo->m_name + ")\n It will be removed.") );
-    msgBox.setInformativeText( QString::fromStdString( errorText ) );
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
+        addNotification(message);
 
-    //todo!!!
+        //todo!!!
+    }
 }
 
 void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::string &driveKey )
@@ -830,20 +827,25 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     lock.unlock();
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Drive '" + alias + "' created successfully.") );
+    const QString message = QString::fromStdString( "Drive '" + alias + "' created successfully.");
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 
     updateDrivesCBox();
+    addNotification(message);
 }
 
 void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
 {
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Drive creation failed (" + alias + ")\n It will be removed.") );
+    const QString message = QString::fromStdString( "Drive creation failed (" + alias + ")\n It will be removed.");
+    msgBox.setText(message);
     msgBox.setInformativeText( QString::fromStdString( errorText ) );
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 
     //todo!!!
 }
@@ -895,9 +897,12 @@ void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelI
     }
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Your payment for the following channel was successful: '" + alias) );
+    const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias);
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 }
 
 void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
@@ -910,9 +915,12 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
     }
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias) );
+    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias);
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 }
 
 void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey) {
@@ -925,9 +933,12 @@ void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey)
     }
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Your payment for the following drive was successful: '" + alias) );
+    const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias);
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 }
 
 void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString &errorText) {
@@ -940,9 +951,12 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
     }
 
     QMessageBox msgBox;
-    msgBox.setText( QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias) );
+    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias);
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 }
 
 void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
@@ -982,9 +996,12 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
     }
 
     QMessageBox msgBox;
-    msgBox.setText( "Your modification was declined." );
+    const QString message = "Your modification was declined.";
+    msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
+
+    addNotification(message);
 }
 
 void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32> &driveId,
@@ -1021,6 +1038,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     void startCalcDiff();
 
     onRefresh();
+    addNotification(message);
 }
 
 void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId) {
@@ -1042,6 +1060,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     msgBox.exec();
 
     void startCalcDiff();
+    addNotification(message);
 }
 
 void MainWin::loadBalance() {
@@ -1217,6 +1236,32 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     //ui->m_diffTableView->setGridStyle( Qt::NoPen );
+}
+
+void MainWin::setupNotifications() {
+    m_notificationsWidget = new QListWidget(this);
+    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
+    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+    m_notificationsWidget->setWindowModality(Qt::NonModal);
+    m_notificationsWidget->setMaximumHeight(500);
+    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
+
+    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
+        if (m_notificationsWidget->isVisible()) {
+            m_notificationsWidget->hide();
+        } else {
+            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
+            m_notificationsWidget->setFixedWidth(width);
+            m_notificationsWidget->show();
+            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
+            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
+        }
+    });
+}
+
+void MainWin::addNotification(const QString& message) {
+    auto item = new QListWidgetItem(tr(message.toStdString().c_str()), m_notificationsWidget);
+    m_notificationsWidget->insertItem(0, item);
 }
 
 void MainWin::updateDrivesCBox()
