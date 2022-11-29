@@ -9,6 +9,7 @@
 #include "DriveTreeModel.h"
 #include "DiffTableModel.h"
 
+#include "QtGui/qclipboard.h"
 #include "Settings.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
@@ -24,6 +25,7 @@
 #include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
+#include "EditDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
@@ -502,7 +504,32 @@ void MainWin::setupDownloadsTab()
     menu->addAction(renameAction);
     connect( renameAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: renameAction";
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
+        {
+            std::string channelName = channelInfo->m_name;
+            std::string channelKey = channelInfo->m_hash;
+            lock.unlock();
+
+            EditDialog dialog( "Rename channel", "Channel name:", channelName );
+            if ( dialog.exec() == QDialog::Accepted )
+            {
+                qDebug() << "channelName: " << channelName.c_str();
+
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+                if ( auto* channelInfo = Model::findChannel(channelKey); channelInfo != nullptr )
+                {
+                    qDebug() << "channelName renamed: " << channelName.c_str();
+
+                    channelInfo->m_name = channelName;
+                    gSettings.save();
+                    lock.unlock();
+                    updateChannelsCBox();
+                }
+            }
+            qDebug() << "channelName?: " << channelName;
+        }
     });
 
     QAction* topUpAction = new QAction("Top-up", this);
@@ -510,6 +537,8 @@ void MainWin::setupDownloadsTab()
     connect( topUpAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: topUpAction";
+        DownloadPaymentDialog dialog(m_onChainClient, this);
+        dialog.exec();
     });
 
     QAction* copyChannelKeyAction = new QAction("Copy channel key", this);
@@ -517,6 +546,25 @@ void MainWin::setupDownloadsTab()
     connect( copyChannelKeyAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: copyChannelKeyAction";
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
+        {
+            std::string channelKey = channelInfo->m_hash;
+            lock.unlock();
+
+            QClipboard* clipboard = QApplication::clipboard();
+            if ( !clipboard ) {
+                qWarning() << LOG_SOURCE << "bad clipboard";
+                lock.unlock();
+                return;
+            }
+
+            clipboard->setText( QString::fromStdString(channelKey), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(channelKey), QClipboard::Selection );
+            }
+        }
     });
 
     QAction* copyDriveKeyAction = new QAction("Copy drive key", this);
@@ -524,6 +572,26 @@ void MainWin::setupDownloadsTab()
     connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: copyDriveKeyAction";
+
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
+        {
+            std::string driveKey = channelInfo->m_driveHash;
+            lock.unlock();
+
+            QClipboard* clipboard = QApplication::clipboard();
+            if ( !clipboard ) {
+                qWarning() << LOG_SOURCE << "bad clipboard";
+                lock.unlock();
+                return;
+            }
+
+            clipboard->setText( QString::fromStdString(driveKey), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
+            }
+        }
     });
 
     ui->m_moreChannelsBtn->setMenu(menu);
