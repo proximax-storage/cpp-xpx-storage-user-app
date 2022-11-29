@@ -68,6 +68,7 @@ set(PROJECT_SOURCES
         DiffTableModel.h            DiffTableModel.cpp
         Diff.h                      Diff.cpp
         ModifyProgressPanel.h       ModifyProgressPanel.cpp
+        PopupMenu.h                 PopupMenu.cpp
 
         LocalDriveItem.h
         BlockchainEngine.cpp        BlockchainEngine.h

@@ -167,10 +167,13 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
 
 void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& remoteDrivesPages )
 {
+    qDebug() << LOG_SOURCE << "onDrivesLoaded: ";
+
     std::vector<xpx_chain_sdk::Drive> remoteDrives;
     for (const auto& page : remoteDrivesPages) {
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
+    qDebug() << LOG_SOURCE << "onDrivesLoaded: " << remoteDrives.size();
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
