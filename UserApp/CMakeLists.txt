@@ -61,6 +61,7 @@ set(PROJECT_SOURCES
         SelectEntityDialog.h        SelectEntityDialog.cpp      SelectEntityDialog.ui
         ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
         ManageChannelsDialog.h      ManageChannelsDialog.cpp    ManageChannelsDialog.ui
+        EditDialog.h                EditDialog.cpp              EditDialog.ui
 
         FsTreeTableModel.h          FsTreeTableModel.cpp        DownloadPaymentDialog.ui
         DownloadsTableModel.h       DownloadsTableModel.cpp     StoragePaymentDialog.ui
