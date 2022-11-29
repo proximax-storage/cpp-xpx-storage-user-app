@@ -12,15 +12,15 @@ restart_label:
     QApplication a(argc, argv);
     QApplication::setWindowIcon(QIcon("./resources/icons/icon.png"));
     qInstallMessageHandler(customMessageHandler);
-
-#ifdef Q_OS_LINUX
-    QFile styleFile( "./resources/styles/ubuntu.qss" );
-    if ( styleFile.open( QFile::ReadOnly ) ) {
-        a.setStyleSheet( styleFile.readAll() );
-    } else {
-        qWarning () << LOG_SOURCE << "default style not loaded";
-    }
-#endif
+// TODO: same style for all platforms
+//#ifdef Q_OS_LINUX
+//    QFile styleFile( "./resources/styles/ubuntu.qss" );
+//    if ( styleFile.open( QFile::ReadOnly ) ) {
+//        a.setStyleSheet( styleFile.readAll() );
+//    } else {
+//        qWarning () << LOG_SOURCE << "default style not loaded";
+//    }
+//#endif
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();

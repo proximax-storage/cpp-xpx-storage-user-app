@@ -41,6 +41,7 @@
 #include <thread>
 #include <QListWidget>
 #include <QAction>
+#include <QToolTip>
 
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
@@ -1383,6 +1384,11 @@ void MainWin::setupNotifications() {
     m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
 
     connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
+        if (m_notificationsWidget->count() < 1) {
+            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
+            return;
+        }
+
         if (m_notificationsWidget->isVisible()) {
             m_notificationsWidget->hide();
         } else {
