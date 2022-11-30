@@ -1402,7 +1402,8 @@ void MainWin::setupNotifications() {
 }
 
 void MainWin::addNotification(const QString& message) {
-    auto item = new QListWidgetItem(tr(message.toStdString().c_str()), m_notificationsWidget);
+    // No memory leaks, m_notificationsWidget will take ownerships after insert
+    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
     m_notificationsWidget->insertItem(0, item);
 }
 
