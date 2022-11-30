@@ -210,11 +210,8 @@ void MainWin::init()
                onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
         }, Qt::QueuedConnection);
 
-        connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, [this](auto channelKey) {
-            Model::removeChannel( sirius::drive::toString(channelKey) );
-            updateChannelsCBox();
-        }, Qt::QueuedConnection);
-
+        connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionFailed, this, &MainWin::onDownloadChannelCloseFailed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionConfirmed, this, &MainWin::onDownloadPaymentConfirmed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionFailed, this, &MainWin::onDownloadPaymentFailed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::storagePaymentTransactionConfirmed, this, &MainWin::onStoragePaymentConfirmed, Qt::QueuedConnection);
@@ -277,12 +274,8 @@ void MainWin::init()
             onDriveCreationFailed( alias, sirius::drive::toString( driveKey ), errorText.toStdString() );
         }, Qt::QueuedConnection);
 
-        connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, [this](auto driveKey) {
-            Model::removeDrive( sirius::drive::toString(driveKey) );
-            updateDrivesCBox();
-            Model::removeChannelByDriveKey(sirius::drive::toString(driveKey));
-            updateChannelsCBox();
-        }, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, &MainWin::onDriveCloseConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::closeDriveTransactionFailed, this, &MainWin::onDriveCloseFailed, Qt::QueuedConnection);
 
         connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection);
 
@@ -874,14 +867,10 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     lock.unlock();
 
     updateChannelsCBox();
-
-    QMessageBox msgBox;
-    const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
     onRefresh();
+
+    const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
+    showNotification(message);
     addNotification(message);
 }
 
@@ -889,18 +878,12 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 {
     auto* channelInfo = Model::findChannel( channelKey );
     if (channelInfo) {
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Notification");
-        msgBox.setModal(false);
         const QString message = QString::fromStdString( "Channel creation failed (" + channelInfo->m_name + ")\n It will be removed.");
-        msgBox.setText(message);
-        msgBox.setInformativeText( QString::fromStdString( errorText ) );
-        msgBox.setStandardButtons( QMessageBox::Ok );
-        msgBox.exec();
-
+        showNotification(message, errorText.c_str());
         addNotification(message);
 
-        //todo!!!
+        Model::removeChannel(channelKey);
+        updateChannelsCBox();
     }
 }
 
@@ -909,8 +892,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     auto* drive = Model::findDrive( driveKey );
-
-    if ( drive != nullptr )
+    if ( drive )
     {
         drive->m_isCreating = false;
         gSettings.save();
@@ -929,28 +911,47 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
 
     lock.unlock();
 
-    QMessageBox msgBox;
-    const QString message = QString::fromStdString( "Drive '" + alias + "' created successfully.");
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
     updateDrivesCBox();
+
+    const QString message = QString::fromStdString( "Drive '" + alias + "' created successfully.");
+    showNotification(message);
     addNotification(message);
 }
 
 void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
 {
-    QMessageBox msgBox;
     const QString message = QString::fromStdString( "Drive creation failed (" + alias + ")\n It will be removed.");
-    msgBox.setText(message);
-    msgBox.setInformativeText( QString::fromStdString( errorText ) );
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message, errorText.c_str());
     addNotification(message);
 
-    //todo!!!
+    Model::removeDrive(driveKey);
+    Model::removeChannelByDriveKey(driveKey);
+    updateDrivesCBox();
+    updateChannelsCBox();
+}
+
+void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
+    Model::removeDrive( sirius::drive::toString(driveKey) );
+    updateDrivesCBox();
+    Model::removeChannelByDriveKey(sirius::drive::toString(driveKey));
+    updateChannelsCBox();
+}
+
+void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
+    std::string alias = rawHashToHex(driveKey).toStdString();
+    auto drive = Model::findDrive(alias);
+    if (drive) {
+        alias = drive->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
+    }
+
+    QString message = "The drive '";
+    message.append(alias.c_str());
+    message.append("' was not close by reason: ");
+    message.append(errorText);
+    showNotification(message);
+    addNotification(message);
 }
 
 void MainWin::onApplyChanges()
@@ -964,10 +965,9 @@ void MainWin::onApplyChanges()
     auto& actionList = drive->m_actionList;
     if ( actionList.empty() )
     {
-        QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "There is no difference.") );
-        msgBox.setStandardButtons( QMessageBox::Ok );
-        msgBox.exec();
+        const QString message = "There is no difference.";
+        showNotification(message);
+        addNotification(message);
         return;
     }
 
@@ -990,6 +990,28 @@ void MainWin::onRefresh()
     onCurrentChannelChanged( Model::currentDnChannelIndex() );
 }
 
+void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
+    Model::removeChannel( sirius::drive::toString(channelId) );
+    updateChannelsCBox();
+}
+
+void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
+    std::string alias = rawHashToHex(channelId).toStdString();
+    auto channel = Model::findChannel(alias);
+    if (channel) {
+        alias = channel->m_name;
+    } else {
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
+    }
+
+    QString message = "The channel '";
+    message.append(alias.c_str());
+    message.append("' was not close by reason: ");
+    message.append(errorText);
+    showNotification(message);
+    addNotification(message);
+}
+
 void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId) {
     std::string alias = rawHashToHex(channelId).toStdString();
     auto channel = Model::findChannel(alias);
@@ -999,12 +1021,8 @@ void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelI
         qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    QMessageBox msgBox;
     const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias);
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1017,12 +1035,8 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
         qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    QMessageBox msgBox;
     const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias);
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1035,12 +1049,8 @@ void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey)
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    QMessageBox msgBox;
     const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias);
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1053,12 +1063,8 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    QMessageBox msgBox;
     const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias);
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1098,12 +1104,8 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
         updateModificationStatus();
     }
 
-    QMessageBox msgBox;
     const QString message = "Your modification was declined.";
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1129,18 +1131,13 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
                  QString::fromStdString(driveAlias) + " CDI: " +
                  QString::fromStdString(fileStructureCdi);
 
+    startCalcDiff();
+    onRefresh();
+
     QString message;
     message.append("Your modification was applied. Drive: ");
     message.append(driveAlias.c_str());
-
-    QMessageBox msgBox;
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
-    startCalcDiff();
-
-    onRefresh();
+    showNotification(message);
     addNotification(message);
 }
 
@@ -1153,16 +1150,12 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
+    startCalcDiff();
+
     QString message;
     message.append("Your modifications was DECLINED. Drive: ");
     message.append(driveAlias.c_str());
-
-    QMessageBox msgBox;
-    msgBox.setText(message);
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
-
-    startCalcDiff();
+    showNotification(message);
 	addNotification(message);
 }
 
@@ -1401,6 +1394,19 @@ void MainWin::setupNotifications() {
     });
 }
 
+void MainWin::showNotification(const QString &message, const QString& error) {
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Notification");
+    msgBox.setText(message);
+
+    if (!error.isEmpty()) {
+        msgBox.setInformativeText(error);
+    }
+
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
 void MainWin::addNotification(const QString& message) {
     // No memory leaks, m_notificationsWidget will take ownerships after insert
     auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
@@ -1528,11 +1534,11 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
             });
 
             lock.unlock();
-            QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot get drive root hash.") );
-            msgBox.setInformativeText( QString::fromStdString( "Drive: " + driveKey + "\nError: " + message ) );
-            msgBox.setStandardButtons( QMessageBox::Ok );
-            msgBox.exec();
+
+            const QString messageText = "Cannot get drive root hash.";
+            const QString error = QString::fromStdString( "Drive: " + driveKey + "\nError: " + message );
+            showNotification(messageText, error);
+            addNotification(messageText);
             return;
         }
 

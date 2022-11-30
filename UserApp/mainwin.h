@@ -61,10 +61,13 @@ private:
 
     void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
     void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
-    void onDriveDeleted( const std::string& driveKey );
+    void onDriveCloseConfirmed( const std::array<uint8_t, 32>& driveKey );
+    void onDriveCloseFailed( const std::array<uint8_t, 32>& driveKey, const QString& errorText );
     void onCurrentDriveChanged( int index );
     void onApplyChanges();
     void onRefresh();
+    void onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32>& channelId);
+    void onDownloadChannelCloseFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
     void onDownloadPaymentConfirmed(const std::array<uint8_t, 32>& channelId);
     void onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
     void onStoragePaymentConfirmed(const std::array<uint8_t, 32>& driveKey);
@@ -78,6 +81,7 @@ private:
     void setDownloadPath( );
     void setupDrivesTab();
     void setupNotifications();
+    void showNotification(const QString& message, const QString& error = {});
     void addNotification(const QString& message);
 
     void downloadLatestFsTree( const std::string& driveKey );

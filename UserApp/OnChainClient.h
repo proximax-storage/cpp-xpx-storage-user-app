@@ -64,12 +64,12 @@ class OnChainClient : public QObject
         void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
         void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
-        void downloadChannelCloseTransactionFailed(const QString& errorText);
+        void downloadChannelCloseTransactionFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
         void fsTreeDownloaded(const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
         void prepareDriveTransactionConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey);
         void prepareDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void closeDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
-        void closeDriveTransactionFailed(const QString& errorText);
+        void closeDriveTransactionFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void downloadPaymentTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadPaymentTransactionFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
         void storagePaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);

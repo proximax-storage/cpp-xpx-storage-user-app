@@ -205,8 +205,8 @@ void OnChainClient::initConnects() {
         emit downloadChannelCloseTransactionConfirmed(channelId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelFailed, this, [this](auto errorText) {
-        emit downloadChannelCloseTransactionFailed(errorText);
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
+        emit downloadChannelCloseTransactionFailed(channelId, errorText);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDriveConfirmed, this, [this](auto alias, auto driveId) {
@@ -221,8 +221,8 @@ void OnChainClient::initConnects() {
         emit closeDriveTransactionConfirmed(driveId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::closeDriveFailed, this, [this](auto errorText) {
-        emit closeDriveTransactionFailed(errorText);
+    connect(mpTransactionsEngine, &TransactionsEngine::closeDriveFailed, this, [this](auto driveKey, auto errorText) {
+        emit closeDriveTransactionFailed(driveKey, errorText);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::downloadPaymentConfirmed, this, [this](auto channelId) {

@@ -97,14 +97,14 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> finishDownloadNotifier;
 
     const std::string hash = rawHashToHex(finishDownloadTransaction->hash()).toStdString();
-    statusNotifier.set([this, hash, finishDownloadNotifierId = finishDownloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+    statusNotifier.set([this, hash, channelId, finishDownloadNotifierId = finishDownloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), finishDownloadNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit closeDownloadChannelFailed(notification.status.c_str());
+            emit closeDownloadChannelFailed(channelId, notification.status.c_str());
         }
     });
 
@@ -272,14 +272,14 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> driveClosureNotifier;
 
     const std::string hash = rawHashToHex(driveClosureTransaction->hash()).toStdString();
-    statusNotifier.set([this, hash, drivePubKey, driveClosureNotifierId = driveClosureNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
+    statusNotifier.set([this, hash, drivePubKey, rawDrivePubKey, driveClosureNotifierId = driveClosureNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (notification.hash == hash) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), driveClosureNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit closeDriveFailed(notification.status.c_str());
+            emit closeDriveFailed(rawDrivePubKey, notification.status.c_str());
         }
     });
 
