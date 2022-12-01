@@ -147,7 +147,9 @@ void MainWin::init()
     if ( !ALEX_LOCAL_TEST )
     {
         m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, address, port, this);
+        m_modificationsWatcher = new QFileSystemWatcher(this);
 
+        connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
         connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
             AddDownloadChannelDialog dialog(m_onChainClient, this);
             connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
@@ -164,7 +166,17 @@ void MainWin::init()
 
         connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
             ManageDrivesDialog dialog(m_onChainClient, this);
-            connect( &dialog, &ManageDrivesDialog::updateDrives, this, &MainWin::updateDrivesCBox );
+            connect( &dialog, &ManageDrivesDialog::updateDrives, this, [this](auto driveId, auto oldDriveLocalPath){
+                auto drive = Model::findDrive(driveId);
+                if (drive && oldDriveLocalPath != drive->m_localDriveFolder) {
+                    m_modificationsWatcher->removePath(oldDriveLocalPath.c_str());
+                    m_modificationsWatcher->addPath(drive->m_localDriveFolder.c_str());
+					startCalcDiff();
+                }
+
+                updateDrivesCBox();
+            });
+
             dialog.exec();
             updateDrivesCBox();
             startCalcDiff();
@@ -186,7 +198,6 @@ void MainWin::init()
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
         {
             qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
-
 
             // add drives created on another devices
             Model::onDrivesLoaded(drivesPages);
@@ -276,11 +287,11 @@ void MainWin::init()
 
         connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, &MainWin::onDriveCloseConfirmed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::closeDriveTransactionFailed, this, &MainWin::onDriveCloseFailed, Qt::QueuedConnection);
-
         connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName){
             qDebug() << "initializedSuccessfully";
+
             loadBalance();
             ui->m_networkName->setText(networkName);
 
@@ -779,7 +790,7 @@ void MainWin::updateChannelsCBox()
         }
     }
 
-    if ( Model::currentChannelInfoPtr() == nullptr &&  Model::dnChannels().size() > 0 )
+    if ( Model::currentChannelInfoPtr() == nullptr && !Model::dnChannels().empty() )
     {
         onCurrentChannelChanged(0);
     }
@@ -894,6 +905,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     auto* drive = Model::findDrive( driveKey );
     if ( drive )
     {
+        m_modificationsWatcher->addPath(drive->m_localDriveFolder.c_str());
         drive->m_isCreating = false;
         gSettings.save();
     }
@@ -902,7 +914,6 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
         DriveInfo driveInfo;
         driveInfo.m_name = alias;
         driveInfo.m_driveKey = driveKey;
-
         driveInfo.m_isCreating = false;
 
         Model::drives().push_back(driveInfo);
@@ -916,6 +927,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     const QString message = QString::fromStdString( "Drive '" + alias + "' created successfully.");
     showNotification(message);
     addNotification(message);
+	startCalcDiff();
 }
 
 void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
@@ -931,10 +943,24 @@ void MainWin::onDriveCreationFailed(const std::string& alias, const std::string&
 }
 
 void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
-    Model::removeDrive( sirius::drive::toString(driveKey) );
+    const auto driveKeyHex = sirius::drive::toString(driveKey);
+    auto* drive = Model::findDrive(driveKeyHex);
+    if (drive) {
+        m_modificationsWatcher->removePath(drive->m_localDriveFolder.c_str());
+    }
+
+    Model::removeDrive(driveKeyHex);
     updateDrivesCBox();
     Model::removeChannelByDriveKey(sirius::drive::toString(driveKey));
     updateChannelsCBox();
+
+    if (m_driveTreeModel->rowCount() > 0) {
+        m_driveTreeModel->removeRows(0, m_driveTreeModel->rowCount() - 1);
+    }
+
+    if (m_diffTableModel->rowCount(QModelIndex()) > 0) {
+        m_diffTableModel->removeRows(0, m_diffTableModel->rowCount(QModelIndex()) - 1);
+    }
 }
 
 void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
@@ -1210,6 +1236,10 @@ void MainWin::onCurrentChannelChanged( int index )
     {
         m_fsTreeTableModel->setFsTree( channel->m_fsTree, {} );
     }
+}
+
+void MainWin::onDriveLocalDirectoryChanged(const QString&) {
+    startCalcDiff();
 }
 
 void MainWin::onCurrentDriveChanged( int index )

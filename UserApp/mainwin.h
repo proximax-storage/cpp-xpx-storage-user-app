@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QFileSystemModel>
+#include <QFileSystemWatcher>
 #include <QTimer>
 #include <QListWidget>
 
@@ -58,7 +59,7 @@ private:
     void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );
 //    void onChannelDeleted( const std::string& channelKey );
     void onCurrentChannelChanged( int index );
-
+    void onDriveLocalDirectoryChanged(const QString& path);
     void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
     void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
     void onDriveCloseConfirmed( const std::array<uint8_t, 32>& driveKey );
@@ -110,6 +111,7 @@ private:
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
     OnChainClient*          m_onChainClient;
+    QFileSystemWatcher*     m_modificationsWatcher;
 
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
