@@ -40,15 +40,15 @@ public:
         return m_childItems.at(row);
     }
 
-    int childCount() const { return m_childItems.count(); }
+    int childCount() const { return (int)m_childItems.count(); }
 
-    int columnCount() const { return m_itemData.count(); }
+    int columnCount() const { return (int)m_itemData.count(); }
 
     QVariant data( int column ) const
     {
         if ( column<0 || column>=m_itemData.size() )
         {
-            return QVariant();
+            return {};
         }
         return m_itemData.at(column);
     }
@@ -57,8 +57,9 @@ public:
     {
         if ( m_parentItem )
         {
-            return m_parentItem->m_childItems.indexOf( const_cast<DriveTreeItem*>(this) );
+            return (int)m_parentItem->m_childItems.indexOf( const_cast<DriveTreeItem*>(this) );
         }
+
         return 0;
     }
 
@@ -78,7 +79,7 @@ class DriveTreeModel : public QAbstractItemModel
 
 public:
     explicit DriveTreeModel( QObject *parent = nullptr );
-    ~DriveTreeModel() { delete m_rootItem; }
+    ~DriveTreeModel() override { delete m_rootItem; }
 
     void updateModel();
 
@@ -88,14 +89,14 @@ public:
     {
         if ( !index.isValid() )
         {
-            return QVariant();
+            return {};
         }
 
         if ( role == Qt::DecorationRole )
         {
             if ( index.column() == 1 )
             {
-                DriveTreeItem *item = static_cast<DriveTreeItem*>(index.internalPointer());
+                auto item = static_cast<DriveTreeItem*>(index.internalPointer());
                 if ( item->isFolder() )
                 {
                     return QApplication::style()->standardIcon(QStyle::SP_DirIcon);
@@ -111,7 +112,7 @@ public:
         {
             if ( index.column() == 1 )
             {
-                DriveTreeItem *item = static_cast<DriveTreeItem*>(index.internalPointer());
+                auto item = static_cast<DriveTreeItem*>(index.internalPointer());
                 switch( item->ldiStatus() )
                 {
                     case ldi_added:
@@ -129,11 +130,10 @@ public:
 
         if ( role != Qt::DisplayRole )
         {
-            return QVariant();
+            return {};
         }
 
-        DriveTreeItem *item = static_cast<DriveTreeItem*>(index.internalPointer());
-
+        auto item = static_cast<DriveTreeItem*>(index.internalPointer());
         return item->data(index.column());
     }
 
@@ -147,21 +147,21 @@ public:
         return QAbstractItemModel::flags(index);
     }
 
-    QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const override
+    QVariant headerData( int section, Qt::Orientation orientation, int role ) const override
     {
         if ( orientation == Qt::Horizontal && role == Qt::DisplayRole )
         {
             return m_rootItem->data(section);
         }
 
-        return QVariant();
+        return {};
     }
 
     QModelIndex index( int row, int column, const QModelIndex &parent = QModelIndex() ) const override
     {
         if ( !hasIndex(row, column, parent) )
         {
-            return QModelIndex();
+            return {};
         }
 
         DriveTreeItem *parentItem;
@@ -181,22 +181,21 @@ public:
             return createIndex(row, column, childItem);
         }
 
-        return QModelIndex();
+        return {};
     }
 
     QModelIndex parent( const QModelIndex &index ) const override
     {
         if ( !index.isValid() )
         {
-            return QModelIndex();
+            return {};
         }
 
-        DriveTreeItem *childItem = static_cast<DriveTreeItem*>(index.internalPointer());
-        DriveTreeItem *parentItem = childItem->parentItem();
-
-        if ( parentItem == m_rootItem )
+        auto childItem = static_cast<DriveTreeItem*>(index.internalPointer());
+        auto parentItem = childItem ? childItem->parentItem() : nullptr;
+        if ( parentItem == m_rootItem || !parentItem )
         {
-            return QModelIndex();
+            return {};
         }
 
         return createIndex(parentItem->row(), 0, parentItem);

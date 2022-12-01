@@ -25,7 +25,7 @@ void DiffTableModel::updateModel()
 
 int DiffTableModel::rowCount(const QModelIndex &) const
 {
-    return m_actionList.size();
+    return (int)m_actionList.size();
 }
 
 int DiffTableModel::columnCount(const QModelIndex &parent) const
