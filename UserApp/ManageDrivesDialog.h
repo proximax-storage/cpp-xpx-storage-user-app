@@ -16,7 +16,7 @@ public:
     ~ManageDrivesDialog() override;
 
 signals:
-    void updateDrives();
+    void updateDrives(const std::string& driveId, const std::string& oldLocalPath);
 
 protected:
     void accept() override;

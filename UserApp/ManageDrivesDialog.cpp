@@ -98,11 +98,12 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
             return;
         }
 
+        const std::string oldPath = drive->m_localDriveFolder;
         drive->m_localDriveFolder = path.toStdString();
         Model::saveSettings();
         lock.unlock();
 
-        emit updateDrives();
+        emit updateDrives(drive->m_driveKey, oldPath);
     });
 
     connect(ui->m_table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
@@ -128,7 +129,7 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
                 Model::saveSettings();
                 lock.unlock();
 
-                emit updateDrives();
+                emit updateDrives(drive->m_driveKey, drive->m_localDriveFolder);
             }
         }
     });
@@ -150,7 +151,7 @@ ManageDrivesDialog::ManageDrivesDialog( OnChainClient* onChainClient, QWidget *p
             {
                 drive->m_isDeleting = true;
                 ui->m_table->removeRow(selectedRow);
-                emit updateDrives();
+                emit updateDrives(drive->m_driveKey, drive->m_localDriveFolder);
             }
 
         } else {
