@@ -15,7 +15,7 @@ OnChainClient::OnChainClient(StorageEngine* storage,
     init(address, port, privateKey);
 
     connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){
-        if (drivesPage.pagination.totalPages == 1 ) {
+        if (drivesPage.pagination.totalPages <= 1 ) {
             emit drivesLoaded({ drivesPage });
             return;
         }
@@ -32,7 +32,7 @@ OnChainClient::OnChainClient(StorageEngine* storage,
     });
 
     connect(this, &OnChainClient::downloadChannelsPageLoaded, this, [this](const QUuid& id, ChannelsType type, const xpx_chain_sdk::download_channels_page::DownloadChannelsPage& channelsPage){
-        if (channelsPage.pagination.totalPages == 1 ) {
+        if (channelsPage.pagination.totalPages <= 1 ) {
             emit downloadChannelsLoaded(type, { channelsPage });
             return;
         }
