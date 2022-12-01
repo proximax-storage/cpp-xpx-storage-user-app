@@ -173,6 +173,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
     for (const auto& page : remoteDrivesPages) {
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
+
     qDebug() << LOG_SOURCE << "onDrivesLoaded: " << remoteDrives.size();
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
@@ -331,7 +332,6 @@ ChannelInfo* Model::findChannel( const std::string& channelKey )
 void Model::removeChannel( const std::string& channelKey )
 {
     auto& channels = gSettings.config().m_dnChannels;
-
     auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
     {
         return boost::iequals( channelKey, channelInfo.m_hash );
@@ -346,7 +346,7 @@ void Model::removeChannel( const std::string& channelKey )
 
     if ( gSettings.config().m_currentDnChannelIndex >= channels.size() )
     {
-        gSettings.config().m_currentDnChannelIndex = channels.size()-1;
+        gSettings.config().m_currentDnChannelIndex = (int)channels.size() - 1;
     }
 
     gSettings.save();
