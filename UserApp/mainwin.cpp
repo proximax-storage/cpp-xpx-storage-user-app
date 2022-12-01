@@ -42,6 +42,7 @@
 #include <QListWidget>
 #include <QAction>
 #include <QToolTip>
+#include <QFileDialog>
 
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
@@ -537,7 +538,6 @@ void MainWin::setupDownloadsTab()
     menu->addAction(copyChannelKeyAction);
     connect( copyChannelKeyAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: copyChannelKeyAction";
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
@@ -563,8 +563,6 @@ void MainWin::setupDownloadsTab()
     menu->addAction(copyDriveKeyAction);
     connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: copyDriveKeyAction";
-
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
@@ -1370,21 +1368,71 @@ void MainWin::setupDrivesTab()
     menu->addAction(renameAction);
     connect( renameAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: renameAction";
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo != nullptr )
+        {
+            std::string driveName = driveInfo->m_name;
+            std::string driveKey = driveInfo->m_driveKey;
+            lock.unlock();
+
+            EditDialog dialog( "Rename drive", "Drive name:", driveName );
+            if ( dialog.exec() == QDialog::Accepted )
+            {
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+                if ( auto* driveInfo = Model::findDrive(driveKey); driveInfo != nullptr )
+                {
+                    driveInfo->m_name = driveName;
+                    gSettings.save();
+                    lock.unlock();
+                    updateDrivesCBox();
+                }
+            }
+        }
     });
 
     QAction* changeFolderAction = new QAction("Change local folder", this);
     menu->addAction(changeFolderAction);
     connect( changeFolderAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: changeFolderAction";
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo != nullptr )
+        {
+            std::string driveName = driveInfo->m_name;
+            std::string driveKey = driveInfo->m_driveKey;
+            lock.unlock();
+
+            QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+    #ifdef Q_OS_LINUX
+            options |= QFileDialog::DontUseNativeDialog;
+    #endif
+            const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+            if ( path.trimmed().isEmpty() )
+            {
+                qWarning () << LOG_SOURCE  << "bad path";
+                return;
+            }
+            else
+            {
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+                if ( auto* driveInfo = Model::findDrive(driveKey); driveInfo != nullptr )
+                {
+                    driveInfo->m_localDriveFolder = path.toStdString();
+                    gSettings.save();
+                    lock.unlock();
+                    updateDrivesCBox();
+                }
+            }
+        }
     });
 
     QAction* topUpAction = new QAction("Top-up", this);
     menu->addAction(topUpAction);
     connect( topUpAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: topUpAction";
+        StoragePaymentDialog dialog(m_onChainClient, this);
+        dialog.exec();
     });
 
     QAction* copyDriveKeyAction = new QAction("Copy drive key", this);
@@ -1392,10 +1440,29 @@ void MainWin::setupDrivesTab()
     connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: copyDriveKeyAction";
+
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo != nullptr )
+        {
+            std::string driveKey = driveInfo->m_driveKey;
+            lock.unlock();
+
+            QClipboard* clipboard = QApplication::clipboard();
+            if ( !clipboard ) {
+                qWarning() << LOG_SOURCE << "bad clipboard";
+                lock.unlock();
+                return;
+            }
+
+            clipboard->setText( QString::fromStdString(driveKey), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
+            }
+        }
     });
 
     ui->m_moreDrivesBtn->setMenu(menu);
-
 }
 
 void MainWin::setupNotifications() {
