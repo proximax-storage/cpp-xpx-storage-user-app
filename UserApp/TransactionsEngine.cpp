@@ -526,6 +526,9 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             return;
         }
 
+        // TODO: fix libtorrent logic to avoid this
+        std::this_thread::sleep_for(std::chrono::seconds(30));
+
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,
                                                [this, driveId, modificationId, notification,
@@ -555,9 +558,6 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                 qInfo() << LOG_SOURCE << "other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
                 return;
             }
-
-            // TODO: fix libtorrent logic to avoid this
-            std::this_thread::sleep_for(std::chrono::seconds(30));
 
             qInfo() << LOG_SOURCE << "confirmed dataModificationApprovalTransaction hash: "
                     << notification.meta.hash.c_str() << " modificationId: "
