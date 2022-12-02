@@ -193,7 +193,12 @@ void MainWin::init()
                 Model::onSponsoredChannelsLoaded(channelsPages);
             }
 
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+            gSettings.config().m_channelsLoaded = true;
+            lock.unlock();
+
             updateChannelsCBox();
+            m_fsTreeTableModel->setFsTree( {}, {} );
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
@@ -202,12 +207,33 @@ void MainWin::init()
 
             // add drives created on another devices
             Model::onDrivesLoaded(drivesPages);
+
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+            gSettings.config().m_drivesLoaded = true;
+
+            qDebug() << LOG_SOURCE << "m_currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
+            if ( gSettings.config().m_currentDriveIndex >= 0 )
+            {
+                Model::setCurrentDriveIndex( gSettings.config().m_currentDriveIndex );
+                if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
+                {
+                    drivePtr->m_calclDiffIsWaitingFsTree = true;
+                    downloadLatestFsTree( drivePtr->m_driveKey );
+                }
+            }
+            else
+            {
+                m_driveTreeModel->updateModel();
+                ui->m_driveTreeView->expandAll();
+            }
+
             updateDrivesCBox();
             updateModificationStatus();
 
             // load my own channels
             xpx_chain_sdk::DownloadChannelsPageOptions options;
             options.consumerKey = gSettings.config().m_publicKeyStr;
+            lock.unlock();
             m_onChainClient->loadDownloadChannels(options);
 
             // load sponsored channels
@@ -260,6 +286,8 @@ void MainWin::init()
             AddDriveDialog dialog(m_onChainClient, this);
             connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, &MainWin::updateDrivesCBox );
             dialog.exec();
+            m_diffTableModel->updateModel();
+
         }, Qt::QueuedConnection);
 
         connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
@@ -271,8 +299,9 @@ void MainWin::init()
 
             CloseDriveDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
             auto rc = dialog.exec();
-            if ( rc==QDialog::Accepted )
+            if ( rc==QMessageBox::Ok )
             {
+                qDebug() << LOG_SOURCE << "drive->m_isDeleting = true";
                 drive->m_isDeleting = true;
                 updateDrivesCBox();
             }
@@ -905,6 +934,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     {
         m_modificationsWatcher->addPath(drive->m_localDriveFolder.c_str());
         drive->m_isCreating = false;
+        drive->m_isConfirmed = true;
         gSettings.save();
     }
     else
@@ -913,6 +943,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
         driveInfo.m_name = alias;
         driveInfo.m_driveKey = driveKey;
         driveInfo.m_isCreating = false;
+        drive->m_isConfirmed = true;
 
         Model::drives().push_back(driveInfo);
         gSettings.save();
@@ -947,18 +978,33 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
         m_modificationsWatcher->removePath(drive->m_localDriveFolder.c_str());
     }
 
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    std::string driveName;
+    auto* drivePtr = Model::findDrive(driveKeyHex);
+    if ( drivePtr != nullptr )
+    {
+        driveName = drivePtr->m_name;
+    }
+    lock.unlock();
+
+
     Model::removeDrive(driveKeyHex);
     updateDrivesCBox();
+    m_diffTableModel->updateModel();
+
     Model::removeChannelByDriveKey(sirius::drive::toString(driveKey));
     updateChannelsCBox();
 
-    if (m_driveTreeModel->rowCount() > 0) {
-        m_driveTreeModel->removeRows(0, m_driveTreeModel->rowCount() - 1);
+    if ( drivePtr != nullptr )
+    {
+        const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
+        showNotification(message);
+        addNotification(message);
     }
 
-    if (m_diffTableModel->rowCount(QModelIndex()) > 0) {
-        m_diffTableModel->removeRows(0, m_diffTableModel->rowCount(QModelIndex()) - 1);
-    }
+//    if (m_driveTreeModel->rowCount() > 0) {
+//        m_driveTreeModel->removeRows(0, m_driveTreeModel->rowCount() - 1);
+//    }
 }
 
 void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
@@ -1537,7 +1583,10 @@ void MainWin::updateDrivesCBox()
         Model::setCurrentDriveIndex(0);
     }
 
-    ui->m_driveCBox->setCurrentIndex( Model::currentDriveIndex() );
+    if ( Model::currentDriveIndex() >= 0 )
+    {
+        ui->m_driveCBox->setCurrentIndex( Model::currentDriveIndex() );
+    }
 
 //    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
 //    {
@@ -1612,7 +1661,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
         DriveInfo* drivePtr = Model::findDrive( driveKey );
         if (!drivePtr) {
-            qWarning() << LOG_SOURCE << "bad drive";
+            qWarning() << LOG_SOURCE << "drive removed";
             return;
         }
 
@@ -1632,11 +1681,14 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
             lock.unlock();
 
-            const QString messageText = "Cannot get drive root hash.";
-            const QString error = QString::fromStdString( "Drive: " + driveKey + "\nError: " + message );
-            showNotification(messageText, error);
-            addNotification(messageText);
-            return;
+            if ( drivePtr->m_isConfirmed )
+            {
+                const QString messageText = "Cannot get drive root hash.";
+                const QString error = QString::fromStdString( "Drive: " + driveKey + "\nError: " + message );
+                showNotification(messageText, error);
+                addNotification(messageText);
+                return;
+            }
         }
 
         qDebug() << LOG_SOURCE << "@ on RootHash received: " << drive.data.rootHash.c_str();
@@ -1749,13 +1801,20 @@ void MainWin::onFsTreeReceived( const std::string& driveHash, const std::array<u
 
 void MainWin::continueCalcDiff( DriveInfo& drive )
 {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     drive.m_calclDiffIsWaitingFsTree = false;
 
-    Model::calcDiff();
-    m_driveTreeModel->updateModel();
-    ui->m_driveTreeView->expandAll();
-    m_diffTableModel->updateModel();
-    //ui->m_diffTableView->resizeColumnsToContents();
+    qDebug() << LOG_SOURCE << "drive.m_isConfirmed: " << drive.m_isConfirmed;
+
+    if ( drive.m_isConfirmed )
+    {
+        Model::calcDiff();
+        m_driveTreeModel->updateModel();
+        ui->m_driveTreeView->expandAll();
+        m_diffTableModel->updateModel();
+        //ui->m_diffTableView->resizeColumnsToContents();
+    }
 }
 
 void MainWin::startCalcDiff()

@@ -21,7 +21,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
                 QList<QVariant> child;
                 child << QApplication::style()->standardIcon(QStyle::SP_DirIcon);
                 child << QString::fromStdString( entryName ) << "";
-                auto* treeItem = new DriveTreeItem( true, ldi_not_changed, child, parent );
+                auto* treeItem = new DriveTreeItem( true, false, ldi_not_changed, child, parent );
                 parent->appendChild( treeItem );
 
                 scanFolderR( treeItem, path / entryName );
@@ -31,7 +31,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
                 QList<QVariant> child;
                 child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
                 child << QString::fromStdString( entryName ) << QString::fromStdString( std::to_string( entry.file_size() ) );
-                auto* treeItem = new DriveTreeItem( false, ldi_not_changed, child, parent );
+                auto* treeItem = new DriveTreeItem( false, false, ldi_not_changed, child, parent );
                 parent->appendChild( treeItem );
             }
         }
@@ -44,22 +44,37 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
 
 DriveTreeModel::DriveTreeModel( QObject* )
 {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    if ( ! gSettings.config().m_drivesLoaded )
+    {
+        QList<QVariant> rootList;
+        rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
+        m_rootItem = new DriveTreeItem( false, true, ldi_not_changed, rootList );
+
+        QList<QVariant> driveRootList;
+        driveRootList << QString("") << QString("Initializing...") << QString("");
+        auto driveRoot = new DriveTreeItem( false, true, ldi_not_changed, driveRootList, m_rootItem );
+        m_rootItem->appendChild( driveRoot );
+        return;
+    }
+
     QList<QVariant> rootList;
     rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
-    m_rootItem = new DriveTreeItem( true, ldi_not_changed, rootList );
+    m_rootItem = new DriveTreeItem( true, false, ldi_not_changed, rootList );
 
     QList<QVariant> driveRootList;
     driveRootList << QString("/") << QString("/") << QString("");
-    auto driveRoot = new DriveTreeItem( true, ldi_not_changed, driveRootList, m_rootItem );
+    auto driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
     m_rootItem->appendChild( driveRoot );
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     const auto* localDrive = Model::currentDriveInfoPtr();
 
     if ( localDrive != nullptr )
     {
-        scanFolderR( driveRoot, localDrive->m_localDriveFolder );
+        auto localDriveFolder = localDrive->m_localDriveFolder;
+        lock.unlock();
+        scanFolderR( driveRoot, localDriveFolder );
     }
 }
 
@@ -72,7 +87,7 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder )
             QList<QVariant> child;
             child << QApplication::style()->standardIcon(QStyle::SP_DirIcon);
             child << QString::fromStdString( name ) << "";
-            auto* treeItem = new DriveTreeItem( true, entry.m_ldiStatus, child, parent );
+            auto* treeItem = new DriveTreeItem( true, false, entry.m_ldiStatus, child, parent );
             parent->appendChild( treeItem );
 
             parseR( treeItem, entry );
@@ -82,7 +97,7 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder )
             QList<QVariant> child;
             child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
             child << QString::fromStdString( name ) << QString::fromStdString( std::to_string( entry.m_size ) );;
-            auto* treeItem = new DriveTreeItem( false, entry.m_ldiStatus, child, parent );
+            auto* treeItem = new DriveTreeItem( false, false, entry.m_ldiStatus, child, parent );
             parent->appendChild( treeItem );
         }
     }
@@ -94,11 +109,11 @@ void DriveTreeModel::updateModel()
 
     QList<QVariant> rootList;
     rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
-    m_rootItem = new DriveTreeItem( true, ldi_not_changed, rootList );
+    m_rootItem = new DriveTreeItem( true, false, ldi_not_changed, rootList );
 
     QList<QVariant> driveRootList;
     driveRootList << QString("/") << QString("/") << QString("");
-    auto driveRoot = new DriveTreeItem( true, ldi_not_changed, driveRootList, m_rootItem );
+    auto driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
     m_rootItem->appendChild( driveRoot );
 
     const auto* localDrive = Model::currentDriveInfoPtr();

@@ -38,12 +38,14 @@ public:
 
         std::vector<ChannelInfo>    m_dnChannels;
         int                         m_currentDnChannelIndex = -1;
+        bool                        m_channelsLoaded = false;
 
         std::string                 m_downloadFolder;
         std::vector<DownloadInfo>   m_downloads;
 
         std::vector<DriveInfo>      m_drives;
         int                         m_currentDriveIndex = -1;
+        bool                        m_drivesLoaded = false;
 
         Account();
         Account( const Account& a );
