@@ -245,17 +245,6 @@ void MainWin::init()
             }
         }, Qt::QueuedConnection);
 
-        connect(ui->m_cancelModification, &QPushButton::released, this, [this] () {
-            auto drive = Model::currentDriveInfoPtr();
-            if (!drive) {
-                qWarning() << LOG_SOURCE << "bad drive";
-                return;
-            }
-
-            CancelModificationDialog dialog(m_onChainClient, drive->m_driveKey.c_str(), drive->m_name.c_str(), this);
-            dialog.exec();
-        }, Qt::QueuedConnection);
-
         connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
             AddDriveDialog dialog(m_onChainClient, this);
             connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, &MainWin::updateDrivesCBox );
