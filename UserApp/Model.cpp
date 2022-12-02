@@ -81,6 +81,7 @@ void Model::addDrive( const std::string& driveHash,
 
 void Model::setCurrentDriveIndex( int index )
 {
+    qDebug() << LOG_SOURCE << "setCurrentDriveIndex: " << index;
     if ( index < 0 || index >= gSettings.config().m_drives.size() )
     {
         qDebug() << LOG_SOURCE << "setCurrentDriveIndex: invalid index: " << index;

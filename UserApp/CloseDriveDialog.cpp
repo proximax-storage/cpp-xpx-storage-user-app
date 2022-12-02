@@ -9,7 +9,7 @@ CloseDriveDialog::CloseDriveDialog(OnChainClient* onChainClient,
     , mpOnChainClient(onChainClient)
 {
     setWindowTitle("Confirmation");
-    setText("Please confirm drive " + alias + " removal");
+    setText("Please confirm drive '" + alias + "' removal");
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     setButtonText(QMessageBox::Ok, "Confirm");
@@ -20,7 +20,9 @@ CloseDriveDialog::CloseDriveDialog(OnChainClient* onChainClient,
 
 void CloseDriveDialog::accept() {
     mpOnChainClient->closeDrive(rawHashFromHex(mDriveId));
+    QDialog::accept();
 }
 
 void CloseDriveDialog::reject() {
+    QDialog::reject();
 }

@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 
 class DriveTreeItem
 {
+    bool                    m_notFs;
     bool                    m_isFolder;
     int                     m_ldiStatus;
     QList<DriveTreeItem*>   m_childItems;
@@ -21,13 +22,15 @@ class DriveTreeItem
     DriveTreeItem*          m_parentItem = nullptr;
 
 public:
-    explicit DriveTreeItem( bool isFolder, int ldiStatus, const QList<QVariant>& data, DriveTreeItem* parentItem = nullptr )
-        : m_isFolder(isFolder), m_ldiStatus(ldiStatus), m_itemData(data), m_parentItem(parentItem)
+    explicit DriveTreeItem( bool isFolder, bool notFs, int ldiStatus, const QList<QVariant>& data, DriveTreeItem* parentItem = nullptr )
+        : m_isFolder(isFolder), m_notFs(notFs), m_ldiStatus(ldiStatus), m_itemData(data), m_parentItem(parentItem)
     {}
 
     ~DriveTreeItem() {  qDeleteAll(m_childItems); }
 
     bool isFolder() const { return m_isFolder; }
+
+    bool notFs() const { return m_notFs; }
 
     int  ldiStatus() const { return m_ldiStatus; }
 
@@ -97,7 +100,11 @@ public:
             if ( index.column() == 1 )
             {
                 auto item = static_cast<DriveTreeItem*>(index.internalPointer());
-                if ( item->isFolder() )
+                if ( item->notFs() )
+                {
+                    return {};
+                }
+                else if ( item->isFolder() )
                 {
                     return QApplication::style()->standardIcon(QStyle::SP_DirIcon);
                 }

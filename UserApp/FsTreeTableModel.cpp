@@ -202,6 +202,11 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 {
                     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
+                    if ( ! gSettings.config().m_channelsLoaded )
+                    {
+                        return QString("Loading...");
+                    }
+
                     auto channelInfo = gSettings.currentChannelInfoPtr();
 
                     if ( channelInfo == nullptr )
