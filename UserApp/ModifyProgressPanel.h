@@ -1,13 +1,15 @@
 #pragma once
 
 #include <QFrame>
-#include <QPushButton>
-#include <QLabel>
-#include <QVBoxLayout>
-
+#include <QMovie>
+#include <QPixmap>
 #include <functional>
 
 #include "Model.h"
+
+namespace Ui {
+    class Frame;
+}
 
 //enum ModificationStatus { no_modification, is_registring, is_registred, is_approved, is_failed, is_canceling, is_canceled };
 
@@ -16,27 +18,23 @@ class ModifyProgressPanel : public QFrame
 {
 public:
 
-    ModifyProgressPanel( int x, int y, QWidget* parent, std::function<void()> cancelModificationFunc );
+    ModifyProgressPanel( int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc );
+    ~ModifyProgressPanel();
 
-    void setIsRegistring();
-    void setIsRegistred();
-    void setIsApproved();
-    void setIsFailed();
+    void setRegistering();
+    void setRegistered();
+    void setApproved();
+    void setFailed();
     void setIsApprovedWithOldRootHash();
-    void setIsCanceling();
-    void setIsCanceled();
+    void setCanceling();
+    void setCanceled();
 
 private:
     std::function<void()> m_cancelModificationFunc;
-
-    QVBoxLayout*    m_vLayout;
-    QFrame*         m_frame;
-    QVBoxLayout*    m_vLayout_2;
-    QLabel*         m_title;
-    QLabel*         m_text1;
-    QLabel*         m_text2;
-    QLabel*         m_text3;
-    QHBoxLayout*    m_hLayout;
-    QPushButton*    m_cancelButton;
+    Ui::Frame* ui;
+    QMovie* m_loading;
+    QPixmap* m_loaded;
+    QPixmap* m_error;
+    QSize m_commonSize;
 };
 

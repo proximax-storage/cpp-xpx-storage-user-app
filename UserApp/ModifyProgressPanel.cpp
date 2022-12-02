@@ -1,72 +1,36 @@
 #include "ModifyProgressPanel.h"
 #include "Model.h"
+#include "ui_ModifyProgressPanel.h"
 
 #include <QPushButton>
 
-ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::function<void()> cancelModificationFunc )
-    : QFrame(parent), m_cancelModificationFunc( cancelModificationFunc )
+ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc )
+    : QFrame(parent)
+    , ui(new Ui::Frame)
+    , m_cancelModificationFunc( cancelModificationFunc )
 {
-    setGeometry( QRect( x, y, 300, 200 ) );
+    ui->setupUi(this);
 
+    m_commonSize = QSize(20, 20);
+    m_loading = new QMovie("./resources/icons/loader.gif");
+    m_loading->setScaledSize(m_commonSize);
+    m_loading->setParent(this);
+
+    m_loaded = new QPixmap("./resources/icons/loaded.png");
+    m_error = new QPixmap("./resources/icons/error.png");
+
+    ui->m_title->setWindowTitle("Modification status");
+    ui->m_title->setAlignment(Qt::AlignCenter);
+    setGeometry( QRect( x, y, 255, 130) );
     setFrameShape( QFrame::StyledPanel );
-    setLineWidth(1);
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Midlight);
-    setFrameStyle( QFrame::Panel | QFrame::Sunken );
-    m_cancelButton = new QPushButton( "Cancel modification", this );
-    m_vLayout = new QVBoxLayout(this);
+    setFrameStyle( (int)QFrame::StyledPanel | (int)QFrame::Raised );
+    ui->m_cancel->setText("Cancel modification");
+
+    connect( ui->m_cancel, &QPushButton::released, this, [this]
     {
-        m_title = new QLabel(this);
-        m_title->setFrameStyle( QFrame::NoFrame );
-        m_title->setText( "Modification status:");
-        m_title->setStyleSheet("font-weight: bold;");
-        m_title->setAlignment( Qt::AlignBottom | Qt::AlignHCenter );
-        m_vLayout->addWidget( m_title );
-
-        m_vLayout->addStretch(1);
-
-        m_frame = new QFrame(this);
-        m_frame->setFrameStyle( QFrame::Panel | QFrame::Sunken );
-        m_vLayout->addWidget( m_frame );
-
-        m_vLayout_2 = new QVBoxLayout(m_frame);
-
-        {
-            m_text1 = new QLabel(this);
-            m_text1->setText( "modification is registring...");
-            m_text1->setAlignment( Qt::AlignBottom | Qt::AlignLeft );
-            m_vLayout_2->addWidget( m_text1 );
-
-            m_text2 = new QLabel(this);
-            m_text2->setText( "");
-            m_text2->setAlignment( Qt::AlignBottom | Qt::AlignLeft );
-            m_vLayout_2->addWidget( m_text2 );
-
-            m_text3 = new QLabel(this);
-            m_text3->setText( "");
-            m_text3->setAlignment( Qt::AlignBottom | Qt::AlignLeft );
-            m_vLayout_2->addWidget( m_text3 );
-        }
-
-        m_vLayout->addStretch(2);
-
-        m_hLayout = new QHBoxLayout();
-        m_vLayout->addLayout( m_hLayout );
-        {
-            m_hLayout->addStretch(1);
-            m_hLayout->addWidget( m_cancelButton );
-            m_hLayout->addStretch(1);
-        }
-    }
-
-    m_frame->adjustSize();
-    adjustSize();
-
-    //setIsFailedAfterRegistred();
-
-    connect( m_cancelButton, &QPushButton::released, this, [this]
-    {
-        qDebug() << "m_cancelButton, ::released:";
+        qDebug() << "ui->m_cancel, ::released:";
 
         if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo == nullptr )
         {
@@ -74,15 +38,15 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
         }
         else
         {
-            qDebug() << "m_cancelButton, ::released: status: " << driveInfo->m_modificationStatus;
+            qDebug() << "ui->m_cancel, ::released: status: " << driveInfo->m_modificationStatus;
 
             if ( driveInfo->m_modificationStatus == is_registring ||
                  driveInfo->m_modificationStatus == is_registred )
             {
-                qDebug() << "m_cancelButton, ::released: 1";
+                qDebug() << "ui->m_cancel, ::released: 1";
                 m_cancelModificationFunc();
                 driveInfo->m_modificationStatus = is_canceling;
-                setIsCanceling();
+                setCanceling();
             }
             else if ( driveInfo->m_modificationStatus == no_modification ||
                       driveInfo->m_modificationStatus == is_approved ||
@@ -90,7 +54,7 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
                       driveInfo->m_modificationStatus == is_failed ||
                       driveInfo->m_modificationStatus == is_canceled )
             {
-                qDebug() << "m_cancelButton, ::released: 2";
+                qDebug() << "ui->m_cancel, ::released: 2";
 
                 driveInfo->m_currentModificationHash.reset();
                 driveInfo->m_modificationStatus = no_modification;
@@ -100,98 +64,86 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, std::fu
     });
 
     stackUnder( this );
+
+    ui->horizontalLayout->setAlignment(Qt::AlignCenter);
+    ui->m_statusIcon->setText("");
+
+    setRegistering();
+    setRegistered();
+    setApproved();
+    setCanceling();
+    setFailed();
+    setCanceled();
 }
 
-void ModifyProgressPanel::setIsRegistring()
+ModifyProgressPanel::~ModifyProgressPanel()
 {
-    m_text1->setText( "modification is registring...");
-    m_text1->setStyleSheet("color: black");
-    m_text2->setText( "");
-    m_text3->setText( "");
-    m_frame->adjustSize();
-    adjustSize();
-
-    m_cancelButton->setEnabled(true);
 }
 
-
-void ModifyProgressPanel::setIsRegistred()
+void ModifyProgressPanel::setRegistering()
 {
-    qDebug() << "setIsRegistred(): '";
-
-    m_text1->setText( "modification is registred (in blockchain)");
-    m_text1->setStyleSheet("color: blue");
-    m_text2->setText( "modification is uploading...");
-    m_text2->setStyleSheet("color: black");
-    m_text3->setText( "");
-    m_frame->adjustSize();
+    ui->m_statusLabel->setText( "Modification is registering ");
+    ui->m_statusIcon->setScaledContents(false);
+    ui->m_statusIcon->setMovie(m_loading);
+    m_loading->start();
     adjustSize();
-
-    m_cancelButton->setEnabled(true);
 }
 
-void ModifyProgressPanel::setIsApproved()
+void ModifyProgressPanel::setRegistered()
 {
-    m_text1->setText( "modification is registred (in blockchain)");
-    m_text1->setStyleSheet("color: blue");
-    m_text2->setText( "modification is completed");
-    m_text2->setStyleSheet("color: blue");
-    m_text3->setText( "");
-    m_cancelButton->setText("Ok");
-    m_frame->adjustSize();
+    ui->m_statusLabel->setText( "Modification is uploading ");
     adjustSize();
-
-    m_cancelButton->setEnabled(true);
 }
 
-void ModifyProgressPanel::setIsFailed()
+void ModifyProgressPanel::setApproved()
 {
-    m_text1->setText( "modification is failed");
-    m_text1->setStyleSheet("color: red");
-    m_text2->setText( "");
-    m_text3->setText( "");
-    m_cancelButton->setText("Close");
-    m_frame->adjustSize();
+    ui->m_statusLabel->setText("Modification is completed!");
+    ui->m_cancel->setText("Ok");
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setPixmap(*m_loaded);
     adjustSize();
+}
 
-    m_cancelButton->setEnabled(true);
+void ModifyProgressPanel::setFailed()
+{
+    ui->m_statusLabel->setText( "Modification is failed!");
+    ui->m_cancel->setText("Close");
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setPixmap(*m_error);
+    ui->m_cancel->setEnabled(true);
+    adjustSize();
 }
 
 void ModifyProgressPanel::setIsApprovedWithOldRootHash()
 {
-    m_text1->setText( "modification is registred (in blockchain)");
-    m_text1->setStyleSheet("color: blue");
-    m_text2->setText( "modification is completed");
-    m_text2->setStyleSheet("color: blue");
-    m_text3->setText( "root hash is not changed");
-    m_text3->setStyleSheet("color: red");
-    m_cancelButton->setText("Close");
-    m_frame->adjustSize();
-    adjustSize();
-
-    m_cancelButton->setEnabled(true);
+//    ui->m_registeredLabel->setText( "modification is registred (in blockchain)");
+//    ui->m_registeredLabel->setStyleSheet("color: blue");
+//    ui->m_appliedLabel->setText( "Modification is completed");
+//    ui->m_appliedLabel->setStyleSheet("color: blue");
+//    ui->m_appliedLabel->setText( "root hash is not changed");
+//    ui->m_appliedLabel->setStyleSheet("color: red");
+//    ui->m_cancel->setText("Close");
+//    adjustSize();
+//
+//    ui->m_cancel->setEnabled(true);
 }
 
-void ModifyProgressPanel::setIsCanceling()
+void ModifyProgressPanel::setCanceling()
 {
-    m_text1->setText( "modification is canceling...");
-    m_text1->setStyleSheet("color: black");
-    m_text2->setText( "");
-    m_text3->setText( "");
-    m_frame->adjustSize();
+    ui->m_statusLabel->setText( "Modification is canceling ");
+    ui->m_cancel->setEnabled(false);
     adjustSize();
-
-    m_cancelButton->setEnabled(false);
 }
 
-void ModifyProgressPanel::setIsCanceled()
+void ModifyProgressPanel::setCanceled()
 {
-    m_text1->setText( "modification is canceled");
-    m_text1->setStyleSheet("color: black");
-    m_text2->setText( "");
-    m_text3->setText( "");
-    m_frame->adjustSize();
+    ui->m_statusLabel->setText("Modification is canceled!");
+    ui->m_cancel->setText("Ok");
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setPixmap(*m_loaded);
+    ui->m_cancel->setEnabled(true);
     adjustSize();
-
-    m_cancelButton->setEnabled(true);
 }
