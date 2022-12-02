@@ -392,16 +392,16 @@ void MainWin::updateModificationStatus()
                 m_modifyProgressPanel->setVisible(false);
                 break;
             case is_registring:
-                m_modifyProgressPanel->setIsRegistring();
+                m_modifyProgressPanel->setRegistering();
                 m_modifyProgressPanel->setVisible(true);
                 break;
             case is_registred:
-                m_modifyProgressPanel->setIsRegistred();
+                m_modifyProgressPanel->setRegistered();
                 m_modifyProgressPanel->setVisible(true);
                 break;
                 //is_failed, is_canceling, is_canceled
             case is_approved:
-                m_modifyProgressPanel->setIsApproved();
+                m_modifyProgressPanel->setApproved();
                 m_modifyProgressPanel->setVisible(true);
                 break;
             case is_approvedWithOldRootHash:
@@ -409,15 +409,15 @@ void MainWin::updateModificationStatus()
                 m_modifyProgressPanel->setVisible(true);
                 break;
             case is_failed:
-                m_modifyProgressPanel->setIsFailed();
+                m_modifyProgressPanel->setFailed();
                 m_modifyProgressPanel->setVisible(true);
                 break;
             case is_canceling:
-                m_modifyProgressPanel->setIsCanceling();
+                m_modifyProgressPanel->setCanceling();
                 m_modifyProgressPanel->setVisible(true);
                 break;
             case is_canceled:
-                m_modifyProgressPanel->setIsCanceled();
+                m_modifyProgressPanel->setCanceled();
                 m_modifyProgressPanel->setVisible(true);
                 break;
             }
