@@ -1679,8 +1679,9 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
                 const QString error = QString::fromStdString( "Drive: " + driveKey + "\nError: " + message );
                 showNotification(messageText, error);
                 addNotification(messageText);
-                return;
             }
+
+            return;
         }
 
         qDebug() << LOG_SOURCE << "@ on RootHash received: " << drive.data.rootHash.c_str();
