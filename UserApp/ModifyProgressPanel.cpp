@@ -40,8 +40,8 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
         {
             qDebug() << "ui->m_cancel, ::released: status: " << driveInfo->m_modificationStatus;
 
-            if ( driveInfo->m_modificationStatus == is_registring ||
-                 driveInfo->m_modificationStatus == is_registred )
+            if (driveInfo->m_modificationStatus == is_registering ||
+                driveInfo->m_modificationStatus == is_registered )
             {
                 qDebug() << "ui->m_cancel, ::released: 1";
                 m_cancelModificationFunc();
@@ -67,13 +67,6 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
 
     ui->horizontalLayout->setAlignment(Qt::AlignCenter);
     ui->m_statusIcon->setText("");
-
-    setRegistering();
-    setRegistered();
-    setApproved();
-    setCanceling();
-    setFailed();
-    setCanceled();
 }
 
 ModifyProgressPanel::~ModifyProgressPanel()

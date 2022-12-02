@@ -5,6 +5,7 @@
 #include <QFileSystemWatcher>
 #include <QTimer>
 #include <QListWidget>
+#include <QCloseEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -92,6 +93,8 @@ private:
     void startCalcDiff();
 
     void lockMainButtons(bool state);
+    void closeEvent(QCloseEvent* event) override;
+    void addLocalModificationsWatcher();
 
 private slots:
     void updateChannelsCBox();

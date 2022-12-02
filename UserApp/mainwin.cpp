@@ -132,6 +132,7 @@ void MainWin::init()
     });
 
     setupIcons();
+    setGeometry(gSettings.m_windowGeometry);
 
     connect( ui->m_settingsButton, &QPushButton::released, this, [this]
     {
@@ -227,6 +228,7 @@ void MainWin::init()
                 ui->m_driveTreeView->expandAll();
             }
 
+            addLocalModificationsWatcher();
             updateDrivesCBox();
             updateModificationStatus();
 
@@ -420,11 +422,11 @@ void MainWin::updateModificationStatus()
             case no_modification:
                 m_modifyProgressPanel->setVisible(false);
                 break;
-            case is_registring:
+            case is_registering:
                 m_modifyProgressPanel->setRegistering();
                 m_modifyProgressPanel->setVisible(true);
                 break;
-            case is_registred:
+            case is_registered:
                 m_modifyProgressPanel->setRegistered();
                 m_modifyProgressPanel->setVisible(true);
                 break;
@@ -765,7 +767,6 @@ bool MainWin::requestPrivateKey()
 {
     {
         PrivKeyDialog pKeyDialog( this );
-
         pKeyDialog.exec();
 
         if ( pKeyDialog.result() != QDialog::Accepted )
@@ -783,6 +784,9 @@ bool MainWin::requestPrivateKey()
     {
         return false;
     }
+
+    gSettings.m_windowGeometry.setWidth(1000);
+    gSettings.m_windowGeometry.setHeight(700);
 
     return true;
 }
@@ -1040,7 +1044,7 @@ void MainWin::onApplyChanges()
     auto driveKeyHex = rawHashFromHex(drive->m_driveKey.c_str());
     m_onChainClient->applyDataModification(driveKeyHex, actions, sandbox);
 
-    drive->m_modificationStatus = is_registring;
+    drive->m_modificationStatus = is_registering;
     updateModificationStatus();
 }
 
@@ -1134,7 +1138,7 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
 
     if ( auto drive = Model::findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
-        drive->m_modificationStatus = is_registred;
+        drive->m_modificationStatus = is_registered;
         lock.unlock();
 
         updateModificationStatus();
@@ -1196,7 +1200,6 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     QString message;
     message.append("Your modification was applied. Drive: ");
     message.append(driveAlias.c_str());
-    showNotification(message);
     addNotification(message);
 }
 
@@ -1828,4 +1831,22 @@ void MainWin::lockMainButtons(bool state) {
     ui->m_closeDrive->setDisabled(state);
     ui->m_manageDrives->setDisabled(state);
     ui->m_topUpDrive->setDisabled(state);
+}
+
+void MainWin::closeEvent(QCloseEvent *event) {
+    if (event) {
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+        gSettings.m_windowGeometry = frameGeometry();
+        gSettings.save();
+        lock.unlock();
+
+        event->accept();
+    }
+}
+
+void MainWin::addLocalModificationsWatcher() {
+    auto drives = gSettings.config().m_drives;
+    for (const auto& drive : drives) {
+        m_modificationsWatcher->addPath(drive.m_localDriveFolder.c_str());
+    }
 }

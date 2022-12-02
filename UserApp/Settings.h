@@ -4,6 +4,7 @@
 #include <optional>
 #include <filesystem>
 
+#include <QRect>
 #include <QDebug>
 
 #include "crypto/KeyPair.h"
@@ -28,6 +29,7 @@ public:
     std::string     m_restBootstrap;
     std::string     m_replicatorBootstrap;
     std::string     m_udpPort  = "6846";
+    QRect           m_windowGeometry;
 
     struct Account
     {

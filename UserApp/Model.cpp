@@ -212,7 +212,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             auto& lastModification = remoteDrive.data.activeDataModifications.back();
             it->m_currentModificationHash = Model::hexStringToHash( lastModification.dataModification.id );
             //TODO
-            it->m_modificationStatus = is_registring;
+            it->m_modificationStatus = is_registering;
         }
     }
 

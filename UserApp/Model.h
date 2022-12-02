@@ -32,7 +32,7 @@ using  FsTreeHandler  = std::function<void( const std::string&           driveHa
                                             const std::array<uint8_t,32> fsTreeHash,
                                             const sirius::drive::FsTree& fsTree )>;
 
-enum ModificationStatus { no_modification, is_registring, is_registred, is_approved, is_approvedWithOldRootHash, is_failed, is_canceling, is_canceled };
+enum ModificationStatus { no_modification, is_registering, is_registered, is_approved, is_approvedWithOldRootHash, is_failed, is_canceling, is_canceled };
 
 //
 // ChannelInfo

@@ -142,6 +142,22 @@ bool Settings::load( const std::string& pwd )
             iarchive( m_udpPort );
             iarchive( m_currentAccountIndex );
             iarchive( m_accounts );
+
+            int top;
+            iarchive( top );
+            m_windowGeometry.setTop(top);
+
+            int left;
+            iarchive( left );
+            m_windowGeometry.setLeft(left);
+
+            int width;
+            iarchive( width );
+            m_windowGeometry.setWidth(width);
+
+            int height;
+            iarchive( height );
+            m_windowGeometry.setHeight(height);
         }
         catch(...)
         {
@@ -213,6 +229,10 @@ void Settings::save()
         archive( m_udpPort );
         archive( m_currentAccountIndex );
         archive( m_accounts );
+        archive( m_windowGeometry.top() );
+        archive( m_windowGeometry.left() );
+        archive( m_windowGeometry.width() );
+        archive( m_windowGeometry.height() );
 
         std::ofstream fStream( settingsFolder() / "config", std::ios::binary );
         fStream << os.str();
@@ -228,6 +248,10 @@ void Settings::save()
             archive( m_udpPort );
             archive( m_currentAccountIndex );
             archive( m_accounts );
+            archive( m_windowGeometry.top() );
+            archive( m_windowGeometry.left() );
+            archive( m_windowGeometry.width() );
+            archive( m_windowGeometry.height() );
 
             std::ofstream fStream( settingsFolder() / "config.json", std::ios::binary );
             fStream << os.str();
