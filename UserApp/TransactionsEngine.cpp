@@ -527,7 +527,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         }
 
         // TODO: fix libtorrent logic to avoid this
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        //std::this_thread::sleep_for(std::chrono::seconds(30));
 
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,

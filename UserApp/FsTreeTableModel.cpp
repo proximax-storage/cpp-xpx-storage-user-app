@@ -48,16 +48,16 @@ void FsTreeTableModel::updateRows()
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-            qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
+//            qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
             m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
         }
         else
         {
             const auto& file = sirius::drive::getFile(child.second);
-            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
-                     << sirius::drive::toString( file.hash().array() ).c_str();
+//            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
+//                     << sirius::drive::toString( file.hash().array() ).c_str();
             m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
-            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
+//            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
         }
     }
 

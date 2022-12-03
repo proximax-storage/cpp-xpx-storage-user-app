@@ -196,10 +196,16 @@ void MainWin::init()
 
             std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
             gSettings.config().m_channelsLoaded = true;
-            lock.unlock();
 
+            int dnChannelIndex = Model::currentDnChannelIndex();
+            if ( dnChannelIndex >= 0 )
+            {
+                ui->m_channels->setCurrentIndex( dnChannelIndex );
+                onCurrentChannelChanged( dnChannelIndex );
+            }
             updateChannelsCBox();
-            m_fsTreeTableModel->setFsTree( {}, {} );
+            m_fsTreeTableModel->update();
+
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
@@ -266,7 +272,7 @@ void MainWin::init()
 
             CloseChannelDialog dialog(m_onChainClient, channel->m_hash.c_str(), channel->m_name.c_str(), this);
             auto rc = dialog.exec();
-            if ( rc == QDialog::Accepted )
+            if ( rc==QMessageBox::Ok )
             {
                 channel->m_isDeleting = true;
                 updateChannelsCBox();
@@ -323,12 +329,12 @@ void MainWin::init()
             lockMainButtons(false);
 
             // Set current download channel
-            int dnChannelIndex = Model::currentDnChannelIndex();
-            if ( dnChannelIndex >= 0 )
-            {
-                ui->m_channels->setCurrentIndex( dnChannelIndex );
-                onCurrentChannelChanged( dnChannelIndex );
-            }
+//            int dnChannelIndex = Model::currentDnChannelIndex();
+//            if ( dnChannelIndex >= 0 )
+//            {
+//                ui->m_channels->setCurrentIndex( dnChannelIndex );
+//                onCurrentChannelChanged( dnChannelIndex );
+//            }
         }, Qt::QueuedConnection);
 
         connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
@@ -493,7 +499,9 @@ void MainWin::setupDownloadsTab()
 
     setupFsTreeTable();
     setupDownloadsTable();
-    //updateChannelsCBox();
+
+    ui->m_channels->clear();
+    ui->m_channels->addItem( "Loading..." );
 
     connect( ui->m_channels, QOverload<int>::of(&QComboBox::activated), this, [this] (int index)
     {
@@ -793,7 +801,15 @@ bool MainWin::requestPrivateKey()
 
 void MainWin::updateChannelsCBox()
 {
+    qDebug() << LOG_SOURCE << "updateChannelsCBox: " << gSettings.config().m_channelsLoaded << " : " << Model::dnChannels().size();
+
+    if ( ! gSettings.config().m_channelsLoaded )
+    {
+        return;
+    }
+
     ui->m_channels->clear();
+
     for( const auto& channelInfo: Model::dnChannels() )
     {
         if ( channelInfo.m_isCreating )
@@ -1054,7 +1070,25 @@ void MainWin::onRefresh()
 }
 
 void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    std::string channelName;
+    auto* channelPtr = Model::findChannel( sirius::drive::toString(channelId) );
+    if ( channelPtr != nullptr )
+    {
+        channelName = channelPtr->m_name;
+    }
+    lock.unlock();
+
     Model::removeChannel( sirius::drive::toString(channelId) );
+
+    if ( channelPtr != nullptr )
+    {
+        const QString message = QString::fromStdString( "Channel '" + channelName + "' closed (removed).");
+        showNotification(message);
+        addNotification(message);
+    }
+
     updateChannelsCBox();
 }
 
@@ -1347,6 +1381,9 @@ void MainWin::setupDrivesTab()
         }
     }
 
+    ui->m_driveCBox->clear();
+    ui->m_driveCBox->addItem( "Loading..." );
+
 //    updateDrivesCBox();
 
     // request FsTree info-hash
@@ -1504,48 +1541,48 @@ void MainWin::setupDrivesTab()
 }
 
 void MainWin::setupNotifications() {
-    m_notificationsWidget = new QListWidget(this);
-    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
-    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-    m_notificationsWidget->setWindowModality(Qt::NonModal);
-    m_notificationsWidget->setMaximumHeight(500);
-    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
+//    m_notificationsWidget = new QListWidget(this);
+//    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
+//    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+//    m_notificationsWidget->setWindowModality(Qt::NonModal);
+//    m_notificationsWidget->setMaximumHeight(500);
+//    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
 
-    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
-        if (m_notificationsWidget->count() < 1) {
-            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
-            return;
-        }
+//    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
+//        if (m_notificationsWidget->count() < 1) {
+//            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
+//            return;
+//        }
 
-        if (m_notificationsWidget->isVisible()) {
-            m_notificationsWidget->hide();
-        } else {
-            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
-            m_notificationsWidget->setFixedWidth(width);
-            m_notificationsWidget->show();
-            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
-            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
-        }
-    });
+//        if (m_notificationsWidget->isVisible()) {
+//            m_notificationsWidget->hide();
+//        } else {
+//            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
+//            m_notificationsWidget->setFixedWidth(width);
+//            m_notificationsWidget->show();
+//            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
+//            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
+//        }
+//    });
 }
 
 void MainWin::showNotification(const QString &message, const QString& error) {
-    QMessageBox msgBox;
-    msgBox.setWindowTitle("Notification");
-    msgBox.setText(message);
+//    QMessageBox msgBox;
+//    msgBox.setWindowTitle("Notification");
+//    msgBox.setText(message);
 
-    if (!error.isEmpty()) {
-        msgBox.setInformativeText(error);
-    }
+//    if (!error.isEmpty()) {
+//        msgBox.setInformativeText(error);
+//    }
 
-    msgBox.setStandardButtons( QMessageBox::Ok );
-    msgBox.exec();
+//    msgBox.setStandardButtons( QMessageBox::Ok );
+//    msgBox.exec();
 }
 
 void MainWin::addNotification(const QString& message) {
-    // No memory leaks, m_notificationsWidget will take ownerships after insert
-    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
-    m_notificationsWidget->insertItem(0, item);
+//    // No memory leaks, m_notificationsWidget will take ownerships after insert
+//    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
+//    m_notificationsWidget->insertItem(0, item);
 }
 
 void MainWin::updateDrivesCBox()
