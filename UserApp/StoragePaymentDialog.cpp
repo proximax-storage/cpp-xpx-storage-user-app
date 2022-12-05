@@ -27,7 +27,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     connect(ui->m_driveKy, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint()), tr("Invalid key!"));
+            QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_driveKy->setProperty("is_valid", false);
         } else {
@@ -41,7 +41,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     connect(ui->m_unitsAmount, &QLineEdit::textChanged, this, [this, unitsTemplate] (auto text)
     {
         if (!unitsTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint()), tr("Invalid units amount!"));
+            QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_unitsAmount->setProperty("is_valid", false);
         } else {
@@ -52,7 +52,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     });
 
     if (!keyTemplate.match(ui->m_driveKy->text()).hasMatch()) {
-        QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint()), tr("Invalid key!"));
+        QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_driveKy->setProperty("is_valid", false);
     } else {
@@ -63,7 +63,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     }
 
     if (!unitsTemplate.match(ui->m_unitsAmount->text()).hasMatch()) {
-        QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint()), tr("Invalid units amount!"));
+        QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_unitsAmount->setProperty("is_valid", false);
     } else {

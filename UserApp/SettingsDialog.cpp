@@ -32,7 +32,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
     {
         if (!addressTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+            QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_restBootAddrField->setProperty("is_valid", false);
         } else {
@@ -45,7 +45,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this, addressTemplate] (auto text)
     {
         if (!addressTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+            QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_replicatorBootAddrField->setProperty("is_valid", false);
         } else {
@@ -59,7 +59,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     connect(ui->m_portField, &QLineEdit::textChanged, this, [this, portTemplate] (auto text)
     {
         if (!portTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid port!"));
+            QToolTip::showText(ui->m_portField->mapToGlobal(QPoint(0, 15)), tr("Invalid port!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_portField->setProperty("is_valid", false);
         } else {
@@ -120,7 +120,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
 
     connect(ui->m_dnFolderField, &QLineEdit::textChanged, this, [this](auto text){
         if (text.trimmed().isEmpty()) {
-            QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid path!"));
+            QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_dnFolderField->setProperty("is_valid", false);
         } else {
@@ -131,7 +131,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     });
 
     if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
-        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_restBootAddrField->setProperty("is_valid", false);
     } else {
@@ -142,7 +142,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     }
 
     if (!addressTemplate.match(ui->m_replicatorBootAddrField->text()).hasMatch()) {
-        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_replicatorBootAddrField->setProperty("is_valid", false);
     } else {
@@ -153,7 +153,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     }
 
     if (!portTemplate.match(ui->m_portField->text()).hasMatch()) {
-        QToolTip::showText(ui->m_portField->mapToGlobal(QPoint()), tr("Invalid address!"));
+        QToolTip::showText(ui->m_portField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_portField->setProperty("is_valid", false);
     } else {
@@ -164,7 +164,7 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     }
 
     if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
-        QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint()), tr("Invalid download folder path!"));
+        QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr("Invalid download folder path!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
         ui->m_dnFolderField->setProperty("is_valid", false);

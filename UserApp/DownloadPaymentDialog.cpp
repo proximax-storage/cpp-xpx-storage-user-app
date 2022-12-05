@@ -27,7 +27,7 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     connect(ui->m_channelKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint()), tr("Invalid channel!"));
+            QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint(0, 15)), tr("Invalid channel!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_channelKey->setProperty("is_valid", false);
         } else {
@@ -41,7 +41,7 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     connect(ui->m_prepaid, &QLineEdit::textChanged, this, [this, unitsTemplate] (auto text)
     {
         if (!unitsTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_prepaid->mapToGlobal(QPoint()), tr("Invalid units amount!"));
+            QToolTip::showText(ui->m_prepaid->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_prepaid->setProperty("is_valid", false);
         } else {
@@ -52,7 +52,7 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     });
 
     if (!keyTemplate.match(ui->m_channelKey->text()).hasMatch()) {
-        QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint()), tr("Invalid channel!"));
+        QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint(0, 15)), tr("Invalid channel!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_channelKey->setProperty("is_valid", false);
     } else {
@@ -63,7 +63,7 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     }
 
     if (!unitsTemplate.match(ui->m_prepaid->text()).hasMatch()) {
-        QToolTip::showText(ui->m_prepaid->mapToGlobal(QPoint()), tr("Invalid units amount!"));
+        QToolTip::showText(ui->m_prepaid->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_prepaid->setProperty("is_valid", false);
     } else {

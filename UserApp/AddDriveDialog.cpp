@@ -22,7 +22,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->m_driveName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
         if (!nameTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint()), tr("Invalid name!"));
+            QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_driveName->setProperty("is_valid", false);
         } else {
@@ -36,7 +36,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->m_replicatorNumber, &QLineEdit::textChanged, this, [this, replicatorNumberTemplate] (auto text)
     {
         if (!replicatorNumberTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint()), tr("Invalid replicator number amount!"));
+            QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint(0, 15)), tr("Invalid replicator number amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_replicatorNumber->setProperty("is_valid", false);
         } else {
@@ -50,7 +50,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->m_maxDriveSize, &QLineEdit::textChanged, this, [this, driveSizeTemplate] (auto text)
     {
         if (!driveSizeTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint()), tr("Invalid drive size!"));
+            QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint(0, 15)), tr("Invalid drive size!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_maxDriveSize->setProperty("is_valid", false);
         } else {
@@ -62,7 +62,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 
     connect(ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this](auto text){
         if (text.trimmed().isEmpty()) {
-            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint()), tr("Invalid path!"));
+            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_localDriveFolder->setProperty("is_valid", false);
         } else {
@@ -87,7 +87,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveDialog::reject);
 
     if (!nameTemplate.match(ui->m_driveName->text()).hasMatch()) {
-        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint()), tr("Invalid name!"));
+        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_driveName->setProperty("is_valid", false);
     } else {
@@ -97,7 +97,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     }
 
     if (!replicatorNumberTemplate.match(ui->m_replicatorNumber->text()).hasMatch()) {
-        QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint()), tr("Invalid replicator number amount!"));
+        QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint(0, 15)), tr("Invalid replicator number amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_replicatorNumber->setProperty("is_valid", false);
     } else {
@@ -107,7 +107,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     }
 
     if (!driveSizeTemplate.match(ui->m_maxDriveSize->text()).hasMatch()) {
-        QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint()), tr("Invalid drive size!"));
+        QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint(0, 15)), tr("Invalid drive size!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_maxDriveSize->setProperty("is_valid", false);
     } else {
@@ -117,7 +117,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     }
 
     if (ui->m_localDriveFolder->text().trimmed().isEmpty()) {
-        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint()), tr("Invalid path!"));
+        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_localDriveFolder->setProperty("is_valid", false);
     } else {

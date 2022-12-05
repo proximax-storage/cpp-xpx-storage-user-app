@@ -20,7 +20,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
         if (!nameTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->name->mapToGlobal(QPoint()), tr("Invalid name!"));
+            QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->name->setProperty("is_valid", false);
         } else {
@@ -31,7 +31,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     });
 
     if (!nameTemplate.match(ui->name->text()).hasMatch()) {
-        QToolTip::showText(ui->name->mapToGlobal(QPoint()), tr("Invalid name!"));
+        QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->name->setProperty("is_valid", false);
     } else {
@@ -44,7 +44,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->driveKey->mapToGlobal(QPoint()), tr("Invalid key!"));
+            QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->driveKey->setProperty("is_valid", false);
         } else {
@@ -57,7 +57,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     if (!keyTemplate.match(ui->driveKey->text()).hasMatch()) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->driveKey->setProperty("is_valid", false);
-        QToolTip::showText(ui->driveKey->mapToGlobal(QPoint()), tr("Invalid key!"));
+        QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
@@ -68,7 +68,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 //    connect(ui->keysLine, &QLineEdit::textChanged, this, [this] (auto text)
 //    {
 //        if (!text.trimmed().isEmpty()) {
-//            QToolTip::showText(ui->keysLine->mapToGlobal(QPoint()), tr("Invalid keys!"));
+//            QToolTip::showText(ui->keysLine->mapToGlobal(QPoint(0, 15)), tr("Invalid keys!"));
 //            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 //            ui->keysLine->setProperty("is_valid", false);
 //        } else {
@@ -81,7 +81,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 //    if (!ui->keysLine->text().trimmed().isEmpty()) {
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 //        ui->driveKey->setProperty("is_valid", false);
-//        QToolTip::showText(ui->driveKey->mapToGlobal(QPoint()), tr("Invalid keys!"));
+//        QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid keys!"));
 //    } else {
 //        QToolTip::hideText();
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
@@ -93,7 +93,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     connect(ui->prepaidAmountLine, &QLineEdit::textChanged, this, [this, unitsTemplate] (auto text)
     {
         if (!unitsTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint()), tr("Invalid amount!"));
+            QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint(0, 15)), tr("Invalid amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->prepaidAmountLine->setProperty("is_valid", false);
         } else {
@@ -104,7 +104,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     });
 
     if (!unitsTemplate.match(ui->prepaidAmountLine->text()).hasMatch()) {
-        QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint()), tr("Invalid units amount!"));
+        QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->prepaidAmountLine->setProperty("is_valid", false);
     } else {

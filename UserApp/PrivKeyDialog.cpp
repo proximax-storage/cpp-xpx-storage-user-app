@@ -43,7 +43,7 @@ void PrivKeyDialog::init()
     connect(ui->m_accountName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
         if (!nameTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
+            QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_accountName->setProperty("is_valid", false);
         } else {
@@ -57,7 +57,7 @@ void PrivKeyDialog::init()
     connect(ui->m_pkField, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));
+            QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_pkField->setProperty("is_valid", false);
         } else {
@@ -68,7 +68,7 @@ void PrivKeyDialog::init()
     });
 
     if (!nameTemplate.match(ui->m_accountName->text()).hasMatch()) {
-        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Invalid name!"));
+        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_accountName->setProperty("is_valid", false);
     } else {
@@ -81,13 +81,15 @@ void PrivKeyDialog::init()
     if (!keyTemplate.match(ui->m_pkField->text()).hasMatch()) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_pkField->setProperty("is_valid", false);
-        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Invalid key!"));
+        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_pkField->setProperty("is_valid", true);
         validate();
     }
+
+    ui->m_accountName->setFocus();
 }
 
 PrivKeyDialog::~PrivKeyDialog()
@@ -113,7 +115,7 @@ bool PrivKeyDialog::isAccountExists() {
 
     if ( nameIterator != m_settings.m_accounts.end() )
     {
-        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint()), tr("Account with same name already exists!"));
+        QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint(0, 15)), tr("Account with same name already exists!"), nullptr, {}, 3000);
         return true;
     }
 
@@ -124,7 +126,7 @@ bool PrivKeyDialog::isAccountExists() {
 
     if ( keyIterator != m_settings.m_accounts.end() )
     {
-        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint()), tr("Account with same private key already exists!"));
+        QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint(0, 15)), tr("Account with same private key already exists!"), nullptr, {}, 3000);
         return true;
     }
 
