@@ -32,6 +32,7 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
     {
         qDebug() << "ui->m_cancel, ::released:";
 
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
         if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo == nullptr )
         {
             setVisible(false);
@@ -44,9 +45,8 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
                 driveInfo->m_modificationStatus == is_registered )
             {
                 qDebug() << "ui->m_cancel, ::released: 1";
-                m_cancelModificationFunc();
                 driveInfo->m_modificationStatus = is_canceling;
-                setCanceling();
+                m_cancelModificationFunc();
             }
             else if ( driveInfo->m_modificationStatus == no_modification ||
                       driveInfo->m_modificationStatus == is_approved ||
@@ -61,6 +61,8 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
                 setVisible(false);
             }
         }
+
+        lock.unlock();
     });
 
     stackUnder( this );
@@ -95,6 +97,7 @@ void ModifyProgressPanel::setApproved()
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
     ui->m_statusIcon->setPixmap(*m_loaded);
+    ui->m_cancel->setEnabled(true);
     adjustSize();
 }
 
