@@ -473,14 +473,14 @@ void MainWin::updateModificationStatus()
 
 void MainWin::setupIcons() {
     QIcon settingsButtonIcon("./resources/icons/settings.png");
-    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+//    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
     ui->m_settingsButton->setText("");
     ui->m_settingsButton->setIcon(settingsButtonIcon);
     ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIconSize(QSize(18, 18));
 
     QIcon notificationsButtonIcon("./resources/icons/notification.png");
-    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+//    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
     ui->m_notificationsButton->setText("");
     ui->m_notificationsButton->setIcon(notificationsButtonIcon);
     ui->m_notificationsButton->setStyleSheet("background: transparent; border: 0px;");

@@ -105,6 +105,7 @@ struct DriveInfo
     std::string m_driveKey;
     std::string m_name;
     std::string m_localDriveFolder;
+    bool        m_localDriveFolderExists = false;
     uint64_t    m_maxDriveSize = 0;
     uint32_t    m_replicatorNumber = 0;
     bool        m_isCreating = true;

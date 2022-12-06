@@ -194,7 +194,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             DriveInfo driveInfo;
             driveInfo.m_driveKey         = remoteDrive.data.multisig;
             driveInfo.m_name             = remoteDrive.data.multisig;
-            driveInfo.m_localDriveFolder = Model::homeFolder() / hash;
+            driveInfo.m_localDriveFolder = "";
             driveInfo.m_maxDriveSize     = remoteDrive.data.size;
             driveInfo.m_replicatorNumber = remoteDrive.data.replicatorCount;
             driveInfo.m_isCreating = false;
@@ -418,6 +418,8 @@ void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
 
 void Model::calcDiff()
 {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
     auto* drive = currentDriveInfoPtr();
 
     if ( drive == nullptr )
@@ -430,12 +432,23 @@ void Model::calcDiff()
     sirius::utils::ParseHexStringIntoContainer( drive->m_driveKey.c_str(), 64, driveKey );
 
     qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->m_localDriveFolder;
-    auto localDrive = std::make_shared<LocalDriveItem>();
-    Diff::calcLocalDriveInfoR( *localDrive, drive->m_localDriveFolder, true, &driveKey );
+    std::error_code ec;
+    if ( ! fs::exists( drive->m_localDriveFolder, ec ) || ! fs::is_directory( drive->m_localDriveFolder, ec ) )
+    {
+        drive->m_localDriveFolderExists = false;
+        drive->m_actionList = {};
+    }
+    else
+    {
+        drive->m_localDriveFolderExists = true;
 
-    Diff diff( *localDrive, drive->m_localDriveFolder, drive->m_fsTree, driveKey, drive->m_actionList );
+        auto localDrive = std::make_shared<LocalDriveItem>();
+        Diff::calcLocalDriveInfoR( *localDrive, drive->m_localDriveFolder, true, &driveKey );
 
-    drive->m_localDrive = std::move(localDrive);
+        Diff diff( *localDrive, drive->m_localDriveFolder, drive->m_fsTree, driveKey, drive->m_actionList );
+
+        drive->m_localDrive = std::move(localDrive);
+    }
 }
 
 std::array<uint8_t,32> Model::hexStringToHash( const std::string& str )

@@ -17,7 +17,15 @@ void DiffTableModel::updateModel()
 
     if ( drive != nullptr )
     {
-        m_actionList = drive->m_actionList;
+        if ( drive->m_localDriveFolderExists )
+        {
+            m_actionList = drive->m_actionList;
+            m_correctLocalFolder = true;
+        }
+        else
+        {
+            m_correctLocalFolder = false;
+        }
     }
 
     endResetModel();
@@ -25,7 +33,11 @@ void DiffTableModel::updateModel()
 
 int DiffTableModel::rowCount(const QModelIndex &) const
 {
-    return (int)m_actionList.size();
+    if ( m_correctLocalFolder )
+    {
+        return (int)m_actionList.size();
+    }
+    return 1;
 }
 
 int DiffTableModel::columnCount(const QModelIndex &parent) const
@@ -39,16 +51,20 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
 
     switch ( role )
     {
-        case Qt::TextAlignmentRole:
-        {
-            if ( index.column() == 1 )
-            {
-                return Qt::AlignRight;
-            }
-            break;
-        }
+//        case Qt::TextAlignmentRole:
+//        {
+//            if ( index.column() == 1 )
+//            {
+//                return Qt::AlignRight;
+//            }
+//            break;
+//        }
         case Qt::DecorationRole:
         {
+            if ( ! m_correctLocalFolder )
+            {
+                return {};
+            }
             if ( index.column() == 0 )
             {
                 return QApplication::style()->standardIcon(QStyle::SP_FileIcon);
@@ -58,10 +74,12 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
 
         case Qt::ForegroundRole:
         {
+            if ( ! m_correctLocalFolder )
+            {
+                return QVariant( QColor( Qt::red ) );
+            }
             if ( index.column() == 0 )
             {
-                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
                 auto& action = m_actionList[ index.row() ];
 
                 switch( action.m_actionId )
@@ -80,8 +98,10 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
 
         case Qt::DisplayRole:
         {
-            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
+            if ( ! m_correctLocalFolder )
+            {
+                return "Incorrect local folder";
+            }
             auto& action = m_actionList[ index.row() ];
 
             switch( index.column() )

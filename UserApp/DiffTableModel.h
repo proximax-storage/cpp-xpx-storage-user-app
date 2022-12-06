@@ -36,4 +36,5 @@ public:
 
 private:
     sirius::drive::ActionList   m_actionList = {};
+    bool                        m_correctLocalFolder = true;
 };
