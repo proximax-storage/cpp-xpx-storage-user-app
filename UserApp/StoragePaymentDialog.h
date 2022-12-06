@@ -28,6 +28,7 @@ private:
     void validate();
 
 private:
+    std::string mCurrentDriveKey;
     Ui::StoragePaymentDialog *ui;
     OnChainClient* mpOnChainClient;
 };

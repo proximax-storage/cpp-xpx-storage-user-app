@@ -1,8 +1,9 @@
 #include "StoragePaymentDialog.h"
 #include "ui_StoragePaymentDialog.h"
-#include "SelectEntityDialog.h"
 #include <QRegularExpression>
 #include <QToolTip>
+
+#include <boost/algorithm/string.hpp>
 
 StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
                                            QWidget *parent) :
@@ -17,23 +18,49 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &StoragePaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &StoragePaymentDialog::reject);
 
-    connect(ui->m_selectDrive, &QPushButton::released, this, [this] ()
+    ui->selectDriveBox->addItem("Select from my drives");
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    std::vector<std::string> drivesKeys;
+    drivesKeys.reserve(Model::drives().size());
+    for ( const auto& drive : Model::drives()) {
+        drivesKeys.push_back(drive.m_driveKey);
+        ui->selectDriveBox->addItem(drive.m_name.c_str());
+    }
+
+    lock.unlock();
+
+    connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
     {
-        SelectEntityDialog dialog(SelectEntityDialog::Entity::Drive, [this] (const QString& hash) { ui->m_driveKy->setText(hash); });
-        dialog.exec();
-    });
+        if (index >= 1) {
+            mCurrentDriveKey = drivesKeys[--index];
+            ui->m_driveKy->setText(mCurrentDriveKey.c_str());
+        }
+    }, Qt::QueuedConnection);
 
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-    connect(ui->m_driveKy, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+    connect(ui->m_driveKy, &QLineEdit::textChanged, this, [this, keyTemplate, drivesKeys] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
             QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_driveKy->setProperty("is_valid", false);
+            mCurrentDriveKey.clear();
+            ui->selectDriveBox->setCurrentIndex(0);
         } else {
             QToolTip::hideText();
             ui->m_driveKy->setProperty("is_valid", true);
+            mCurrentDriveKey = ui->m_driveKy->text().toStdString();
             validate();
+
+            auto index = ui->selectDriveBox->currentIndex();
+            if (index >= 1) {
+                bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+                if (!isEquals) {
+                    ui->selectDriveBox->setCurrentIndex(0);
+                }
+            }
         }
     });
 
@@ -55,11 +82,22 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
         QToolTip::showText(ui->m_driveKy->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_driveKy->setProperty("is_valid", false);
+        mCurrentDriveKey.clear();
+        ui->selectDriveBox->setCurrentIndex(0);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_driveKy->setProperty("is_valid", true);
+        mCurrentDriveKey = ui->m_driveKy->text().toStdString();
         validate();
+
+        auto index = ui->selectDriveBox->currentIndex();
+        if (index >= 1) {
+            bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+            if (!isEquals) {
+                ui->selectDriveBox->setCurrentIndex(0);
+            }
+        }
     }
 
     if (!unitsTemplate.match(ui->m_unitsAmount->text()).hasMatch()) {
@@ -83,7 +121,7 @@ StoragePaymentDialog::~StoragePaymentDialog()
 }
 
 void StoragePaymentDialog::accept() {
-    mpOnChainClient->storagePayment(rawHashFromHex(ui->m_driveKy->text()), ui->m_unitsAmount->text().toULongLong());
+    mpOnChainClient->storagePayment(rawHashFromHex(mCurrentDriveKey.c_str()), ui->m_unitsAmount->text().toULongLong());
     QDialog::accept();
 }
 

@@ -38,6 +38,7 @@ private:
     void validate();
 
 private:
+    std::string                     mCurrentDriveKey;
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
 };

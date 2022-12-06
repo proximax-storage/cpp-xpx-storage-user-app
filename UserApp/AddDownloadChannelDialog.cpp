@@ -1,10 +1,11 @@
 #include "AddDownloadChannelDialog.h"
-#include "SelectEntityDialog.h"
 #include "ui_AddDownloadChannelDialog.h"
 #include "Utils.h"
 #include "mainwin.h"
 #include <QToolTip>
 #include <QRegularExpression>
+
+#include <boost/algorithm/string.hpp>
 
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                                                    QWidget *parent) :
@@ -40,29 +41,64 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         validate();
     }
 
+    ui->selectDriveBox->addItem("Select from my drives");
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    std::vector<std::string> drivesKeys;
+    drivesKeys.reserve(Model::drives().size());
+    for ( const auto& drive : Model::drives()) {
+        drivesKeys.push_back(drive.m_driveKey);
+        ui->selectDriveBox->addItem(drive.m_name.c_str());
+    }
+
+    lock.unlock();
+
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-    connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+    connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate, drivesKeys] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
             QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->driveKey->setProperty("is_valid", false);
+            mCurrentDriveKey.clear();
+            ui->selectDriveBox->setCurrentIndex(0);
         } else {
             QToolTip::hideText();
             ui->driveKey->setProperty("is_valid", true);
+            mCurrentDriveKey = ui->driveKey->text().toStdString();
             validate();
+
+            auto index = ui->selectDriveBox->currentIndex();
+            if (index >= 1) {
+                bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+                if (!isEquals) {
+                    ui->selectDriveBox->setCurrentIndex(0);
+                }
+            }
         }
     });
 
     if (!keyTemplate.match(ui->driveKey->text()).hasMatch()) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->driveKey->setProperty("is_valid", false);
+        mCurrentDriveKey.clear();
+        ui->selectDriveBox->setCurrentIndex(0);
         QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->driveKey->setProperty("is_valid", true);
+        mCurrentDriveKey = ui->driveKey->text().toStdString();
         validate();
+
+        auto index = ui->selectDriveBox->currentIndex();
+        if (index >= 1) {
+            bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+            if (!isEquals) {
+                ui->selectDriveBox->setCurrentIndex(0);
+            }
+        }
     }
 
 //    connect(ui->keysLine, &QLineEdit::textChanged, this, [this] (auto text)
@@ -118,11 +154,13 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDownloadChannelDialog::reject);
 
-    connect(ui->m_selectMyDriveBtn, &QPushButton::released, this, [this] ()
+    connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
     {
-        SelectEntityDialog dialog(SelectEntityDialog::Entity::Drive, [this] (const QString& hash) { ui->driveKey->setText(hash); });
-        dialog.exec();
-    });
+        if (index >= 1) {
+            mCurrentDriveKey = drivesKeys[--index];
+            ui->driveKey->setText(mCurrentDriveKey.c_str());
+        }
+    }, Qt::QueuedConnection);
 
     setWindowTitle("Add new download channel");
     setFocus();
@@ -145,11 +183,10 @@ void AddDownloadChannelDialog::accept() {
         qInfo() << LOG_SOURCE << "listOfAllowedPublicKeys is empty";
     }
 
-
     auto channelHash = mpOnChainClient->addDownloadChannel(
                 ui->name->text().toStdString(),
                 listOfAllowedPublicKeys,
-                rawHashFromHex(ui->driveKey->text()),
+                rawHashFromHex(mCurrentDriveKey.c_str()),
                 ui->prepaidAmountLine->text().toULongLong(),
                 0); // feedback is unused for now
 
@@ -161,7 +198,7 @@ void AddDownloadChannelDialog::accept() {
         publicKeys.push_back(rawHashToHex(key).toStdString());
     }
 
-    emit addDownloadChannel(ui->name->text().toStdString(), channelHash, ui->driveKey->text().toStdString(), publicKeys);
+    emit addDownloadChannel(ui->name->text().toStdString(), channelHash, mCurrentDriveKey, publicKeys);
 
     QDialog::accept();
 }

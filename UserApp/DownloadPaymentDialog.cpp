@@ -1,8 +1,9 @@
 #include "DownloadPaymentDialog.h"
 #include "ui_DownloadPaymentDialog.h"
-#include "SelectEntityDialog.h"
 #include <QRegularExpression>
 #include <QToolTip>
+
+#include <boost/algorithm/string.hpp>
 
 DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
                                              QWidget *parent) :
@@ -17,23 +18,49 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DownloadPaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DownloadPaymentDialog::reject);
 
-    connect(ui->m_selectChannel, &QPushButton::released, this, [this] ()
+    ui->selectChannelBox->addItem("Select from my channels");
+
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+    std::vector<std::string> channelsKeys;
+    channelsKeys.reserve(Model::dnChannels().size());
+    for ( const auto& channel : Model::dnChannels()) {
+        channelsKeys.push_back(channel.m_hash);
+        ui->selectChannelBox->addItem(channel.m_name.c_str());
+    }
+
+    lock.unlock();
+
+    connect( ui->selectChannelBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, channelsKeys] (int index)
     {
-        SelectEntityDialog dialog(SelectEntityDialog::Entity::Channel, [this] (const QString& hash) { ui->m_channelKey->setText(hash); });
-        dialog.exec();
-    });
+        if (index >= 1) {
+            mCurrentChannelKey = channelsKeys[--index];
+            ui->m_channelKey->setText(mCurrentChannelKey.c_str());
+        }
+    }, Qt::QueuedConnection);
 
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-    connect(ui->m_channelKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+    connect(ui->m_channelKey, &QLineEdit::textChanged, this, [this, keyTemplate, channelsKeys] (auto text)
     {
         if (!keyTemplate.match(text).hasMatch()) {
             QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint(0, 15)), tr("Invalid channel!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_channelKey->setProperty("is_valid", false);
+            mCurrentChannelKey.clear();
+            ui->selectChannelBox->setCurrentIndex(0);
         } else {
             QToolTip::hideText();
             ui->m_channelKey->setProperty("is_valid", true);
+            mCurrentChannelKey = ui->m_channelKey->text().toStdString();
             validate();
+
+            auto index = ui->selectChannelBox->currentIndex();
+            if (index >= 1) {
+                bool isEquals = boost::iequals( channelsKeys[--index], mCurrentChannelKey );
+                if (!isEquals) {
+                    ui->selectChannelBox->setCurrentIndex(0);
+                }
+            }
         }
     });
 
@@ -55,11 +82,22 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
         QToolTip::showText(ui->m_channelKey->mapToGlobal(QPoint(0, 15)), tr("Invalid channel!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_channelKey->setProperty("is_valid", false);
+        mCurrentChannelKey.clear();
+        ui->selectChannelBox->setCurrentIndex(0);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_channelKey->setProperty("is_valid", true);
+        mCurrentChannelKey = ui->m_channelKey->text().toStdString();
         validate();
+
+        auto index = ui->selectChannelBox->currentIndex();
+        if (index >= 1) {
+            bool isEquals = boost::iequals( channelsKeys[--index], mCurrentChannelKey );
+            if (!isEquals) {
+                ui->selectChannelBox->setCurrentIndex(0);
+            }
+        }
     }
 
     if (!unitsTemplate.match(ui->m_prepaid->text()).hasMatch()) {
@@ -83,7 +121,7 @@ DownloadPaymentDialog::~DownloadPaymentDialog()
 }
 
 void DownloadPaymentDialog::accept() {
-    mpOnChainClient->downloadPayment(rawHashFromHex(ui->m_channelKey->text()), ui->m_prepaid->text().toULongLong());
+    mpOnChainClient->downloadPayment(rawHashFromHex(mCurrentChannelKey.c_str()), ui->m_prepaid->text().toULongLong());
     QDialog::accept();
 }
 

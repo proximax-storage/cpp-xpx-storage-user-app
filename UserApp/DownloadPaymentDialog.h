@@ -28,6 +28,7 @@ private:
     void validate();
 
 private:
+    std::string mCurrentChannelKey;
     Ui::DownloadPaymentDialog *ui;
     OnChainClient* mpOnChainClient;
 };
