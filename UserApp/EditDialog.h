@@ -16,7 +16,9 @@ public:
 
 protected:
     void accept() override;
-//    void reject() override;
+
+private:
+    void validate();
 
 private:
     Ui::EditDialog *ui;
