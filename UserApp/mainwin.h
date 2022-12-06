@@ -78,6 +78,8 @@ private:
     void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
     void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
     void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId);
+    void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+    void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void loadBalance();
 
     void setDownloadPath( );

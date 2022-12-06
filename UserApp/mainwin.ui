@@ -701,12 +701,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="listView_5"/>
+         <widget class="QTreeView" name="myReplicators"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
-           <widget class="QPushButton" name="pushButton_20">
+           <widget class="QPushButton" name="m_onBoardReplicator">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -725,7 +725,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_14">
+           <widget class="QPushButton" name="m_offBoardReplicator">
             <property name="minimumSize">
              <size>
               <width>0</width>

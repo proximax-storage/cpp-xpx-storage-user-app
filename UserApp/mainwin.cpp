@@ -22,6 +22,8 @@
 #include "ManageChannelsDialog.h"
 #include "DownloadPaymentDialog.h"
 #include "StoragePaymentDialog.h"
+#include "ReplicatorOnBoardingDialog.h"
+#include "ReplicatorOffBoardingDialog.h"
 #include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
@@ -262,6 +264,8 @@ void MainWin::init()
         connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionFailed, this, &MainWin::onDownloadPaymentFailed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::storagePaymentTransactionConfirmed, this, &MainWin::onStoragePaymentConfirmed, Qt::QueuedConnection);
         connect(m_onChainClient, &OnChainClient::storagePaymentTransactionFailed, this, &MainWin::onStoragePaymentFailed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::cancelModificationTransactionConfirmed, this, &MainWin::onCancelModificationTransactionConfirmed, Qt::QueuedConnection);
+        connect(m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this, &MainWin::onCancelModificationTransactionFailed, Qt::QueuedConnection);
 
         connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
             auto channel = Model::currentChannelInfoPtr();
@@ -327,14 +331,6 @@ void MainWin::init()
             m_onChainClient->loadDrives(options);
 
             lockMainButtons(false);
-
-            // Set current download channel
-//            int dnChannelIndex = Model::currentDnChannelIndex();
-//            if ( dnChannelIndex >= 0 )
-//            {
-//                ui->m_channels->setCurrentIndex( dnChannelIndex );
-//                onCurrentChannelChanged( dnChannelIndex );
-//            }
         }, Qt::QueuedConnection);
 
         connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
@@ -344,6 +340,16 @@ void MainWin::init()
 
         connect(ui->m_topupChannel, &QPushButton::released, this, [this] {
             DownloadPaymentDialog dialog(m_onChainClient, this);
+            dialog.exec();
+        });
+
+        connect(ui->m_onBoardReplicator, &QPushButton::released, this, [this](){
+            ReplicatorOnBoardingDialog dialog(this);
+            dialog.exec();
+        });
+
+        connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
+            ReplicatorOffBoardingDialog dialog(this);
             dialog.exec();
         });
 
@@ -382,9 +388,12 @@ void MainWin::init()
 
     lockMainButtons(true);
 
-    ui->tabWidget->setTabVisible(2, false);
+    auto modifyPanelCallback = [this](){
+        cancelModification();
+        updateModificationStatus();
+    };
 
-    m_modifyProgressPanel = new ModifyProgressPanel( 350, 350, this, [this] { updateModificationStatus(); } );
+    m_modifyProgressPanel = new ModifyProgressPanel( 350, 350, this, modifyPanelCallback );
 
     connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus );
 
@@ -966,6 +975,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     showNotification(message);
     addNotification(message);
 	startCalcDiff();
+    loadBalance();
 }
 
 void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
@@ -1011,9 +1021,7 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
         addNotification(message);
     }
 
-//    if (m_driveTreeModel->rowCount() > 0) {
-//        m_driveTreeModel->removeRows(0, m_driveTreeModel->rowCount() - 1);
-//    }
+    loadBalance();
 }
 
 void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
@@ -1062,11 +1070,13 @@ void MainWin::onApplyChanges()
 
     drive->m_modificationStatus = is_registering;
     updateModificationStatus();
+    loadBalance();
 }
 
 void MainWin::onRefresh()
 {
     onCurrentChannelChanged( Model::currentDnChannelIndex() );
+    loadBalance();
 }
 
 void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
@@ -1090,6 +1100,7 @@ void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &cha
     }
 
     updateChannelsCBox();
+    loadBalance();
 }
 
 void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
@@ -1121,6 +1132,7 @@ void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelI
     const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias);
     showNotification(message);
     addNotification(message);
+    loadBalance();
 }
 
 void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
@@ -1149,6 +1161,7 @@ void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey)
     const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias);
     showNotification(message);
     addNotification(message);
+    loadBalance();
 }
 
 void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString &errorText) {
@@ -1182,10 +1195,7 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
         qDebug () << LOG_SOURCE << "Your last modification was registered: !!! drive not found";
     }
 
-//    QMessageBox msgBox;
-//    msgBox.setText( "Your modification was registered."  );
-//    msgBox.setStandardButtons( QMessageBox::Ok );
-//    msgBox.exec();
+    loadBalance();
 }
 
 void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
@@ -1235,6 +1245,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     message.append("Your modification was applied. Drive: ");
     message.append(driveAlias.c_str());
     addNotification(message);
+    loadBalance();
 }
 
 void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId) {
@@ -1253,6 +1264,32 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     message.append(driveAlias.c_str());
     showNotification(message);
 	addNotification(message);
+}
+
+void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
+    std::string driveRawId = rawHashToHex(driveId).toStdString();
+    auto drive = Model::findDrive(driveRawId);
+    if (!drive) {
+        qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
+    } else {
+        drive->m_modificationStatus = ModificationStatus::is_canceled;
+    }
+
+    updateModificationStatus();
+    loadBalance();
+}
+
+void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
+    std::string driveRawId = rawHashToHex(driveId).toStdString();
+    auto drive = Model::findDrive(driveRawId);
+    if (!drive) {
+        qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
+    } else {
+        drive->m_modificationStatus = ModificationStatus::is_failed;
+    }
+
+    updateModificationStatus();
+	loadBalance();
 }
 
 void MainWin::loadBalance() {
@@ -1541,48 +1578,48 @@ void MainWin::setupDrivesTab()
 }
 
 void MainWin::setupNotifications() {
-//    m_notificationsWidget = new QListWidget(this);
-//    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
-//    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-//    m_notificationsWidget->setWindowModality(Qt::NonModal);
-//    m_notificationsWidget->setMaximumHeight(500);
-//    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
+    m_notificationsWidget = new QListWidget(this);
+    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
+    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+    m_notificationsWidget->setWindowModality(Qt::NonModal);
+    m_notificationsWidget->setMaximumHeight(500);
+    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
 
-//    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
-//        if (m_notificationsWidget->count() < 1) {
-//            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
-//            return;
-//        }
+    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
+        if (m_notificationsWidget->count() < 1) {
+            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
+            return;
+        }
 
-//        if (m_notificationsWidget->isVisible()) {
-//            m_notificationsWidget->hide();
-//        } else {
-//            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
-//            m_notificationsWidget->setFixedWidth(width);
-//            m_notificationsWidget->show();
-//            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
-//            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
-//        }
-//    });
+        if (m_notificationsWidget->isVisible()) {
+            m_notificationsWidget->hide();
+        } else {
+            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
+            m_notificationsWidget->setFixedWidth(width);
+            m_notificationsWidget->show();
+            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
+            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
+        }
+    });
 }
 
 void MainWin::showNotification(const QString &message, const QString& error) {
-//    QMessageBox msgBox;
-//    msgBox.setWindowTitle("Notification");
-//    msgBox.setText(message);
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Notification");
+    msgBox.setText(message);
 
-//    if (!error.isEmpty()) {
-//        msgBox.setInformativeText(error);
-//    }
+    if (!error.isEmpty()) {
+        msgBox.setInformativeText(error);
+    }
 
-//    msgBox.setStandardButtons( QMessageBox::Ok );
-//    msgBox.exec();
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
 }
 
 void MainWin::addNotification(const QString& message) {
-//    // No memory leaks, m_notificationsWidget will take ownerships after insert
-//    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
-//    m_notificationsWidget->insertItem(0, item);
+    // No memory leaks, m_notificationsWidget will take ownerships after insert
+    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
+    m_notificationsWidget->insertItem(0, item);
 }
 
 void MainWin::updateDrivesCBox()
