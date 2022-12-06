@@ -840,6 +840,7 @@ void MainWin::updateChannelsCBox()
         onCurrentChannelChanged(0);
     }
 
+    qDebug() << LOG_SOURCE << "ui->m_channels: " << ui->m_channels->size();
     ui->m_channels->setCurrentIndex( Model::currentDnChannelIndex() );
 
     if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr )
@@ -1801,6 +1802,8 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
             auto fsTreeSaveFolder = fsTreesFolder()/sirius::drive::toString(fsTreeHash);
             if ( fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME ) )
             {
+                qDebug() << LOG_SOURCE << "Use previously saved FsTree";
+
                 sirius::drive::FsTree fsTree;
                 try
                 {
@@ -1856,8 +1859,12 @@ void MainWin::onFsTreeReceived( const std::string& driveHash, const std::array<u
 
     if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveHash )
     {
-        qDebug() << LOG_SOURCE << "@ on FsTree received: " << driveHash.c_str();
+        qDebug() << LOG_SOURCE << "@ on FsTree received: channelName:" << channelPtr->m_name.c_str();
+        channelPtr->m_fsTreeHash = fsTreeHash;
+        channelPtr->m_fsTree     = fsTree;
+        channelPtr->m_waitingFsTree = false;
         m_fsTreeTableModel->setFsTree( fsTree, {} );
+        m_fsTreeTableModel->update();
     }
 
     if (  drivePtr->m_calclDiffIsWaitingFsTree )

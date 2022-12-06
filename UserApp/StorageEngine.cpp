@@ -95,7 +95,7 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                     const std::array<uint8_t,32>&   fsTreeHash,
                                     FsTreeHandler                   onFsTreeReceived )
 {
-    qDebug() << LOG_SOURCE << "downloadFsTree(): channelId: " << driveHash;
+    qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveHash;
 
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 

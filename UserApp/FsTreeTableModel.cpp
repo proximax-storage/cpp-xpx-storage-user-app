@@ -141,7 +141,7 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
 
         auto channelInfo = gSettings.currentChannelInfoPtr();
 
-        if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+        if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
         {
             //qDebug() << LOG_SOURCE << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
             //qDebug() << LOG_SOURCE << "rowCount: 1";
@@ -178,7 +178,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
 
                 auto channelInfo = gSettings.currentChannelInfoPtr();
 
-                if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+                if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
                 {
                     return value;
                 }
@@ -223,7 +223,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 {
                     auto channelInfo = gSettings.currentChannelInfoPtr();
 
-                    if ( channelInfo == nullptr || channelInfo->m_waitingFsTree )
+                    if ( channelInfo == nullptr || channelInfo->m_waitingFsTree  || !gSettings.config().m_channelsLoaded )
                     {
                         return QString("");
                     }
