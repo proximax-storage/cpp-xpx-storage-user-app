@@ -52,40 +52,42 @@ set(TS_FILES StorageClientApp_en_US.ts)
 
 set(PROJECT_SOURCES
         main.cpp
-        mainwin.h                   mainwin.cpp                 mainwin.ui
-        SettingsDialog.h            SettingsDialog.cpp          SettingsDialog.ui
-        PrivKeyDialog.h             PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                     Model.cpp                   AddDownloadChannelDialog.ui
-        Settings.h                  Settings.cpp                progressbardialog.ui
-        StorageEngine.h             StorageEngine.cpp           AddDriveDialog.ui
-        SelectEntityDialog.h        SelectEntityDialog.cpp      SelectEntityDialog.ui
-        ManageDrivesDialog.h        ManageDrivesDialog.cpp      ManageDrivesDialog.ui
-        ManageChannelsDialog.h      ManageChannelsDialog.cpp    ManageChannelsDialog.ui
-        EditDialog.h                EditDialog.cpp              EditDialog.ui
+        mainwin.h                     mainwin.cpp                 mainwin.ui
+        SettingsDialog.h              SettingsDialog.cpp          SettingsDialog.ui
+        PrivKeyDialog.h               PrivKeyDialog.cpp           PrivKeyDialog.ui
+        Model.h                       Model.cpp                   AddDownloadChannelDialog.ui
+        Settings.h                    Settings.cpp                progressbardialog.ui
+        StorageEngine.h               StorageEngine.cpp           AddDriveDialog.ui
+        SelectEntityDialog.h          SelectEntityDialog.cpp      SelectEntityDialog.ui
+        ManageDrivesDialog.h          ManageDrivesDialog.cpp      ManageDrivesDialog.ui
+        ManageChannelsDialog.h        ManageChannelsDialog.cpp    ManageChannelsDialog.ui
+        EditDialog.h                  EditDialog.cpp              EditDialog.ui
 
-        FsTreeTableModel.h          FsTreeTableModel.cpp        DownloadPaymentDialog.ui
-        DownloadsTableModel.h       DownloadsTableModel.cpp     StoragePaymentDialog.ui
-        DriveTreeModel.h            DriveTreeModel.cpp          ModifyProgressPanel.ui
-        DiffTableModel.h            DiffTableModel.cpp
-        Diff.h                      Diff.cpp
-        ModifyProgressPanel.h       ModifyProgressPanel.cpp
-        PopupMenu.h                 PopupMenu.cpp
+        FsTreeTableModel.h            FsTreeTableModel.cpp        DownloadPaymentDialog.ui
+        DownloadsTableModel.h         DownloadsTableModel.cpp     StoragePaymentDialog.ui
+        DriveTreeModel.h              DriveTreeModel.cpp          ModifyProgressPanel.ui
+        DiffTableModel.h              DiffTableModel.cpp          ReplicatorOnBoardingDialog.ui
+        Diff.h                        Diff.cpp                    ReplicatorOffBoardingDialog.ui
+        ModifyProgressPanel.h         ModifyProgressPanel.cpp
+        PopupMenu.h                   PopupMenu.cpp
 
         LocalDriveItem.h
-        BlockchainEngine.cpp        BlockchainEngine.h
-        Worker.cpp                  Worker.h
-        TransactionsEngine.cpp      TransactionsEngine.h
-        AddDownloadChannelDialog.cpp AddDownloadChannelDialog.h
-        CloseChannelDialog.cpp      CloseChannelDialog.h
-        ProgressBarDialog.cpp       ProgressBarDialog.h
-        OnChainClient.cpp           OnChainClient.h
+        BlockchainEngine.cpp          BlockchainEngine.h
+        Worker.cpp                    Worker.h
+        TransactionsEngine.cpp        TransactionsEngine.h
+        AddDownloadChannelDialog.cpp  AddDownloadChannelDialog.h
+        CloseChannelDialog.cpp        CloseChannelDialog.h
+        ProgressBarDialog.cpp         ProgressBarDialog.h
+        OnChainClient.cpp             OnChainClient.h
 
-        AddDriveDialog.h            AddDriveDialog.cpp
-        Utils.h                     Utils.cpp
-        CloseDriveDialog.h          CloseDriveDialog.cpp
-        DownloadPaymentDialog.h     DownloadPaymentDialog.cpp
-        StoragePaymentDialog.h      StoragePaymentDialog.cpp
-        CancelModificationDialog.h  CancelModificationDialog.cpp
+        AddDriveDialog.h              AddDriveDialog.cpp
+        Utils.h                       Utils.cpp
+        CloseDriveDialog.h            CloseDriveDialog.cpp
+        DownloadPaymentDialog.h       DownloadPaymentDialog.cpp
+        StoragePaymentDialog.h        StoragePaymentDialog.cpp
+        CancelModificationDialog.h    CancelModificationDialog.cpp
+        ReplicatorOnBoardingDialog.h  ReplicatorOnBoardingDialog.cpp
+        ReplicatorOffBoardingDialog.h ReplicatorOffBoardingDialog.cpp
 
         ${TS_FILES}
 )
