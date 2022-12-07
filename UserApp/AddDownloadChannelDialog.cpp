@@ -128,7 +128,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QRegularExpression unitsTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
     connect(ui->prepaidAmountLine, &QLineEdit::textChanged, this, [this, unitsTemplate] (auto text)
     {
-        if (!unitsTemplate.match(text).hasMatch()) {
+        if (!unitsTemplate.match(text).hasMatch() || text.toULongLong() == 0) {
             QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint(0, 15)), tr("Invalid amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->prepaidAmountLine->setProperty("is_valid", false);
@@ -139,7 +139,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         }
     });
 
-    if (!unitsTemplate.match(ui->prepaidAmountLine->text()).hasMatch()) {
+    if (!unitsTemplate.match(ui->prepaidAmountLine->text()).hasMatch() || ui->prepaidAmountLine->text().toULongLong() == 0) {
         QToolTip::showText(ui->prepaidAmountLine->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->prepaidAmountLine->setProperty("is_valid", false);

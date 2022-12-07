@@ -35,7 +35,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     QRegularExpression replicatorNumberTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,10})")));
     connect(ui->m_replicatorNumber, &QLineEdit::textChanged, this, [this, replicatorNumberTemplate] (auto text)
     {
-        if (!replicatorNumberTemplate.match(text).hasMatch()) {
+        if (!replicatorNumberTemplate.match(text).hasMatch() || text.toULongLong() == 0) {
             QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint(0, 15)), tr("Invalid replicator number amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_replicatorNumber->setProperty("is_valid", false);
@@ -49,7 +49,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     QRegularExpression driveSizeTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
     connect(ui->m_maxDriveSize, &QLineEdit::textChanged, this, [this, driveSizeTemplate] (auto text)
     {
-        if (!driveSizeTemplate.match(text).hasMatch()) {
+        if (!driveSizeTemplate.match(text).hasMatch() || text.toULongLong() == 0) {
             QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint(0, 15)), tr("Invalid drive size!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_maxDriveSize->setProperty("is_valid", false);
@@ -96,7 +96,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
         validate();
     }
 
-    if (!replicatorNumberTemplate.match(ui->m_replicatorNumber->text()).hasMatch()) {
+    if (!replicatorNumberTemplate.match(ui->m_replicatorNumber->text()).hasMatch() || ui->m_replicatorNumber->text().toULongLong() == 0) {
         QToolTip::showText(ui->m_replicatorNumber->mapToGlobal(QPoint(0, 15)), tr("Invalid replicator number amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_replicatorNumber->setProperty("is_valid", false);
@@ -106,7 +106,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
         validate();
     }
 
-    if (!driveSizeTemplate.match(ui->m_maxDriveSize->text()).hasMatch()) {
+    if (!driveSizeTemplate.match(ui->m_maxDriveSize->text()).hasMatch() || ui->m_maxDriveSize->text().toULongLong() == 0) {
         QToolTip::showText(ui->m_maxDriveSize->mapToGlobal(QPoint(0, 15)), tr("Invalid drive size!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_maxDriveSize->setProperty("is_valid", false);

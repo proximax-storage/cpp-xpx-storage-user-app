@@ -67,7 +67,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     QRegularExpression unitsTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
     connect(ui->m_unitsAmount, &QLineEdit::textChanged, this, [this, unitsTemplate] (auto text)
     {
-        if (!unitsTemplate.match(text).hasMatch()) {
+        if (!unitsTemplate.match(text).hasMatch() || text.toULongLong() == 0) {
             QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_unitsAmount->setProperty("is_valid", false);
@@ -100,7 +100,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
         }
     }
 
-    if (!unitsTemplate.match(ui->m_unitsAmount->text()).hasMatch()) {
+    if (!unitsTemplate.match(ui->m_unitsAmount->text()).hasMatch() || ui->m_unitsAmount->text().toULongLong() == 0) {
         QToolTip::showText(ui->m_unitsAmount->mapToGlobal(QPoint(0, 15)), tr("Invalid units amount!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_unitsAmount->setProperty("is_valid", false);

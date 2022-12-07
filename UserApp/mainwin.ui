@@ -410,13 +410,13 @@
            <widget class="QLabel" name="downloadsLabel">
             <property name="minimumSize">
              <size>
-              <width>0</width>
+              <width>120</width>
               <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>120</width>
               <height>30</height>
              </size>
             </property>
@@ -431,7 +431,7 @@
              <string>Downloads:</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -679,16 +679,16 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <item>
-         <widget class="QLabel" name="label_6">
+         <widget class="QLabel" name="replicatorsLabel">
           <property name="minimumSize">
            <size>
-            <width>0</width>
+            <width>120</width>
             <height>30</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>16777215</width>
+            <width>120</width>
             <height>30</height>
            </size>
           </property>
@@ -703,7 +703,7 @@
            <string>Replicators:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
