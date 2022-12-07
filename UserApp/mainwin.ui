@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1000</width>
-    <height>700</height>
+    <height>686</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -260,14 +260,14 @@
              <widget class="QPushButton" name="m_addChannel">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>80</width>
-                <height>16777215</height>
+                <height>30</height>
                </size>
               </property>
               <property name="text">
@@ -279,14 +279,14 @@
              <widget class="QPushButton" name="m_closeChannel">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>80</width>
-                <height>16777215</height>
+                <height>30</height>
                </size>
               </property>
               <property name="text">
@@ -295,48 +295,29 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="m_manageChannels">
-              <property name="minimumSize">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
                <size>
-                <width>100</width>
-                <height>30</height>
+                <width>40</width>
+                <height>20</height>
                </size>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Manage</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="m_topupChannel">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Top-up channel</string>
-              </property>
-             </widget>
+             </spacer>
             </item>
             <item>
              <widget class="QPushButton" name="m_moreChannelsBtn">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>16777215</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
@@ -426,17 +407,17 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="downloadsLabel">
             <property name="minimumSize">
              <size>
-              <width>120</width>
+              <width>0</width>
               <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>120</width>
-              <height>16777215</height>
+              <width>16777215</width>
+              <height>30</height>
              </size>
             </property>
             <property name="font">
@@ -448,6 +429,9 @@
             </property>
             <property name="text">
              <string>Downloads:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -462,23 +446,46 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="m_removeDownloadBtn">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>.AppleSystemUIFont</family>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Remove</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="QPushButton" name="pushButton">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Open local folder</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="m_removeDownloadBtn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>.AppleSystemUIFont</family>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -496,6 +503,12 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
               <height>30</height>
              </size>
             </property>
@@ -542,54 +555,29 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="m_manageDrives">
-              <property name="minimumSize">
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
                <size>
-                <width>100</width>
-                <height>30</height>
+                <width>40</width>
+                <height>20</height>
                </size>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Manage</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="m_topUpDrive">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Top-up drive</string>
-              </property>
-             </widget>
+             </spacer>
             </item>
             <item>
              <widget class="QPushButton" name="m_moreDrivesBtn">
               <property name="minimumSize">
                <size>
-                <width>0</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>16777215</width>
+                <width>80</width>
                 <height>30</height>
                </size>
               </property>
@@ -611,20 +599,57 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
-            <item>
-             <widget class="QPushButton" name="m_openLocalFolderBtn">
-              <property name="text">
-               <string>Open local folder</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QPushButton" name="m_openLocalFolderBtn">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Open local folder</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QPushButton" name="m_applyChangesBtn">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Apply changes</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="m_diffTableView">
+            <property name="minimumSize">
+             <size>
+              <width>400</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QPushButton" name="m_calcDiffBtn">
             <property name="minimumSize">
@@ -643,27 +668,6 @@
              <string>Calculate diff</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <widget class="QTableView" name="m_diffTableView">
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QPushButton" name="m_applyChangesBtn">
-              <property name="text">
-               <string>Apply changes</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </item>
          </layout>
         </item>
@@ -696,7 +700,10 @@
            </font>
           </property>
           <property name="text">
-           <string>Drives:</string>
+           <string>Replicators:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>

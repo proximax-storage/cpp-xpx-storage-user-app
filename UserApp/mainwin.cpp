@@ -18,8 +18,6 @@
 #include "CancelModificationDialog.h"
 #include "AddDriveDialog.h"
 #include "CloseDriveDialog.h"
-#include "ManageDrivesDialog.h"
-#include "ManageChannelsDialog.h"
 #include "DownloadPaymentDialog.h"
 #include "StoragePaymentDialog.h"
 #include "ReplicatorOnBoardingDialog.h"
@@ -158,32 +156,6 @@ void MainWin::init()
             AddDownloadChannelDialog dialog(m_onChainClient, this);
             connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
             dialog.exec();
-        }, Qt::QueuedConnection);
-
-        connect(ui->m_manageChannels, &QPushButton::released, this, [this] () {
-            ManageChannelsDialog dialog(m_onChainClient, this);
-            connect( &dialog, &ManageChannelsDialog::updateChannels, this, &MainWin::updateChannelsCBox );
-            connect( &dialog, &ManageChannelsDialog::addDownloadChannel, this, &MainWin::addChannel );
-            dialog.exec();
-            updateChannelsCBox();
-        }, Qt::QueuedConnection);
-
-        connect(ui->m_manageDrives, &QPushButton::released, this, [this] () {
-            ManageDrivesDialog dialog(m_onChainClient, this);
-            connect( &dialog, &ManageDrivesDialog::updateDrives, this, [this](auto driveId, auto oldDriveLocalPath){
-                auto drive = Model::findDrive(driveId);
-                if (drive && oldDriveLocalPath != drive->m_localDriveFolder) {
-                    m_modificationsWatcher->removePath(oldDriveLocalPath.c_str());
-                    m_modificationsWatcher->addPath(drive->m_localDriveFolder.c_str());
-					startCalcDiff();
-                }
-
-                updateDrivesCBox();
-            });
-
-            dialog.exec();
-            updateDrivesCBox();
-            startCalcDiff();
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,
@@ -332,16 +304,6 @@ void MainWin::init()
 
             lockMainButtons(false);
         }, Qt::QueuedConnection);
-
-        connect(ui->m_topUpDrive, &QPushButton::released, this, [this] {
-            StoragePaymentDialog dialog(m_onChainClient, this);
-            dialog.exec();
-        }, Qt::QueuedConnection);
-
-        connect(ui->m_topupChannel, &QPushButton::released, this, [this] {
-            DownloadPaymentDialog dialog(m_onChainClient, this);
-            dialog.exec();
-        });
 
         connect(ui->m_onBoardReplicator, &QPushButton::released, this, [this](){
             ReplicatorOnBoardingDialog dialog(this);
@@ -651,7 +613,6 @@ void MainWin::setupFsTreeTable()
     ui->m_fsTreeTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
-
     ui->m_fsTreeTableView->update();
     ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
 }
@@ -1531,8 +1492,14 @@ void MainWin::setupDrivesTab()
                 std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
                 if ( auto* driveInfo = Model::findDrive(driveKey); driveInfo != nullptr )
                 {
-                    driveInfo->m_localDriveFolder = path.toStdString();
-                    gSettings.save();
+                    if (path.toStdString() != driveInfo->m_localDriveFolder) {
+                        m_modificationsWatcher->removePath(driveInfo->m_localDriveFolder.c_str());
+                        m_modificationsWatcher->addPath(path.toStdString().c_str());
+                        driveInfo->m_localDriveFolder = path.toStdString();
+                        gSettings.save();
+                        startCalcDiff();
+                    }
+
                     lock.unlock();
                     updateDrivesCBox();
                 }
@@ -1907,12 +1874,8 @@ void MainWin::lockMainButtons(bool state) {
     ui->m_refresh->setDisabled(state);
     ui->m_addChannel->setDisabled(state);
     ui->m_closeChannel->setDisabled(state);
-    ui->m_manageChannels->setDisabled(state);
-    ui->m_topupChannel->setDisabled(state);
     ui->m_addDrive->setDisabled(state);
     ui->m_closeDrive->setDisabled(state);
-    ui->m_manageDrives->setDisabled(state);
-    ui->m_topUpDrive->setDisabled(state);
 }
 
 void MainWin::closeEvent(QCloseEvent *event) {
