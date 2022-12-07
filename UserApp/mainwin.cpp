@@ -1852,8 +1852,8 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     {
         Model::calcDiff();
         m_driveTreeModel->updateModel();
-        ui->m_driveTreeView->expandAll();
         m_diffTableModel->updateModel();
+        ui->m_driveTreeView->expandAll();
         //ui->m_diffTableView->resizeColumnsToContents();
     }
 }
