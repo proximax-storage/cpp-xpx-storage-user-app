@@ -22,6 +22,8 @@ if (APPLE)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
             MACOSX_PACKAGE_LOCATION "resources/icons")
 
+    set(CMAKE_PREFIX_PATH "~/Qt/6.2.4/macos")
+
     find_package(Threads REQUIRED)
     find_package(Boost 1.71.0 REQUIRED)
 

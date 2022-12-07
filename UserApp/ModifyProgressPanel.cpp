@@ -12,12 +12,12 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
     ui->setupUi(this);
 
     m_commonSize = QSize(20, 20);
-    m_loading = new QMovie("./resources/icons/loader.gif");
+    m_loading = new QMovie(getResource("./resources/icons/loader.gif"));
     m_loading->setScaledSize(m_commonSize);
     m_loading->setParent(this);
 
-    m_loaded = new QPixmap("./resources/icons/loaded.png");
-    m_error = new QPixmap("./resources/icons/error.png");
+    m_loaded = new QPixmap(getResource("./resources/icons/loaded.png"));
+    m_error = new QPixmap(getResource("./resources/icons/error.png"));
 
     ui->m_title->setWindowTitle("Modification status");
     ui->m_title->setAlignment(Qt::AlignCenter);

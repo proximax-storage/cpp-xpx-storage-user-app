@@ -472,21 +472,22 @@ void MainWin::updateModificationStatus()
 }
 
 void MainWin::setupIcons() {
-    QIcon settingsButtonIcon("./resources/icons/settings.png");
-//    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+    qDebug() << getResource("./resources/icons/settings.png");
+    QIcon settingsButtonIcon(getResource("./resources/icons/settings.png"));
+    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
     ui->m_settingsButton->setText("");
     ui->m_settingsButton->setIcon(settingsButtonIcon);
     ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIconSize(QSize(18, 18));
 
-    QIcon notificationsButtonIcon("./resources/icons/notification.png");
-//    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+    QIcon notificationsButtonIcon(getResource("./resources/icons/notification.png"));
+    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
     ui->m_notificationsButton->setText("");
     ui->m_notificationsButton->setIcon(notificationsButtonIcon);
     ui->m_notificationsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_notificationsButton->setIconSize(QSize(18, 18));
 
-    QPixmap networkIcon("./resources/icons/network.png");
+    QPixmap networkIcon(getResource("./resources/icons/network.png"));
     ui->m_networkLabel->setPixmap(networkIcon);
     ui->m_networkLabel->setStyleSheet("padding: 5px 5px 5px 5px;");
     ui->m_networkLabel->setAlignment(Qt::AlignLeft);

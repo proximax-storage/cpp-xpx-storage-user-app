@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QStringList>
+#include <QCoreApplication>
 
 #include <vector>
 #include <string>
@@ -226,3 +227,12 @@ public:
     static void stestInitChannels();
     static void stestInitDrives();
 };
+
+inline QString getResource( const QString& resource )
+{
+#ifdef __APPLE__
+    return QCoreApplication::applicationDirPath() + "/." + resource;
+#else
+    return resource;
+#endif
+}
