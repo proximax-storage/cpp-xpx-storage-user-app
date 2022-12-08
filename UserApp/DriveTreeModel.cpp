@@ -78,32 +78,35 @@ DriveTreeModel::DriveTreeModel( QObject* )
     }
 }
 
-void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder )
+void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder, bool skipNotChanged )
 {
     for( const auto& [name,entry] : localFolder.m_childs )
     {
-        if ( entry.m_isFolder )
+        if ( !skipNotChanged || entry.m_ldiStatus != ldi_not_changed )
         {
-            QList<QVariant> child;
-            child << QApplication::style()->standardIcon(QStyle::SP_DirIcon);
-            child << QString::fromStdString( name ) << "";
-            auto* treeItem = new DriveTreeItem( true, false, entry.m_ldiStatus, child, parent );
-            parent->appendChild( treeItem );
+            if ( entry.m_isFolder )
+            {
+                QList<QVariant> child;
+                child << QApplication::style()->standardIcon(QStyle::SP_DirIcon);
+                child << QString::fromStdString( name ) << "";
+                auto* treeItem = new DriveTreeItem( true, false, entry.m_ldiStatus, child, parent );
+                parent->appendChild( treeItem );
 
-            parseR( treeItem, entry );
-        }
-        else
-        {
-            QList<QVariant> child;
-            child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
-            child << QString::fromStdString( name ) << QString::fromStdString( std::to_string( entry.m_size ) );;
-            auto* treeItem = new DriveTreeItem( false, false, entry.m_ldiStatus, child, parent );
-            parent->appendChild( treeItem );
+                parseR( treeItem, entry, skipNotChanged );
+            }
+            else
+            {
+                QList<QVariant> child;
+                child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
+                child << QString::fromStdString( name ) << QString::fromStdString( std::to_string( entry.m_size ) );;
+                auto* treeItem = new DriveTreeItem( false, false, entry.m_ldiStatus, child, parent );
+                parent->appendChild( treeItem );
+            }
         }
     }
 }
 
-void DriveTreeModel::updateModel()
+void DriveTreeModel::updateModel( bool skipNotChanged )
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
@@ -121,11 +124,11 @@ void DriveTreeModel::updateModel()
     if ( localDrive != nullptr && localDrive->m_localDrive )
     {
         beginResetModel();
-        parseR( driveRoot, *localDrive->m_localDrive );
+        parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
         endResetModel();
     }
-    else if ( localDrive != nullptr )
-    {
-        scanFolderR( driveRoot, localDrive->m_localDriveFolder );
-    }
+//    else if ( localDrive != nullptr )
+//    {
+//        scanFolderR( driveRoot, localDrive->m_localDriveFolder );
+//    }
 }

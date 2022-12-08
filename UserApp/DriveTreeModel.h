@@ -84,7 +84,7 @@ public:
     explicit DriveTreeModel( QObject *parent = nullptr );
     ~DriveTreeModel() override { delete m_rootItem; }
 
-    void updateModel();
+    void updateModel( bool skipNotChanged );
 
     void update( const LocalDriveItem& localDriveRoot );
 

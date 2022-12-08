@@ -52,6 +52,8 @@ struct ChannelInfo
     timepoint                   m_tobeDeletedTimepoint;
     endpoint_list               m_endpointList = {};
 
+    std::vector<std::string>    m_lastOpenedPath;
+
     std::optional<std::array<uint8_t,32>>   m_fsTreeHash;
     sirius::drive::FsTree                   m_fsTree;
     bool                                    m_waitingFsTree = false;

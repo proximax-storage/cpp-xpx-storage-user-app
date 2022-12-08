@@ -14,7 +14,8 @@ public:
     void update();
 
     int onDoubleClick( int row );
-    std::string currentPath() const;
+    std::string currentPathString() const;
+    std::vector<std::string> currentPath() const;
 
     int rowCount(const QModelIndex &) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -24,7 +25,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 //    public slots:
-        void setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path );
+        void setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path );
 
 public:
     struct Row

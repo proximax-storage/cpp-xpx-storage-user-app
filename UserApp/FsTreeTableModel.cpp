@@ -10,15 +10,16 @@
 FsTreeTableModel::FsTreeTableModel()
 {}
 
-void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const FsTreePath& path )
+void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
 {
     m_fsTree = fsTree;
-    m_currentPath = path;
     m_currentFolder = &m_fsTree;
 
-    for( auto& folder: path )
+    m_currentPath.clear();
+    for( const auto& folder: path )
     {
-        auto* it = m_currentFolder->findChild( folder->name() );
+        m_currentPath.push_back( m_currentFolder );
+        auto* it = m_currentFolder->findChild( folder );
         if ( !sirius::drive::isFolder(*it) )
         {
             break;
@@ -114,7 +115,7 @@ int FsTreeTableModel::onDoubleClick( int row )
     return 0;
 }
 
-std::string FsTreeTableModel::currentPath() const
+std::string FsTreeTableModel::currentPathString() const
 {
 //    qDebug() << LOG_SOURCE << "currentPath: ";
 
@@ -130,6 +131,19 @@ std::string FsTreeTableModel::currentPath() const
         path += "/" + m_currentPath[i]->name();
     }
     path += "/" + m_currentFolder->name();
+
+    return path;
+}
+
+std::vector<std::string> FsTreeTableModel::currentPath() const
+{
+
+    std::vector<std::string> path;
+    for( int i=1; i<m_currentPath.size(); i++)
+    {
+        path.push_back( m_currentPath[i]->name() );
+    }
+    path.push_back( m_currentFolder->name() );
 
     return path;
 }

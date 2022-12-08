@@ -183,7 +183,7 @@ void MainWin::init()
             connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
             {
                 if (index >= 0) {
-                    qDebug() << "Channel index: " << index;
+                    //qDebug() << "Channel index: " << index;
                     onCurrentChannelChanged( index );
                 }
             }, Qt::QueuedConnection);
@@ -211,7 +211,7 @@ void MainWin::init()
             }
             else
             {
-                m_driveTreeModel->updateModel();
+                m_driveTreeModel->updateModel(false);
                 ui->m_driveTreeView->expandAll();
             }
 
@@ -603,7 +603,12 @@ void MainWin::setupFsTreeTable()
         //qDebug() << LOG_SOURCE << index;
         int toBeSelectedRow = m_fsTreeTableModel->onDoubleClick( index.row() );
         ui->m_fsTreeTableView->selectRow( toBeSelectedRow );
-        ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
+        ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPathString()));
+        if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr )
+        {
+            channelPtr->m_lastOpenedPath = m_fsTreeTableModel->currentPath();
+            qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << channelPtr->m_lastOpenedPath;
+        }
     }, Qt::QueuedConnection);
 
     connect( ui->m_fsTreeTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
@@ -624,7 +629,7 @@ void MainWin::setupFsTreeTable()
     ui->m_fsTreeTableView->horizontalHeader()->hide();
     ui->m_fsTreeTableView->setGridStyle( Qt::NoPen );
     ui->m_fsTreeTableView->update();
-    ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPath()));
+    ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPathString()));
 }
 
 void MainWin::selectFsTreeItem( int index )
@@ -1313,7 +1318,8 @@ void MainWin::onCurrentChannelChanged( int index )
         }
         else
         {
-            m_fsTreeTableModel->setFsTree( channel->m_fsTree, {} );
+            m_fsTreeTableModel->setFsTree( channel->m_fsTree, channel->m_lastOpenedPath );
+            ui->m_path->setText( "Path: " + QString::fromStdString(m_fsTreeTableModel->currentPathString()));
         }
     }
 }
@@ -1632,7 +1638,7 @@ void MainWin::updateDrivesCBox()
 //    {
 //        m_driveTreeModel->rescanFolder( "" );
 //    }
-    m_driveTreeModel->updateModel();
+    m_driveTreeModel->updateModel(false);
     ui->m_driveTreeView->expandAll();
 
     // Update FsTree
@@ -1832,7 +1838,7 @@ void MainWin::onFsTreeReceived( const std::string& driveHash, const std::array<u
         channelPtr->m_fsTreeHash = fsTreeHash;
         channelPtr->m_fsTree     = fsTree;
         channelPtr->m_waitingFsTree = false;
-        m_fsTreeTableModel->setFsTree( fsTree, {} );
+        m_fsTreeTableModel->setFsTree( fsTree, channelPtr->m_lastOpenedPath );
         m_fsTreeTableModel->update();
     }
 
@@ -1853,7 +1859,7 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     if ( drive.m_isConfirmed )
     {
         Model::calcDiff();
-        m_driveTreeModel->updateModel();
+        m_driveTreeModel->updateModel(false);
         m_diffTableModel->updateModel();
         ui->m_driveTreeView->expandAll();
         //ui->m_diffTableView->resizeColumnsToContents();
