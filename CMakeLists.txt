@@ -63,6 +63,8 @@ add_subdirectory(UserApp)
 # copy resources
 if(APPLE)
     file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/UserApp/StorageClientApp.app/Contents/MacOS)
+    file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/UserApp/Debug/StorageClientApp.app/Contents/)
+    file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/UserApp/StorageClientApp.app/Contents/)
 endif()
 
 if(UNIX AND NOT APPLE)

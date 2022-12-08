@@ -10,11 +10,11 @@ int main(int argc, char *argv[])
 {
 restart_label:
     QApplication a(argc, argv);
-    QApplication::setWindowIcon(QIcon("./resources/icons/icon.png"));
+    QApplication::setWindowIcon(QIcon(getResource("./resources/icons/icon.png")));
     qInstallMessageHandler(customMessageHandler);
 // TODO: same style for all platforms
 //#ifdef Q_OS_LINUX
-//    QFile styleFile( "./resources/styles/ubuntu.qss" );
+//    QFile styleFile( getResource("./resources/styles/ubuntu.qss") );
 //    if ( styleFile.open( QFile::ReadOnly ) ) {
 //        a.setStyleSheet( styleFile.readAll() );
 //    } else {
