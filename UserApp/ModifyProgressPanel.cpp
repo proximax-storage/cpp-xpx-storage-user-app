@@ -80,7 +80,7 @@ void ModifyProgressPanel::setRegistering()
     ui->m_statusLabel->setText( "Modification is registering ");
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
-    ui->m_cancel->setEnabled(true);
+    ui->m_cancel->setEnabled(false);
     ui->m_statusIcon->setMovie(m_loading);
     m_loading->start();
     adjustSize();
@@ -89,7 +89,6 @@ void ModifyProgressPanel::setRegistering()
 void ModifyProgressPanel::setRegistered()
 {
     ui->m_statusLabel->setText( "Modification is uploading ");
-    ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(true);
     adjustSize();
 }

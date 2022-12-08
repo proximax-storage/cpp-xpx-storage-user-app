@@ -175,7 +175,6 @@ void MainWin::init()
             if ( dnChannelIndex >= 0 )
             {
                 ui->m_channels->setCurrentIndex( dnChannelIndex );
-                onCurrentChannelChanged( dnChannelIndex );
             }
 
             updateChannelsCBox();
@@ -372,6 +371,8 @@ void MainWin::init()
     };
 
     m_modifyProgressPanel = new ModifyProgressPanel( 350, 350, this, modifyPanelCallback );
+
+    connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus, Qt::QueuedConnection);
 
     updateModificationStatus();
     setupNotifications();
@@ -1046,7 +1047,11 @@ void MainWin::onApplyChanges()
 
 void MainWin::onRefresh()
 {
-    onCurrentChannelChanged( Model::currentDnChannelIndex() );
+    auto channel = Model::currentChannelInfoPtr();
+    if (channel) {
+        downloadLatestFsTree(channel->m_driveHash);
+    }
+
     loadBalance();
 }
 
@@ -1288,31 +1293,28 @@ void MainWin::loadBalance() {
 
 void MainWin::onCurrentChannelChanged( int index )
 {
-    if (index < 0) {
-        qWarning() << LOG_SOURCE << "bad index";
-        return;
-    }
+    if (index >= 0) {
+        Model::setCurrentDnChannelIndex( index );
 
-    Model::setCurrentDnChannelIndex( index );
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+        auto channel = Model::currentChannelInfoPtr();
 
-    auto channel = Model::currentChannelInfoPtr();
+        if ( !channel )
+        {
+            qWarning() << LOG_SOURCE << "bad channel";
+            m_fsTreeTableModel->setFsTree( {}, {} );
+            return;
+        }
 
-    if ( !channel )
-    {
-        qWarning() << LOG_SOURCE << "bad channel";
-        m_fsTreeTableModel->setFsTree( {}, {} );
-        return;
-    }
-
-    if ( ! channel->m_fsTreeHash )
-    {
-        downloadLatestFsTree( channel->m_driveHash );
-    }
-    else
-    {
-        m_fsTreeTableModel->setFsTree( channel->m_fsTree, {} );
+        if ( ! channel->m_fsTreeHash )
+        {
+            downloadLatestFsTree( channel->m_driveHash );
+        }
+        else
+        {
+            m_fsTreeTableModel->setFsTree( channel->m_fsTree, {} );
+        }
     }
 }
 
@@ -1495,6 +1497,7 @@ void MainWin::setupDrivesTab()
                         m_modificationsWatcher->removePath(driveInfo->m_localDriveFolder.c_str());
                         m_modificationsWatcher->addPath(path.toStdString().c_str());
                         driveInfo->m_localDriveFolder = path.toStdString();
+                        driveInfo->m_localDriveFolderExists = true;
                         gSettings.save();
                         startCalcDiff();
                     }
