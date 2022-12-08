@@ -236,3 +236,8 @@ inline QString getResource( const QString& resource )
     return resource;
 #endif
 }
+
+inline bool isFolderExists(const std::string& path) {
+
+    return fs::exists( path ) || ! fs::is_directory( path );
+}

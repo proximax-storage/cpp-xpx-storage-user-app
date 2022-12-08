@@ -432,8 +432,7 @@ void Model::calcDiff()
     sirius::utils::ParseHexStringIntoContainer( drive->m_driveKey.c_str(), 64, driveKey );
 
     qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->m_localDriveFolder;
-    std::error_code ec;
-    if ( ! fs::exists( drive->m_localDriveFolder, ec ) || ! fs::is_directory( drive->m_localDriveFolder, ec ) )
+    if ( ! isFolderExists(drive->m_localDriveFolder) )
     {
         drive->m_localDriveFolderExists = false;
         drive->m_actionList = {};
