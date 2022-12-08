@@ -38,7 +38,7 @@
         <widget class="QLineEdit" name="name">
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
@@ -70,7 +70,7 @@
         <widget class="QLineEdit" name="driveKey">
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
@@ -86,7 +86,7 @@
         <widget class="QComboBox" name="selectDriveBox">
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
@@ -118,7 +118,7 @@
         <widget class="QLineEdit" name="keysLine">
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
@@ -141,7 +141,7 @@
         <widget class="QLineEdit" name="prepaidAmountLine">
          <property name="minimumSize">
           <size>
-           <width>0</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>

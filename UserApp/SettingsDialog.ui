@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
-    <height>477</height>
+    <width>668</width>
+    <height>429</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -67,7 +67,7 @@
       <widget class="QLineEdit" name="m_dnFolderField">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>
@@ -86,7 +86,7 @@
       <widget class="QComboBox" name="m_accountCbox">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>
@@ -102,7 +102,7 @@
       <widget class="QLineEdit" name="m_replicatorBootAddrField">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>
@@ -211,7 +211,7 @@
       <widget class="QPushButton" name="m_dnFolderBtn">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>
@@ -230,7 +230,7 @@
       <widget class="QLineEdit" name="m_portField">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>
@@ -259,7 +259,7 @@
       <widget class="QLineEdit" name="m_restBootAddrField">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>350</width>
          <height>30</height>
         </size>
        </property>

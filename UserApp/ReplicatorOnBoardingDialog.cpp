@@ -6,6 +6,7 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(QWidget *parent) :
     ui(new Ui::ReplicatorOnBoardingDialog)
 {
     ui->setupUi(this);
+    setWindowTitle("Replicator onboarding");
 }
 
 ReplicatorOnBoardingDialog::~ReplicatorOnBoardingDialog()

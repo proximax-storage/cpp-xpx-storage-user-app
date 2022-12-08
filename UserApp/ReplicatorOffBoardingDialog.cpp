@@ -6,6 +6,7 @@ ReplicatorOffBoardingDialog::ReplicatorOffBoardingDialog(QWidget *parent) :
     ui(new Ui::ReplicatorOffBoardingDialog)
 {
     ui->setupUi(this);
+    setWindowTitle("Replicator offboarding");
 }
 
 ReplicatorOffBoardingDialog::~ReplicatorOffBoardingDialog()
