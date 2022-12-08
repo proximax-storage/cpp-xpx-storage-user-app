@@ -111,8 +111,10 @@ private:
 
     QTimer*                 m_downloadUpdateTimer;
 
-    FsTreeTableModel*       m_fsTreeTableModel;
+    FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
+
+    FsTreeTableModel*       m_driveFsTreeTableModel;
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
     OnChainClient*          m_onChainClient;

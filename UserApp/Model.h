@@ -115,6 +115,8 @@ struct DriveInfo
     bool        m_isDeleting = false;
     bool        m_isConfirmed = false;
 
+    std::vector<std::string>    m_lastOpenedPath;
+
 public: // tmp
     std::optional<std::array<uint8_t,32>>   m_rootHash;
     sirius::drive::FsTree                   m_fsTree;
