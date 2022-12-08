@@ -177,9 +177,17 @@ void MainWin::init()
                 ui->m_channels->setCurrentIndex( dnChannelIndex );
                 onCurrentChannelChanged( dnChannelIndex );
             }
+
             updateChannelsCBox();
             m_fsTreeTableModel->update();
 
+            connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
+            {
+                if (index >= 0) {
+                    qDebug() << "Channel index: " << index;
+                    onCurrentChannelChanged( index );
+                }
+            }, Qt::QueuedConnection);
         }, Qt::QueuedConnection);
 
         connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
@@ -211,6 +219,14 @@ void MainWin::init()
             addLocalModificationsWatcher();
             updateDrivesCBox();
             updateModificationStatus();
+
+            connect( ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
+            {
+                if (index >= 0) {
+                    qDebug() << "Drive index: " << index;
+                    onCurrentDriveChanged( index );
+                }
+            });
 
             // load my own channels
             xpx_chain_sdk::DownloadChannelsPageOptions options;
@@ -357,8 +373,6 @@ void MainWin::init()
 
     m_modifyProgressPanel = new ModifyProgressPanel( 350, 350, this, modifyPanelCallback );
 
-    connect( ui->tabWidget, &QTabWidget::currentChanged, this, &MainWin::updateModificationStatus );
-
     updateModificationStatus();
     setupNotifications();
 }
@@ -473,12 +487,6 @@ void MainWin::setupDownloadsTab()
 
     ui->m_channels->clear();
     ui->m_channels->addItem( "Loading..." );
-
-    connect( ui->m_channels, QOverload<int>::of(&QComboBox::activated), this, [this] (int index)
-    {
-        qDebug() << LOG_SOURCE << "Channel index: " <<index;
-        onCurrentChannelChanged( index );
-    }, Qt::QueuedConnection);
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
     {
@@ -839,7 +847,7 @@ void MainWin::addChannel( const std::string&              channelName,
     }
     else
     {
-        Model::applyForChannels( driveKey, [&,this] (const ChannelInfo& channelInfo )
+        Model::applyForChannels( driveKey, [&channels] (const ChannelInfo& channelInfo )
         {
             if ( ! channels.back().m_fsTreeHash && channelInfo.m_fsTreeHash )
             {
@@ -1313,26 +1321,16 @@ void MainWin::onDriveLocalDirectoryChanged(const QString&) {
 
 void MainWin::onCurrentDriveChanged( int index )
 {
-    if (index < 0) {
-        qWarning() << LOG_SOURCE << "bad index";
-        return;
+    if (index >= 0) {
+        Model::setCurrentDriveIndex( index );
+        updateModificationStatus();
+        emit ui->m_calcDiffBtn->released();
     }
-
-    Model::setCurrentDriveIndex( index );
-    updateDrivesCBox();
-
-    emit ui->m_calcDiffBtn->released();
 }
 
 void MainWin::setupDrivesTab()
 {
-    connect( ui->m_driveCBox, QOverload<int>::of(&QComboBox::activated), this, [this] (int index)
-    {
-        qDebug() << LOG_SOURCE << "Drive index: " <<index;
-        onCurrentDriveChanged( index );
-    });
-
-    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
+    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, []
     {
         qDebug() << LOG_SOURCE << "openLocalFolderBtn";
 
