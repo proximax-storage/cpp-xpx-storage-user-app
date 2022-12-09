@@ -19,7 +19,7 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
         if ( entry.is_directory() )
         {
             LocalDriveItem child{ true, entryName, 0, "", {}, fs::last_write_time(entry) };
-            calcLocalDriveInfoR( child, path / entryName );
+            calcLocalDriveInfoR( child, path / entryName, calculateHashes, driveKey );
             parent.m_childs[entryName] = std::move(child);
         }
         else if ( entry.is_regular_file() && entryName != ".DS_Store" )
@@ -252,7 +252,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             {
                 // Remove file
                 fs::path fsChildPath = fsPath.empty() ? fs::path(getFile(fsChild).name()) : fsPath / getFile(fsChild).name();
-                qDebug() << LOG_SOURCE << "! fsChildPath: " << fsChildPath.string().c_str();
+                qDebug() << LOG_SOURCE << "! remove fsChildPath: " << fsChildPath.string().c_str();
 
                 // save removed file into 'removedItems'
                 removedItems.push_back( LocalDriveItem{ false,name,getFile(fsChild).size(),{},{},{},ldi_removed} );

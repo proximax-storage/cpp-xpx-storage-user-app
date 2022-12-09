@@ -1336,6 +1336,7 @@ void MainWin::onCurrentDriveChanged( int index )
 
 void MainWin::setupDrivesTab()
 {
+    ui->m_driveFsTableView->setVisible(false);
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, []
     {
         qDebug() << LOG_SOURCE << "openLocalFolderBtn";
