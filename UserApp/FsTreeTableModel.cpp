@@ -7,11 +7,13 @@
 #include <QPushButton>
 #include <QThread>
 
-FsTreeTableModel::FsTreeTableModel()
-{}
-
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
 {
+    if ( !m_isChannelFsModel )
+    {
+        qDebug() << "setFsTree: ";
+        fsTree.dbgPrint();
+    }
     m_fsTree = fsTree;
     m_currentFolder = &m_fsTree;
 
@@ -20,7 +22,7 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std
     {
         m_currentPath.push_back( m_currentFolder );
         auto* it = m_currentFolder->findChild( folder );
-        if ( !sirius::drive::isFolder(*it) )
+        if ( it == nullptr || !sirius::drive::isFolder(*it) )
         {
             break;
         }
@@ -30,11 +32,11 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std
     updateRows();
 }
 
-void FsTreeTableModel::update()
-{
-    beginResetModel();
-    endResetModel();
-}
+//void FsTreeTableModel::update()
+//{
+//    beginResetModel();
+//    endResetModel();
+//}
 
 void FsTreeTableModel::updateRows()
 {
@@ -49,14 +51,21 @@ void FsTreeTableModel::updateRows()
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-//            qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
+            if ( !m_isChannelFsModel )
+            {
+                qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
+            }
             m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
         }
         else
         {
+            
             const auto& file = sirius::drive::getFile(child.second);
-//            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
-//                     << sirius::drive::toString( file.hash().array() ).c_str();
+            if ( !m_isChannelFsModel )
+            {
+                qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
+                     << sirius::drive::toString( file.hash().array() ).c_str();
+            }
             m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
 //            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
         }
@@ -75,6 +84,7 @@ int FsTreeTableModel::onDoubleClick( int row )
         if ( m_currentPath.empty() )
         {
             // do not change selected row
+            updateRows();
             return row;
         }
 
@@ -100,11 +110,13 @@ int FsTreeTableModel::onDoubleClick( int row )
     {
         if ( row > m_rows.size() || ! m_rows[row].m_isFolder )
         {
+            updateRows();
             return row;
         }
 
         auto* it = m_currentFolder->findChild( m_rows[row].m_name );
-        assert( sirius::drive::isFolder(*it) );
+        ASSERT( it != nullptr )
+        ASSERT( sirius::drive::isFolder(*it) );
         m_currentPath.emplace_back( m_currentFolder );
         m_currentFolder = &sirius::drive::getFolder(*it);
 
@@ -112,6 +124,8 @@ int FsTreeTableModel::onDoubleClick( int row )
         //emit this->layoutChanged();
         return 0;
     }
+
+    updateRows();
     return 0;
 }
 
@@ -137,7 +151,6 @@ std::string FsTreeTableModel::currentPathString() const
 
 std::vector<std::string> FsTreeTableModel::currentPath() const
 {
-
     std::vector<std::string> path;
     for( int i=1; i<m_currentPath.size(); i++)
     {
@@ -150,19 +163,27 @@ std::vector<std::string> FsTreeTableModel::currentPath() const
 
 int FsTreeTableModel::rowCount(const QModelIndex &) const
 {
-    {
-        std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-        auto channelInfo = gSettings.currentChannelInfoPtr();
+    if ( m_isChannelFsModel )
+    {
+        auto channelInfo = Model::currentChannelInfoPtr();
 
         if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
         {
-            //qDebug() << LOG_SOURCE << "rowCount: channelInfo == nullptr || channelInfo->m_waitingFsTree";
-            //qDebug() << LOG_SOURCE << "rowCount: 1";
             return 1;
         }
     }
-    //qDebug() << "rowCount: " << m_rows.size();
+    else
+    {
+        auto driveInfo = Model::currentDriveInfoPtr();
+
+        if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_channelsLoaded )
+        {
+            return 1;
+        }
+    }
+
     return m_rows.size();
 }
 
@@ -172,6 +193,15 @@ int FsTreeTableModel::columnCount(const QModelIndex &parent) const
 }
 
 QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
+{
+    if ( m_isChannelFsModel )
+    {
+        return channelData( index, role );
+    }
+    return driveData( index, role );
+}
+
+QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
 {
     QVariant value;
 
@@ -190,7 +220,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
             {
                 std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-                auto channelInfo = gSettings.currentChannelInfoPtr();
+                auto channelInfo = Model::currentChannelInfoPtr();
 
                 if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
                 {
@@ -221,7 +251,7 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                         return QString("Loading...");
                     }
 
-                    auto channelInfo = gSettings.currentChannelInfoPtr();
+                    auto channelInfo = Model::currentChannelInfoPtr();
 
                     if ( channelInfo == nullptr )
                     {
@@ -235,13 +265,106 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
                 }
                 case 1:
                 {
-                    auto channelInfo = gSettings.currentChannelInfoPtr();
+                    auto channelInfo = Model::currentChannelInfoPtr();
 
                     if ( channelInfo == nullptr || channelInfo->m_waitingFsTree  || !gSettings.config().m_channelsLoaded )
                     {
                         return QString("");
                     }
 
+                    const auto& row = m_rows[index.row()];
+                    if ( row.m_isFolder )
+                    {
+                        return QString();
+                    }
+                    return QString::fromStdString( std::to_string( row.m_size) );
+                }
+            }
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    return value;
+}
+
+QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
+{
+    QVariant value;
+
+    switch ( role )
+    {
+        case Qt::TextAlignmentRole:
+        {
+            if ( index.column() == 1 )
+            {
+                return Qt::AlignRight;
+            }
+            break;
+        }
+        case Qt::DecorationRole:
+        {
+            {
+                std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+
+                auto driveInfo = Model::currentDriveInfoPtr();
+
+                if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_drivesLoaded )
+                {
+                    return value;
+                }
+            }
+            if ( index.column() == 0 )
+            {
+                //qDebug() << "d index.row(): " << index.row() << " of: " << m_rows.size();
+
+                if ( m_rows[index.row()].m_isFolder )
+                {
+                    return QApplication::style()->standardIcon(QStyle::SP_DirIcon);
+                }
+                return QApplication::style()->standardIcon(QStyle::SP_FileIcon);
+            }
+            break;
+        }
+
+        case Qt::DisplayRole:
+        {
+            switch( index.column() )
+            {
+                case 0:
+                {
+                    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
+
+                    if ( ! gSettings.config().m_drivesLoaded )
+                    {
+                        return QString("Loading...");
+                    }
+
+                    auto driveInfo = Model::currentDriveInfoPtr();
+
+                    if ( driveInfo == nullptr )
+                    {
+                        return QString("No drive selected");
+                    }
+                    if ( driveInfo->m_downloadingFsTree )
+                    {
+                        return QString("Loading...");
+                    }
+                    //qDebug() << "index.row(): " << index.row() << " of: " << m_rows.size();
+                    return QString::fromStdString( m_rows[index.row()].m_name );
+                }
+                case 1:
+                {
+                    auto driveInfo = Model::currentDriveInfoPtr();
+
+                    if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_drivesLoaded )
+                    {
+                        return QString("");
+                    }
+
+                    //qDebug() << "2 index.row(): " << index.row() << " of: " << m_rows.size();
                     const auto& row = m_rows[index.row()];
                     if ( row.m_isFolder )
                     {

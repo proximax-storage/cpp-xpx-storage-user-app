@@ -355,7 +355,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QTableView" name="m_fsTreeTableView">
+           <widget class="QTableView" name="m_channelFsTableView">
             <property name="minimumSize">
              <size>
               <width>400</width>
@@ -587,6 +587,13 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="m_drivePath">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QTableView" name="m_driveFsTableView"/>

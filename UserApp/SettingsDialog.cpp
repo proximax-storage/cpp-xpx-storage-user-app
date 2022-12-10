@@ -255,7 +255,7 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
     }
 
     int index = gSettingsCopy.m_currentAccountIndex;
-    assert( index >= 0 );
+    ASSERT( index >= 0 );
     qDebug() << "ui->m_accountCbox->setCurrentIndex: " << index;
     ui->m_accountCbox->setCurrentIndex(index);
 }
