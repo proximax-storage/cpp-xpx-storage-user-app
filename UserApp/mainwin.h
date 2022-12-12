@@ -126,6 +126,8 @@ private:
     FsTreeTableModel*       m_driveFsTreeTableModel;
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
+    DriveTreeModel*         m_diffTreeModel;
+
     OnChainClient*          m_onChainClient;
     QFileSystemWatcher*     m_modificationsWatcher;
 

@@ -683,6 +683,19 @@ void MainWin::setupDriveFsTable()
     ui->m_driveFsTableView->setGridStyle( Qt::NoPen );
     ui->m_driveFsTableView->update();
     ui->m_drivePath->setText( "Path: " + QString::fromStdString(m_driveFsTreeTableModel->currentPathString()));
+
+    m_diffTreeModel = new DriveTreeModel(true);
+
+    ui->m_diffTree->setModel( m_diffTreeModel );
+    ui->m_diffTree->setTreePosition(1);
+    ui->m_diffTree->setColumnHidden(0,true);
+    ui->m_diffTree->header()->resizeSection(1, 300);
+    ui->m_diffTree->header()->resizeSection(2, 30);
+    ui->m_diffTree->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_diffTree->setHeaderHidden(true);
+    ui->m_diffTree->show();
+    ui->m_diffTree->expandAll();
+
 }
 
 void MainWin::selectDriveFsItem( int index )
@@ -1429,6 +1442,8 @@ void MainWin::onCurrentDriveChanged( int index )
         if ( ! drivePtr->m_rootHash )
         {
             downloadLatestFsTree( drivePtr->m_driveKey );
+            m_driveTreeModel->updateModel(false);
+            m_diffTreeModel->updateModel(true);
         }
         else
         {
@@ -1526,7 +1541,7 @@ void MainWin::setupDrivesTab()
 //        });
 //    }
 
-    m_driveTreeModel = new DriveTreeModel();
+    m_driveTreeModel = new DriveTreeModel(false);
     ui->m_driveTreeView->setModel( m_driveTreeModel );
     ui->m_driveTreeView->setTreePosition(1);
     ui->m_driveTreeView->setColumnHidden(0,true);
@@ -2017,12 +2032,32 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     if ( drive.m_isConfirmed )
     {
         Model::calcDiff();
-        m_driveTreeModel->updateModel(false);
-        m_diffTableModel->updateModel();
-        ui->m_driveTreeView->expandAll();
-        //ui->m_diffTableView->resizeColumnsToContents();
 
+        m_diffTableModel->updateModel();
+        //ui->m_diffTableView->resizeColumnsToContents();
+        m_diffTreeModel->updateModel(true);
+        m_driveTreeModel->updateModel(false);
         m_driveFsTreeTableModel->setFsTree( drive.m_fsTree, drive.m_lastOpenedPath );
+
+        QMetaObject::invokeMethod( this, [this]()
+        {
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            if ( auto* drive = Model::currentDriveInfoPtr(); drive != nullptr )
+            {
+                ui->m_diffTree->expandAll();
+                ui->m_driveTreeView->expandAll();
+                m_driveFsTreeTableModel->update();
+            }
+        }, Qt::QueuedConnection);
+
+//        ui->m_driveFsTableView->setModel( m_driveFsTreeTableModel );
+//        ui->m_diffTree->setModel(m_diffTreeModel);
+
+        std::thread([this] {
+            usleep(500000);
+            m_driveFsTreeTableModel->update();
+        }).detach();
     }
 }
 
