@@ -178,13 +178,7 @@ void MainWin::init()
         }
 
         updateChannelsCBox();
-
-        connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
-        {
-            if (index >= 0) {
-                onCurrentChannelChanged( index );
-            }
-        }, Qt::QueuedConnection);
+        connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
@@ -222,13 +216,7 @@ void MainWin::init()
         updateDrivesCBox();
         updateModificationStatus();
 
-        connect( ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
-        {
-            if (index >= 0) {
-                qDebug() << "Drive index: " << index;
-                onCurrentDriveChanged( index );
-            }
-        });
+        connect( ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
 
         // load my own channels
         xpx_chain_sdk::DownloadChannelsPageOptions options;
@@ -1404,6 +1392,7 @@ void MainWin::onCurrentChannelChanged( int index )
         }
 
         if (channel) {
+            lockChannel(channel->m_hash);
             unlockChannel(channel->m_hash);
         }
     }
@@ -1421,6 +1410,7 @@ void MainWin::onCurrentDriveChanged( int index )
 
         auto drive = Model::currentDriveInfoPtr();
         if (drive) {
+            lockDrive(drive->m_driveKey);
             unlockDrive(drive->m_driveKey);
         }
 
@@ -1767,7 +1757,6 @@ void MainWin::lockChannel(const std::string &channelId) {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto channel = Model::findChannel(channelId);
     if (channel && (channel->m_isCreating || channel->m_isDeleting)) {
-        ui->m_addChannel->setDisabled(true);
         ui->m_closeChannel->setDisabled(true);
         ui->m_moreChannelsBtn->setDisabled(true);
         ui->m_channelFsTableView->setDisabled(true);
@@ -1780,7 +1769,6 @@ void MainWin::unlockChannel(const std::string &channelId) {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto channel = Model::findChannel(channelId);
     if ((channel && !channel->m_isCreating && !channel->m_isDeleting) || (Model::dnChannels().empty())) {
-        ui->m_addChannel->setEnabled(true);
         ui->m_closeChannel->setEnabled(true);
         ui->m_moreChannelsBtn->setEnabled(true);
         ui->m_channelFsTableView->setEnabled(true);
@@ -1793,10 +1781,10 @@ void MainWin::lockDrive(const std::string &driveId) {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto drive = Model::findDrive(driveId);
     if (drive && (drive->m_isCreating || drive->m_isDeleting)) {
-        ui->m_addDrive->setDisabled(true);
         ui->m_closeDrive->setDisabled(true);
         ui->m_moreDrivesBtn->setDisabled(true);
         ui->m_driveTreeView->setDisabled(true);
+        ui->m_driveFsTableView->setDisabled(true);
         ui->m_openLocalFolderBtn->setDisabled(true);
         ui->m_applyChangesBtn->setDisabled(true);
         ui->m_diffTableView->setDisabled(true);
@@ -1808,10 +1796,10 @@ void MainWin::unlockDrive(const std::string &driveId) {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto drive = Model::findDrive(driveId);
     if ((drive && !drive->m_isCreating && !drive->m_isDeleting) || (Model::drives().empty())) {
-        ui->m_addDrive->setEnabled(true);
         ui->m_closeDrive->setEnabled(true);
         ui->m_moreDrivesBtn->setEnabled(true);
         ui->m_driveTreeView->setEnabled(true);
+        ui->m_driveFsTableView->setEnabled(true);
         ui->m_openLocalFolderBtn->setEnabled(true);
         ui->m_applyChangesBtn->setEnabled(true);
         ui->m_diffTableView->setEnabled(true);
