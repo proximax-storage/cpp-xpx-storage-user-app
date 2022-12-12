@@ -49,12 +49,16 @@ private:
     void cancelModification();
 
     void setupIcons();
+
     void setupDownloadsTab();
-    void setupFsTreeTable();
     void setupDownloadsTable();
-    void selectFsTreeItem( int index );
     void onDownloadBtn();
 
+    void setupChannelFsTable();
+    void selectChannelFsItem( int index );
+
+    void setupDriveFsTable();
+    void selectDriveFsItem( int index );
 
     void onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey );
     void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );

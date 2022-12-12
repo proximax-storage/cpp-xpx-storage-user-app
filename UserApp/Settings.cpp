@@ -216,7 +216,7 @@ void Settings::save()
         }
     }
 
-    assert( m_currentAccountIndex < m_accounts.size() );
+    ASSERT( m_currentAccountIndex < m_accounts.size() );
 
     try
     {

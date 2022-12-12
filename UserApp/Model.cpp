@@ -228,7 +228,7 @@ std::vector<DriveInfo>& Model::drives()
 
 DriveInfo* Model::currentDriveInfoPtr()
 {
-    qDebug() << LOG_SOURCE << "currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
+    //qDebug() << LOG_SOURCE << "currentDriveIndex: " << gSettings.config().m_currentDriveIndex;
 
     if ( gSettings.config().m_currentDriveIndex >= 0 && gSettings.config().m_currentDriveIndex < gSettings.config().m_drives.size() )
     {

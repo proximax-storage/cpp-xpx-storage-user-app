@@ -16,6 +16,13 @@
 #include "xpxchaincpp/model/storage/download_channel.h"
 #include "xpxchaincpp/model/storage/download_channels_page.h"
 
+#define ASSERT(expr) { \
+    if (!(expr)) {\
+        std::cerr << ": " << __FILE__ << ":" << __LINE__ << " failed assert: " << #expr << "\n" << std::flush; \
+        assert(0); \
+    }\
+}
+
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;
 

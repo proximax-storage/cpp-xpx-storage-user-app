@@ -101,7 +101,7 @@ public:
 
     Account& config()
     {
-        assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
+        ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
         return m_accounts[m_currentAccountIndex];
     }
 
@@ -109,7 +109,7 @@ public:
 
     ChannelInfo& currentChannelInfo()
     {
-        assert( config().m_currentDnChannelIndex >= 0 && config().m_currentDnChannelIndex < config().m_dnChannels.size() );
+        ASSERT( config().m_currentDnChannelIndex >= 0 && config().m_currentDnChannelIndex < config().m_dnChannels.size() );
         return config().m_dnChannels[config().m_currentDnChannelIndex];
     }
 
@@ -126,7 +126,7 @@ public:
     {
         qDebug() << LOG_SOURCE << "setCurrentAccountIndex: " << currentAccountIndex;
         m_currentAccountIndex = currentAccountIndex;
-        assert( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
+        ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
     }
 
     void onDownloadCompleted( lt::torrent_handle handle );

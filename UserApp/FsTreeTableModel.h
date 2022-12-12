@@ -9,9 +9,9 @@ class FsTreeTableModel: public QAbstractListModel
 {
     Q_OBJECT
 public:
-    FsTreeTableModel();
+    FsTreeTableModel( bool isChannelFsModel ) : m_isChannelFsModel(isChannelFsModel) {}
 
-    void update();
+    //void update();
 
     int onDoubleClick( int row );
     std::string currentPathString() const;
@@ -28,6 +28,10 @@ public:
         void setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path );
 
 public:
+        QVariant channelData(const QModelIndex &index, int role) const;
+        QVariant driveData(const QModelIndex &index, int role) const;
+
+public:
     struct Row
     {
         bool        m_isFolder;
@@ -42,6 +46,7 @@ public:
     std::vector<Row> m_rows;
 
 private:
+    bool                    m_isChannelFsModel;
     sirius::drive::FsTree   m_fsTree = {};
     FsTreePath              m_currentPath = {};
     sirius::drive::Folder*  m_currentFolder;
