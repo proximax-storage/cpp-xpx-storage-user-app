@@ -1770,7 +1770,7 @@ void MainWin::lockChannel(const std::string &channelId) {
         ui->m_addChannel->setDisabled(true);
         ui->m_closeChannel->setDisabled(true);
         ui->m_moreChannelsBtn->setDisabled(true);
-        ui->m_fsTreeTableView->setDisabled(true);
+        ui->m_channelFsTableView->setDisabled(true);
         ui->m_refresh->setDisabled(true);
         ui->m_downloadBtn->setDisabled(true);
     }
@@ -1783,7 +1783,7 @@ void MainWin::unlockChannel(const std::string &channelId) {
         ui->m_addChannel->setEnabled(true);
         ui->m_closeChannel->setEnabled(true);
         ui->m_moreChannelsBtn->setEnabled(true);
-        ui->m_fsTreeTableView->setEnabled(true);
+        ui->m_channelFsTableView->setEnabled(true);
         ui->m_refresh->setEnabled(true);
         ui->m_downloadBtn->setEnabled(true);
     }
