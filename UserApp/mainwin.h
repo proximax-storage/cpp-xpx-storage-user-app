@@ -101,6 +101,11 @@ private:
 private slots:
     void updateChannelsCBox();
     void updateDrivesCBox();
+    void lockChannel(const std::string& channelId);
+    void unlockChannel(const std::string& channelId);
+    void lockDrive(const std::string& driveId);
+    void unlockDrive(const std::string& driveId);
+    void markChannelsForDelete(const std::string& driveId, bool state);
 
 public:
     // if private key is not set it will be 'true'

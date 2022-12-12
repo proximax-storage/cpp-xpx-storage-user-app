@@ -44,6 +44,8 @@
 #include <QToolTip>
 #include <QFileDialog>
 
+#include <boost/algorithm/string.hpp>
+
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWin)
@@ -181,7 +183,6 @@ void MainWin::init()
         connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
         {
             if (index >= 0) {
-                //qDebug() << "Channel index: " << index;
                 onCurrentChannelChanged( index );
             }
         }, Qt::QueuedConnection);
@@ -265,15 +266,21 @@ void MainWin::init()
         {
             channel->m_isDeleting = true;
             updateChannelsCBox();
+            lockChannel(channel->m_hash);
         }
     }, Qt::QueuedConnection);
 
     connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
         AddDriveDialog dialog(m_onChainClient, this);
         connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, &MainWin::updateDrivesCBox );
+        connect( &dialog, &AddDriveDialog::updateDrivesCBox, this, [this](){
+            auto drive = Model::currentDriveInfoPtr();
+            if (drive) {
+                lockDrive(drive->m_driveKey);
+            }
+        } );
         dialog.exec();
         m_diffTableModel->updateModel();
-
     }, Qt::QueuedConnection);
 
     connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
@@ -290,6 +297,13 @@ void MainWin::init()
             qDebug() << LOG_SOURCE << "drive->m_isDeleting = true";
             drive->m_isDeleting = true;
             updateDrivesCBox();
+            lockDrive(drive->m_driveKey);
+            markChannelsForDelete(drive->m_driveKey, true);
+
+            auto channel = Model::currentChannelInfoPtr();
+            if (channel) {
+                lockChannel(channel->m_hash);
+            }
         }
     }, Qt::QueuedConnection);
 
@@ -864,6 +878,9 @@ void MainWin::addChannel( const std::string&              channelName,
     Model::setCurrentDnChannelIndex( (int)channels.size()-1 );
 
     updateChannelsCBox();
+    lock.unlock();
+
+    lockChannel(channelKey);
 }
 
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
@@ -902,6 +919,8 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
     const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
     showNotification(message);
     addNotification(message);
+
+    unlockChannel(channelKey);
 }
 
 void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
@@ -914,6 +933,7 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
         Model::removeChannel(channelKey);
         updateChannelsCBox();
+        unlockChannel(channelInfo->m_hash);
     }
 }
 
@@ -950,6 +970,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &alias, const std::str
     addNotification(message);
 	startCalcDiff();
     loadBalance();
+    unlockDrive(driveKey);
 }
 
 void MainWin::onDriveCreationFailed(const std::string& alias, const std::string& driveKey, const std::string& errorText)
@@ -962,6 +983,7 @@ void MainWin::onDriveCreationFailed(const std::string& alias, const std::string&
     Model::removeChannelByDriveKey(driveKey);
     updateDrivesCBox();
     updateChannelsCBox();
+    unlockDrive(driveKey);
 }
 
 void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
@@ -980,7 +1002,6 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
     }
     lock.unlock();
 
-
     Model::removeDrive(driveKeyHex);
     updateDrivesCBox();
     m_diffTableModel->updateModel();
@@ -996,10 +1017,13 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
     }
 
     loadBalance();
+    unlockDrive(driveKeyHex);
+    unlockChannel("");
 }
 
 void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
-    std::string alias = rawHashToHex(driveKey).toStdString();
+    const auto driveId = rawHashToHex(driveKey).toStdString();
+    std::string alias = driveId;
     auto drive = Model::findDrive(alias);
     if (drive) {
         alias = drive->m_name;
@@ -1013,6 +1037,8 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     message.append(errorText);
     showNotification(message);
     addNotification(message);
+    unlockDrive(driveId);
+    markChannelsForDelete(driveId, false);
 }
 
 void MainWin::onApplyChanges()
@@ -1061,7 +1087,8 @@ void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &cha
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     std::string channelName;
-    auto* channelPtr = Model::findChannel( sirius::drive::toString(channelId) );
+    const auto channelKey = sirius::drive::toString(channelId);
+    auto* channelPtr = Model::findChannel( channelKey );
     if ( channelPtr != nullptr )
     {
         channelName = channelPtr->m_name;
@@ -1079,10 +1106,12 @@ void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &cha
 
     updateChannelsCBox();
     loadBalance();
+    unlockChannel(channelKey);
 }
 
 void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
-    std::string alias = rawHashToHex(channelId).toStdString();
+    const auto channelKey = rawHashToHex(channelId).toStdString();
+    std::string alias = channelKey;
     auto channel = Model::findChannel(alias);
     if (channel) {
         alias = channel->m_name;
@@ -1096,6 +1125,7 @@ void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channe
     message.append(errorText);
     showNotification(message);
     addNotification(message);
+    unlockChannel(channelKey);
 }
 
 void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId) {
@@ -1301,7 +1331,6 @@ void MainWin::onCurrentChannelChanged( int index )
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         auto channel = Model::currentChannelInfoPtr();
-
         if ( !channel )
         {
             qWarning() << LOG_SOURCE << "bad channel";
@@ -1318,6 +1347,10 @@ void MainWin::onCurrentChannelChanged( int index )
             m_channelFsTreeTableModel->setFsTree( channel->m_fsTree, channel->m_lastOpenedPath );
             ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
         }
+
+        if (channel) {
+            unlockChannel(channel->m_hash);
+        }
     }
 }
 
@@ -1330,6 +1363,13 @@ void MainWin::onCurrentDriveChanged( int index )
     if (index >= 0) {
         Model::setCurrentDriveIndex( index );
         updateModificationStatus();
+
+        auto drive = Model::currentDriveInfoPtr();
+        if (drive) {
+            unlockDrive(drive->m_driveKey);
+        }
+
+        // TODO: thread
         emit ui->m_calcDiffBtn->released();
     }
 }
@@ -1627,29 +1667,8 @@ void MainWin::updateDrivesCBox()
         ui->m_driveCBox->setCurrentIndex( Model::currentDriveIndex() );
     }
 
-//    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
-//    {
-//        m_driveTreeModel->rescanFolder( drivePtr->m_localDriveFolder );
-//    }
-//    else
-//    {
-//        m_driveTreeModel->rescanFolder( "" );
-//    }
     m_driveTreeModel->updateModel(false);
     ui->m_driveTreeView->expandAll();
-
-    // Update FsTree
-    //
-//    if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr && ! drivePtr->m_rootHash )
-//    {
-//        if ( ! drivePtr->m_rootHash || m_lastSelectedDriveKey != drivePtr->m_driveKey )
-//        {
-//            if ( ! drivePtr->m_downloadingFsTree )
-//            {
-//                downloadLatestFsTree( drivePtr->m_driveKey );
-//            }
-//        }
-//    }
 
     if ( auto* drivePtr = Model::currentDriveInfoPtr(); drivePtr != nullptr )
     {
@@ -1658,6 +1677,75 @@ void MainWin::updateDrivesCBox()
     else
     {
         m_lastSelectedDriveKey.clear();
+    }
+}
+
+void MainWin::lockChannel(const std::string &channelId) {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto channel = Model::findChannel(channelId);
+    if (channel && (channel->m_isCreating || channel->m_isDeleting)) {
+        ui->m_addChannel->setDisabled(true);
+        ui->m_closeChannel->setDisabled(true);
+        ui->m_moreChannelsBtn->setDisabled(true);
+        ui->m_fsTreeTableView->setDisabled(true);
+        ui->m_refresh->setDisabled(true);
+        ui->m_downloadBtn->setDisabled(true);
+    }
+}
+
+void MainWin::unlockChannel(const std::string &channelId) {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto channel = Model::findChannel(channelId);
+    if ((channel && !channel->m_isCreating && !channel->m_isDeleting) || (Model::dnChannels().empty())) {
+        ui->m_addChannel->setEnabled(true);
+        ui->m_closeChannel->setEnabled(true);
+        ui->m_moreChannelsBtn->setEnabled(true);
+        ui->m_fsTreeTableView->setEnabled(true);
+        ui->m_refresh->setEnabled(true);
+        ui->m_downloadBtn->setEnabled(true);
+    }
+}
+
+void MainWin::lockDrive(const std::string &driveId) {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto drive = Model::findDrive(driveId);
+    if (drive && (drive->m_isCreating || drive->m_isDeleting)) {
+        ui->m_addDrive->setDisabled(true);
+        ui->m_closeDrive->setDisabled(true);
+        ui->m_moreDrivesBtn->setDisabled(true);
+        ui->m_driveTreeView->setDisabled(true);
+        ui->m_openLocalFolderBtn->setDisabled(true);
+        ui->m_applyChangesBtn->setDisabled(true);
+        ui->m_diffTableView->setDisabled(true);
+        ui->m_calcDiffBtn->setDisabled(true);
+    }
+}
+
+void MainWin::unlockDrive(const std::string &driveId) {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto drive = Model::findDrive(driveId);
+    if ((drive && !drive->m_isCreating && !drive->m_isDeleting) || (Model::drives().empty())) {
+        ui->m_addDrive->setEnabled(true);
+        ui->m_closeDrive->setEnabled(true);
+        ui->m_moreDrivesBtn->setEnabled(true);
+        ui->m_driveTreeView->setEnabled(true);
+        ui->m_openLocalFolderBtn->setEnabled(true);
+        ui->m_applyChangesBtn->setEnabled(true);
+        ui->m_diffTableView->setEnabled(true);
+        ui->m_calcDiffBtn->setEnabled(true);
+    }
+}
+
+void MainWin::markChannelsForDelete(const std::string& driveId, bool state) {
+    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    auto drive = Model::findDrive(driveId);
+    if (drive) {
+        auto& channels = gSettings.config().m_dnChannels;
+        for (auto& channel : channels) {
+            if (boost::iequals( channel.m_driveHash, drive->m_driveKey )) {
+                channel.m_isDeleting = state;
+            }
+        }
     }
 }
 
