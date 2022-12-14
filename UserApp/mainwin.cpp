@@ -677,11 +677,12 @@ void MainWin::setupDriveFsTable()
     m_driveFsTreeTableModel = new FsTreeTableModel( false );
 
     ui->m_driveFsTableView->setModel( m_driveFsTreeTableModel );
+    ui->m_driveFsTableView->horizontalHeader()->hide();
     ui->m_driveFsTableView->setColumnWidth(0,300);
     ui->m_driveFsTableView->horizontalHeader()->setStretchLastSection(true);
-    ui->m_driveFsTableView->horizontalHeader()->hide();
     ui->m_driveFsTableView->setGridStyle( Qt::NoPen );
-    ui->m_driveFsTableView->update();
+    ui->m_driveFsTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+
     ui->m_drivePath->setText( "Path: " + QString::fromStdString(m_driveFsTreeTableModel->currentPathString()));
 
     m_diffTreeModel = new DriveTreeModel(true);
@@ -2033,31 +2034,37 @@ void MainWin::continueCalcDiff( DriveInfo& drive )
     {
         Model::calcDiff();
 
-        m_diffTableModel->updateModel();
-        //ui->m_diffTableView->resizeColumnsToContents();
-        m_diffTreeModel->updateModel(true);
-        m_driveTreeModel->updateModel(false);
-        m_driveFsTreeTableModel->setFsTree( drive.m_fsTree, drive.m_lastOpenedPath );
-
         QMetaObject::invokeMethod( this, [this]()
         {
             std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
             if ( auto* drive = Model::currentDriveInfoPtr(); drive != nullptr )
             {
+                m_diffTableModel->updateModel();
+                //ui->m_diffTableView->resizeColumnsToContents();
+                m_diffTreeModel->updateModel(true);
+                m_driveTreeModel->updateModel(false);
+                m_driveFsTreeTableModel->setFsTree( drive->m_fsTree, drive->m_lastOpenedPath );
+
                 ui->m_diffTree->expandAll();
                 ui->m_driveTreeView->expandAll();
-                m_driveFsTreeTableModel->update();
             }
         }, Qt::QueuedConnection);
 
-//        ui->m_driveFsTableView->setModel( m_driveFsTreeTableModel );
-//        ui->m_diffTree->setModel(m_diffTreeModel);
+        static bool atFirst = true;
+        if ( atFirst )
+        {
+            atFirst = false;
+            std::thread([this] {
+                usleep(500000);
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-        std::thread([this] {
-            usleep(500000);
-            m_driveFsTreeTableModel->update();
-        }).detach();
+                if ( auto* drive = Model::currentDriveInfoPtr(); drive != nullptr )
+                {
+                    m_driveFsTreeTableModel->setFsTree( drive->m_fsTree, drive->m_lastOpenedPath );
+                }
+            }).detach();
+        }
     }
 }
 
