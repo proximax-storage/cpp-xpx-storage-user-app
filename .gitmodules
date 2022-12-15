@@ -2,7 +2,9 @@
 	path = cpp-xpx-storage-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk.git
 	branch = develop
+        update = merge
 [submodule "cpp-xpx-chain-sdk"]
 	path = cpp-xpx-chain-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-chain-sdk.git
 	branch = R21BC-245
+        update = merge
