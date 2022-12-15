@@ -122,6 +122,8 @@ struct DriveInfo
     bool        m_isDeleting = false;
     bool        m_isConfirmed = false;
 
+    sirius::drive::ReplicatorList m_replicatorList;
+
     std::vector<std::string>    m_lastOpenedPath;
 
 public: // tmp
@@ -218,10 +220,11 @@ public:
     static void startStorageEngine( std::function<void()> addressAlreadyInUseHandler );
     static void endStorageEngine();
 
-    static void downloadFsTree( const std::string&             driveHash,
-                                const std::string&             dnChannelId,
-                                const std::array<uint8_t,32>&  fsTreeHash,
-                                FsTreeHandler                  onFsTreeReceived );
+    static void downloadFsTree( const std::string&                      driveHash,
+                                const std::string&                      dnChannelId,
+                                const std::array<uint8_t,32>&           fsTreeHash,
+                                const sirius::drive::ReplicatorList&    replicatorList,
+                                FsTreeHandler                           onFsTreeReceived );
 
     static sirius::drive::lt_handle downloadFile( const std::string&            channelId,
                                                   const std::array<uint8_t,32>& fileHash );

@@ -205,6 +205,17 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 
         it->m_isConfirmed = true;
         it->m_replicatorNumber = remoteDrive.data.replicatorCount;
+        it->m_replicatorList.clear();
+        for( const auto& replicatorKey : remoteDrive.data.replicators )
+        {
+            std::array<uint8_t,32> key;
+            sirius::utils::ParseHexStringIntoContainer( replicatorKey.c_str(), 64, key );
+            it->m_replicatorList.emplace_back(key);
+        }
+        if ( ! it->m_replicatorList.empty() )
+        {
+            gStorageEngine->addReplicatorList( it->m_replicatorList );
+        }
 
         if ( ! remoteDrive.data.activeDataModifications.empty() )
         {
@@ -375,14 +386,16 @@ void Model::endStorageEngine()
     gStorageEngine.reset();
 }
 
-void Model::downloadFsTree( const std::string&             driveHash,
-                            const std::string&             dnChannelId,
-                            const std::array<uint8_t,32>&  fsTreeHash,
-                            FsTreeHandler                  onFsTreeReceived )
+void Model::downloadFsTree( const std::string&                      driveHash,
+                            const std::string&                      dnChannelId,
+                            const std::array<uint8_t,32>&           fsTreeHash,
+                            const sirius::drive::ReplicatorList&    replicatorList,
+                            FsTreeHandler                           onFsTreeReceived )
 {
     gStorageEngine->downloadFsTree( driveHash,
                                     dnChannelId,
                                     fsTreeHash,
+                                    replicatorList,
                                     onFsTreeReceived );
 }
 

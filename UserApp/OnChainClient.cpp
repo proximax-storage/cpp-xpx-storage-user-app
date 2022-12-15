@@ -288,7 +288,7 @@ void OnChainClient::initConnects() {
 
                 mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(),
                                                 "0000000000000000000000000000000000000000000000000000000000000000",
-                                                rawHashFromHex(fileStructureCdi.c_str()), callback);
+                                                rawHashFromHex(fileStructureCdi.c_str()), {}, callback);
     }, Qt::QueuedConnection);
 }
 

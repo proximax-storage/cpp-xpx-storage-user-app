@@ -1974,6 +1974,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
         Model::downloadFsTree( driveKey,
                                driveKey,
                                fsTreeHash,
+                               drivePtr->m_replicatorList,
                                [this] ( const std::string&           driveHash,
                                         const std::array<uint8_t,32> fsTreeHash,
                                         const sirius::drive::FsTree& fsTree )

@@ -38,10 +38,13 @@ public:
 
     void restart();
 
-    void downloadFsTree( const std::string&             driveHash,
-                         const std::string&             dnChannelId,
-                         const std::array<uint8_t,32>&  fsTreeHash,
-                         FsTreeHandler                  onFsTreeReceived );
+    void addReplicatorList( const sirius::drive::ReplicatorList& );
+
+    void downloadFsTree( const std::string&                     driveHash,
+                         const std::string&                     dnChannelId,
+                         const std::array<uint8_t,32>&          fsTreeHash,
+                         const sirius::drive::ReplicatorList&   replicatorList,
+                         FsTreeHandler                          onFsTreeReceived );
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&  channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
