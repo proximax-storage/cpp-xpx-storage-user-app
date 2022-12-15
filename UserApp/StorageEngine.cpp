@@ -116,6 +116,11 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 
     auto fsTreeSaveFolder = fsTreesFolder()/sirius::drive::toString(fsTreeHash);
 
+    //TODO:  !!!
+     endpoint_list epList;
+     boost::asio::ip::address e1 = boost::asio::ip::make_address("54.251.236.214");
+     epList.push_back( {e1,7904} );
+
 //    auto tmpRequestingFsTreeTorrent =
                     m_session->download( sirius::drive::DownloadContext(
                                             sirius::drive::DownloadContext::fs_tree,
@@ -146,7 +151,8 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                        channelId,
                                        fsTreeSaveFolder,
                                        "",
-                                       {});
+                                       epList);
+                                       //{});
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
