@@ -13,6 +13,8 @@
 #include "Settings.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
+#include "ChannelInfoDialog.h"
+#include "DriveInfoDialog.h"
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
 #include "CancelModificationDialog.h"
@@ -571,28 +573,16 @@ void MainWin::setupDownloadsTab()
         }
     });
 
-    QAction* copyDriveKeyAction = new QAction("Copy drive key", this);
-    menu->addAction(copyDriveKeyAction);
-    connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
+    QAction* channelInfoAction = new QAction("Channel info", this);
+    menu->addAction(channelInfoAction);
+    connect( channelInfoAction, &QAction::triggered, this, [this](bool)
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         if ( auto* channelInfo = Model::currentChannelInfoPtr(); channelInfo != nullptr )
         {
-            std::string driveKey = channelInfo->m_driveHash;
-            lock.unlock();
-
-            QClipboard* clipboard = QApplication::clipboard();
-            if ( !clipboard ) {
-                qWarning() << LOG_SOURCE << "bad clipboard";
-                lock.unlock();
-                return;
-            }
-
-            clipboard->setText( QString::fromStdString(driveKey), QClipboard::Clipboard );
-            if ( clipboard->supportsSelection() ) {
-                clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
-            }
+            ChannelInfoDialog dialog( *channelInfo, this );
+            dialog.exec();
         }
     });
 
@@ -1668,6 +1658,21 @@ void MainWin::setupDrivesTab()
             if ( clipboard->supportsSelection() ) {
                 clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
             }
+        }
+    });
+
+    QAction* driveInfoAction = new QAction("Drive info", this);
+    menu->addAction(driveInfoAction);
+    connect( driveInfoAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: driveInfoAction";
+
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo != nullptr )
+        {
+            DriveInfoDialog dialog( *driveInfo, this);
+            dialog.exec();
         }
     });
 

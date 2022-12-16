@@ -59,6 +59,8 @@ struct ChannelInfo
     timepoint                   m_tobeDeletedTimepoint;
     endpoint_list               m_endpointList = {};
 
+    //size_t                      m_prepaid = 0;
+
     std::vector<std::string>    m_lastOpenedPath;
 
     std::optional<std::array<uint8_t,32>>   m_fsTreeHash;
