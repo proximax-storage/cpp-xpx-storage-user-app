@@ -29,7 +29,7 @@ ChannelInfoDialog::ChannelInfoDialog( const ChannelInfo& channelInfo,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ChannelInfoDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ChannelInfoDialog::reject);
 
-    setWindowTitle("Channel info");
+    setWindowTitle("Channel Info");
     setFocus();
 }
 

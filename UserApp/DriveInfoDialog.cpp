@@ -20,7 +20,7 @@ DriveInfoDialog::DriveInfoDialog( const DriveInfo& info,
     ui->m_maxDriveSize->setText( QString::number(info.m_maxDriveSize) );
     ui->m_localDriveFolder->setText( QString::fromStdString(info.m_localDriveFolder) );
 
-    setWindowTitle("Create Drive");
+    setWindowTitle("Drive Info");
     setFocus();
 }
 
