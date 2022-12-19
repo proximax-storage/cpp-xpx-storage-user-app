@@ -172,12 +172,14 @@ void MainWin::init()
 
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
         gSettings.config().m_channelsLoaded = true;
+        m_channelFsTreeTableModel->update();
 
         int dnChannelIndex = Model::currentDnChannelIndex();
-        if ( dnChannelIndex >= 0 )
+        if ( dnChannelIndex >= 0 && dnChannelIndex < Model::dnChannels().size() )
         {
             ui->m_channels->setCurrentIndex( dnChannelIndex );
         }
+        lock.unlock();
 
         updateChannelsCBox();
         connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
