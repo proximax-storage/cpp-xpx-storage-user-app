@@ -27,7 +27,7 @@ restart_label:
     for (const QString &locale : uiLanguages) {
         const QString baseName = "Demo_" + QLocale(locale).name();
         if (translator.load(":/i18n/" + baseName)) {
-            a.installTranslator(&translator);
+            QApplication::installTranslator(&translator);
             break;
         }
     }
@@ -42,10 +42,7 @@ restart_label:
     }
     w.show();
 
-    auto rc = a.exec();
-
-    Model::endStorageEngine();
-
+    auto rc = QApplication::exec();
     if ( rc == 1024 )
         goto restart_label;
 }
