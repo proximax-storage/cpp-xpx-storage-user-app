@@ -7,6 +7,11 @@
 #include <QPushButton>
 #include <QThread>
 
+FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel) 
+    : m_isChannelFsModel(isChannelFsModel)
+    , mp_model(model)
+{}
+
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
 {
     if ( !m_isChannelFsModel )
@@ -134,7 +139,7 @@ std::string FsTreeTableModel::currentPathString() const
 //    qDebug() << LOG_SOURCE << "currentPath: ";
 
     std::string path = "";
-    if ( m_currentPath.size() == 0 )
+    if ( m_currentPath.empty() )
     {
         path = "/";
         return path;
@@ -167,24 +172,23 @@ int FsTreeTableModel::rowCount(const QModelIndex &) const
 
     if ( m_isChannelFsModel )
     {
-        auto channelInfo = Model::currentChannelInfoPtr();
+        auto channelInfo = mp_model->currentDownloadChannel();
 
-        if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
+        if ( channelInfo == nullptr || channelInfo->isWaitingFsTree() || !mp_model->isDownloadChannelsLoaded() )
         {
             return 1;
         }
     }
     else
     {
-        auto driveInfo = Model::currentDriveInfoPtr();
-
-        if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_channelsLoaded )
+        auto driveInfo = mp_model->currentDrive();
+        if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDownloadChannelsLoaded() )
         {
             return 1;
         }
     }
 
-    return m_rows.size();
+    return (int)m_rows.size();
 }
 
 int FsTreeTableModel::columnCount(const QModelIndex &parent) const
@@ -220,9 +224,9 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
             {
                 std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-                auto channelInfo = Model::currentChannelInfoPtr();
+                auto channelInfo = mp_model->currentDownloadChannel();
 
-                if ( channelInfo == nullptr || channelInfo->m_waitingFsTree || !gSettings.config().m_channelsLoaded )
+                if ( channelInfo == nullptr || channelInfo->isWaitingFsTree() || !mp_model->isDownloadChannelsLoaded() )
                 {
                     return value;
                 }
@@ -246,18 +250,18 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                 {
                     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-                    if ( ! gSettings.config().m_channelsLoaded )
+                    if ( !mp_model->isDownloadChannelsLoaded() )
                     {
                         return QString("Loading...");
                     }
 
-                    auto channelInfo = Model::currentChannelInfoPtr();
+                    auto channelInfo = mp_model->currentDownloadChannel();
 
                     if ( channelInfo == nullptr )
                     {
                         return QString("No channel selected");
                     }
-                    if ( channelInfo->m_waitingFsTree )
+                    if ( channelInfo->isWaitingFsTree() )
                     {
                         return QString("Loading...");
                     }
@@ -265,9 +269,9 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                 }
                 case 1:
                 {
-                    auto channelInfo = Model::currentChannelInfoPtr();
+                    auto channelInfo = mp_model->currentDownloadChannel();
 
-                    if ( channelInfo == nullptr || channelInfo->m_waitingFsTree  || !gSettings.config().m_channelsLoaded )
+                    if ( channelInfo == nullptr || channelInfo->isWaitingFsTree()  || !mp_model->isDownloadChannelsLoaded() )
                     {
                         return QString("");
                     }
@@ -309,9 +313,9 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
             {
                 std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-                auto driveInfo = Model::currentDriveInfoPtr();
+                auto driveInfo = mp_model->currentDrive();
 
-                if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_drivesLoaded )
+                if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDrivesLoaded() )
                 {
                     return value;
                 }
@@ -337,29 +341,29 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
                 {
                     std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
-                    if ( ! gSettings.config().m_drivesLoaded )
+                    if ( ! mp_model->isDrivesLoaded() )
                     {
                         return QString("Loading...");
                     }
 
-                    auto driveInfo = Model::currentDriveInfoPtr();
+                    auto driveInfo = mp_model->currentDrive();
 
                     if ( driveInfo == nullptr )
                     {
                         return QString("No drive selected");
                     }
-                    if ( driveInfo->m_downloadingFsTree )
+                    if ( driveInfo->isDownloadingFsTree() )
                     {
                         return QString("Loading...");
                     }
-                    //qDebug() << "index.row(): " << index.row() << " of: " << m_rows.size();
+
                     return QString::fromStdString( m_rows[index.row()].m_name );
                 }
                 case 1:
                 {
-                    auto driveInfo = Model::currentDriveInfoPtr();
+                    auto driveInfo = mp_model->currentDrive();
 
-                    if ( driveInfo == nullptr || driveInfo->m_downloadingFsTree || !gSettings.config().m_drivesLoaded )
+                    if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDrivesLoaded() )
                     {
                         return QString("");
                     }

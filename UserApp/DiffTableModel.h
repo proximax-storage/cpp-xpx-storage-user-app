@@ -1,12 +1,13 @@
 #pragma once
 
 #include <QModelIndex>
+#include "Model.h"
 #include "drive/ActionList.h"
 
 class DiffTableModel: public QAbstractListModel
 {
 public:
-    DiffTableModel() {}
+    DiffTableModel(Model* model);
 
     void updateModel();
 
@@ -37,4 +38,5 @@ public:
 private:
     sirius::drive::ActionList   m_actionList = {};
     bool                        m_correctLocalFolder = true;
+    Model*                      mp_model;
 };

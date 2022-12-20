@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QModelIndex>
+#include "Model.h"
 #include "drive/FsTree.h"
 
 using FsTreePath = std::vector<sirius::drive::Folder*>;
@@ -8,8 +9,9 @@ using FsTreePath = std::vector<sirius::drive::Folder*>;
 class FsTreeTableModel: public QAbstractListModel
 {
     Q_OBJECT
+
 public:
-    FsTreeTableModel( bool isChannelFsModel ) : m_isChannelFsModel(isChannelFsModel) {}
+    FsTreeTableModel( Model* model, bool isChannelFsModel );
 
     //void update();
 
@@ -50,4 +52,5 @@ private:
     sirius::drive::FsTree   m_fsTree = {};
     FsTreePath              m_currentPath = {};
     sirius::drive::Folder*  m_currentFolder;
+    Model*                  mp_model;
 };

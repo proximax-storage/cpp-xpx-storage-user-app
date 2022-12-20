@@ -1,25 +1,28 @@
 #include "DiffTableModel.h"
-#include "Settings.h"
 
 #include <QApplication>
 #include <QStyle>
 #include <QIcon>
 #include <QPushButton>
 
+DiffTableModel::DiffTableModel(Model *model)
+    : mp_model(model)
+{}
+
 void DiffTableModel::updateModel()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    const auto* drive = Model::currentDriveInfoPtr();
+    const auto* drive = mp_model->currentDrive();
 
     beginResetModel();
     m_actionList.clear();
 
     if ( drive != nullptr )
     {
-        if ( drive->m_localDriveFolderExists )
+        if ( drive->isLocalFolderExists() )
         {
-            m_actionList = drive->m_actionList;
+            m_actionList = drive->getActionsList();
             m_correctLocalFolder = true;
         }
         else

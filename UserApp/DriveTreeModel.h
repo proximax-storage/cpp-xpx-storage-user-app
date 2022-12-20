@@ -8,6 +8,7 @@
 
 #include <filesystem>
 
+#include "Model.h"
 #include "LocalDriveItem.h"
 
 namespace fs = std::filesystem;
@@ -79,9 +80,10 @@ class DriveTreeModel : public QAbstractItemModel
     Q_OBJECT
 
     DriveTreeItem* m_rootItem;
+    Model* mp_model;
 
 public:
-    explicit DriveTreeModel( QObject *parent = nullptr );
+    explicit DriveTreeModel( Model* model, QObject *parent = nullptr );
     ~DriveTreeModel() override { delete m_rootItem; }
 
     void updateModel( bool skipNotChanged );

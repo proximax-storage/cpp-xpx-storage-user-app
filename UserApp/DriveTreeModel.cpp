@@ -42,11 +42,13 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
     }
 }
 
-DriveTreeModel::DriveTreeModel( QObject* )
+DriveTreeModel::DriveTreeModel( Model* model, QObject* parent)
+    : QAbstractItemModel(parent)
+    , mp_model(model)
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    if ( ! gSettings.config().m_drivesLoaded )
+    if ( ! mp_model->isDrivesLoaded() )
     {
         QList<QVariant> rootList;
         rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
@@ -68,11 +70,11 @@ DriveTreeModel::DriveTreeModel( QObject* )
     auto driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
     m_rootItem->appendChild( driveRoot );
 
-    const auto* localDrive = Model::currentDriveInfoPtr();
+    const auto* localDrive = mp_model->currentDrive();
 
     if ( localDrive != nullptr )
     {
-        auto localDriveFolder = localDrive->m_localDriveFolder;
+        auto localDriveFolder = localDrive->getLocalFolder();
         lock.unlock();
         scanFolderR( driveRoot, localDriveFolder );
     }
@@ -119,16 +121,12 @@ void DriveTreeModel::updateModel( bool skipNotChanged )
     auto driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
     m_rootItem->appendChild( driveRoot );
 
-    const auto* localDrive = Model::currentDriveInfoPtr();
+    const auto* localDrive = mp_model->currentDrive();
 
-    if ( localDrive != nullptr && localDrive->m_localDrive )
+    if ( localDrive != nullptr && localDrive->getLocalDriveItem() )
     {
         beginResetModel();
-        parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
+        parseR( driveRoot, *localDrive->getLocalDriveItem(), skipNotChanged );
         endResetModel();
     }
-//    else if ( localDrive != nullptr )
-//    {
-//        scanFolderR( driveRoot, localDrive->m_localDriveFolder );
-//    }
 }
