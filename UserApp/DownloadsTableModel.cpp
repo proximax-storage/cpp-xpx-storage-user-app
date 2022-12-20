@@ -1,5 +1,4 @@
 #include "DownloadsTableModel.h"
-#include "Settings.h"
 #include "mainwin.h"
 
 #include <QApplication>
@@ -7,15 +6,16 @@
 #include <QIcon>
 #include <QIdentityProxyModel>
 
-DownloadsTableModel::DownloadsTableModel( QObject *parent, std::function<void(int)> selectDownloadRowFunc )
-    : QAbstractListModel{parent}, m_selectDownloadRowFunc(selectDownloadRowFunc)
+DownloadsTableModel::DownloadsTableModel( Model* model, QObject *parent, std::function<void(int)> selectDownloadRowFunc )
+    : QAbstractListModel(parent)
+    , mp_model(model)
+    , m_selectDownloadRowFunc(selectDownloadRowFunc)
 {
 }
 
 int DownloadsTableModel::rowCount(const QModelIndex &) const
 {
-    //qDebug() << LOG_SOURCE << "m_downloads.size: " << gSettings.config().m_downloads.size();
-    return gSettings.config().m_downloads.size();
+    return (int)mp_model->downloads().size();
 }
 
 int DownloadsTableModel::columnCount(const QModelIndex &parent) const
@@ -52,23 +52,24 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-                    return QString::fromStdString( gSettings.config().m_downloads[index.row()].m_fileName );
+                    return QString::fromStdString( mp_model->downloads()[index.row()].getFileName() );
                 }
                 case 1: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
 
-                    const auto& dnInfo = gSettings.config().m_downloads[index.row()];
+                    const auto& dnInfo = mp_model->downloads()[index.row()];
                     if ( dnInfo.isCompleted() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("done");
                     }
-                    if ( ! dnInfo.m_ltHandle.is_valid() )
+                    if ( ! dnInfo.getHandle().is_valid() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("0%");
                     }
-                    return QString::fromStdString( std::to_string( (dnInfo.m_progress+5)/10 ) ) + "%";
+
+                    return QString::fromStdString( std::to_string( (dnInfo.getProgress() + 5) / 10 ) ) + "%";
                 }
             }
         }
@@ -83,25 +84,24 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
 
 QVariant DownloadsTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    return QVariant();
+    return {};
 }
 
 void DownloadsTableModel::updateProgress()
 {
     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
 
-    auto& downloads = gSettings.config().m_downloads;
-
+    auto& downloads = mp_model->downloads();
     beginResetModel();
     {
         for( auto& dnInfo: downloads )
         {
-            if ( dnInfo.isCompleted() || ! dnInfo.m_ltHandle.is_valid() )
+            if ( dnInfo.isCompleted() || ! dnInfo.getHandle().is_valid() )
             {
                 continue;
             }
 
-            std::vector<int64_t> fp = dnInfo.m_ltHandle.file_progress();
+            std::vector<int64_t> fp = dnInfo.getHandle().file_progress();
 
             uint64_t dnBytes = 0;
             uint64_t totalBytes = 0;
@@ -110,7 +110,7 @@ void DownloadsTableModel::updateProgress()
             for( uint32_t i=0; i<fp.size(); i++ )
             {
                 //qDebug() << LOG_SOURCE << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
-                auto fsize = dnInfo.m_ltHandle.torrent_file()->files().file_size(i);
+                auto fsize = dnInfo.getHandle().torrent_file()->files().file_size(i);
                 dnBytes    += fp[i];
                 totalBytes += fsize;
             }
@@ -118,11 +118,11 @@ void DownloadsTableModel::updateProgress()
 
             double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
             //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
-            dnInfo.m_progress = progress;
+            dnInfo.setProgress((int)progress);
 
             if ( totalBytes>0 && totalBytes==dnBytes )
             {
-                dnInfo.m_isCompleted = true;
+                dnInfo.setCompleted(true);
             }
         }
     }

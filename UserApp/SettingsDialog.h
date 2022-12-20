@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "Settings.h"
+
 namespace Ui { class SettingsDialog; }
 
 class SettingsDialog : public QDialog
@@ -11,7 +13,7 @@ public:
     Q_OBJECT
 
 public:
-    explicit SettingsDialog( QWidget *parent, bool initSettings = false );
+    explicit SettingsDialog( Settings* settings, QWidget *parent, bool initSettings = false );
     ~SettingsDialog() override;
 
 protected:
@@ -28,6 +30,8 @@ private:
 
 private:
     Ui::SettingsDialog* ui;
+    Settings* mpSettings;
+    Settings* mpSettingsDraft;
 };
 
 #endif // SETTINGDIALOG_H

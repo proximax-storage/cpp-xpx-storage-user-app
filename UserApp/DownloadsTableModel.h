@@ -1,16 +1,15 @@
 #pragma once
 
 #include <QModelIndex>
+#include "Model.h"
 
 class DownloadsTableModel : public QAbstractListModel
 {
-    std::function<void(int)> m_selectDownloadRowFunc;
-
 public:
     int m_selectedRow = -1;
 
 public:
-    explicit DownloadsTableModel( QObject *parent, std::function<void(int)> selectDownloadRowFunc );
+    explicit DownloadsTableModel( Model* model, QObject *parent, std::function<void(int)> selectDownloadRowFunc );
 
     int rowCount(const QModelIndex &) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -24,4 +23,7 @@ public:
     void beginResetModel() { QAbstractItemModel::beginResetModel(); }
     void endResetModel() { QAbstractItemModel::endResetModel(); }
 
+    private:
+        Model* mp_model;
+        std::function<void(int)> m_selectDownloadRowFunc;
 };

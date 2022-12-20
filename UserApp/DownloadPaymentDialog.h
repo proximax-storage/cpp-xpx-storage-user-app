@@ -6,6 +6,7 @@
 #include <qdebug.h>
 #include <QMessageBox>
 #include "OnChainClient.h"
+#include "Model.h"
 
 namespace Ui {
 class DownloadPaymentDialog;
@@ -17,6 +18,7 @@ class DownloadPaymentDialog : public QDialog
 
 public:
     explicit DownloadPaymentDialog(OnChainClient* onChainClient,
+                                   Model* model,
                                    QWidget *parent = nullptr);
     ~DownloadPaymentDialog() override;
 
@@ -31,6 +33,7 @@ private:
     std::string mCurrentChannelKey;
     Ui::DownloadPaymentDialog *ui;
     OnChainClient* mpOnChainClient;
+    Model* mpModel;
 };
 
 #endif // DOWNLOADPAYMENTDIALOG_H

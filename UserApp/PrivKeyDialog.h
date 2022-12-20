@@ -12,8 +12,7 @@ class PrivKeyDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit PrivKeyDialog( QWidget *parent );
-    explicit PrivKeyDialog( QWidget *parent, Settings& );
+    explicit PrivKeyDialog( Settings* settings, QWidget *parent = nullptr );
     ~PrivKeyDialog() override;
 
 protected:
@@ -31,7 +30,7 @@ private:
 
 private:
     Ui::PrivKeyDialog*  ui;
-    Settings&           m_settings;
+    Settings*           mp_settings;
 };
 
 #endif // PRIVKEYDIALOG_H

@@ -1,4 +1,5 @@
 #include "DownloadPaymentDialog.h"
+#include "Utils.h"
 #include "ui_DownloadPaymentDialog.h"
 #include <QRegularExpression>
 #include <QToolTip>
@@ -6,10 +7,12 @@
 #include <boost/algorithm/string.hpp>
 
 DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
+                                             Model* model,
                                              QWidget *parent) :
         QDialog(parent),
         ui(new Ui::DownloadPaymentDialog),
-        mpOnChainClient(onChainClient)
+        mpOnChainClient(onChainClient),
+        mpModel(model)
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
@@ -23,10 +26,10 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     std::vector<std::string> channelsKeys;
-    channelsKeys.reserve(Model::dnChannels().size());
-    for ( const auto& channel : Model::dnChannels()) {
-        channelsKeys.push_back(channel.m_hash);
-        ui->selectChannelBox->addItem(channel.m_name.c_str());
+    channelsKeys.reserve(mpModel->getDownloadChannels().size());
+    for ( const auto& channel : mpModel->getDownloadChannels()) {
+        channelsKeys.push_back(channel.getKey());
+        ui->selectChannelBox->addItem(channel.getName().c_str());
     }
 
     lock.unlock();

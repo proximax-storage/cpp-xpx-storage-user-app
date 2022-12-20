@@ -10,15 +10,16 @@
 #include <QToolTip>
 #include <QRegularExpression>
 
-// not saved properties
-Settings gSettingsCopy;
 
-SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
+SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSettings ) :
     QDialog( parent ),
-    ui( new Ui::SettingsDialog() )
+    ui( new Ui::SettingsDialog() ),
+    mpSettings(settings)
 {
-    gSettingsCopy = gSettings;
-    qDebug() << "gSettings.m_currentAccountIndex: " << gSettings.m_currentAccountIndex << " " << gSettingsCopy.m_currentAccountIndex;
+    mpSettingsDraft = new Settings(this);
+    mpSettingsDraft = mpSettings;
+
+    qDebug() << "mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
@@ -73,12 +74,12 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
     {
         //todo
         qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
-        if ( gSettingsCopy.accountList().size() > size_t(index) )
+        if ( mpSettingsDraft->accountList().size() > size_t(index) )
         {
-            gSettingsCopy.setCurrentAccountIndex(index);
-            qDebug() << LOG_SOURCE << "selected name: " << QString::fromStdString( gSettingsCopy.config().m_accountName );
-            qDebug() << LOG_SOURCE << "selected key: " << QString::fromStdString( gSettingsCopy.config().m_publicKeyStr );
-            qDebug() << LOG_SOURCE << "selected privateKey: " << QString::fromStdString( gSettingsCopy.config().m_privateKeyStr );
+            mpSettingsDraft->setCurrentAccountIndex(index);
+            qDebug() << LOG_SOURCE << "selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
+            qDebug() << LOG_SOURCE << "selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
+            qDebug() << LOG_SOURCE << "selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
             updateAccountFields();
         }
     });
@@ -104,14 +105,14 @@ SettingsDialog::SettingsDialog( QWidget *parent, bool initSettings ) :
         ui->m_newAccountBtn->setStyleSheet("QPushButton { color: grey;}" );
     }
 
-    connect(ui->m_copyKeyBtn, &QPushButton::released, this, [](){
+    connect(ui->m_copyKeyBtn, &QPushButton::released, this, [this](){
         QClipboard* clipboard = QApplication::clipboard();
         if (!clipboard) {
             qWarning() << LOG_SOURCE << "bad clipboard";
             return;
         }
 
-        const QString publicKey = gSettingsCopy.config().m_publicKeyStr.c_str();
+        const QString publicKey = mpSettingsDraft->config().m_publicKeyStr.c_str();
         clipboard->setText(publicKey, QClipboard::Clipboard);
         if (clipboard->supportsSelection()) {
             clipboard->setText(publicKey, QClipboard::Selection);
@@ -186,25 +187,25 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::updateAccountFields()
 {
-    ui->m_restBootAddrField->setText( QString::fromStdString( gSettingsCopy.m_restBootstrap ));
-    ui->m_replicatorBootAddrField->setText( QString::fromStdString( gSettingsCopy.m_replicatorBootstrap ));
+    ui->m_restBootAddrField->setText( QString::fromStdString( mpSettingsDraft->m_restBootstrap ));
+    ui->m_replicatorBootAddrField->setText( QString::fromStdString( mpSettingsDraft->m_replicatorBootstrap ));
     ui->m_portField->setValidator( new QIntValidator(1025, 65535, this) );
-    ui->m_portField->setText( QString::fromStdString( gSettingsCopy.m_udpPort ));
-    ui->m_dnFolderField->setText( QString::fromStdString( gSettingsCopy.downloadFolder() ));
+    ui->m_portField->setText( QString::fromStdString( mpSettingsDraft->m_udpPort ));
+    ui->m_dnFolderField->setText( QString::fromStdString( mpSettingsDraft->downloadFolder() ));
 }
 
 void SettingsDialog::accept()
 {
-    gSettingsCopy.m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
-    gSettingsCopy.m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
-    gSettingsCopy.m_udpPort                 = ui->m_portField->text().toStdString();
-    gSettingsCopy.config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
+    mpSettingsDraft->m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
+    mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
+    mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
+    mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
 
-    bool ltSessionMustRestart = ( gSettings.m_replicatorBootstrap       !=   gSettingsCopy.m_replicatorBootstrap )
-                                ||  ( gSettings.m_udpPort                   !=   gSettingsCopy.m_udpPort )
-                                ||  ( gSettings.config().m_privateKeyStr    !=   gSettingsCopy.config().m_privateKeyStr );
+    bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap       !=   mpSettingsDraft->m_replicatorBootstrap )
+                                ||  ( mpSettings->m_udpPort                   !=   mpSettingsDraft->m_udpPort )
+                                ||  ( mpSettings->config().m_privateKeyStr    !=   mpSettingsDraft->config().m_privateKeyStr );
 
-    if ( ltSessionMustRestart && gSettings.loaded() )
+    if ( ltSessionMustRestart && mpSettings->loaded() )
     {
         QMessageBox msgBox;
         msgBox.setText("Account changed.\nApplication should be restarted");
@@ -217,16 +218,16 @@ void SettingsDialog::accept()
         }
     }
 
-    gSettings.m_restBootstrap           = gSettingsCopy.m_restBootstrap;
-    gSettings.m_replicatorBootstrap     = gSettingsCopy.m_replicatorBootstrap;
-    gSettings.config().m_downloadFolder = gSettingsCopy.config().m_downloadFolder;
-    gSettings.m_accounts                = gSettingsCopy.m_accounts;
-    gSettings.setCurrentAccountIndex( gSettingsCopy.m_currentAccountIndex );
-    gSettings.save();
+    mpSettings->m_restBootstrap           = mpSettingsDraft->m_restBootstrap;
+    mpSettings->m_replicatorBootstrap     = mpSettingsDraft->m_replicatorBootstrap;
+    mpSettings->config().m_downloadFolder = mpSettingsDraft->config().m_downloadFolder;
+    mpSettings->m_accounts                = mpSettingsDraft->m_accounts;
+    mpSettings->setCurrentAccountIndex( mpSettingsDraft->m_currentAccountIndex );
+    mpSettings->save();
 
-    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( gSettings.config().m_accountName );
-    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( gSettings.config().m_publicKeyStr );
-    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( gSettings.config().m_privateKeyStr );
+    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( mpSettings->config().m_accountName );
+    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->config().m_publicKeyStr );
+    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( mpSettings->config().m_privateKeyStr );
 
     QCoreApplication::exit(1024);
     QDialog::accept();
@@ -241,12 +242,12 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 {
     if ( initSettings )
     {
-        auto name = gSettingsCopy.config().m_accountName;
+        auto name = mpSettingsDraft->config().m_accountName;
         ui->m_accountCbox->addItem( QString::fromStdString(name) );
     }
     else
     {
-        auto list = gSettingsCopy.accountList();
+        auto list = mpSettingsDraft->accountList();
 
         for( const auto& element: list )
         {
@@ -254,7 +255,7 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
         }
     }
 
-    int index = gSettingsCopy.m_currentAccountIndex;
+    int index = mpSettingsDraft->m_currentAccountIndex;
     ASSERT( index >= 0 );
     qDebug() << "ui->m_accountCbox->setCurrentIndex: " << index;
     ui->m_accountCbox->setCurrentIndex(index);
@@ -262,13 +263,13 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
 void SettingsDialog::onNewAccountBtn()
 {
-    PrivKeyDialog pKeyDialog( this, gSettingsCopy );
+    PrivKeyDialog pKeyDialog( mpSettingsDraft, this );
     pKeyDialog.exec();
 
     if ( pKeyDialog.result() == QDialog::Accepted )
     {
-        ui->m_accountCbox->addItem( QString::fromStdString( gSettingsCopy.config().m_publicKeyStr ));
-        int index = gSettingsCopy.m_currentAccountIndex;
+        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr ));
+        int index = mpSettingsDraft->m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
     }
 }

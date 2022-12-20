@@ -21,6 +21,9 @@
        <property name="text">
         <string>Capacity* (MB)</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item row="0" column="1">
@@ -43,6 +46,9 @@
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Replicator private key*</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>

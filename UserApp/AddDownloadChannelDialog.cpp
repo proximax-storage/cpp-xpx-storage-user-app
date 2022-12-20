@@ -2,16 +2,19 @@
 #include "ui_AddDownloadChannelDialog.h"
 #include "Utils.h"
 #include "mainwin.h"
+#include "Drive.h"
 #include <QToolTip>
 #include <QRegularExpression>
 
 #include <boost/algorithm/string.hpp>
 
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
+                                                   Model* model,
                                                    QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
-    mpOnChainClient(onChainClient)
+    mpOnChainClient(onChainClient),
+    mpModel(model)
 {
     ui->setupUi(this);
 
@@ -46,10 +49,10 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     std::vector<std::string> drivesKeys;
-    drivesKeys.reserve(Model::drives().size());
-    for ( const auto& drive : Model::drives()) {
-        drivesKeys.push_back(drive.m_driveKey);
-        ui->selectDriveBox->addItem(drive.m_name.c_str());
+    drivesKeys.reserve(mpModel->getDrives().size());
+    for ( const auto& drive : mpModel->getDrives()) {
+        drivesKeys.push_back(drive.getKey());
+        ui->selectDriveBox->addItem(drive.getName().c_str());
     }
 
     lock.unlock();

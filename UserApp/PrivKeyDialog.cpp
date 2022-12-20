@@ -13,18 +13,10 @@
 #include <QRegularExpression>
 
 
-PrivKeyDialog::PrivKeyDialog( QWidget *parent ) :
+PrivKeyDialog::PrivKeyDialog( Settings* settings, QWidget *parent ) :
     QDialog(parent),
     ui(new Ui::PrivKeyDialog),
-    m_settings(gSettings)
-{
-    init();
-}
-
-PrivKeyDialog::PrivKeyDialog( QWidget *parent, Settings& settings) :
-    QDialog(parent),
-    ui(new Ui::PrivKeyDialog),
-    m_settings(settings)
+    mp_settings(settings)
 {
     init();
 }
@@ -108,23 +100,23 @@ void PrivKeyDialog::validate() {
 }
 
 bool PrivKeyDialog::isAccountExists() {
-    auto nameIterator = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [this]( auto account )
+    auto nameIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
         return account.m_accountName == ui->m_accountName->text().toStdString();
     });
 
-    if ( nameIterator != m_settings.m_accounts.end() )
+    if ( nameIterator != mp_settings->m_accounts.end() )
     {
         QToolTip::showText(ui->m_accountName->mapToGlobal(QPoint(0, 15)), tr("Account with same name already exists!"), nullptr, {}, 3000);
         return true;
     }
 
-    auto keyIterator = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [this]( auto account )
+    auto keyIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
         return account.m_privateKeyStr == ui->m_pkField->text().toStdString();
     });
 
-    if ( keyIterator != m_settings.m_accounts.end() )
+    if ( keyIterator != mp_settings->m_accounts.end() )
     {
         QToolTip::showText(ui->m_pkField->mapToGlobal(QPoint(0, 15)), tr("Account with same private key already exists!"), nullptr, {}, 3000);
         return true;
@@ -187,12 +179,12 @@ void PrivKeyDialog::accept()
 
     // Check unique key
     //
-    auto it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
+    auto it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
     {
         return account.m_privateKeyStr == privateKeyStr;
     } );
 
-    if ( it != m_settings.m_accounts.end() )
+    if ( it != mp_settings->m_accounts.end() )
     {
         QMessageBox msgBox;
         msgBox.setText("Account with same private key\n already exists");
@@ -203,12 +195,12 @@ void PrivKeyDialog::accept()
 
     // Check unique name
     //
-    it = std::find_if( m_settings.m_accounts.begin(), m_settings.m_accounts.end(), [&]( const auto& account )
+    it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
     {
         return account.m_accountName == accountName;
     } );
 
-    if ( it != m_settings.m_accounts.end() )
+    if ( it != mp_settings->m_accounts.end() )
     {
         QMessageBox msgBox;
         msgBox.setText("Account with same name\n already exists");
@@ -217,10 +209,13 @@ void PrivKeyDialog::accept()
         return;
     }
 
-    m_settings.m_accounts.emplace_back( Settings::Account{} );
-    qDebug() << LOG_SOURCE << "m_settings.m_accounts.size()-1: " << m_settings.m_accounts.size()-1;
-    m_settings.setCurrentAccountIndex( (int)m_settings.m_accounts.size() - 1 );
-    m_settings.config().initAccount( accountName, privateKeyStr );
+    Account newAccount;
+    mp_settings->m_accounts.emplace_back( newAccount );
+
+    qDebug() << LOG_SOURCE << "mp_settings->m_accounts.size()-1: " << (int)mp_settings->m_accounts.size() - 1;
+
+    mp_settings->setCurrentAccountIndex( (int)mp_settings->m_accounts.size() - 1 );
+    mp_settings->config().initAccount( accountName, privateKeyStr );
 
     QDialog::accept();
 }

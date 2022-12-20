@@ -8,6 +8,7 @@
 #include <xpxchaincpp/model/storage/drive.h>
 
 #include "OnChainClient.h"
+#include "Model.h"
 
 namespace Ui {
 class AddDownloadChannelDialog;
@@ -21,6 +22,7 @@ class AddDownloadChannelDialog : public QDialog
 
 public:
     explicit AddDownloadChannelDialog(OnChainClient* onChainClient,
+                                      Model* model,
                                       QWidget *parent = nullptr);
     ~AddDownloadChannelDialog();
 
@@ -41,6 +43,7 @@ private:
     std::string                     mCurrentDriveKey;
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
+    Model*                          mpModel;
 };
 
 #endif // ADDDOWNLOADCHANNELDIALOG_H

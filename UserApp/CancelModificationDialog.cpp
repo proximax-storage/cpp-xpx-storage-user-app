@@ -1,4 +1,5 @@
 #include "CancelModificationDialog.h"
+#include "Utils.h"
 
 CancelModificationDialog::CancelModificationDialog(OnChainClient* onChainClient,
                                                    const QString& driveId,
