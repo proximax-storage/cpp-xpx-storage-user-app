@@ -179,6 +179,10 @@ void MainWin::init()
         {
             ui->m_channels->setCurrentIndex( dnChannelIndex );
         }
+        else if ( dnChannelIndex < Model::dnChannels().size() > 0 )
+        {
+            ui->m_channels->setCurrentIndex( 0 );
+        }
         lock.unlock();
 
         updateChannelsCBox();
@@ -1939,7 +1943,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
 
             if ( auto* channelPtr = Model::currentChannelInfoPtr(); channelPtr != nullptr && channelPtr->m_driveHash == driveKey )
             {
-                m_channelFsTreeTableModel->updateRows();
+                m_channelFsTreeTableModel->setFsTree( channelPtr->m_fsTree, channelPtr->m_lastOpenedPath );
             }
 
             if ( drivePtr->m_calclDiffIsWaitingFsTree )
