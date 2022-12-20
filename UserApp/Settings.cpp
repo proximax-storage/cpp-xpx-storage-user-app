@@ -1,69 +1,52 @@
 //#include "moc_Settings.cpp"
 
 #include "Settings.h"
+#include "Model.h"
 #include "StorageEngine.h"
-//#include "Diff.h"
 #include "drive/Utils.h"
 #include <fstream>
 #include <filesystem>
 
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-#include <cereal/types/array.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/json.hpp>
 
 #include <QDebug>
 #include <QMessageBox>
 
-namespace fs = std::filesystem;
+Settings::Settings(QObject *parent)
+    : QObject(parent)
+{}
 
-fs::path settingsFolder()
+Settings::~Settings()
+{}
+
+Settings::Settings(const Settings& s)
 {
-    fs::path path;
-#ifdef _WIN32
-    qDebug() << LOG_SOURCE << "!NOT IMPLEMNTED! FOR WIN32: settingsPath()";
-    exit(1);
-#else
-    const char* homePath = getenv("HOME");
-    path = std::string(homePath) + "/.XpxSiriusStorageClient";
-#endif
+    m_restBootstrap = s.m_restBootstrap;
+    m_replicatorBootstrap = s.m_replicatorBootstrap;
+    m_udpPort = s.m_udpPort;
+    m_windowGeometry = s.m_windowGeometry;
+    m_settingsVersion = s.m_settingsVersion;
+    m_accounts = s.m_accounts;
+    m_currentAccountIndex = s.m_currentAccountIndex;
+    m_loaded = s.m_loaded;
+}
 
-    std::error_code ec;
-    if ( ! fs::exists( path, ec ) )
-    {
-        fs::create_directories( path, ec );
-        if ( ec )
-        {
-            QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(path) ) );
-            msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.exec();
-            exit(1);
-        }
+Settings &Settings::operator=(const Settings &s) {
+    if (this == &s) {
+        return *this;
     }
 
-    return path;
-}
-
-Settings::Account::Account() {}
-
-Settings::Account::Account( const Account& a )
-{
-    *this = a;
-}
-
-Settings::Account& Settings::Account::operator=( const Account& a )
-{
-    initAccount( a.m_accountName, a.m_privateKeyStr );
-
-    m_dnChannels            = a.m_dnChannels;
-    m_currentDnChannelIndex = a.m_currentDnChannelIndex;
-    m_downloadFolder        = a.m_downloadFolder;
-    m_downloads             = a.m_downloads;
-    m_drives                = a.m_drives;
-    m_currentDriveIndex     = a.m_currentDriveIndex;
+    m_restBootstrap = s.m_restBootstrap;
+    m_replicatorBootstrap = s.m_replicatorBootstrap;
+    m_udpPort = s.m_udpPort;
+    m_windowGeometry = s.m_windowGeometry;
+    m_settingsVersion = s.m_settingsVersion;
+    m_accounts = s.m_accounts;
+    m_currentAccountIndex = s.m_currentAccountIndex;
+    m_loaded = s.m_loaded;
 
     return *this;
 }
@@ -72,20 +55,20 @@ void Settings::initForTests()
 {
     if ( Model::homeFolder() == "/Users/alex" )
     {
-        gSettings.m_restBootstrap       = "54.151.169.225:3000";
+        m_restBootstrap       = "54.151.169.225:3000";
 
-        m_accounts.push_back({});
-        setCurrentAccountIndex( m_accounts.size()-1 );
+        m_accounts.emplace_back();
+        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
         config().initAccount( "test_genkins", "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
-        m_accounts.push_back({});
-        setCurrentAccountIndex( m_accounts.size()-1 );
+        m_accounts.emplace_back();
+        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
         config().initAccount( "test_genkins_2", "b04fbd908d0fd4315efc4e970bb899d5f82f3828256b7b1f3d4782fef02820e1" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
-        m_accounts.push_back({});
-        setCurrentAccountIndex( m_accounts.size()-1 );
+        m_accounts.emplace_back();
+        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
         config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
@@ -100,7 +83,7 @@ bool Settings::load( const std::string& pwd )
 {
     try
     {
-        fs::path filePath = settingsFolder() / "config";
+        fs::path filePath = getSettingsFolder() / "config";
 
         if ( ! fs::exists( filePath ) )
         {
@@ -202,13 +185,13 @@ bool Settings::load( const std::string& pwd )
 void Settings::save()
 {
     std::error_code ec;
-    if ( ! fs::exists( settingsFolder(), ec ) )
+    if ( ! fs::exists( getSettingsFolder(), ec ) )
     {
-        fs::create_directories( settingsFolder(), ec );
+        fs::create_directories( getSettingsFolder(), ec );
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(settingsFolder()) ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
@@ -222,7 +205,6 @@ void Settings::save()
     {
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
-        //cereal::XMLOutputArchive archive( os );
         archive( m_settingsVersion );
         archive( m_restBootstrap );
         archive( m_replicatorBootstrap );
@@ -234,7 +216,7 @@ void Settings::save()
         archive( m_windowGeometry.width() );
         archive( m_windowGeometry.height() );
 
-        std::ofstream fStream( settingsFolder() / "config", std::ios::binary );
+        std::ofstream fStream( getSettingsFolder() / "config", std::ios::binary );
         fStream << os.str();
         fStream.close();
 
@@ -253,7 +235,7 @@ void Settings::save()
             archive( m_windowGeometry.width() );
             archive( m_windowGeometry.height() );
 
-            std::ofstream fStream( settingsFolder() / "config.json", std::ios::binary );
+            std::ofstream fStream( getSettingsFolder() / "config.json", std::ios::binary );
             fStream << os.str();
             fStream.close();
 
@@ -262,7 +244,7 @@ void Settings::save()
     catch( const std::exception& ex )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + std::string(settingsFolder() / "config") ) );
+        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + std::string(getSettingsFolder() / "config") ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
@@ -270,6 +252,11 @@ void Settings::save()
     }
 
     qDebug() << LOG_SOURCE << "Settings saved";
+}
+
+bool Settings::loaded() const
+{
+    return m_loaded;
 }
 
 std::vector<std::string> Settings::accountList()
@@ -281,6 +268,33 @@ std::vector<std::string> Settings::accountList()
         list.push_back( account.m_accountName );
     }
     return list;
+}
+
+Account& Settings::config()
+{
+    ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
+    return m_accounts[m_currentAccountIndex];
+}
+
+fs::path Settings::downloadFolder()
+{
+    return config().m_downloadFolder;
+}
+
+DownloadChannel* Settings::currentChannelInfoPtr()
+{
+    if ( config().m_currentDnChannelIndex < 0 || config().m_currentDnChannelIndex >= config().m_dnChannels.size() )
+    {
+        return nullptr;
+    }
+    return &config().m_dnChannels[config().m_currentDnChannelIndex];
+}
+
+void Settings::setCurrentAccountIndex( int currentAccountIndex )
+{
+    qDebug() << LOG_SOURCE << "setCurrentAccountIndex: " << currentAccountIndex;
+    m_currentAccountIndex = currentAccountIndex;
+    ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() )
 }
 
 void Settings::onDownloadCompleted( lt::torrent_handle handle )
@@ -296,7 +310,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
         for( auto& dnInfo: downloads )
         {
-            if ( dnInfo.m_ltHandle == handle )
+            if ( dnInfo.getHandle() == handle )
             {
                 counter++;
             }
@@ -305,10 +319,10 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
         for( auto& dnInfo: downloads )
         {
-            if ( dnInfo.m_ltHandle == handle )
+            if ( dnInfo.getHandle() == handle )
             {
-                fs::path srcPath = fs::path(dnInfo.m_saveFolder) / sirius::drive::toString( dnInfo.m_hash );
-                fs::path destPath = fs::path(dnInfo.m_saveFolder) / dnInfo.m_fileName;
+                fs::path srcPath = fs::path(dnInfo.getSaveFolder()) / sirius::drive::toString( dnInfo.getHash() );
+                fs::path destPath = fs::path(dnInfo.getSaveFolder()) / dnInfo.getFileName();
 
                 std::error_code ec;
 
@@ -316,22 +330,22 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 while( fs::exists(destPath,ec) )
                 {
                     index++;
-                    auto newName = fs::path(dnInfo.m_fileName).stem().string()
+                    auto newName = fs::path(dnInfo.getFileName()).stem().string()
                                     + " (" + std::to_string(index) + ")"
-                                    + fs::path(dnInfo.m_fileName).extension().string();
-                    destPath = fs::path(dnInfo.m_saveFolder) / newName;
+                                    + fs::path(dnInfo.getFileName()).extension().string();
+                    destPath = fs::path(dnInfo.getSaveFolder()) / newName;
                 }
 
-                dnInfo.m_fileName = destPath.filename();
+                dnInfo.getFileName() = destPath.filename();
 
                 if ( --counter == 0 )
                 {
-                    qDebug() << LOG_SOURCE << "onDownloadCompleted: rename(): " << srcPath << " : " << destPath;
+                    qDebug() << LOG_SOURCE << "onDownloadCompleted: rename(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
-                    qDebug() << LOG_SOURCE << "onDownloadCompleted: copy(): " << srcPath << " : " << destPath;
+                    qDebug() << LOG_SOURCE << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     fs::copy( srcPath, destPath, ec );
                 }
 
@@ -346,7 +360,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     msgBox.exec();
                 }
 
-                dnInfo.m_isCompleted = true;
+                dnInfo.setCompleted(true);
             }
         }
 
@@ -371,7 +385,7 @@ void Settings::removeFromDownloads( int index )
 
     for( auto it = downloads.begin(); it != downloads.end(); it++ )
     {
-        if ( it->m_hash == dnInfo.m_hash )
+        if ( it->getHash() == dnInfo.getHash() )
         {
             hashCounter++;
         }
@@ -381,20 +395,20 @@ void Settings::removeFromDownloads( int index )
 
     if ( hashCounter == 1 )
     {
-        gStorageEngine->removeTorrentSync( dnInfo.m_hash );
+        gStorageEngine->removeTorrentSync( dnInfo.getHash() );
     }
 
     // remove file
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        fs::remove( downloadFolder() / dnInfo.m_fileName, ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / dnInfo.m_fileName).string().c_str() << " ec=" << ec.message().c_str();
+        fs::remove( downloadFolder() / dnInfo.getFileName(), ec );
+        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
     }
     else if ( hashCounter == 1 )
     {
-        fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash), ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.m_hash)).string().c_str() << " ec=" << ec.message().c_str();
+        fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash()), ec );
+        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );

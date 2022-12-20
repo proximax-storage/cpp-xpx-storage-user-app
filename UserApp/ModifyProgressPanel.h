@@ -11,27 +11,24 @@ namespace Ui {
     class Frame;
 }
 
-//enum ModificationStatus { no_modification, is_registring, is_registred, is_approved, is_failed, is_canceling, is_canceled };
-
-
 class ModifyProgressPanel : public QFrame
 {
 public:
 
-    ModifyProgressPanel( int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc );
+    ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc );
     ~ModifyProgressPanel();
 
     void setRegistering();
-    void setRegistered();
+    void setUploading();
     void setApproved();
     void setFailed();
-    void setIsApprovedWithOldRootHash();
     void setCanceling();
     void setCanceled();
 
 private:
     std::function<void()> m_cancelModificationFunc;
     Ui::Frame* ui;
+    Model* mp_model;
     QMovie* m_loading;
     QPixmap* m_loaded;
     QPixmap* m_error;

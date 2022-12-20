@@ -1,12 +1,15 @@
 #include "ModifyProgressPanel.h"
 #include "Model.h"
+#include "Utils.h"
 #include "ui_ModifyProgressPanel.h"
+#include "DriveModificationEvent.h"
 
 #include <QPushButton>
 
-ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc )
+ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc )
     : QFrame(parent)
     , ui(new Ui::Frame)
+    , mp_model(model)
     , m_cancelModificationFunc( cancelModificationFunc )
 {
     ui->setupUi(this);
@@ -30,36 +33,13 @@ ModifyProgressPanel::ModifyProgressPanel( int x, int y, QWidget* parent, const s
 
     connect( ui->m_cancel, &QPushButton::released, this, [this]
     {
-        qDebug() << "ui->m_cancel, ::released:";
-
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo == nullptr )
-        {
+        auto drive = mp_model->currentDrive();
+        if (drive) {
+            drive->updateState(canceling);
+            m_cancelModificationFunc();
+        } else {
             setVisible(false);
-        }
-        else
-        {
-            qDebug() << "ui->m_cancel, ::released: status: " << driveInfo->m_modificationStatus;
-
-            if (driveInfo->m_modificationStatus == is_registering ||
-                driveInfo->m_modificationStatus == is_registered )
-            {
-                qDebug() << "ui->m_cancel, ::released: 1";
-                driveInfo->m_modificationStatus = is_canceling;
-                m_cancelModificationFunc();
-            }
-            else if ( driveInfo->m_modificationStatus == no_modification ||
-                      driveInfo->m_modificationStatus == is_approved ||
-                      driveInfo->m_modificationStatus == is_approvedWithOldRootHash ||
-                      driveInfo->m_modificationStatus == is_failed ||
-                      driveInfo->m_modificationStatus == is_canceled )
-            {
-                qDebug() << "ui->m_cancel, ::released: 2";
-
-                driveInfo->m_currentModificationHash.reset();
-                driveInfo->m_modificationStatus = no_modification;
-                setVisible(false);
-            }
         }
 
         lock.unlock();
@@ -86,7 +66,7 @@ void ModifyProgressPanel::setRegistering()
     adjustSize();
 }
 
-void ModifyProgressPanel::setRegistered()
+void ModifyProgressPanel::setUploading()
 {
     ui->m_statusLabel->setText( "Modification is uploading ");
     ui->m_cancel->setEnabled(true);
@@ -113,20 +93,6 @@ void ModifyProgressPanel::setFailed()
     ui->m_statusIcon->setPixmap(*m_error);
     ui->m_cancel->setEnabled(true);
     adjustSize();
-}
-
-void ModifyProgressPanel::setIsApprovedWithOldRootHash()
-{
-//    ui->m_registeredLabel->setText( "modification is registred (in blockchain)");
-//    ui->m_registeredLabel->setStyleSheet("color: blue");
-//    ui->m_appliedLabel->setText( "Modification is completed");
-//    ui->m_appliedLabel->setStyleSheet("color: blue");
-//    ui->m_appliedLabel->setText( "root hash is not changed");
-//    ui->m_appliedLabel->setStyleSheet("color: red");
-//    ui->m_cancel->setText("Close");
-//    adjustSize();
-//
-//    ui->m_cancel->setEnabled(true);
 }
 
 void ModifyProgressPanel::setCanceling()

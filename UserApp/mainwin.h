@@ -12,13 +12,15 @@ namespace Ui { class MainWin; }
 QT_END_NAMESPACE
 
 class FsTreeTableModel;
-class ChannelInfo;
-class DriveInfo;
+class DownloadChannel;
+class Drive;
 class DownloadsTableModel;
 class DriveTreeModel;
 class DiffTableModel;
 class OnChainClient;
 class ModifyProgressPanel;
+class Model;
+class Settings;
 
 namespace sirius { namespace drive
 {
@@ -81,7 +83,7 @@ private:
     void onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
     void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
     void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
-    void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId);
+    void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t);
     void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void loadBalance();
@@ -94,7 +96,7 @@ private:
 
     void downloadLatestFsTree( const std::string& driveKey );
     void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
-    void continueCalcDiff( DriveInfo& drive );
+    void continueCalcDiff( Drive& drive );
 
     void startCalcDiff();
 
@@ -103,13 +105,13 @@ private:
     void addLocalModificationsWatcher();
 
 private slots:
+    void onDriveStateChanged(const std::string& driveKey, int state);
     void updateChannelsCBox();
     void updateDrivesCBox();
     void lockChannel(const std::string& channelId);
     void unlockChannel(const std::string& channelId);
     void lockDrive(const std::string& driveId);
     void unlockDrive(const std::string& driveId);
-    void markChannelsForDelete(const std::string& driveId, bool state);
 
 public:
     // if private key is not set it will be 'true'
@@ -122,6 +124,8 @@ private:
 
     FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
+    Settings*               m_settings;
+    Model*                  m_model;
 
     FsTreeTableModel*       m_driveFsTreeTableModel;
     DriveTreeModel*         m_driveTreeModel;
