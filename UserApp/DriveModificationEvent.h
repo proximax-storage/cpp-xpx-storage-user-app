@@ -1,14 +1,21 @@
-//
-// Created by cempl on 13.12.22.
-//
+#ifndef DRIVEMODIFICATIONEVENT_H
+#define DRIVEMODIFICATIONEVENT_H
 
-#ifndef CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONEVENT_H
-#define CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONEVENT_H
+#include <QEvent>
+#include "Drive.h"
 
 
-class DriveModificationEvent {
+class DriveModificationEvent : public QEvent {
+    public:
+        DriveModificationEvent(DriveState state);
+        ~DriveModificationEvent() override;
 
+    public:
+    DriveState getState() const;
+
+    private:
+        const DriveState mState;
 };
 
 
-#endif //CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONEVENT_H
+#endif //DRIVEMODIFICATIONEVENT_H

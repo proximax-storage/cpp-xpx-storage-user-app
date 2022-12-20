@@ -1,14 +1,23 @@
-//
-// Created by cempl on 13.12.22.
-//
-
-#ifndef CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONTRANSITION_H
-#define CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONTRANSITION_H
+#ifndef DRIVEMODIFICATIONTRANSITION_H
+#define DRIVEMODIFICATIONTRANSITION_H
 
 
-class DriveModificationTransition {
+#include <QAbstractTransition>
 
+class DriveModificationTransition : public QAbstractTransition {
+    Q_OBJECT
+
+public:
+        explicit DriveModificationTransition(int state);
+        ~DriveModificationTransition() override;
+
+    protected:
+        bool eventTest(QEvent* e) override;
+        void onTransition(QEvent*) override;
+
+    private:
+        int mState;
 };
 
 
-#endif //CPP_XPX_STORAGE_USER_APP_DRIVEMODIFICATIONTRANSITION_H
+#endif //DRIVEMODIFICATIONTRANSITION_H
