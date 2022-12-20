@@ -1,0 +1,14 @@
+//
+// Created by cempl on 20.12.22.
+//
+
+#ifndef CPP_XPX_STORAGE_USER_APP_DOWNLOADINFO_H
+#define CPP_XPX_STORAGE_USER_APP_DOWNLOADINFO_H
+
+
+class DownloadInfo {
+
+};
+
+
+#endif //CPP_XPX_STORAGE_USER_APP_DOWNLOADINFO_H

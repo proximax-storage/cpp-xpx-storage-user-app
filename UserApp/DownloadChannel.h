@@ -1,0 +1,14 @@
+//
+// Created by cempl on 15.12.22.
+//
+
+#ifndef CPP_XPX_STORAGE_USER_APP_DOWNLOADCHANNEL_H
+#define CPP_XPX_STORAGE_USER_APP_DOWNLOADCHANNEL_H
+
+
+class DownloadChannel {
+
+};
+
+
+#endif //CPP_XPX_STORAGE_USER_APP_DOWNLOADCHANNEL_H
