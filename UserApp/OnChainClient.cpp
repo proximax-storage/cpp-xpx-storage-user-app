@@ -1,4 +1,5 @@
 #include "OnChainClient.h"
+#include "Utils.h"
 #include <QDebug>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -289,6 +290,10 @@ void OnChainClient::initConnects() {
                 mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(),
                                                 "0000000000000000000000000000000000000000000000000000000000000000",
                                                 rawHashFromHex(fileStructureCdi.c_str()), callback);
+    }, Qt::QueuedConnection);
+
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalFailed, this,  [this](auto driveId, auto fileStructureCdi, auto code) {
+                emit dataModificationApprovalTransactionFailed(driveId, fileStructureCdi, code);
     }, Qt::QueuedConnection);
 }
 

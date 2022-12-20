@@ -59,7 +59,7 @@ class TransactionsEngine : public QObject
                         std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
         void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
-        void dataModificationApprovalFailed();
+        void dataModificationApprovalFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t errorCode);
         void dataModificationConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
         void dataModificationFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
         void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);

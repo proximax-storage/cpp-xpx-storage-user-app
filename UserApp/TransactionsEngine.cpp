@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QFileInfoList>
 #include <QDirIterator>
+#include <drive/ModificationStatus.h>
 
 TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client,
                                        std::shared_ptr<xpx_chain_sdk::Account> account,
@@ -557,6 +558,42 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             if (dataModificationApprovalTransaction->dataModificationId != rawHashToHex(modificationId).toStdString()) {
                 qInfo() << LOG_SOURCE << "other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
                 return;
+            }
+
+            switch (dataModificationApprovalTransaction->modificationStatus) {
+                case (uint8_t)sirius::drive::ModificationStatus::SUCCESS:
+                {
+                    qInfo() << LOG_SOURCE << "data modification approval success. Code: " << dataModificationApprovalTransaction->modificationStatus;
+                    break;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::ACTION_LIST_IS_ABSENT:
+                {
+                    emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << LOG_SOURCE << "data modification approval failed: ACTION_LIST_IS_ABSENT";
+                    return;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::DOWNLOAD_FAILED:
+                {
+                    emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << LOG_SOURCE << "data modification approval failed: DOWNLOAD_FAILED";
+                    return;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::INVALID_ACTION_LIST:
+                {
+                    emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << LOG_SOURCE << "data modification approval failed: INVALID_ACTION_LIST";
+                    return;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::NOT_ENOUGH_SPACE:
+                {
+                    emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << LOG_SOURCE << "data modification approval failed: NOT_ENOUGH_SPACE";
+                    return;
+                }
             }
 
             qInfo() << LOG_SOURCE << "confirmed dataModificationApprovalTransaction hash: "

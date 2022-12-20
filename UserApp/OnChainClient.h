@@ -5,10 +5,10 @@
 #include <memory>
 #include <xpxchaincpp/sdk.h>
 
+#include "Utils.h"
 #include "StorageEngine.h"
 #include "BlockchainEngine.h"
 #include "TransactionsEngine.h"
-#include "Utils.h"
 
 class OnChainClient : public QObject
 {
@@ -75,7 +75,7 @@ class OnChainClient : public QObject
         void storagePaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
         void storagePaymentTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString& errorText);
         void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
-        void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId );
+        void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t code);
         void cancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void cancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
         void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
