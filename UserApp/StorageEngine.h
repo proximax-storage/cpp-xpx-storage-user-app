@@ -9,25 +9,23 @@
 #include "drive/FsTree.h"
 #include "drive/ActionList.h"
 
-#include "Model.h"
-
-namespace sirius { namespace drive {
+namespace sirius::drive {
     class ClientSession;
-}}
+}
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
+
+class Model;
 
 class StorageEngine : public QObject
 {
     Q_OBJECT
 
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
-
-    //std::vector<lt::torrent_handle>                 m_fsTreeLtHandles;
     std::recursive_mutex                            m_mutex;
 
 public:
-    StorageEngine(QObject* parent = nullptr);
+    StorageEngine(Model* model, QObject* parent = nullptr);
 
     sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,
                                        const sirius::Key& driveId,
@@ -41,7 +39,9 @@ public:
     void downloadFsTree( const std::string&             driveHash,
                          const std::string&             dnChannelId,
                          const std::array<uint8_t,32>&  fsTreeHash,
-                         FsTreeHandler                  onFsTreeReceived );
+                         std::function<void( const std::string&           driveHash,
+                                             const std::array<uint8_t,32> fsTreeHash,
+                                             const sirius::drive::FsTree& fsTree )> onFsTreeReceived );
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&  channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
@@ -55,6 +55,9 @@ private:
               std::function<void()>           addressAlreadyInUseHandler );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
+
+private:
+    Model* mp_model;
 };
 
 inline std::shared_ptr<StorageEngine> gStorageEngine;

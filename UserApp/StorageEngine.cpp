@@ -1,18 +1,20 @@
 #include "StorageEngine.h"
 #include "TransactionsEngine.h"
-#include "Settings.h"
 #include "mainwin.h"
 #include "drive/ClientSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
+#include "Model.h"
+#include "Settings.h"
 
 #include <QMetaObject>
 #include <QMessageBox>
 
 #include <boost/algorithm/string.hpp>
 
-StorageEngine::StorageEngine(QObject *parent)
+StorageEngine::StorageEngine(Model* model, QObject *parent)
     : QObject(parent)
+    , mp_model(model)
 {}
 
 sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
@@ -28,9 +30,9 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
     if ( ALEX_LOCAL_TEST )
     {
         endpoint_list bootstraps;
-        bootstraps.push_back( { boost::asio::ip::make_address("192.168.2.101"), 5001 } );
+        bootstraps.emplace_back( boost::asio::ip::make_address("192.168.2.101"), 5001 );
 
-        gStorageEngine->init(*gSettings.config().m_keyPair,
+        gStorageEngine->init(mp_model->getKeyPair(),
                              "192.168.2.201:2001",
                              bootstraps,
                              addressAlreadyInUseHandler );
@@ -38,10 +40,10 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
     else if ( VICTOR_LOCAL_TEST )
     {
         endpoint_list bootstraps;
-        bootstraps.push_back( { boost::asio::ip::make_address("192.168.20.20"), 7914 } );
+        bootstraps.emplace_back( boost::asio::ip::make_address("192.168.20.20"), 7914 );
 
-        gStorageEngine->init(*gSettings.config().m_keyPair,
-                             "192.168.20.30:" + gSettings.m_udpPort,
+        gStorageEngine->init(mp_model->getKeyPair(),
+                             "192.168.20.30:" + mp_model->getUdpPort(),
                              bootstraps,
                              addressAlreadyInUseHandler );
     }
@@ -49,12 +51,12 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
     {
         endpoint_list bootstraps;
         std::vector<std::string> addressAndPort;
-        boost::split( addressAndPort, gSettings.m_replicatorBootstrap, [](char c){ return c==':'; } );
-        bootstraps.push_back( { boost::asio::ip::make_address(addressAndPort[0]),
-                               (uint16_t)atoi(addressAndPort[1].c_str()) } );
+        boost::split( addressAndPort, mp_model->getBootstrapReplicator(), [](char c){ return c==':'; } );
+        bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
+                               (uint16_t)atoi(addressAndPort[1].c_str()) );
 
-        gStorageEngine->init(*gSettings.config().m_keyPair,
-                             "0.0.0.0:" + gSettings.m_udpPort,
+        gStorageEngine->init(mp_model->getKeyPair(),
+                             "0.0.0.0:" + mp_model->getUdpPort(),
                              bootstraps,
                              addressAlreadyInUseHandler );
     }
@@ -84,16 +86,18 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                                                      false,
                                                      "client_session" );
 
-    m_session->setTorrentDeletedHandler( [] ( lt::torrent_handle handle )
+    m_session->setTorrentDeletedHandler( [this] ( lt::torrent_handle handle )
     {
-        gSettings.onDownloadCompleted( handle );
+        mp_model->onDownloadCompleted( handle );
     });
 }
 
 void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                     const std::string&              dnChannelId,
                                     const std::array<uint8_t,32>&   fsTreeHash,
-                                    FsTreeHandler                   onFsTreeReceived )
+                                    std::function<void( const std::string&           driveHash,
+                                                        const std::array<uint8_t,32> fsTreeHash,
+                                                        const sirius::drive::FsTree& fsTree )> onFsTreeReceived )
 {
     qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveHash;
 
@@ -114,7 +118,7 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
 
     qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
-    auto fsTreeSaveFolder = fsTreesFolder()/sirius::drive::toString(fsTreeHash);
+    auto fsTreeSaveFolder = getFsTreesFolder()/sirius::drive::toString(fsTreeHash);
 
 //    auto tmpRequestingFsTreeTorrent =
                     m_session->download( sirius::drive::DownloadContext(
@@ -179,7 +183,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                                     ""
                                 ),
                        channelId,
-                       gSettings.downloadFolder(),
+                       mp_model->getDownloadFolder(),
                        "",
                        {});
     return handle;
