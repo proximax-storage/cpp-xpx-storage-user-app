@@ -140,7 +140,10 @@ void DriveTreeModel::updateModel( bool skipNotChanged )
             driveRootList << QString("?") << QString("/") << QString("");
             driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
             m_rootItem->appendChild( driveRoot );
-            parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
+            if ( localDrive->m_localDrive )
+            {
+                parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
+            }
         }
 
         endResetModel();

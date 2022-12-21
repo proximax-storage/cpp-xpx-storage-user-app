@@ -62,6 +62,7 @@ public:
                 m_privateKeyStr,
                 m_dnChannels,
                 m_currentDnChannelIndex,
+                m_downloads,
                 m_downloadFolder,
                 m_drives,
                 m_currentDriveIndex );

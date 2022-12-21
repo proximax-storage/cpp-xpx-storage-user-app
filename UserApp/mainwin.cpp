@@ -714,10 +714,9 @@ void MainWin::onDownloadBtn()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    auto& downloads = Model::downloads();
-
-    bool overrideFileForAll = false;
-
+    //
+    // Download all selected files
+    //
     auto selectedIndexes = ui->m_channelFsTableView->selectionModel()->selectedRows();
     for( auto index: selectedIndexes )
     {
@@ -734,12 +733,15 @@ void MainWin::onDownloadBtn()
         if ( channelId != nullptr )
         {
             auto ltHandle = Model::downloadFile( channelId->m_hash,  hash );
+
             m_downloadsTableModel->beginResetModel();
             Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
                                                            Model::downloadFolder(),
                                                            false, 0, ltHandle } );
             m_downloadsTableModel->m_selectedRow = int(Model::downloads().size()) - 1;
             m_downloadsTableModel->endResetModel();
+
+            Model::saveSettings();
         }
     }
 }
@@ -1390,6 +1392,9 @@ void MainWin::onCurrentChannelChanged( int index )
             m_channelFsTreeTableModel->setFsTree( {}, {} );
             return;
         }
+
+        m_downloadsTableModel->beginResetModel();
+        m_downloadsTableModel->endResetModel();
 
         if ( ! channel->m_fsTreeHash )
         {
