@@ -4,13 +4,8 @@
 
 class DownloadsTableModel : public QAbstractListModel
 {
-    std::function<void(int)> m_selectDownloadRowFunc;
-
 public:
-    int m_selectedRow = -1;
-
-public:
-    explicit DownloadsTableModel( QObject *parent, std::function<void(int)> selectDownloadRowFunc );
+    explicit DownloadsTableModel( QObject *parent );
 
     int rowCount(const QModelIndex &) const override;
     int columnCount(const QModelIndex &parent) const override;

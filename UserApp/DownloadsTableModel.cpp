@@ -7,8 +7,8 @@
 #include <QIcon>
 #include <QIdentityProxyModel>
 
-DownloadsTableModel::DownloadsTableModel( QObject *parent, std::function<void(int)> selectDownloadRowFunc )
-    : QAbstractListModel{parent}, m_selectDownloadRowFunc(selectDownloadRowFunc)
+DownloadsTableModel::DownloadsTableModel( QObject *parent )
+    : QAbstractListModel{parent}
 {
 }
 
@@ -127,6 +127,4 @@ void DownloadsTableModel::updateProgress()
         }
     }
     endResetModel();
-
-    m_selectDownloadRowFunc( m_selectedRow );
 }

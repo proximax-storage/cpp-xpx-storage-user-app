@@ -371,7 +371,19 @@ void MainWin::init()
 
     // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
-    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();}, Qt::QueuedConnection);
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this]
+    {
+        auto selectedIndexes = ui->m_downloadsTableView->selectionModel()->selectedRows();
+
+        m_downloadsTableModel->updateProgress();
+        
+        if ( ! selectedIndexes.empty() )
+        {
+            ui->m_downloadsTableView->selectRow( selectedIndexes.begin()->row() );
+        }
+        ui->m_removeDownloadBtn->setEnabled( ! selectedIndexes.empty() );
+
+    }, Qt::QueuedConnection);
     m_downloadUpdateTimer->start(500); // 2 times per second
 
     lockMainButtons(true);
@@ -738,7 +750,6 @@ void MainWin::onDownloadBtn()
             Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
                                                            Model::downloadFolder(),
                                                            false, 0, ltHandle } );
-            m_downloadsTableModel->m_selectedRow = int(Model::downloads().size()) - 1;
             m_downloadsTableModel->endResetModel();
 
             Model::saveSettings();
@@ -748,23 +759,30 @@ void MainWin::onDownloadBtn()
 
 void MainWin::setupDownloadsTable()
 {
-    m_downloadsTableModel = new DownloadsTableModel( this, [this](int row) { ui->m_downloadsTableView->selectRow(row); });
+    m_downloadsTableModel = new DownloadsTableModel(this);
+
+    ui->m_downloadsTableView->setModel( m_downloadsTableModel );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->m_downloadsTableView->horizontalHeader()->hide();
+    ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
+    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
+
+    //ui->m_downloadsTableView->update();
+    ui->m_removeDownloadBtn->setEnabled( false );
 
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
-        m_downloadsTableModel->m_selectedRow = index.row();
         ui->m_downloadsTableView->selectRow( index.row() );
     });
 
     connect( ui->m_downloadsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
         ui->m_downloadsTableView->selectRow( index.row() );
-        m_downloadsTableModel->m_selectedRow = index.row();
     });
 
     connect( ui->m_downloadsTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
     {
-        m_downloadsTableModel->m_selectedRow = index.row();
         ui->m_downloadsTableView->selectRow( index.row() );
     });
 
@@ -797,29 +815,11 @@ void MainWin::setupDownloadsTable()
             if ( reply == QMessageBox::Ok )
             {
                 Model::removeFromDownloads( rowIndex );
+                addNotification(message);
+                Model::saveSettings();
             }
-            selectDownloadRow(-1);
-            addNotification(message);
         }
     });
-
-    ui->m_downloadsTableView->setModel( m_downloadsTableModel );
-    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
-    ui->m_downloadsTableView->horizontalHeader()->hide();
-    ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
-    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
-    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
-
-    //ui->m_downloadsTableView->update();
-    ui->m_removeDownloadBtn->setEnabled( false );
-}
-
-void MainWin::selectDownloadRow( int row )
-{
-    //qDebug() << LOG_SOURCE << "selectDownloadRow: " << row;
-    m_downloadsTableModel->m_selectedRow = row;
-    ui->m_downloadsTableView->selectRow( row );
-    ui->m_removeDownloadBtn->setEnabled( row >= 0 );
 }
 
 bool MainWin::requestPrivateKey()
