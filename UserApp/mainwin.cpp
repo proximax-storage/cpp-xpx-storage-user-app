@@ -747,9 +747,12 @@ void MainWin::onDownloadBtn()
             auto ltHandle = Model::downloadFile( channelId->m_hash,  hash );
 
             m_downloadsTableModel->beginResetModel();
-            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
-                                                           Model::downloadFolder(),
-                                                           false, 0, ltHandle } );
+            Model::downloads().insert( Model::downloads().begin(), DownloadInfo{ hash, channelId->m_hash, name,
+                                                                                 Model::downloadFolder(),
+                                                                                 false, 0, ltHandle } );
+//            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
+//                                                           Model::downloadFolder(),
+//                                                           false, 0, ltHandle } );
             m_downloadsTableModel->endResetModel();
 
             Model::saveSettings();
