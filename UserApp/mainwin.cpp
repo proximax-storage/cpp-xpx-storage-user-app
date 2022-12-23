@@ -770,6 +770,10 @@ void MainWin::setupDownloadsTable()
     ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
     ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
+    ui->m_downloadsTableView->setColumnWidth(1,60);
+    ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
 
     //ui->m_downloadsTableView->update();
     ui->m_removeDownloadBtn->setEnabled( false );
@@ -806,7 +810,7 @@ void MainWin::setupDownloadsTable()
 
         if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
         {
-            DownloadInfo dnInfo = Model::downloads()[rowIndex];
+            DownloadInfo dnInfo = downloads[rowIndex];
             lock.unlock();
 
             QMessageBox msgBox;
