@@ -45,6 +45,19 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             }
             break;
         }
+            
+        case Qt::ForegroundRole:
+        {
+            if ( index.column() == 0 )
+            {
+                std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
+                if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                {
+                    return QVariant( QColor( Qt::red ) );
+                }
+            }
+            return {};//QVariant( QColor( Qt::black ) );
+        }
 
         case Qt::DisplayRole:
         {
@@ -52,6 +65,10 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
+                    if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                    {
+                        return QString::fromStdString( "no channel: " + gSettings.config().m_downloads[index.row()].m_fileName );
+                    }
                     return QString::fromStdString( gSettings.config().m_downloads[index.row()].m_fileName );
                 }
                 case 1: {

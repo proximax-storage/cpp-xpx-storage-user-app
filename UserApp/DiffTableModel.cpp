@@ -92,7 +92,7 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         return QVariant( QColor( Qt::black ) );
                 }
             }
-            return QVariant( QColor( Qt::black ) );
+            return {};//QVariant( QColor( Qt::black ) );
         }
 
 

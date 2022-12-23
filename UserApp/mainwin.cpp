@@ -186,6 +186,17 @@ void MainWin::init()
         lock.unlock();
 
         updateChannelsCBox();
+        for( auto& downloadInfo: Model::downloads() )
+        {
+            if ( ! downloadInfo.isCompleted() )
+            {
+                if ( Model::findChannel( downloadInfo.m_channelHash ) == nullptr )
+                {
+                    downloadInfo.m_channelIsOutdated = true;
+                }
+            }
+        }
+
         connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
     }, Qt::QueuedConnection);
 
@@ -749,7 +760,7 @@ void MainWin::onDownloadBtn()
             m_downloadsTableModel->beginResetModel();
             Model::downloads().insert( Model::downloads().begin(), DownloadInfo{ hash, channelId->m_hash, name,
                                                                                  Model::downloadFolder(),
-                                                                                 false, 0, ltHandle } );
+                                                                                 false, 0, false, ltHandle } );
 //            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
 //                                                           Model::downloadFolder(),
 //                                                           false, 0, ltHandle } );

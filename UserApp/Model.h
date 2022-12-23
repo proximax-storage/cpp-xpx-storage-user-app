@@ -96,6 +96,7 @@ struct DownloadInfo
     std::string             m_fileName;
     std::string             m_saveFolder;
     bool                    m_isCompleted = false;
+    bool                    m_channelIsOutdated = false;
 
     int                      m_progress = 0; // m_progress==1001 means completed
     sirius::drive::lt_handle m_ltHandle;
