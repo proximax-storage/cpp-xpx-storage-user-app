@@ -23,7 +23,7 @@ struct LocalDriveItem
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_isFolder, m_name, m_childs );
+        ar( m_isFolder, m_name, m_size, m_fileHash, m_childs, m_modifyTime, m_ldiStatus );
     }
 
     bool operator<( const LocalDriveItem& rhs ) const
