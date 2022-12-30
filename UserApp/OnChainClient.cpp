@@ -137,8 +137,8 @@ void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelI
     mpTransactionsEngine->closeDownloadChannel(channelId);
 }
 
-std::string OnChainClient::addDrive(const std::string &driveAlias, const uint64_t &driveSize, ushort replicatorsCount) {
-    return mpTransactionsEngine->addDrive(driveAlias, driveSize, replicatorsCount);
+std::string OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount) {
+    return mpTransactionsEngine->addDrive(driveSize, replicatorsCount);
 }
 
 void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
@@ -157,11 +157,13 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+            emit internalError(message.c_str());
             return;
         }
 
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
             return;
         }
 
@@ -193,7 +195,16 @@ void OnChainClient::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId
     mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey);
 }
 
+StorageEngine* OnChainClient::getStorageEngine()
+{
+    return mpStorageEngine;
+}
+
 void OnChainClient::initConnects() {
+    connect(mpTransactionsEngine, &TransactionsEngine::internalError, this, [this](auto errorText) {
+        emit internalError(errorText);
+    });
+
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
         emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
     });
@@ -210,12 +221,12 @@ void OnChainClient::initConnects() {
         emit downloadChannelCloseTransactionFailed(channelId, errorText);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::createDriveConfirmed, this, [this](auto alias, auto driveId) {
-        emit prepareDriveTransactionConfirmed(alias, driveId);
+    connect(mpTransactionsEngine, &TransactionsEngine::createDriveConfirmed, this, [this](auto driveId) {
+        emit prepareDriveTransactionConfirmed(driveId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::createDriveFailed, this, [this](auto alias, auto driveKey, auto errorText) {
-        emit prepareDriveTransactionFailed(alias, driveKey, errorText);
+    connect(mpTransactionsEngine, &TransactionsEngine::createDriveFailed, this, [this](auto driveKey, auto errorText) {
+        emit prepareDriveTransactionFailed(driveKey, errorText);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::closeDriveConfirmed, this, [this](auto driveId) {
@@ -249,11 +260,11 @@ void OnChainClient::initConnects() {
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationConfirmed, this, [this](auto driveId,auto modificationId) {
-        emit dataModificationTransactionConfirmed(driveId,modificationId);
+        emit dataModificationTransactionConfirmed(driveId, modificationId);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto driveId, auto modificationId) {
-        emit dataModificationTransactionFailed(driveId,modificationId);
+        emit dataModificationTransactionFailed(driveId, modificationId);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
@@ -261,7 +272,7 @@ void OnChainClient::initConnects() {
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto driveId, auto modificationId) {
-        emit cancelModificationTransactionFailed(driveId,modificationId);
+        emit cancelModificationTransactionFailed(driveId, modificationId);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey) {
@@ -282,18 +293,14 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
+                const QString driveKey = rawHashToHex(driveId);
+                qInfo() << "TransactionsEngine::dataModificationApprovalConfirmed. Drive key: " << driveKey << " fileStructureCdi: " << fileStructureCdi.c_str();
                 emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
-                auto callback = [this](const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree) {
-                    emit fsTreeDownloaded(driveId, fsTreeHash, fsTree);
-                };
-
-                mpStorageEngine->downloadFsTree(rawHashToHex(driveId).toStdString(),
-                                                "0000000000000000000000000000000000000000000000000000000000000000",
-                                                rawHashFromHex(fileStructureCdi.c_str()), {}, callback);
+                emit downloadFsTreeDirect(driveKey.toStdString(), fileStructureCdi);
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalFailed, this,  [this](auto driveId, auto fileStructureCdi, auto code) {
-                emit dataModificationApprovalTransactionFailed(driveId, fileStructureCdi, code);
+        emit dataModificationApprovalTransactionFailed(driveId, fileStructureCdi, code);
     }, Qt::QueuedConnection);
 }
 
@@ -325,17 +332,17 @@ void OnChainClient::init(const std::string& address,
             return;
         }
 
-        if ("mijin" == info.name) {
+        if (boost::iequals("mijin", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin;
-        } else if ("mijinTest" == info.name) {
+        } else if (boost::iequals("mijinTest", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Mijin_Test;
-        } else if ("private" == info.name) {
+        } else if (boost::iequals("private", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Private;
-        } else if ("privateTest" == info.name) {
+        } else if (boost::iequals("privateTest", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Private_Test;
-        } else if ("public" == info.name) {
+        } else if (boost::iequals("public", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public;
-        } else if ("publicTest" == info.name) {
+        } else if (boost::iequals("publicTest", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public_Test;
         } else {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Zero;

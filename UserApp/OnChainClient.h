@@ -40,7 +40,7 @@ class OnChainClient : public QObject
                                        const uint64_t& feedbacksNumber);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
-        std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
+        std::string addDrive(const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void cancelDataModification(const std::array<uint8_t, 32> &driveId);
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
@@ -53,6 +53,7 @@ class OnChainClient : public QObject
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
+        StorageEngine* getStorageEngine();
 
     signals:
         void initializedSuccessfully(const QString& networkName);
@@ -66,10 +67,11 @@ class OnChainClient : public QObject
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadChannelCloseTransactionFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
         void fsTreeDownloaded(const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
-        void prepareDriveTransactionConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey);
-        void prepareDriveTransactionFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void prepareDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
+        void prepareDriveTransactionFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void closeDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
         void closeDriveTransactionFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void downloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
         void downloadPaymentTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadPaymentTransactionFailed(const std::array<uint8_t, 32> &channelId, const QString& errorText);
         void storagePaymentTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
@@ -82,6 +84,7 @@ class OnChainClient : public QObject
         void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey);
+        void internalError(const QString& errorText);
 
     // internal signals
     signals:
