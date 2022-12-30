@@ -6,14 +6,14 @@ namespace Ui {
 class ChannelInfoDialog;
 }
 
-struct ChannelInfo;
+struct DownloadChannel;
 
 class ChannelInfoDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ChannelInfoDialog( const ChannelInfo& channelInfo,
+    explicit ChannelInfoDialog( const DownloadChannel& channel,
                                       QWidget *parent = nullptr);
     ~ChannelInfoDialog();
 
