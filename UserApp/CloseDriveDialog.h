@@ -5,6 +5,7 @@
 #include <QPushButton>
 
 #include "OnChainClient.h"
+#include "Drive.h"
 
 class CloseDriveDialog : public QMessageBox
 {
@@ -12,11 +13,10 @@ class CloseDriveDialog : public QMessageBox
 
 public:
     explicit CloseDriveDialog(OnChainClient* onChainClient,
-                              const QString& driveId,
-                              const QString& alias,
+                              Drive* drive,
                               QWidget *parent = nullptr);
 
-    ~CloseDriveDialog() = default;
+    ~CloseDriveDialog() override;
 
 public:
     void accept() override;
@@ -24,7 +24,7 @@ public:
 
 private:
     OnChainClient* mpOnChainClient;
-    QString mDriveId;
+    Drive* mDrive;
 };
 
 #endif // CLOSEDRIVEDIALOG_H

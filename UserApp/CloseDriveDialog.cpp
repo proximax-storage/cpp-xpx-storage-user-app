@@ -1,28 +1,39 @@
 #include "CloseDriveDialog.h"
 
 CloseDriveDialog::CloseDriveDialog(OnChainClient* onChainClient,
-                                   const QString& driveId,
-                                   const QString& alias,
+                                   Drive* drive,
                                    QWidget *parent)
     : QMessageBox(parent)
-    , mDriveId(driveId)
+    , mDrive(drive)
     , mpOnChainClient(onChainClient)
 {
     setWindowTitle("Confirmation");
-    setText("Please confirm drive '" + alias + "' removal");
+
+    QString text;
+    text.append("Please confirm drive '");
+    text.append(mDrive->getName().c_str());
+    text.append("' removal");
+    setText(text);
+
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
-    setButtonText(QMessageBox::Ok, "Confirm");
+    button(QMessageBox::Ok)->setText("Confirm");
 
     connect(this->button(QMessageBox::Ok), &QPushButton::released, this, &CloseDriveDialog::accept);
     connect(this->button(QMessageBox::Cancel), &QPushButton::released, this, &CloseDriveDialog::reject);
 }
 
-void CloseDriveDialog::accept() {
-    mpOnChainClient->closeDrive(rawHashFromHex(mDriveId));
+CloseDriveDialog::~CloseDriveDialog()
+{}
+
+void CloseDriveDialog::accept()
+{
+    mpOnChainClient->closeDrive(rawHashFromHex(mDrive->getKey().c_str()));
+    mDrive->updateState(deleting);
     QDialog::accept();
 }
 
-void CloseDriveDialog::reject() {
+void CloseDriveDialog::reject()
+{
     QDialog::reject();
 }
