@@ -20,7 +20,7 @@ public:
       : m_diffActionList( outDiffActionList )
     {
         m_diffActionList.clear();
-        calcDiff( driveRoot, localFolderPath, fsTree, {}, driveKey );
+        calcDiff( driveRoot, localFolderPath, fsTree, {} );
     }
 
     static void calcLocalDriveInfoR( LocalDriveItem&            outDriveInfo,
@@ -38,8 +38,7 @@ private:
     bool calcDiff( LocalDriveItem&                  localFolder,
                    fs::path                         localFolderPath,
                    const sirius::drive::Folder&     fsTree,
-                   fs::path                         drivePath,
-                   const std::array<uint8_t,32>&    driveKey );
+                   fs::path                         drivePath );
 
     void removeFolderWithChilds( const sirius::drive::Folder&   remoteFolder,
                                  LocalDriveItem&                localFolder,
@@ -48,10 +47,5 @@ private:
     void addFolderWithChilds( LocalDriveItem&   localFolder,
                               fs::path          localFolderPath,
                               fs::path          path );
-
-//    void calcDiff( const LocalDriveItem& oldRoot, const LocalDriveItem& newRoot, fs::path fsPath, const std::string& drivePath = "" );
-//    void calcMissingFolder( const LocalDriveItem& newRoot, fs::path fsPath, const std::string& drivePath );
-//    void calcRemovedFolder( const LocalDriveItem& oldRoot, const std::string& drivePath );
-
 };
 

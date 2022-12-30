@@ -15,7 +15,6 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
     for( const auto& entry : std::filesystem::directory_iterator(path) )
     {
         const auto entryName = entry.path().filename().string();
-
         if ( entry.is_directory() )
         {
             LocalDriveItem child{ true, entryName, 0, "", {}, fs::last_write_time(entry) };
@@ -37,6 +36,7 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 {
                     hash = sirius::drive::calculateInfoHash( path / entryName, sirius::Key(*driveKey) ).array();
                 }
+
                 parent.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, fs::last_write_time(entry) };
             }
             else
@@ -93,7 +93,7 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             }
             else
             {
-                auto hash = sirius::drive::calculateInfoHash( fsPath / entryName, sirius::Key(driveKey) ).array();
+                hash = sirius::drive::calculateInfoHash( fsPath / entryName, sirius::Key(driveKey) ).array();
             }
 
             newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, fs::last_write_time(entry) };
@@ -104,8 +104,7 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
 bool Diff::calcDiff( LocalDriveItem&                localFolder,
                      fs::path                       localFolderPath,
                      const sirius::drive::Folder&   fsFolder,
-                     fs::path                       fsPath,
-                     const std::array<uint8_t,32>&  driveKey )
+                     fs::path                       fsPath)
 {
     bool isChanged = false;
 
@@ -118,7 +117,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
 
     // Find files that were added or modifyed by user
     //
-    for( auto& [name,localChild] : localChilds )
+    for( auto& [name, localChild] : localChilds )
     {
         // Logic path of file/folder on the drive
         fs::path childPath = localFolderPath / name;
@@ -136,7 +135,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 if ( isFolder(fsIt->second) )
                 {
                     // continue calculation
-                    if ( calcDiff( localChild, childPath, getFolder(fsIt->second), fsChildPath, driveKey ) )
+                    if ( calcDiff( localChild, childPath, getFolder(fsIt->second), fsChildPath ) )
                     {
                         isChanged = true;
                     }
@@ -146,7 +145,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     // Remote file has been replaced by folder with same name
 
                     // save removed file into 'replacedItems'
-                    removedItems.push_back( LocalDriveItem{ false,name,getFile(fsIt->second).size(),{},{},{},ldi_removed} );
+                    removedItems.push_back( LocalDriveItem{ false, name, getFile(fsIt->second).size(), {}, {}, {}, ldi_removed } );
 
                     // remove remote file
                     m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
@@ -163,7 +162,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     // Remote folder has been replaced by file with same name
 
                     // remove folder content (from drive)
-                    LocalDriveItem removedFolder{ false,name,0,{},{},{},ldi_removed};
+                    LocalDriveItem removedFolder{ false, name, 0, {}, {}, {}, ldi_removed };
                     removeFolderWithChilds( getFolder(fsIt->second), removedFolder, fsChildPath );
 
                     // save it into 'replacedItems'
@@ -194,8 +193,8 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                         {
                             m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
                         }
-                        localChild.m_ldiStatus = ldi_changed;
 
+                        localChild.m_ldiStatus = ldi_changed;
                         isChanged = true;
                     }
                 }
@@ -220,6 +219,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     localChild.m_ldiStatus = ldi_added;
                 }
             }
+
             isChanged = true;
         }
     }
