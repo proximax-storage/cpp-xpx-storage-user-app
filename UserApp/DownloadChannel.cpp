@@ -1,4 +1,5 @@
 #include "DownloadChannel.h"
+#include "utils/HexParser.h"
 
 DownloadChannel::DownloadChannel()
 {}
@@ -70,7 +71,7 @@ void DownloadChannel::setLastOpenedPath(const std::vector<std::string>& path) {
     m_lastOpenedPath = path;
 }
 
-std::optional<std::array<uint8_t, 32>> DownloadChannel::getFsTreeHash() const {
+std::array<uint8_t, 32> DownloadChannel::getFsTreeHash() const {
     return m_fsTreeHash;
 }
 
@@ -86,10 +87,24 @@ void DownloadChannel::setFsTree(const sirius::drive::FsTree& fsTree) {
     m_fsTree = fsTree;
 }
 
-bool DownloadChannel::isWaitingFsTree() const {
-    return m_waitingFsTree;
+bool DownloadChannel::isDownloadingFsTree() const {
+    return m_downloadingFsTree;
 }
 
-void DownloadChannel::setWaitingFsTree(bool state) {
-    m_waitingFsTree = state;
+void DownloadChannel::setDownloadingFsTree(bool state) {
+    m_downloadingFsTree = state;
+}
+
+sirius::drive::ReplicatorList DownloadChannel::getReplicators() const {
+    return m_shardReplicators;
+}
+
+void DownloadChannel::setReplicators(const std::vector<std::string>& replicators) {
+    m_shardReplicators.clear();
+    for( const auto& key : replicators )
+    {
+        std::array<uint8_t, 32> replicatorKey{ 0 };
+        sirius::utils::ParseHexStringIntoContainer( key.c_str(), 64, replicatorKey );
+        m_shardReplicators.emplace_back(replicatorKey);
+    }
 }

@@ -3,7 +3,6 @@
 
 #include <string>
 #include <chrono>
-#include <optional>
 #include <array>
 #include <vector>
 
@@ -37,12 +36,14 @@ class DownloadChannel {
         void setCreatingTimePoint(timepoint time);
         std::vector<std::string> getLastOpenedPath() const;
         void setLastOpenedPath(const std::vector<std::string>& path);
-        std::optional<std::array<uint8_t, 32>> getFsTreeHash() const;
+        std::array<uint8_t, 32> getFsTreeHash() const;
         void setFsTreeHash(const std::array<uint8_t, 32>& hash);
         sirius::drive::FsTree getFsTree() const;
         void setFsTree(const sirius::drive::FsTree& fsTree);
-        bool isWaitingFsTree() const;
-        void setWaitingFsTree(bool state);
+        bool isDownloadingFsTree() const;
+        void setDownloadingFsTree(bool state);
+        sirius::drive::ReplicatorList getReplicators() const;
+        void setReplicators(const std::vector<std::string>& replicators);
 
         template<class Archive>
         void serialize( Archive &ar )
@@ -54,7 +55,8 @@ class DownloadChannel {
                 m_isCreating,
                 m_isDeleting,
                 m_creationTimepoint,
-                m_tobeDeletedTimepoint );
+                m_tobeDeletedTimepoint,
+                m_fsTreeHash );
         }
 
     private:
@@ -66,11 +68,11 @@ class DownloadChannel {
         bool m_isDeleting = false;
         timepoint m_creationTimepoint;
         timepoint m_tobeDeletedTimepoint;
-        endpoint_list m_endpointList = {};
         std::vector<std::string> m_lastOpenedPath;
-        std::optional<std::array<uint8_t, 32>> m_fsTreeHash;
+        std::array<uint8_t, 32> m_fsTreeHash;
         sirius::drive::FsTree m_fsTree;
-        bool m_waitingFsTree = false;
+        bool m_downloadingFsTree = false;
+        sirius::drive::ReplicatorList m_shardReplicators;
 };
 
 
