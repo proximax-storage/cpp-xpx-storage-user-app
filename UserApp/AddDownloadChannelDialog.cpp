@@ -50,8 +50,8 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     std::vector<std::string> drivesKeys;
     drivesKeys.reserve(mpModel->getDrives().size());
-    for ( const auto& drive : mpModel->getDrives()) {
-        drivesKeys.push_back(drive.getKey());
+    for ( const auto& [key, drive] : mpModel->getDrives()) {
+        drivesKeys.push_back(key);
         ui->selectDriveBox->addItem(drive.getName().c_str());
     }
 
@@ -192,6 +192,8 @@ void AddDownloadChannelDialog::accept() {
                 rawHashFromHex(mCurrentDriveKey.c_str()),
                 ui->prepaidAmountLine->text().toULongLong(),
                 0); // feedback is unused for now
+
+    channelHash = QString::fromStdString(channelHash).toUpper().toStdString();
 
     qDebug() << LOG_SOURCE << "addChannelHash: " << channelHash.c_str();
 
