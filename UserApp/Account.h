@@ -35,22 +35,21 @@ class Account : public QObject
                     m_currentDnChannelIndex,
                     m_downloadFolder,
                     m_drives,
-                    m_currentDriveIndex );
+                    m_currentDriveKey );
         }
 
-        std::string                 m_accountName;
-        std::string                 m_privateKeyStr;
-        std::string                 m_publicKeyStr;
-        std::vector<DownloadChannel>    m_dnChannels;
-        int                         m_currentDnChannelIndex = -1;
-        bool                        m_channelsLoaded = false;
-        std::string                 m_downloadFolder;
-        std::vector<DownloadInfo>   m_downloads;
-        std::vector<Drive>          m_drives;
-        int                         m_currentDriveIndex = -1;
-        bool                        m_drivesLoaded = false;
-
-        std::optional<sirius::crypto::KeyPair>  m_keyPair;
+        std::string m_accountName;
+        std::string m_privateKeyStr;
+        std::string m_publicKeyStr;
+        std::vector<DownloadChannel> m_dnChannels;
+        int m_currentDnChannelIndex = -1;
+        bool m_channelsLoaded = false;
+        std::string m_downloadFolder;
+        std::vector<DownloadInfo> m_downloads;
+        std::map<std::string, Drive> m_drives;
+        std::string m_currentDriveKey;
+        bool m_drivesLoaded = false;
+        std::optional<sirius::crypto::KeyPair> m_keyPair;
 };
 
 

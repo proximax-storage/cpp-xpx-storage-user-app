@@ -21,7 +21,7 @@ Account& Account::operator=( const Account& a )
     m_downloadFolder        = a.m_downloadFolder;
     m_downloads             = a.m_downloads;
     m_drives                = a.m_drives;
-    m_currentDriveIndex     = a.m_currentDriveIndex;
+    m_currentDriveKey       = a.m_currentDriveKey;
 
     return *this;
 }
