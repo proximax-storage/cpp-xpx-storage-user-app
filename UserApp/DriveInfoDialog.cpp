@@ -2,25 +2,28 @@
 #include "DriveInfoDialog.h"
 #include "./ui_DriveInfoDialog.h"
 
-#include <QIntValidator>
-#include <QFileDialog>
 #include <QRegularExpression>
 #include <QToolTip>
 
-DriveInfoDialog::DriveInfoDialog( const DriveInfo& info,
-                                QWidget *parent ) :
+DriveInfoDialog::DriveInfoDialog(const Drive& drive,
+                                 QWidget *parent ) :
     QDialog( parent ),
     ui( new Ui::DriveInfoDialog() )
 {
     ui->setupUi(this);
     setModal(true);
 
-    ui->m_driveName->setText( QString::fromStdString(info.m_name) );
-    ui->m_replicatorNumber->setText( QString::number(info.m_replicatorNumber) );
-    ui->m_maxDriveSize->setText( QString::number(info.m_maxDriveSize) );
-    ui->m_localDriveFolder->setText( QString::fromStdString(info.m_localDriveFolder) );
+    ui->m_driveName->setText( QString::fromStdString(drive.getName()) );
+    ui->m_replicatorNumber->setText( QString::number(drive.getReplicatorsCount()) );
+    ui->m_maxDriveSize->setText( QString::number(drive.getSize()) );
+    ui->m_localDriveFolder->setText( QString::fromStdString(drive.getLocalFolder()) );
 
-    setWindowTitle("Drive Info");
+    QString title;
+    title.append("About drive");
+    title.append("'");
+    title.append(drive.getName().c_str());
+    title.append("'");
+    setWindowTitle(title);
     setFocus();
 }
 
