@@ -87,8 +87,9 @@ class Model : public QObject
         void                     onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void                     onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void                     onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages );
-        void                     setCurrentDriveIndex( int );
-        int                      currentDriveIndex();
+        void                     setCurrentDriveKey( const std::string& driveKey );
+        std::string              currentDriveKey();
+        bool isDriveWithNameExists(const QString& driveName) const;
         QRect getWindowGeometry() const;
         void setWindowGeometry(const QRect& geometry);
         void initForTests();
@@ -96,8 +97,12 @@ class Model : public QObject
         std::string getClientPrivateKey();
         bool isDrivesLoaded();
         void setDrivesLoaded(bool state);
+        void setLoadedDrivesCount(uint64_t count);
+        uint64_t getLoadedDrivesCount() const;
+        void setOutdatedDriveNumber(uint64_t count);
+        uint64_t getOutdatedDriveNumber() const;
 
-        std::vector<Drive> getDrives();
+        std::map<std::string, Drive>& getDrives();
 
         Drive* currentDrive();
 
@@ -109,8 +114,6 @@ class Model : public QObject
 
         void removeChannelByDriveKey(const std::string &driveKey);
 
-        void applyForDrive(const std::string &driveKey, std::function<void(Drive &)>);
-
         void removeFromDownloads(int rowIndex);
 
         void calcDiff();
@@ -121,19 +124,8 @@ class Model : public QObject
         void startStorageEngine( std::function<void()> addressAlreadyInUseHandler );
         void endStorageEngine();
 
-        void downloadFsTree( const std::string&             driveHash,
-                             const std::string&             dnChannelId,
-                             const std::array<uint8_t,32>&  fsTreeHash,
-                             std::function<void( const std::string&           driveHash,
-                                                 const std::array<uint8_t,32> fsTreeHash,
-                                                 const sirius::drive::FsTree& fsTree )>                  onFsTreeReceived );
-
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
                                                const std::array<uint8_t,32>& fileHash );
-
-        void                     onFsTreeForDriveReceived( const std::string&           driveHash,
-                                                                  const std::array<uint8_t,32> fsTreeHash,
-                                                                  const sirius::drive::FsTree& fsTree );
 
         static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
 
@@ -151,4 +143,6 @@ class Model : public QObject
 
     private:
         Settings* m_settings;
+        uint64_t m_loadedDrivesCount;
+        uint64_t m_outdatedDriveNumber;
 };

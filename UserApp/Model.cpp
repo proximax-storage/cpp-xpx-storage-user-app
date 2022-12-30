@@ -17,6 +17,8 @@
 Model::Model(Settings* settings, QObject* parent)
     : QObject(parent)
     , m_settings(settings)
+    , m_loadedDrivesCount(0)
+    , m_outdatedDriveNumber(0)
 {
 }
 
@@ -141,22 +143,35 @@ void Model::setDownloadChannelsLoaded(bool state) {
     m_settings->config().m_channelsLoaded = state;
 }
 
-void Model::setCurrentDriveIndex( int index )
+void Model::setCurrentDriveKey( const std::string& driveKey )
 {
-    qDebug() << LOG_SOURCE << "setCurrentDriveIndex: " << index;
-    if ( index < 0 || index >= m_settings->config().m_drives.size() )
+    const auto driveKyeUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
+    if ( !m_settings->config().m_drives.contains(driveKyeUpperCase) )
     {
-        qDebug() << LOG_SOURCE << "setCurrentDriveIndex: invalid index: " << index;
+        qDebug() << LOG_SOURCE << "setCurrentDriveIndex: invalid drive key: " << driveKyeUpperCase;
     }
     else
     {
-        m_settings->config().m_currentDriveIndex = index;
+        m_settings->config().m_currentDriveKey = driveKyeUpperCase;
     }
 }
 
-int Model::currentDriveIndex()
+std::string Model::currentDriveKey()
 {
-    return m_settings->config().m_currentDriveIndex;
+    return m_settings->config().m_currentDriveKey;
+}
+
+bool Model::isDriveWithNameExists(const QString& driveName) const
+{
+    if (driveName.isEmpty()) {
+        return false;
+    }
+
+    auto it = std::find_if( m_settings->config().m_drives.begin(), m_settings->config().m_drives.end(), [&driveName] (const auto& iterator) {
+        return boost::iequals(iterator.second.getName(), driveName.toStdString());
+    });
+
+    return !(it == m_settings->config().m_drives.end());
 }
 
 QRect Model::getWindowGeometry() const {
@@ -187,11 +202,25 @@ void Model::setDrivesLoaded(bool state) {
     m_settings->config().m_drivesLoaded = state;
 }
 
-void Model::addDrive(const Drive& drive) {
-    m_settings->config().m_drives.push_back(drive);
+void Model::setLoadedDrivesCount(uint64_t count) {
+    m_loadedDrivesCount = count;
+}
 
-    const auto index = (int)m_settings->config().m_drives.size() - 1;
-    onDriveStateChanged(m_settings->config().m_drives[index]);
+uint64_t Model::getLoadedDrivesCount() const {
+    return m_loadedDrivesCount;
+}
+
+void Model::setOutdatedDriveNumber(uint64_t count) {
+    m_outdatedDriveNumber = count;
+}
+
+uint64_t Model::getOutdatedDriveNumber() const {
+    return m_outdatedDriveNumber;
+}
+
+void Model::addDrive(const Drive& drive) {
+    m_settings->config().m_drives.insert({ drive.getKey(), drive });
+    onDriveStateChanged(m_settings->config().m_drives[drive.getKey()]);
 }
 
 void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages )
@@ -216,6 +245,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
             channel.setKey(remoteChannel.data.id);
             channel.setAllowedPublicKeys(remoteChannel.data.listOfPublicKeys);
             channel.setDriveKey(remoteChannel.data.drive);
+            channel.setReplicators(remoteChannel.data.shardReplicators);
             channel.setCreating(false);
             channel.setDeleting(false);
             auto creationTime = std::chrono::steady_clock::now(); //todo
@@ -252,6 +282,7 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
             channel.setKey(remoteChannel.data.id);
             channel.setAllowedPublicKeys(remoteChannel.data.listOfPublicKeys);
             channel.setDriveKey(remoteChannel.data.drive);
+            channel.setReplicators(remoteChannel.data.shardReplicators);
             channel.setCreating(false);
             channel.setDeleting(false);
             auto creationTime = std::chrono::steady_clock::now(); //todo
@@ -265,8 +296,6 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
 
 void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& remoteDrivesPages )
 {
-    qDebug() << LOG_SOURCE << "onDrivesLoaded: ";
-
     std::vector<xpx_chain_sdk::Drive> remoteDrives;
     for (const auto& page : remoteDrivesPages) {
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
@@ -280,109 +309,112 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 
     for( auto& remoteDrive : remoteDrives )
     {
-        std::string hash = remoteDrive.data.multisig;
-        auto it = std::find_if( drives.begin(), drives.end(), [&hash] (const auto& driveInfo)
-        {
-            return boost::iequals( driveInfo.getKey(), hash );
-        });
-
-        if ( it == drives.end() )
-        {
-            Drive drive;
-            drive.setKey(remoteDrive.data.multisig);
-            drive.setName(remoteDrive.data.multisig);
-            drive.setLocalFolder("");
-            drive.setSize(remoteDrive.data.size);
+        if (drives.contains(remoteDrive.data.multisig)) {
+            const auto driveKeyUpperCase = QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString();
+            Drive& drive = drives[driveKeyUpperCase];
+            onDriveStateChanged(drive);
             drive.setReplicatorsCount(remoteDrive.data.replicatorCount);
-            drives.push_back(drive);
-            it = drives.end() - 1;
-        }
 
-        it->updateState(no_modifications);
-        it->setReplicatorsCount(remoteDrive.data.replicatorCount);
+            if ( !remoteDrive.data.replicators.empty() )
+            {
+                drive.setReplicators(remoteDrive.data.replicators);
+                gStorageEngine->addReplicatorList( drive.getReplicators() );
+            }
 
-        if ( ! remoteDrive.data.activeDataModifications.empty() )
-        {
-            qWarning () << LOG_SOURCE << "drive modification status: is_registring: " << it->getName();
-            auto& lastModification = remoteDrive.data.activeDataModifications.back();
-            it->setModificationHash(Model::hexStringToHash( lastModification.dataModification.id ));
-            //TODO load torrent and other data to session to continue, check cancel modifications also
-            it->updateState(uploading);
+            drive.updateState(creating);
+            drive.updateState(no_modifications);
+        } else {
+            Drive newDrive;
+            newDrive.setKey(remoteDrive.data.multisig);
+            newDrive.setName(remoteDrive.data.multisig);
+            newDrive.setLocalFolder(homeFolder()/newDrive.getKey());
+            newDrive.setSize(remoteDrive.data.size);
+            newDrive.setReplicatorsCount(remoteDrive.data.replicatorCount);
+            addDrive(newDrive);
+
+            Drive& drive = drives[newDrive.getKey()];
+            drive.setReplicatorsCount(remoteDrive.data.replicatorCount);
+
+            if ( !remoteDrive.data.replicators.empty() )
+            {
+                drive.setReplicators(remoteDrive.data.replicators);
+                gStorageEngine->addReplicatorList( drive.getReplicators() );
+            }
+
+            drive.updateState(creating);
+            drive.updateState(no_modifications);
         }
+// TODO: continue uploading after tools is started
+//        if ( ! remoteDrive.data.activeDataModifications.empty() )
+//        {
+//            qWarning () << LOG_SOURCE << "drive modification status: is_registring: " << it->getName();
+//            auto& lastModification = remoteDrive.data.activeDataModifications.back();
+//            it->setModificationHash(Model::hexStringToHash( lastModification.dataModification.id ));
+//            //TODO load torrent and other data to session to continue, check cancel modifications also
+//            // add transation from no_modifications to loading (start/end session and continue uploading)
+//            it->updateState(uploading);
+//        }
     }
 
     for (auto& d : drives)
     {
         auto it = std::find_if( remoteDrives.begin(), remoteDrives.end(), [&d] (const auto& driveInfo)
         {
-            return boost::iequals( driveInfo.data.multisig, d.getKey() );
+            return boost::iequals( driveInfo.data.multisig, d.second.getKey() );
         });
 
         if ( it == remoteDrives.end() )
         {
-            d.updateState(unconfirmed);
+            onDriveStateChanged(d.second);
+            d.second.updateState(unconfirmed);
         }
-
-        onDriveStateChanged(d);
     }
 
     m_settings->save();
 }
 
-std::vector<Drive> Model::getDrives()
+std::map<std::string, Drive>& Model::getDrives()
 {
     return m_settings->config().m_drives;
 }
 
 Drive* Model::currentDrive()
 {
-    if ( m_settings->config().m_currentDriveIndex >= 0 && m_settings->config().m_currentDriveIndex < m_settings->config().m_drives.size() )
+    if (m_settings->config().m_drives.contains(m_settings->config().m_currentDriveKey))
     {
-        return & m_settings->config().m_drives[ m_settings->config().m_currentDriveIndex ];
+        return &m_settings->config().m_drives[m_settings->config().m_currentDriveKey];
     }
+
     return nullptr;
 }
 
 Drive* Model::findDrive( const std::string& driveKey )
 {
+    const auto driveKeyUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
     auto& drives = m_settings->config().m_drives;
-    auto it = std::find_if( drives.begin(), drives.end(), [&driveKey] (const Drive& drive) {
-        return boost::iequals( drive.getKey(), driveKey );
-    });
+    if (drives.contains(driveKeyUpperCase)) {
+        return &drives[driveKeyUpperCase];
+    }
 
-    return it == drives.end() ? nullptr : &(*it);
+    return nullptr;
 }
 
 Drive* Model::findDriveByModificationId( const std::array<uint8_t, 32>& modificationId )
 {
     auto& drives = m_settings->config().m_drives;
-    auto it = std::find_if( drives.begin(), drives.end(), [&modificationId] (const Drive& drive) {
-        return *drive.getModificationHash() == modificationId;
+    auto it = std::find_if( drives.begin(), drives.end(), [&modificationId] (const auto& iterator) {
+        return iterator.second.getModificationHash() == modificationId;
     });
 
-    return it == drives.end() ? nullptr : &(*it);
+    return it == drives.end() ? nullptr : &it->second;
 }
-
 
 void Model::removeDrive( const std::string& driveKey )
 {
+    const auto driveKeyUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
     auto& drives = m_settings->config().m_drives;
-
-    auto it = std::find_if( drives.begin(), drives.end(), [driveKey] (const auto& drive)
-    {
-        return boost::iequals( driveKey, drive.getKey() );
-    });
-
-    if ( it == drives.end() )
-    {
-        return;
-    }
-
-    drives.erase(it);
-
-    if ( m_settings->config().m_currentDriveIndex >= drives.size() )
-    {
-        m_settings->config().m_currentDriveIndex = (int)drives.size() - 1;
+    if (drives.contains(driveKeyUpperCase)) {
+        drives.erase(driveKeyUpperCase);
     }
 
     m_settings->save();
@@ -397,21 +429,6 @@ void Model::removeChannelByDriveKey(const std::string &driveKey) {
         } else {
             ++begin;
         }
-    }
-}
-
-void Model::applyForDrive( const std::string& driveKey, std::function<void(Drive&)> func )
-{
-    auto& drives = m_settings->config().m_drives;
-
-    auto it = std::find_if( drives.begin(), drives.end(), [driveKey] (const auto& drive)
-    {
-        return boost::iequals( driveKey, drive.getKey() );
-    });
-
-    if ( it != drives.end() )
-    {
-        func( *it );
     }
 }
 
@@ -477,7 +494,7 @@ void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::d
         {
             channel.setFsTree(fsTree);
             channel.setFsTreeHash(fsTreeHash);
-            channel.setWaitingFsTree(false);
+            channel.setDownloadingFsTree(false);
         }
     }
 }
@@ -493,61 +510,26 @@ void Model::endStorageEngine()
     gStorageEngine.reset();
 }
 
-void Model::downloadFsTree( const std::string&             driveHash,
-                            const std::string&             dnChannelId,
-                            const std::array<uint8_t,32>&  fsTreeHash,
-                            std::function<void( const std::string&           driveHash,
-                                                const std::array<uint8_t,32> fsTreeHash,
-                                                const sirius::drive::FsTree& fsTree )> onFsTreeReceived )
-{
-    gStorageEngine->downloadFsTree( driveHash,
-                                    dnChannelId,
-                                    fsTreeHash,
-                                    onFsTreeReceived );
-}
-
 sirius::drive::lt_handle Model::downloadFile( const std::string&            channelIdStr,
                                               const std::array<uint8_t,32>& fileHash )
 {
-    std::array<uint8_t,32> channelId;
+    std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
 
     return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
-//TODO: remove it
-void Model::onFsTreeForDriveReceived( const std::string&           driveHash,
-                                      const std::array<uint8_t,32> fsTreeHash,
-                                      const sirius::drive::FsTree& fsTree )
-{
-    auto& drives = m_settings->config().m_drives;
-
-    auto it = std::find_if( drives.begin(), drives.end(), [driveHash] (const auto& drive)
-    {
-        return boost::iequals( driveHash, drive.getKey() );
-    });
-
-    if ( it == drives.end() )
-    {
-        return;
-    }
-
-    it->setRootHash(fsTreeHash);
-    it->setFsTree(fsTree);
-}
-
 void Model::calcDiff()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
-    auto* drive = currentDrive();
-    if ( drive == nullptr )
+    auto drive = currentDrive();
+    if ( !drive )
     {
         qDebug() << LOG_SOURCE << "currentDrivePtr() == nullptr";
         return;
     }
 
-    std::array<uint8_t,32> driveKey;
+    std::array<uint8_t,32> driveKey{};
     sirius::utils::ParseHexStringIntoContainer( drive->getKey().c_str(), 64, driveKey );
 
     qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->getLocalFolder();
@@ -562,31 +544,25 @@ void Model::calcDiff()
 
         auto localDrive = std::make_shared<LocalDriveItem>();
         Diff::calcLocalDriveInfoR( *localDrive, drive->getLocalFolder(), true, &driveKey );
-
         sirius::drive::ActionList actionList;
         Diff diff( *localDrive, drive->getLocalFolder(), drive->getFsTree(), driveKey, actionList);
-        drive->setActionsList(actionList);
 
+        drive->setActionsList(actionList);
         drive->setLocalDriveItem(std::move(localDrive));
     }
 }
 
 std::array<uint8_t,32> Model::hexStringToHash( const std::string& str )
 {
-    std::array<uint8_t,32> hash;
+    std::array<uint8_t,32> hash{};
     sirius::utils::ParseHexStringIntoContainer( str.c_str(), 64, hash );
     return hash;
 }
 
 void Model::onDriveStateChanged(const Drive& drive) {
-    QObject::connect(&drive, &Drive::stateChanged, [this](auto driveKey, auto state)
+    connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state)
     {
         emit driveStateChanged(driveKey, state);
-        if (state == unconfirmed)
-        {
-            removeDrive(driveKey);
-            removeChannelByDriveKey(driveKey);
-        }
     });
 }
 
@@ -617,7 +593,7 @@ void Model::stestInitDrives()
     d1.setKey( sirius::drive::toString(driveKey));
     d1.setName("drive1");
     d1.setLocalFolder("/Users/alex/000-drive1");
-    m_settings->config().m_drives.push_back(d1);
+    m_settings->config().m_drives.insert({ d1.getKey(), d1 });
 
     std::array<uint8_t,32> driveKey2{2,0,0,0,0,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1};
 
@@ -625,9 +601,9 @@ void Model::stestInitDrives()
     d2.setKey(sirius::drive::toString(driveKey2));
     d2.setName("drive2");
     d2.setLocalFolder("/Users/alex/000-drive2");
-    m_settings->config().m_drives.push_back(d2);
+    m_settings->config().m_drives.insert({ d2.getKey(), d2 });
 
-    m_settings->config().m_currentDriveIndex = 0;
+    m_settings->config().m_currentDriveKey = d1.getKey();
 
     //todo!!!
 //    LocalDriveItem root;
