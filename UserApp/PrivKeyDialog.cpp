@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QToolTip>
 #include <QRegularExpression>
+#include <boost/algorithm/string/predicate.hpp>
 
 
 PrivKeyDialog::PrivKeyDialog( Settings* settings, QWidget *parent ) :
@@ -102,7 +103,7 @@ void PrivKeyDialog::validate() {
 bool PrivKeyDialog::isAccountExists() {
     auto nameIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
-        return account.m_accountName == ui->m_accountName->text().toStdString();
+        return boost::iequals(account.m_accountName, ui->m_accountName->text().toStdString());
     });
 
     if ( nameIterator != mp_settings->m_accounts.end() )
@@ -113,7 +114,7 @@ bool PrivKeyDialog::isAccountExists() {
 
     auto keyIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
-        return account.m_privateKeyStr == ui->m_pkField->text().toStdString();
+        return boost::iequals(account.m_privateKeyStr, ui->m_pkField->text().toStdString());
     });
 
     if ( keyIterator != mp_settings->m_accounts.end() )
@@ -174,14 +175,14 @@ void PrivKeyDialog::onLoadFromFileBtn()
 
 void PrivKeyDialog::accept()
 {
-    std::string privateKeyStr = ui->m_pkField->text().toStdString();
+    std::string privateKeyStr = ui->m_pkField->text().toUpper().toStdString();
     std::string accountName   = ui->m_accountName->text().toStdString();
 
     // Check unique key
     //
     auto it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
     {
-        return account.m_privateKeyStr == privateKeyStr;
+        return boost::iequals(account.m_privateKeyStr, privateKeyStr);
     } );
 
     if ( it != mp_settings->m_accounts.end() )
@@ -197,7 +198,7 @@ void PrivKeyDialog::accept()
     //
     it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
     {
-        return account.m_accountName == accountName;
+        return boost::iequals(account.m_accountName, accountName);
     } );
 
     if ( it != mp_settings->m_accounts.end() )

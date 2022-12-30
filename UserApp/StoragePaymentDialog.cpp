@@ -26,9 +26,9 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
 
     std::vector<std::string> drivesKeys;
     drivesKeys.reserve(mpModel->getDrives().size());
-    for ( const auto& drive : mpModel->getDrives()) {
-        drivesKeys.push_back(drive.getKey());
-        ui->selectDriveBox->addItem(drive.getName().c_str());
+    for ( const auto& [key, value] : mpModel->getDrives()) {
+        drivesKeys.push_back(key);
+        ui->selectDriveBox->addItem(value.getName().c_str());
     }
 
     lock.unlock();
