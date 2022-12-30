@@ -172,20 +172,20 @@ void MainWin::init()
         {
             ui->m_channels->setCurrentIndex( dnChannelIndex );
         }
-        else if ( dnChannelIndex < Model::dnChannels().size() > 0 )
+        else if ( dnChannelIndex < m_model->getDownloadChannels().size() > 0 )
         {
             ui->m_channels->setCurrentIndex( 0 );
         }
         lock.unlock();
 
         updateChannelsCBox();
-        for( auto& downloadInfo: Model::downloads() )
+        for( auto& downloadInfo: m_model->downloads() )
         {
             if ( ! downloadInfo.isCompleted() )
             {
-                if ( Model::findChannel( downloadInfo.m_channelHash ) == nullptr )
+                if ( m_model->findChannel( downloadInfo.getDownloadChannelKey() ) == nullptr )
                 {
-                    downloadInfo.m_channelIsOutdated = true;
+                    downloadInfo.setChannelOutdated(true);
                 }
             }
         }
@@ -762,25 +762,30 @@ void MainWin::onDownloadBtn()
         auto channel = m_model->currentDownloadChannel();
         if ( channel )
         {
-            auto ltHandle = Model::downloadFile( channelId->m_hash,  hash );
+            auto ltHandle = m_model->downloadFile( channel->getKey(),  hash );
 
             m_downloadsTableModel->beginResetModel();
-            Model::downloads().insert( Model::downloads().begin(), DownloadInfo{ hash, channelId->m_hash, name,
-                                                                                 Model::downloadFolder(),
-                                                                                 false, 0, false, ltHandle } );
-//            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
-//                                                           Model::downloadFolder(),
-//                                                           false, 0, ltHandle } );
-            m_downloadsTableModel->endResetModel();
 
-            Model::saveSettings();
+            DownloadInfo downloadInfo;
+            downloadInfo.setHash(hash);
+            downloadInfo.setDownloadChannelKey(channel->getKey());
+            downloadInfo.setFileName(name);
+            downloadInfo.setSaveFolder(m_model->getDownloadFolder());
+            downloadInfo.setChannelOutdated(false);
+            downloadInfo.setCompleted(false);
+            downloadInfo.setProgress(0);
+            downloadInfo.setHandle(ltHandle);
+
+            m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
+            m_downloadsTableModel->endResetModel();
+            m_model->saveSettings();
         }
     }
 }
 
 void MainWin::setupDownloadsTable()
 {
-    m_downloadsTableModel = new DownloadsTableModel(this);
+    m_downloadsTableModel = new DownloadsTableModel(m_model, this);
 
     ui->m_downloadsTableView->setModel( m_downloadsTableModel );
     ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
@@ -789,11 +794,9 @@ void MainWin::setupDownloadsTable()
     ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
     ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
-    ui->m_downloadsTableView->setColumnWidth(1,60);
+    ui->m_downloadsTableView->setColumnWidth(1, 60);
     ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-
-    //ui->m_downloadsTableView->update();
     ui->m_removeDownloadBtn->setEnabled( false );
 
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
@@ -839,9 +842,9 @@ void MainWin::setupDownloadsTable()
 
             if ( reply == QMessageBox::Ok )
             {
-                Model::removeFromDownloads( rowIndex );
+                m_model->removeFromDownloads( rowIndex );
                 addNotification(message);
-                Model::saveSettings();
+                m_model->saveSettings();
             }
         }
     });

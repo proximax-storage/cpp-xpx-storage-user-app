@@ -6,8 +6,9 @@
 #include <QIcon>
 #include <QIdentityProxyModel>
 
-DownloadsTableModel::DownloadsTableModel( QObject *parent )
+DownloadsTableModel::DownloadsTableModel( Model* model, QObject *parent )
     : QAbstractListModel(parent)
+    , mp_model(model)
 {
 }
 
@@ -51,7 +52,7 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             if ( index.column() == 0 )
             {
                 std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-                if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                if ( mp_model->downloads()[index.row()].isChannelOutdated() )
                 {
                     return QVariant( QColor( Qt::red ) );
                 }
@@ -65,27 +66,28 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-                    if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                    if ( mp_model->downloads()[index.row()].isChannelOutdated() )
                     {
-                        return QString::fromStdString( "no channel: " + gSettings.config().m_downloads[index.row()].m_fileName );
+                        return QString::fromStdString( "no channel: " + mp_model->downloads()[index.row()].getFileName() );
                     }
-                    return QString::fromStdString( gSettings.config().m_downloads[index.row()].m_fileName );
+                    return QString::fromStdString( mp_model->downloads()[index.row()].getFileName() );
                 }
                 case 1: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
 
-                    const auto& dnInfo = gSettings.config().m_downloads[index.row()];
+                    const auto& dnInfo = mp_model->downloads()[index.row()];
                     if ( dnInfo.isCompleted() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("done");
                     }
-                    if ( ! dnInfo.m_ltHandle.is_valid() )
+                    if ( ! dnInfo.getHandle().is_valid() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("0%");
                     }
-                    return QString::fromStdString( std::to_string( (dnInfo.m_progress+5)/10 ) ) + "%";
+
+                    return QString::fromStdString( std::to_string( ( dnInfo.getProgress() + 5 ) / 10 ) ) + "%";
                 }
             }
         }

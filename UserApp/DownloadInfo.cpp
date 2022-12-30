@@ -61,3 +61,10 @@ bool DownloadInfo::isCompleted() const {
 void DownloadInfo::setCompleted(bool state) {
     m_isCompleted = state;
 }
+
+bool DownloadInfo::isChannelOutdated() const {
+    return m_channelIsOutdated;
+}
+void DownloadInfo::setChannelOutdated(bool state) {
+    m_channelIsOutdated = state;
+}

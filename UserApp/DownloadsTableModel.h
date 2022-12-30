@@ -6,7 +6,7 @@
 class DownloadsTableModel : public QAbstractListModel
 {
 public:
-    explicit DownloadsTableModel( QObject *parent );
+    explicit DownloadsTableModel( Model* model, QObject *parent );
 
     int rowCount(const QModelIndex &) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -20,4 +20,6 @@ public:
     void beginResetModel() { QAbstractItemModel::beginResetModel(); }
     void endResetModel() { QAbstractItemModel::endResetModel(); }
 
+private:
+    Model* mp_model;
 };
