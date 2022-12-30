@@ -37,8 +37,6 @@ public:
 
     void init();
 
-    void selectDownloadRow( int );
-
     void addChannel( const std::string&              channelName,
                      const std::string&              channelKey,
                      const std::string&              driveKey,

@@ -93,7 +93,7 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                 }
             }
 
-            return QVariant( QColor( Qt::black ) );
+            return {};
         }
 
 
@@ -119,6 +119,8 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         default:
                             return QString::fromStdString( "???" );
                     }
+
+					return QString::fromStdString( "???" );
                 }
                 case 1:
                 {
@@ -131,6 +133,8 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         default:
                             return QString::fromStdString( "???" );
                     }
+
+                    return QString::fromStdString( "???" );
                 }
             }
         }

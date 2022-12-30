@@ -172,9 +172,24 @@ void MainWin::init()
         {
             ui->m_channels->setCurrentIndex( dnChannelIndex );
         }
+        else if ( dnChannelIndex < Model::dnChannels().size() > 0 )
+        {
+            ui->m_channels->setCurrentIndex( 0 );
+        }
         lock.unlock();
 
         updateChannelsCBox();
+        for( auto& downloadInfo: Model::downloads() )
+        {
+            if ( ! downloadInfo.isCompleted() )
+            {
+                if ( Model::findChannel( downloadInfo.m_channelHash ) == nullptr )
+                {
+                    downloadInfo.m_channelIsOutdated = true;
+                }
+            }
+        }
+
         connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
     }, Qt::QueuedConnection);
 
@@ -399,7 +414,19 @@ void MainWin::init()
 
     // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
-    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {m_downloadsTableModel->updateProgress();}, Qt::QueuedConnection);
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this]
+    {
+        auto selectedIndexes = ui->m_downloadsTableView->selectionModel()->selectedRows();
+
+        m_downloadsTableModel->updateProgress();
+        
+        if ( ! selectedIndexes.empty() )
+        {
+            ui->m_downloadsTableView->selectRow( selectedIndexes.begin()->row() );
+        }
+        ui->m_removeDownloadBtn->setEnabled( ! selectedIndexes.empty() );
+
+    }, Qt::QueuedConnection);
     m_downloadUpdateTimer->start(500); // 2 times per second
 
     lockMainButtons(true);
@@ -717,10 +744,9 @@ void MainWin::onDownloadBtn()
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    auto& downloads = m_model->downloads();
-
-    bool overrideFileForAll = false;
-
+    //
+    // Download all selected files
+    //
     auto selectedIndexes = ui->m_channelFsTableView->selectionModel()->selectedRows();
     for( auto index: selectedIndexes )
     {
@@ -736,51 +762,53 @@ void MainWin::onDownloadBtn()
         auto channel = m_model->currentDownloadChannel();
         if ( channel )
         {
-            auto ltHandle = m_model->downloadFile( channel->getKey(), hash );
+            auto ltHandle = Model::downloadFile( channelId->m_hash,  hash );
+
             m_downloadsTableModel->beginResetModel();
-
-            DownloadInfo downloadInfo;
-            downloadInfo.setHash(hash);
-            downloadInfo.setDownloadChannelKey(channel->getKey());
-            downloadInfo.setFileName(name);
-            downloadInfo.setSaveFolder(m_model->getDownloadFolder());
-            downloadInfo.setCompleted(false);
-            downloadInfo.setProgress(0);
-            downloadInfo.setHandle(ltHandle);
-
-            m_model->downloads().emplace_back(downloadInfo);
-            m_downloadsTableModel->m_selectedRow = int(m_model->downloads().size()) - 1;
+            Model::downloads().insert( Model::downloads().begin(), DownloadInfo{ hash, channelId->m_hash, name,
+                                                                                 Model::downloadFolder(),
+                                                                                 false, 0, false, ltHandle } );
+//            Model::downloads().emplace_back( DownloadInfo{ hash, channelId->m_hash, name,
+//                                                           Model::downloadFolder(),
+//                                                           false, 0, ltHandle } );
             m_downloadsTableModel->endResetModel();
+
+            Model::saveSettings();
         }
     }
 }
 
 void MainWin::setupDownloadsTable()
 {
-    m_downloadsTableModel = new DownloadsTableModel( m_model, this, [this](int row) { ui->m_downloadsTableView->selectRow(row); });
+    m_downloadsTableModel = new DownloadsTableModel(this);
+
+    ui->m_downloadsTableView->setModel( m_downloadsTableModel );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->m_downloadsTableView->horizontalHeader()->hide();
+    ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
+    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
+    ui->m_downloadsTableView->setColumnWidth(1,60);
+    ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+
+    //ui->m_downloadsTableView->update();
+    ui->m_removeDownloadBtn->setEnabled( false );
 
     connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
     {
-        if (index.isValid()) {
-            m_downloadsTableModel->m_selectedRow = index.row();
-            ui->m_downloadsTableView->selectRow( index.row() );
-        }
+        ui->m_downloadsTableView->selectRow( index.row() );
     });
 
     connect( ui->m_downloadsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
-        if (index.isValid()) {
-            ui->m_downloadsTableView->selectRow( index.row() );
-            m_downloadsTableModel->m_selectedRow = index.row();
-        }
+        ui->m_downloadsTableView->selectRow( index.row() );
     });
 
     connect( ui->m_downloadsTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
     {
-        if (index.isValid()) {
-            m_downloadsTableModel->m_selectedRow = index.row();
-            ui->m_downloadsTableView->selectRow( index.row() );
-        }
+        ui->m_downloadsTableView->selectRow( index.row() );
     });
 
     connect( ui->m_removeDownloadBtn, &QPushButton::released, this, [this] ()
@@ -800,7 +828,7 @@ void MainWin::setupDownloadsTable()
 
         if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
         {
-            DownloadInfo dnInfo = m_model->downloads()[rowIndex];
+            DownloadInfo dnInfo = downloads[rowIndex];
             lock.unlock();
 
             QMessageBox msgBox;
@@ -811,28 +839,12 @@ void MainWin::setupDownloadsTable()
 
             if ( reply == QMessageBox::Ok )
             {
-                m_model->removeFromDownloads( rowIndex );
+                Model::removeFromDownloads( rowIndex );
+                addNotification(message);
+                Model::saveSettings();
             }
-            selectDownloadRow(-1);
-            addNotification(message);
         }
     });
-
-    ui->m_downloadsTableView->setModel( m_downloadsTableModel );
-    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
-    ui->m_downloadsTableView->horizontalHeader()->hide();
-    ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
-    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
-    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
-    ui->m_removeDownloadBtn->setEnabled( false );
-}
-
-void MainWin::selectDownloadRow( int row )
-{
-    //qDebug() << LOG_SOURCE << "selectDownloadRow: " << row;
-    m_downloadsTableModel->m_selectedRow = row;
-    ui->m_downloadsTableView->selectRow( row );
-    ui->m_removeDownloadBtn->setEnabled( row >= 0 );
 }
 
 bool MainWin::requestPrivateKey()
@@ -1653,6 +1665,8 @@ void MainWin::onDriveLocalDirectoryChanged(const QString& path) {
         if (drive.second.getLocalFolder() == path.toStdString() &&
             m_model->currentDrive() &&
             drive.second.getKey() == m_model->currentDrive()->getKey()) {
+
+			// TODO: calc diff and update view only
             onDriveStateChanged(drive.second.getKey(), no_modifications);
             break;
         }

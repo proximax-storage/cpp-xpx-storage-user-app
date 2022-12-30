@@ -42,9 +42,8 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
     }
 }
 
-DriveTreeModel::DriveTreeModel( Model* model, bool isDiffTree, QObject* parent)
+DriveTreeModel::DriveTreeModel( bool isDiffTree, QObject* parent)
     : QAbstractItemModel(parent)
-    , mp_model(model)
     , m_isDiffTree(isDiffTree)
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
@@ -130,7 +129,7 @@ void DriveTreeModel::updateModel( bool skipNotChanged )
             driveRoot = new DriveTreeItem( true, true, ldi_not_changed, driveRootList, m_rootItem );
             m_rootItem->appendChild( driveRoot );
         }
-        if ( m_isDiffTree && localDrive->getActionsList().empty() )
+        else if ( m_isDiffTree && localDrive->getActionsList().empty() )
         {
             m_rootItem = new DriveTreeItem( true, true, ldi_not_changed, rootList );
             driveRootList << QString("?") << QString("no changes") << QString("");
@@ -143,7 +142,10 @@ void DriveTreeModel::updateModel( bool skipNotChanged )
             driveRootList << QString("?") << QString("/") << QString("");
             driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
             m_rootItem->appendChild( driveRoot );
-            parseR( driveRoot, *localDrive->getLocalDriveItem(), skipNotChanged );
+            if ( localDrive->m_localDrive )
+            {
+                parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
+            }
         }
 
         endResetModel();

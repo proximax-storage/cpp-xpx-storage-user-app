@@ -136,7 +136,7 @@ public:
                 }
             }
 
-            return QVariant( QColor( Qt::black ) );
+            return {};
         }
 
         if ( role != Qt::DisplayRole )

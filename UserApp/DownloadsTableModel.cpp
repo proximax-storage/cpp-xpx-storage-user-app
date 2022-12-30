@@ -6,10 +6,8 @@
 #include <QIcon>
 #include <QIdentityProxyModel>
 
-DownloadsTableModel::DownloadsTableModel( Model* model, QObject *parent, std::function<void(int)> selectDownloadRowFunc )
+DownloadsTableModel::DownloadsTableModel( QObject *parent )
     : QAbstractListModel(parent)
-    , mp_model(model)
-    , m_selectDownloadRowFunc(selectDownloadRowFunc)
 {
 }
 
@@ -47,6 +45,19 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             }
             break;
         }
+            
+        case Qt::ForegroundRole:
+        {
+            if ( index.column() == 0 )
+            {
+                std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
+                if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                {
+                    return QVariant( QColor( Qt::red ) );
+                }
+            }
+            return {};//QVariant( QColor( Qt::black ) );
+        }
 
         case Qt::DisplayRole:
         {
@@ -54,24 +65,27 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-                    return QString::fromStdString( mp_model->downloads()[index.row()].getFileName() );
+                    if ( gSettings.config().m_downloads[index.row()].m_channelIsOutdated )
+                    {
+                        return QString::fromStdString( "no channel: " + gSettings.config().m_downloads[index.row()].m_fileName );
+                    }
+                    return QString::fromStdString( gSettings.config().m_downloads[index.row()].m_fileName );
                 }
                 case 1: {
                     std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
 
-                    const auto& dnInfo = mp_model->downloads()[index.row()];
+                    const auto& dnInfo = gSettings.config().m_downloads[index.row()];
                     if ( dnInfo.isCompleted() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("done");
                     }
-                    if ( ! dnInfo.getHandle().is_valid() )
+                    if ( ! dnInfo.m_ltHandle.is_valid() )
                     {
                         //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("0%");
                     }
-
-                    return QString::fromStdString( std::to_string( (dnInfo.getProgress() + 5) / 10 ) ) + "%";
+                    return QString::fromStdString( std::to_string( (dnInfo.m_progress+5)/10 ) ) + "%";
                 }
             }
         }
@@ -129,6 +143,4 @@ void DownloadsTableModel::updateProgress()
         }
     }
     endResetModel();
-
-    m_selectDownloadRowFunc( m_selectedRow );
 }
