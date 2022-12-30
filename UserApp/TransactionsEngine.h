@@ -28,7 +28,7 @@ class TransactionsEngine : public QObject
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
-        std::string addDrive(const std::string& driveAlias, const uint64_t& driveSize, ushort replicatorsCount);
+        std::string addDrive(const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void cancelDataModification(const std::array<uint8_t, 32> &driveKey);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
@@ -44,8 +44,8 @@ class TransactionsEngine : public QObject
         void createDownloadChannelFailed(const QString& channelId, const QString& errorText);
         void closeDownloadChannelConfirmed(const std::array<uint8_t, 32>& channelId);
         void closeDownloadChannelFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
-        void createDriveConfirmed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveId);
-        void createDriveFailed(const std::string& driveAlias, const std::array<uint8_t, 32>& driveKey, const QString& errorText);
+        void createDriveConfirmed(const std::array<uint8_t, 32>& driveId);
+        void createDriveFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void closeDriveConfirmed(const std::array<uint8_t, 32>& driveId);
         void closeDriveFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void downloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId);
@@ -69,6 +69,7 @@ class TransactionsEngine : public QObject
         void replicatorOffBoardingFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingConfirmed(const QString& replicatorPublicKey);
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey);
+        void internalError(const QString& errorText);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
