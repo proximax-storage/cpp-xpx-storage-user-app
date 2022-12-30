@@ -2,8 +2,8 @@
 #include "Model.h"
 #include "DriveModificationTransition.h"
 #include "DriveModificationEvent.h"
-
-#include <boost/algorithm/string.hpp>
+#include "utils/HexParser.h"
+#include "Utils.h"
 
 
 Drive::Drive(QObject* parent)
@@ -27,7 +27,6 @@ Drive::Drive(const Drive &drive) {
     m_rootHash = drive.m_rootHash;
     m_fsTree = drive.m_fsTree;
     m_downloadingFsTree = drive.m_downloadingFsTree;
-    m_calculateDiffIsWaitingFsTree = drive.m_calculateDiffIsWaitingFsTree;
 
     m_localDrive = std::make_shared<LocalDriveItem>();
     m_localDrive->m_isFolder = drive.m_localDrive->m_isFolder;
@@ -59,7 +58,6 @@ Drive &Drive::operator=(const Drive& drive) {
     m_rootHash = drive.m_rootHash;
     m_fsTree = drive.m_fsTree;
     m_downloadingFsTree = drive.m_downloadingFsTree;
-    m_calculateDiffIsWaitingFsTree = drive.m_calculateDiffIsWaitingFsTree;
 
     m_localDrive = std::make_shared<LocalDriveItem>();
     m_localDrive->m_isFolder = drive.m_localDrive->m_isFolder;
@@ -82,7 +80,7 @@ std::string Drive::getKey() const {
 }
 
 void Drive::setKey(const std::string &key) {
-    m_driveKey = key;
+    m_driveKey = QString::fromStdString(key).toUpper().toStdString();
 }
 
 std::string Drive::getName() const {
@@ -132,7 +130,7 @@ void Drive::setLastOpenedPath(const std::vector<std::string>& path) {
     m_lastOpenedPath = path;
 }
 
-std::optional<std::array<uint8_t, 32>> Drive::getRootHash() const {
+std::array<uint8_t, 32> Drive::getRootHash() const {
     return m_rootHash;
 }
 
@@ -156,14 +154,6 @@ void Drive::setDownloadingFsTree(bool state) {
     m_downloadingFsTree = state;
 }
 
-bool Drive::isWaitingFsTree() const {
-    return m_calculateDiffIsWaitingFsTree;
-}
-
-void Drive::setWaitingFsTree(bool state) {
-    m_calculateDiffIsWaitingFsTree = state;
-}
-
 std::shared_ptr<LocalDriveItem> Drive::getLocalDriveItem() const {
     return m_localDrive;
 }
@@ -180,7 +170,7 @@ void Drive::setActionsList(const sirius::drive::ActionList& actions) {
     m_actionList = actions;
 }
 
-std::optional<std::array<uint8_t, 32>> Drive::getModificationHash() const {
+std::array<uint8_t, 32> Drive::getModificationHash() const {
     return m_currentModificationHash;
 }
 
@@ -190,6 +180,20 @@ void Drive::setModificationHash(const std::array<uint8_t, 32>& modificationHash)
 
 DriveState Drive::getState() const {
     return m_driveState;
+}
+
+sirius::drive::ReplicatorList Drive::getReplicators() const {
+    return m_replicatorList;
+}
+
+void Drive::setReplicators(const std::vector<std::string>& replicators) {
+    m_replicatorList.clear();
+    for( const auto& key : replicators )
+    {
+        std::array<uint8_t, 32> replicatorKey{};
+        sirius::utils::ParseHexStringIntoContainer( key.c_str(), 64, replicatorKey );
+        m_replicatorList.emplace_back(replicatorKey);
+    }
 }
 
 void Drive::updateState(DriveState state) {
@@ -206,7 +210,6 @@ void Drive::initStateMachine(DriveState initialState) {
     auto unConfirmedState = new QState();
     auto deletingState = new QState();
     auto deletedState = new QState();
-    auto deleteIsFailedState = new QState();
     auto noModificationsState = new QState();
     auto registeringState = new QState();
     auto uploadingState = new QState();
@@ -215,6 +218,10 @@ void Drive::initStateMachine(DriveState initialState) {
     auto canceledState = new QState();
     auto failedState = new QState();
 
+    auto creatingToCreatingTransition = new DriveModificationTransition(creating);
+    creatingToCreatingTransition->setTargetState(creatingState);
+    creatingState->addTransition(creatingToCreatingTransition);
+
     auto creatingToNoModificationsTransition = new DriveModificationTransition(no_modifications);
     creatingToNoModificationsTransition->setTargetState(noModificationsState);
     creatingState->addTransition(creatingToNoModificationsTransition);
@@ -222,6 +229,10 @@ void Drive::initStateMachine(DriveState initialState) {
     auto creatingToUnConfirmedTransition = new DriveModificationTransition(unconfirmed);
     creatingToUnConfirmedTransition->setTargetState(unConfirmedState);
     creatingState->addTransition(creatingToUnConfirmedTransition);
+
+    auto noModificationsToNoModificationsTransition = new DriveModificationTransition(no_modifications);
+    noModificationsToNoModificationsTransition->setTargetState(noModificationsState);
+    noModificationsState->addTransition(noModificationsToNoModificationsTransition);
 
     auto noModificationsToRegisteringTransition = new DriveModificationTransition(registering);
     noModificationsToRegisteringTransition->setTargetState(registeringState);
@@ -235,13 +246,9 @@ void Drive::initStateMachine(DriveState initialState) {
     deletingToDeletedTransition->setTargetState(deletedState);
     deletingState->addTransition(deletingToDeletedTransition);
 
-    auto deletingToDeleteIsFailedTransition = new DriveModificationTransition(deleteIsFailed);
-    deletingToDeleteIsFailedTransition->setTargetState(deleteIsFailedState);
-    deletingState->addTransition(deletingToDeleteIsFailedTransition);
-
-    auto deleteIsFailedToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    deleteIsFailedToNoModificationsTransition->setTargetState(noModificationsState);
-    deleteIsFailedState->addTransition(deleteIsFailedToNoModificationsTransition);
+    auto deletingToNoModificationsTransition = new DriveModificationTransition(no_modifications);
+    deletingToNoModificationsTransition->setTargetState(noModificationsState);
+    deletingState->addTransition(deletingToNoModificationsTransition);
 
     auto registeringToCancelingTransition = new DriveModificationTransition(canceling);
     registeringToCancelingTransition->setTargetState(cancelingState);
@@ -295,7 +302,6 @@ void Drive::initStateMachine(DriveState initialState) {
     mp_stateMachine->addState(unConfirmedState);
     mp_stateMachine->addState(deletingState);
     mp_stateMachine->addState(deletedState);
-    mp_stateMachine->addState(deleteIsFailedState);
     mp_stateMachine->addState(noModificationsState);
     mp_stateMachine->addState(registeringState);
     mp_stateMachine->addState(uploadingState);
@@ -330,11 +336,6 @@ void Drive::initStateMachine(DriveState initialState) {
             mp_stateMachine->setInitialState(deletedState);
             break;
         }
-        case deleteIsFailed:
-        {
-            mp_stateMachine->setInitialState(deleteIsFailedState);
-            break;
-        }
         case registering:
         {
             mp_stateMachine->setInitialState(registeringState);
@@ -367,9 +368,16 @@ void Drive::initStateMachine(DriveState initialState) {
         }
     }
 
-    connect(mp_stateMachine, &QStateMachine::started, this, [this]() {
+    connect(mp_stateMachine, &QStateMachine::started, this, [this, creatingState]() {
+        qDebug () << "state machine started for the drive:" << getName().c_str();
         m_isInitialized = true;
-        emit initialized(m_driveKey);
+
+        // To avoid the call initial state before state machine started
+        connect(creatingState, &QState::entered, this, [this]() {
+            m_driveState = creating;
+            qDebug () << "m_driveState = creating; " << getName().c_str();
+            emit stateChanged(m_driveKey, m_driveState);
+        });
 
         for (auto event : m_modificationEvents) {
             mp_stateMachine->postEvent(event);
@@ -378,77 +386,66 @@ void Drive::initStateMachine(DriveState initialState) {
         m_modificationEvents.clear();
     });
 
+    m_driveState = initialState;
     mp_stateMachine->start();
 
-    QObject::connect(creatingState, &QState::entered, this, [this]() {
-        m_driveState = creating;
-        qDebug () << "m_driveState = creating;";
-        emit stateChanged(m_driveKey, m_driveState);
-    });
-
-    QObject::connect(unConfirmedState, &QState::entered, this, [this]() {
+    connect(unConfirmedState, &QState::entered, this, [this]() {
         m_driveState = unconfirmed;
-        qDebug () << "m_driveState = unconfirmed;";
+        qDebug () << "m_driveState = unconfirmed; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(deletingState, &QState::entered, this, [this]() {
+    connect(deletingState, &QState::entered, this, [this]() {
         m_driveState = deleting;
-        qDebug () << "m_driveState = deleting;";
+        qDebug () << "m_driveState = deleting; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(deletedState, &QState::entered, this, [this]() {
+    connect(deletedState, &QState::entered, this, [this]() {
         m_driveState = deleted;
-        qDebug () << "m_driveState = deleted;";
+        qDebug () << "m_driveState = deleted; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(deleteIsFailedState, &QState::entered, this, [this]() {
-        m_driveState = deleteIsFailed;
-        qDebug () << "m_driveState = deleteIsFailed;";
-        emit stateChanged(m_driveKey, m_driveState);
-    });
-
-    QObject::connect(noModificationsState, &QState::entered, this, [this]() {
+    connect(noModificationsState, &QState::entered, this, [this]() {
         m_driveState = no_modifications;
-        qDebug () << "m_driveState = no_modifications;";
+        qDebug () << "m_driveState = no_modifications; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(registeringState, &QState::entered, this, [this]() {
+    connect(registeringState, &QState::entered, this, [this]() {
         m_driveState = registering;
-        qDebug () << "m_driveState = is_registering;";
+        qDebug () << "m_driveState = is_registering; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(uploadingState, &QState::entered, this, [this]() {
+    connect(uploadingState, &QState::entered, this, [this]() {
         m_driveState = uploading;
-        qDebug () << "m_driveState = uploadingState;";
+        qDebug () << "m_driveState = uploadingState; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(approvedState, &QState::entered, this, [this]() {
+    connect(approvedState, &QState::entered, this, [this]() {
         m_driveState = approved;
-        qDebug () << "m_driveState = approvedState;";
+        qDebug () << "m_driveState = approvedState; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(cancelingState, &QState::entered, this, [this]() {
+    connect(cancelingState, &QState::entered, this, [this]() {
         m_driveState = canceling;
-        qDebug () << "m_driveState = is_canceling;";
+        qDebug () << "m_driveState = is_canceling; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(canceledState, &QState::entered, this, [this]() {
+    connect(canceledState, &QState::entered, this, [this]() {
         m_driveState = canceled;
-        qDebug () << "m_driveState = is_canceled;";
+        qDebug () << "m_driveState = is_canceled; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 
-    QObject::connect(failedState, &QState::entered, this, [this]() {
+    connect(failedState, &QState::entered, this, [this]() {
         m_driveState = failed;
-        qDebug () << "m_driveState = is_failed;";
+        qDebug () << "m_driveState = is_failed; " << getName().c_str();
         emit stateChanged(m_driveKey, m_driveState);
     });
 }

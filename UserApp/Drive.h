@@ -13,7 +13,6 @@ enum DriveState
     unconfirmed,
     deleting,
     deleted,
-    deleteIsFailed,
     no_modifications,
     registering,
     approved,
@@ -59,7 +58,7 @@ class Drive : public QObject
         std::vector<std::string> getLastOpenedPath() const;
         void setLastOpenedPath(const std::vector<std::string>& path);
 
-        std::optional<std::array<uint8_t, 32>> getRootHash() const;
+        std::array<uint8_t, 32> getRootHash() const;
         void setRootHash(const std::array<uint8_t, 32>& rootHash);
 
         sirius::drive::FsTree getFsTree() const;
@@ -68,19 +67,19 @@ class Drive : public QObject
         bool isDownloadingFsTree() const;
         void setDownloadingFsTree(bool state);
 
-        bool isWaitingFsTree() const;
-        void setWaitingFsTree(bool state);
-
         std::shared_ptr<LocalDriveItem> getLocalDriveItem() const;
         void setLocalDriveItem(std::shared_ptr<LocalDriveItem> item);
 
         sirius::drive::ActionList getActionsList() const;
         void setActionsList(const sirius::drive::ActionList& actions);
 
-        std::optional<std::array<uint8_t, 32>> getModificationHash() const;
+        std::array<uint8_t, 32> getModificationHash() const;
         void setModificationHash(const std::array<uint8_t, 32>& modificationHash);
 
         DriveState getState() const;
+
+        sirius::drive::ReplicatorList getReplicators() const;
+        void setReplicators(const std::vector<std::string>& replicators);
 
         void updateState(DriveState state);
 
@@ -91,11 +90,12 @@ class Drive : public QObject
                m_name,
                m_localDriveFolder,
                m_size,
-               m_replicatorNumber );
+               m_replicatorNumber,
+               m_replicatorList,
+               m_rootHash );
         }
 
     signals:
-        void initialized(const std::string& driveKey);
         void stateChanged(const std::string& driveKey, int state);
 
     private:
@@ -108,17 +108,17 @@ class Drive : public QObject
         bool m_localDriveFolderExists = false;
         uint64_t m_size = 0;
         uint32_t m_replicatorNumber = 0;
+        sirius::drive::ReplicatorList m_replicatorList;
         std::vector<std::string> m_lastOpenedPath;
 
-        std::optional<std::array<uint8_t, 32>> m_rootHash;
+        std::array<uint8_t, 32> m_rootHash = { 0 };
         sirius::drive::FsTree m_fsTree;
         bool m_downloadingFsTree = false;
-        bool m_calculateDiffIsWaitingFsTree = false;
 
         // diff
         std::shared_ptr<LocalDriveItem> m_localDrive;
         sirius::drive::ActionList m_actionList;
-        std::optional<std::array<uint8_t, 32>> m_currentModificationHash;
+        std::array<uint8_t, 32> m_currentModificationHash = { 0 };
         DriveState m_driveState;
         QStateMachine *mp_stateMachine;
         std::vector<DriveModificationEvent*> m_modificationEvents;
