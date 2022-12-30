@@ -1,5 +1,4 @@
 #include "StorageEngine.h"
-#include "TransactionsEngine.h"
 #include "mainwin.h"
 #include "drive/ClientSession.h"
 #include "drive/Session.h"
@@ -101,10 +100,7 @@ void StorageEngine::addReplicatorList( const sirius::drive::ReplicatorList& keys
 void StorageEngine::downloadFsTree( const std::string&                      driveHash,
                                     const std::string&                      dnChannelId,
                                     const std::array<uint8_t,32>&           fsTreeHash,
-                                    const sirius::drive::ReplicatorList&    replicatorList,
-                                    std::function<void( const std::string&           driveHash,
-                                                        const std::array<uint8_t,32> fsTreeHash,
-                                                        const sirius::drive::FsTree& fsTree )> onFsTreeReceived )
+                                    const sirius::drive::ReplicatorList&    replicatorList )
 {
     qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveHash;
 
@@ -113,57 +109,43 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     if ( Model::isZeroHash(fsTreeHash) )
     {
         qDebug() << LOG_SOURCE << "zero fstree received";
-        onFsTreeReceived( driveHash, fsTreeHash, {} );
+        emit fsTreeReceived(driveHash, fsTreeHash, {});
         return;
     }
 
-    std::array<uint8_t,32> channelId;
+    std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );
 
-//    qDebug() << LOG_SOURCE << "downloadFsTree(): 1";
     m_session->addDownloadChannel( channelId );
 
     qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
-    auto fsTreeSaveFolder = getFsTreesFolder()/sirius::drive::toString(fsTreeHash);
+    const auto fsTreeHashUpperCase = QString::fromStdString(sirius::drive::toString(fsTreeHash)).toUpper().toStdString();
+    auto fsTreeSaveFolder = getFsTreesFolder()/fsTreeHashUpperCase;
 
-    //TODO:  !!!
-//     endpoint_list epList;
-//     boost::asio::ip::address e1 = boost::asio::ip::make_address("54.251.236.214");
-//     epList.push_back( {e1,7904} );
+    auto notification = [this, driveHash, fsTreeSaveFolder](sirius::drive::download_status::code code,
+                                                            const sirius::drive::InfoHash& infoHash,
+                                                            const std::filesystem::path /*filePath*/,
+                                                            size_t /*downloaded*/,
+                                                            size_t /*fileSize*/,
+                                                            const std::string& /*errorText*/) {
+        qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
+        sirius::drive::FsTree fsTree;
+        try
+        {
+            fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+        } catch (const std::runtime_error& ex )
+        {
+            qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
+            fsTree = {};
+            fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
+        }
 
-//    auto tmpRequestingFsTreeTorrent =
-                    m_session->download( sirius::drive::DownloadContext(
-                                            sirius::drive::DownloadContext::fs_tree,
+        emit fsTreeReceived(driveHash, infoHash.array(), fsTree);
+    };
 
-                                            [ onFsTreeReceived, driveHash, fsTreeSaveFolder ]
-                                             ( sirius::drive::download_status::code code,
-                                                const sirius::drive::InfoHash& infoHash,
-                                                const std::filesystem::path /*filePath*/,
-                                                size_t /*downloaded*/,
-                                                size_t /*fileSize*/,
-                                                const std::string& /*errorText*/)
-                                            {
-                                                qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
-                                                sirius::drive::FsTree fsTree;
-                                                try
-                                                {
-                                                    fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
-                                                } catch (const std::runtime_error& ex )
-                                                {
-                                                    qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
-                                                    fsTree = {};
-                                                    fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
-                                                }
-                                                onFsTreeReceived( driveHash, infoHash.array(), fsTree );
-                                            },
-                                            fsTreeHash,
-                                            channelId, 0),
-                                       channelId,
-                                       fsTreeSaveFolder,
-                                       "",
-                                       {},
-                                       replicatorList );
+    sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicatorList);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,

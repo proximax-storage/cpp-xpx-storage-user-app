@@ -41,15 +41,15 @@ public:
     void downloadFsTree( const std::string&                     driveHash,
                          const std::string&                     dnChannelId,
                          const std::array<uint8_t,32>&          fsTreeHash,
-                         const sirius::drive::ReplicatorList&   replicatorList,
-                         std::function<void( const std::string& driveHash,
-                                             const std::array<uint8_t,32> fsTreeHash,
-                                             const sirius::drive::FsTree& fsTree )> onFsTreeReceived );
+                         const sirius::drive::ReplicatorList&   replicatorList );
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&  channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
+
+signals:
+    void fsTreeReceived(const std::string& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
 
 private:
     void init(const sirius::crypto::KeyPair&  keyPair,
