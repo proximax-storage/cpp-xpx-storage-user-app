@@ -29,6 +29,8 @@ std::filesystem::path getSettingsFolder();
 
 std::filesystem::path getFsTreesFolder();
 
+std::string getPrettyDriveState(int state);
+
 QDebug& operator<<(QDebug& out, const std::string& str);
 
 #endif //UTILS_H

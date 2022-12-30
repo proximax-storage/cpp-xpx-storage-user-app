@@ -7,6 +7,7 @@
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
 #include "Utils.h"
+#include "Drive.h"
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -109,6 +110,36 @@ std::filesystem::path getSettingsFolder()
 std::filesystem::path getFsTreesFolder()
 {
     return getSettingsFolder() / "FsTrees";
+}
+
+std::string getPrettyDriveState(int state) {
+    switch (state)
+    {
+        case no_modifications:
+            return "no_modifications";
+        case registering:
+            return "registering";
+        case approved:
+            return "approved";
+        case failed:
+            return "failed";
+        case canceling:
+            return "canceling";
+        case canceled:
+            return "canceled";
+        case uploading:
+            return "uploading";
+        case creating:
+            return "creating";
+        case unconfirmed:
+            return "unconfirmed";
+        case deleting:
+            return "deleting";
+        case deleted:
+            return "deleted";
+        default:
+            return "unknown drive state";
+    }
 }
 
 QDebug& operator<<(QDebug& out, const std::string& str)
