@@ -44,14 +44,14 @@ public:
                      const std::string&              driveKey,
                      const std::vector<std::string>& allowedPublicKeys );
 
+signals:
+    void drivesInitialized();
+
 private:
     bool requestPrivateKey();
-
-    void updateModificationStatus();
     void cancelModification();
 
     void setupIcons();
-
     void setupDownloadsTab();
     void setupDownloadsTable();
     void onDownloadBtn();
@@ -64,11 +64,10 @@ private:
 
     void onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey );
     void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );
-//    void onChannelDeleted( const std::string& channelKey );
     void onCurrentChannelChanged( int index );
     void onDriveLocalDirectoryChanged(const QString& path);
-    void onDriveCreationConfirmed( const std::string& alias, const std::string& driveKey );
-    void onDriveCreationFailed( const std::string& alias, const std::string& driveKey, const std::string& errorText );
+    void onDriveCreationConfirmed( const std::string& driveKey );
+    void onDriveCreationFailed( const std::string& driveKey, const std::string& errorText );
     void onDriveCloseConfirmed( const std::array<uint8_t, 32>& driveKey );
     void onDriveCloseFailed( const std::array<uint8_t, 32>& driveKey, const QString& errorText );
     void onCurrentDriveChanged( int index );
@@ -87,31 +86,34 @@ private:
     void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void loadBalance();
-
-    void setDownloadPath( );
     void setupDrivesTab();
     void setupNotifications();
     void showNotification(const QString& message, const QString& error = {});
     void addNotification(const QString& message);
-
-    void downloadLatestFsTree( const std::string& driveKey );
     void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
-    void continueCalcDiff( Drive& drive );
-
-    void startCalcDiff();
-
     void lockMainButtons(bool state);
     void closeEvent(QCloseEvent* event) override;
     void addLocalModificationsWatcher();
+    bool isCurrentDrive(Drive* drive);
 
 private slots:
+    void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
+    void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
+    void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
+    void onInternalError(const QString& errorText);
+    void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);
     void updateChannelsCBox();
-    void updateDrivesCBox();
+    void updateDriveNameOnUi(const Drive& drive);
+    void updateDriveStatusOnUi(const Drive& drive);
+    void addDriveToUi(const Drive& drive);
+    void removeDriveFromUi(const Drive& drive);
     void lockChannel(const std::string& channelId);
     void unlockChannel(const std::string& channelId);
-    void lockDrive(const std::string& driveId);
-    void unlockDrive(const std::string& driveId);
+    void lockDrive();
+    void unlockDrive();
+    void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
+    void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
 
 public:
     // if private key is not set it will be 'true'
@@ -127,7 +129,7 @@ private:
     Settings*               m_settings;
     Model*                  m_model;
 
-    FsTreeTableModel*       m_driveFsTreeTableModel;
+    FsTreeTableModel*       m_driveTableModel;
     DriveTreeModel*         m_driveTreeModel;
     DiffTableModel*         m_diffTableModel;
     DriveTreeModel*         m_diffTreeModel;
@@ -137,7 +139,4 @@ private:
 
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
-
-    std::string             m_lastSelectedChannelKey;
-    std::string             m_lastSelectedDriveKey;
 };
