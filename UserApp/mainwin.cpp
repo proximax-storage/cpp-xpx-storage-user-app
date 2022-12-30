@@ -12,6 +12,8 @@
 #include "QtGui/qclipboard.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
+#include "ChannelInfoDialog.h"
+#include "DriveInfoDialog.h"
 #include "AddDownloadChannelDialog.h"
 #include "CloseChannelDialog.h"
 #include "CancelModificationDialog.h"
@@ -173,10 +175,11 @@ void MainWin::init()
         m_model->setDownloadChannelsLoaded(true);
 
         int dnChannelIndex = m_model->currentDownloadChannelIndex();
-        if ( dnChannelIndex >= 0 )
+        if ( dnChannelIndex >= 0 && dnChannelIndex < Model::dnChannels().size())
         {
             ui->m_channels->setCurrentIndex( dnChannelIndex );
         }
+        lock.unlock();
 
         updateChannelsCBox();
         connect(m_model, &Model::driveStateChanged, this, &MainWin::onDriveStateChanged, Qt::QueuedConnection);
@@ -554,28 +557,16 @@ void MainWin::setupDownloadsTab()
         }
     });
 
-    auto copyDriveKeyAction = new QAction("Copy drive key", this);
-    menu->addAction(copyDriveKeyAction);
-    connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
+    QAction* channelInfoAction = new QAction("Channel info", this);
+    menu->addAction(channelInfoAction);
+    connect( channelInfoAction, &QAction::triggered, this, [this](bool)
     {
         std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
         if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
         {
-            std::string driveKey = channelInfo->getDriveKey();
-            lock.unlock();
-
-            QClipboard* clipboard = QApplication::clipboard();
-            if ( !clipboard ) {
-                qWarning() << LOG_SOURCE << "bad clipboard";
-                lock.unlock();
-                return;
-            }
-
-            clipboard->setText( QString::fromStdString(driveKey), QClipboard::Clipboard );
-            if ( clipboard->supportsSelection() ) {
-                clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
-            }
+            ChannelInfoDialog dialog( *channelInfo, this );
+            dialog.exec();
         }
     });
 
@@ -659,12 +650,26 @@ void MainWin::setupDriveFsTable()
     m_driveFsTreeTableModel = new FsTreeTableModel( m_model, false );
 
     ui->m_driveFsTableView->setModel( m_driveFsTreeTableModel );
+    ui->m_driveFsTableView->horizontalHeader()->hide();
     ui->m_driveFsTableView->setColumnWidth(0,300);
     ui->m_driveFsTableView->horizontalHeader()->setStretchLastSection(true);
-    ui->m_driveFsTableView->horizontalHeader()->hide();
     ui->m_driveFsTableView->setGridStyle( Qt::NoPen );
-    ui->m_driveFsTableView->update();
+    ui->m_driveFsTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+
     ui->m_drivePath->setText( "Path: " + QString::fromStdString(m_driveFsTreeTableModel->currentPathString()));
+
+    m_diffTreeModel = new DriveTreeModel(true);
+
+    ui->m_diffTree->setModel( m_diffTreeModel );
+    ui->m_diffTree->setTreePosition(1);
+    ui->m_diffTree->setColumnHidden(0,true);
+    ui->m_diffTree->header()->resizeSection(1, 300);
+    ui->m_diffTree->header()->resizeSection(2, 30);
+    ui->m_diffTree->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_diffTree->setHeaderHidden(true);
+    ui->m_diffTree->show();
+    ui->m_diffTree->expandAll();
+
 }
 
 void MainWin::selectDriveFsItem( int index )
@@ -1397,6 +1402,8 @@ void MainWin::onCurrentDriveChanged( int index )
         {
             // TODO improved, check drive state before
             downloadLatestFsTree( drivePtr->getKey() );
+            m_driveTreeModel->updateModel(false);
+            m_diffTreeModel->updateModel(true);
         }
         else
         {
@@ -1494,7 +1501,7 @@ void MainWin::setupDrivesTab()
 //        });
 //    }
 
-    m_driveTreeModel = new DriveTreeModel(m_model, this);
+    m_driveTreeModel = new DriveTreeModel(m_model, false, this);
     ui->m_driveTreeView->setModel( m_driveTreeModel );
     ui->m_driveTreeView->setTreePosition(1);
     ui->m_driveTreeView->setColumnHidden(0,true);
@@ -1620,6 +1627,21 @@ void MainWin::setupDrivesTab()
             if ( clipboard->supportsSelection() ) {
                 clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
             }
+        }
+    });
+
+    QAction* driveInfoAction = new QAction("Drive info", this);
+    menu->addAction(driveInfoAction);
+    connect( driveInfoAction, &QAction::triggered, this, [this](bool)
+    {
+        qDebug() << "TODO: driveInfoAction";
+
+        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+        if ( auto* driveInfo = Model::currentDriveInfoPtr(); driveInfo != nullptr )
+        {
+            DriveInfoDialog dialog( *driveInfo, this);
+            dialog.exec();
         }
     });
 
@@ -1909,6 +1931,7 @@ void MainWin::downloadLatestFsTree( const std::string& driveKey )
         m_model->downloadFsTree( driveKey,
                                driveKey,
                                fsTreeHash,
+                               drivePtr->m_replicatorList,
                                [this] ( const std::string&           driveHash,
                                         const std::array<uint8_t,32> fsTreeHash,
                                         const sirius::drive::FsTree& fsTree )
@@ -1952,18 +1975,53 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
     }
 }
 
+// TODO: rework!
 void MainWin::continueCalcDiff( Drive& drive )
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     drive.setWaitingFsTree(false);
 
-    qDebug() << LOG_SOURCE << "MainWin::continueCalcDiff";
 
-    m_model->calcDiff();
-    m_driveTreeModel->updateModel(false);
-    m_diffTableModel->updateModel();
-    ui->m_driveTreeView->expandAll();
-    m_driveFsTreeTableModel->setFsTree( drive.getFsTree(), drive.getLastOpenedPath() );
+    drive.m_calclDiffIsWaitingFsTree = false;
+
+    qDebug() << LOG_SOURCE << "drive.m_isConfirmed: " << drive.m_isConfirmed;
+
+    if ( drive.m_isConfirmed )
+    {
+        Model::calcDiff();
+
+        QMetaObject::invokeMethod( this, [this]()
+        {
+            std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+            if ( auto* drive = Model::currentDriveInfoPtr(); drive != nullptr )
+            {
+                m_diffTableModel->updateModel();
+                //ui->m_diffTableView->resizeColumnsToContents();
+                m_diffTreeModel->updateModel(true);
+                m_driveTreeModel->updateModel(false);
+                m_driveFsTreeTableModel->setFsTree( drive->m_fsTree, drive->m_lastOpenedPath );
+
+                ui->m_diffTree->expandAll();
+                ui->m_driveTreeView->expandAll();
+            }
+        }, Qt::QueuedConnection);
+
+        static bool atFirst = true;
+        if ( atFirst )
+        {
+            atFirst = false;
+            std::thread([this] {
+                usleep(500000);
+                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+
+                if ( auto* drive = Model::currentDriveInfoPtr(); drive != nullptr )
+                {
+                    m_driveFsTreeTableModel->setFsTree( drive->m_fsTree, drive->m_lastOpenedPath );
+                }
+            }).detach();
+        }
+    }
 }
 
 void MainWin::startCalcDiff()

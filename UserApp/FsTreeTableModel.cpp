@@ -37,11 +37,11 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std
     updateRows();
 }
 
-//void FsTreeTableModel::update()
-//{
-//    beginResetModel();
-//    endResetModel();
-//}
+void FsTreeTableModel::update()
+{
+    beginResetModel();
+    endResetModel();
+}
 
 void FsTreeTableModel::updateRows()
 {

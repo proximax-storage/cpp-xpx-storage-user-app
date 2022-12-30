@@ -92,9 +92,16 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
     });
 }
 
-void StorageEngine::downloadFsTree( const std::string&              driveHash,
-                                    const std::string&              dnChannelId,
-                                    const std::array<uint8_t,32>&   fsTreeHash,
+void StorageEngine::addReplicatorList( const sirius::drive::ReplicatorList& keys )
+{
+    m_session->addReplicatorList( keys );
+}
+
+
+void StorageEngine::downloadFsTree( const std::string&                      driveHash,
+                                    const std::string&                      dnChannelId,
+                                    const std::array<uint8_t,32>&           fsTreeHash,
+                                    const sirius::drive::ReplicatorList&    replicatorList,
                                     std::function<void( const std::string&           driveHash,
                                                         const std::array<uint8_t,32> fsTreeHash,
                                                         const sirius::drive::FsTree& fsTree )> onFsTreeReceived )
@@ -119,6 +126,11 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
     qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
     auto fsTreeSaveFolder = getFsTreesFolder()/sirius::drive::toString(fsTreeHash);
+
+    //TODO:  !!!
+//     endpoint_list epList;
+//     boost::asio::ip::address e1 = boost::asio::ip::make_address("54.251.236.214");
+//     epList.push_back( {e1,7904} );
 
 //    auto tmpRequestingFsTreeTorrent =
                     m_session->download( sirius::drive::DownloadContext(
@@ -150,7 +162,8 @@ void StorageEngine::downloadFsTree( const std::string&              driveHash,
                                        channelId,
                                        fsTreeSaveFolder,
                                        "",
-                                       {});
+                                       {},
+                                       replicatorList );
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,

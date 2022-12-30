@@ -13,7 +13,7 @@ class FsTreeTableModel: public QAbstractListModel
 public:
     FsTreeTableModel( Model* model, bool isChannelFsModel );
 
-    //void update();
+    void update();
 
     int onDoubleClick( int row );
     std::string currentPathString() const;

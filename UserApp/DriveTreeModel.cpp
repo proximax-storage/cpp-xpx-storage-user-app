@@ -42,9 +42,10 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
     }
 }
 
-DriveTreeModel::DriveTreeModel( Model* model, QObject* parent)
+DriveTreeModel::DriveTreeModel( Model* model, bool isDiffTree, QObject* parent)
     : QAbstractItemModel(parent)
     , mp_model(model)
+    , m_isDiffTree(isDiffTree)
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
@@ -112,21 +113,40 @@ void DriveTreeModel::updateModel( bool skipNotChanged )
 {
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
-    QList<QVariant> rootList;
-    rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
-    m_rootItem = new DriveTreeItem( true, false, ldi_not_changed, rootList );
-
-    QList<QVariant> driveRootList;
-    driveRootList << QString("/") << QString("/") << QString("");
-    auto driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
-    m_rootItem->appendChild( driveRoot );
-
-    const auto* localDrive = mp_model->currentDrive();
-
-    if ( localDrive != nullptr && localDrive->getLocalDriveItem() )
+    if ( const auto* localDrive = Model::currentDriveInfoPtr(); localDrive != nullptr )
     {
+        QList<QVariant> rootList;
+        rootList << QString("unused") << QString("name") << QString("size"); // it will be hidden!
+
+        QList<QVariant> driveRootList;
+        DriveTreeItem*  driveRoot;
+        
         beginResetModel();
-        parseR( driveRoot, *localDrive->getLocalDriveItem(), skipNotChanged );
+
+        if ( localDrive->m_isCreating || localDrive->m_downloadingFsTree  )
+        {
+            m_rootItem = new DriveTreeItem( true, true, ldi_not_changed, rootList );
+            driveRootList << QString("?") << QString("") << QString("");
+            driveRoot = new DriveTreeItem( true, true, ldi_not_changed, driveRootList, m_rootItem );
+            m_rootItem->appendChild( driveRoot );
+        }
+        else if ( m_isDiffTree && localDrive->m_actionList.empty() )
+        {
+            m_rootItem = new DriveTreeItem( true, true, ldi_not_changed, rootList );
+            driveRootList << QString("?") << QString("no changes") << QString("");
+            driveRoot = new DriveTreeItem( true, true, ldi_not_changed, driveRootList, m_rootItem );
+            m_rootItem->appendChild( driveRoot );
+        }
+        else
+        {
+            m_rootItem = new DriveTreeItem( true, false, ldi_not_changed, rootList );
+            driveRootList << QString("?") << QString("/") << QString("");
+            driveRoot = new DriveTreeItem( true, false, ldi_not_changed, driveRootList, m_rootItem );
+            m_rootItem->appendChild( driveRoot );
+            parseR( driveRoot, *localDrive->m_localDrive, skipNotChanged );
+        }
+
         endResetModel();
+        //scanFolderR( driveRoot, localDrive->m_localDriveFolder );
     }
 }

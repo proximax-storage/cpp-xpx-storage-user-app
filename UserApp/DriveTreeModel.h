@@ -79,11 +79,11 @@ class DriveTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
-    DriveTreeItem* m_rootItem;
-    Model* mp_model;
+    DriveTreeItem*  m_rootItem;
+    bool            m_isDiffTree;
 
 public:
-    explicit DriveTreeModel( Model* model, QObject *parent = nullptr );
+    explicit DriveTreeModel( Model* model, bool isDiffTree, QObject *parent = nullptr );
     ~DriveTreeModel() override { delete m_rootItem; }
 
     void updateModel( bool skipNotChanged );
