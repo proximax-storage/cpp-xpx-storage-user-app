@@ -13,21 +13,18 @@ class FsTreeTableModel: public QAbstractListModel
 public:
     FsTreeTableModel( Model* model, bool isChannelFsModel );
 
-    void update();
-
     int onDoubleClick( int row );
     std::string currentPathString() const;
     std::vector<std::string> currentPath() const;
 
-    int rowCount(const QModelIndex &) const override;
+    int rowCount(const QModelIndex& index = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent) const override;
 
     QVariant data(const QModelIndex &index, int role) const override;
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-//    public slots:
-        void setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path );
+    void setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path );
 
 public:
         QVariant channelData(const QModelIndex &index, int role) const;
@@ -39,7 +36,6 @@ public:
         bool        m_isFolder;
         std::string m_name;
         size_t      m_size;
-
         std::array<uint8_t,32> m_hash;
     };
 

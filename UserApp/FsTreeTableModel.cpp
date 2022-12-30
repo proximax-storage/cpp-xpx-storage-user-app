@@ -3,7 +3,6 @@
 
 #include <QApplication>
 #include <QStyle>
-#include <QIcon>
 #include <QPushButton>
 #include <QThread>
 
@@ -14,33 +13,20 @@ FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel)
 
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
 {
-    if ( !m_isChannelFsModel )
-    {
-        qDebug() << "setFsTree: ";
-        fsTree.dbgPrint();
-    }
     m_fsTree = fsTree;
     m_currentFolder = &m_fsTree;
-
     m_currentPath.clear();
     for( const auto& folder: path )
     {
         m_currentPath.push_back( m_currentFolder );
-        auto* it = m_currentFolder->findChild( folder );
-        if ( it == nullptr || !sirius::drive::isFolder(*it) )
+        auto it = m_currentFolder->findChild( folder );
+        if ( it && sirius::drive::isFolder(*it) )
         {
-            break;
+            m_currentFolder = &sirius::drive::getFolder(*it);
         }
-        m_currentFolder = &sirius::drive::getFolder(*it);
     }
 
     updateRows();
-}
-
-void FsTreeTableModel::update()
-{
-    beginResetModel();
-    endResetModel();
 }
 
 void FsTreeTableModel::updateRows()
@@ -48,32 +34,32 @@ void FsTreeTableModel::updateRows()
     beginResetModel();
 
     m_rows.clear();
-    m_rows.reserve( m_currentFolder->childs().size()+1 );
+    m_rows.reserve( m_currentFolder->childs().size() + 1 );
+    m_rows.emplace_back( Row { true, "..", 0 } );
+    QModelIndex parentIndex = createIndex(0, 0);
+    if (parentIndex.isValid()) {
+        emit dataChanged(parentIndex, parentIndex);
+    }
 
-    m_rows.emplace_back( Row{true, "..", 0} );
-
+    int i = 1;
     for( const auto& child : m_currentFolder->childs() )
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-            if ( !m_isChannelFsModel )
-            {
-                qDebug() << LOG_SOURCE << "updateRows isFolder: " << sirius::drive::getFolder(child.second).name().c_str();
-            }
             m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
         }
         else
         {
-            
             const auto& file = sirius::drive::getFile(child.second);
-            if ( !m_isChannelFsModel )
-            {
-                qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::getFile(child.second).name().c_str() << " "
-                     << sirius::drive::toString( file.hash().array() ).c_str();
-            }
             m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
-//            qDebug() << LOG_SOURCE << "updateRows isFile: " << sirius::drive::toString( m_rows.back().m_hash ).c_str();
         }
+
+        QModelIndex childIndex = createIndex(i, 0);
+        if (childIndex.isValid()) {
+            emit dataChanged(childIndex, childIndex);
+        }
+
+        i++;
     }
 
     endResetModel();
@@ -81,11 +67,8 @@ void FsTreeTableModel::updateRows()
 
 int FsTreeTableModel::onDoubleClick( int row )
 {
-    qDebug() << LOG_SOURCE << "onDoubleClick: " << row;
-
     if ( row == 0 )
     {
-        //qDebug() << LOG_SOURCE << "m_currentPath.size(): " << m_currentPath.size();
         if ( m_currentPath.empty() )
         {
             // do not change selected row
@@ -98,7 +81,6 @@ int FsTreeTableModel::onDoubleClick( int row )
         m_currentPath.pop_back();
 
         updateRows();
-        //emit this->layoutChanged();
 
         int toBeSelectedRow = 0;
         for( const auto& child: m_currentFolder->childs() )
@@ -126,19 +108,13 @@ int FsTreeTableModel::onDoubleClick( int row )
         m_currentFolder = &sirius::drive::getFolder(*it);
 
         updateRows();
-        //emit this->layoutChanged();
         return 0;
     }
-
-    updateRows();
-    return 0;
 }
 
 std::string FsTreeTableModel::currentPathString() const
 {
-//    qDebug() << LOG_SOURCE << "currentPath: ";
-
-    std::string path = "";
+    std::string path;
     if ( m_currentPath.empty() )
     {
         path = "/";
@@ -149,6 +125,7 @@ std::string FsTreeTableModel::currentPathString() const
     {
         path += "/" + m_currentPath[i]->name();
     }
+
     path += "/" + m_currentFolder->name();
 
     return path;
@@ -168,26 +145,6 @@ std::vector<std::string> FsTreeTableModel::currentPath() const
 
 int FsTreeTableModel::rowCount(const QModelIndex &) const
 {
-    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-
-    if ( m_isChannelFsModel )
-    {
-        auto channelInfo = mp_model->currentDownloadChannel();
-
-        if ( channelInfo == nullptr || channelInfo->isWaitingFsTree() || !mp_model->isDownloadChannelsLoaded() )
-        {
-            return 1;
-        }
-    }
-    else
-    {
-        auto driveInfo = mp_model->currentDrive();
-        if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDownloadChannelsLoaded() )
-        {
-            return 1;
-        }
-    }
-
     return (int)m_rows.size();
 }
 
@@ -198,16 +155,23 @@ int FsTreeTableModel::columnCount(const QModelIndex &parent) const
 
 QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
 {
+    if (!index.isValid()) {
+        return {};
+    }
+
     if ( m_isChannelFsModel )
     {
         return channelData( index, role );
     }
+
     return driveData( index, role );
 }
 
 QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
 {
-    QVariant value;
+    if (!index.isValid()) {
+        return {};
+    }
 
     switch ( role )
     {
@@ -225,10 +189,9 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                 std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
 
                 auto channelInfo = mp_model->currentDownloadChannel();
-
-                if ( channelInfo == nullptr || channelInfo->isWaitingFsTree() || !mp_model->isDownloadChannelsLoaded() )
+                if ( channelInfo == nullptr || channelInfo->isDownloadingFsTree() || !mp_model->isDownloadChannelsLoaded() )
                 {
-                    return value;
+                    return {};
                 }
             }
             if ( index.column() == 0 )
@@ -261,7 +224,7 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                     {
                         return QString("No channel selected");
                     }
-                    if ( channelInfo->isWaitingFsTree() )
+                    if ( channelInfo->isDownloadingFsTree() )
                     {
                         return QString("Loading...");
                     }
@@ -270,8 +233,7 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                 case 1:
                 {
                     auto channelInfo = mp_model->currentDownloadChannel();
-
-                    if ( channelInfo == nullptr || channelInfo->isWaitingFsTree()  || !mp_model->isDownloadChannelsLoaded() )
+                    if ( channelInfo == nullptr || channelInfo->isDownloadingFsTree()  || !mp_model->isDownloadChannelsLoaded() )
                     {
                         return QString("");
                     }
@@ -291,12 +253,14 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
             break;
     }
 
-    return value;
+    return {};
 }
 
 QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
 {
-    QVariant value;
+    if (!index.isValid()) {
+        return {};
+    }
 
     switch ( role )
     {
@@ -317,13 +281,11 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
 
                 if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDrivesLoaded() )
                 {
-                    return value;
+                    return {};
                 }
             }
             if ( index.column() == 0 )
             {
-                //qDebug() << "d index.row(): " << index.row() << " of: " << m_rows.size();
-
                 if ( m_rows[index.row()].m_isFolder )
                 {
                     return QApplication::style()->standardIcon(QStyle::SP_DirIcon);
@@ -368,7 +330,6 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
                         return QString("");
                     }
 
-                    //qDebug() << "2 index.row(): " << index.row() << " of: " << m_rows.size();
                     const auto& row = m_rows[index.row()];
                     if ( row.m_isFolder )
                     {
@@ -384,10 +345,10 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
             break;
     }
 
-    return value;
+    return {};
 }
 
 QVariant FsTreeTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    return QVariant();
+    return {};
 }

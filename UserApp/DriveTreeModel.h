@@ -41,6 +41,7 @@ public:
         {
             return nullptr;
         }
+
         return m_childItems.at(row);
     }
 
@@ -50,10 +51,11 @@ public:
 
     QVariant data( int column ) const
     {
-        if ( column<0 || column>=m_itemData.size() )
+        if ( column < 0 || column >= m_itemData.size() )
         {
             return {};
         }
+
         return m_itemData.at(column);
     }
 
@@ -81,14 +83,13 @@ class DriveTreeModel : public QAbstractItemModel
 
     DriveTreeItem*  m_rootItem;
     bool            m_isDiffTree;
+    Model*          mp_model;
 
 public:
     explicit DriveTreeModel( Model* model, bool isDiffTree, QObject *parent = nullptr );
     ~DriveTreeModel() override { delete m_rootItem; }
 
     void updateModel( bool skipNotChanged );
-
-    void update( const LocalDriveItem& localDriveRoot );
 
     QVariant data( const QModelIndex &index, int role ) const override
     {
@@ -134,6 +135,7 @@ public:
                         return QVariant( QColor( Qt::black ) );
                 }
             }
+
             return QVariant( QColor( Qt::black ) );
         }
 
@@ -212,22 +214,15 @@ public:
 
     int rowCount( const QModelIndex &parent = QModelIndex() ) const override
     {
-        DriveTreeItem *parentItem;
-        if ( parent.column() > 0 )
-        {
-            return 0;
+        if (parent.isValid()) {
+            auto item = static_cast<DriveTreeItem*>(parent.internalPointer());
+            if (item)
+            {
+                return item->childCount();
+            }
         }
 
-        if ( !parent.isValid() )
-        {
-            parentItem = m_rootItem;
-        }
-        else
-        {
-            parentItem = static_cast<DriveTreeItem*>(parent.internalPointer());
-        }
-
-        return parentItem->childCount();
+        return m_rootItem->childCount();
     }
 
     int columnCount( const QModelIndex &parent = QModelIndex() ) const override
@@ -236,58 +231,7 @@ public:
         {
             return static_cast<DriveTreeItem*>( parent.internalPointer() )->columnCount();
         }
+
         return m_rootItem->columnCount();
     }
 };
-
-
-//void DriveTreeModel::setupModelData(const QStringList &lines, DriveTreeItem *parent)
-//{
-//    QList<DriveTreeItem *> parents;
-//    QList<int> indentations;
-//    parents << parent;
-//    indentations << 0;
-
-//    int number = 0;
-
-//    while (number < lines.count())
-//    {
-//        int position = 0;
-//        while (position < lines[number].length()) {
-//            if (lines[number].at(position) != ' ')
-//                break;
-//            position++;
-//        }
-
-//        const QString lineData = lines[number].mid(position).trimmed();
-
-//        if (!lineData.isEmpty()) {
-//            // Read the column data from the rest of the line.
-//            const QStringList columnStrings =
-//                lineData.split(QLatin1Char('\t'), Qt::SkipEmptyParts);
-//            QList<QVariant> columnData;
-//            columnData.reserve(columnStrings.count());
-//            for (const QString &columnString : columnStrings)
-//                columnData << columnString;
-
-//            if (position > indentations.last()) {
-//                // The last child of the current parent is now the new parent
-//                // unless the current parent has no children.
-
-//                if (parents.last()->childCount() > 0) {
-//                    parents << parents.last()->child(parents.last()->childCount()-1);
-//                    indentations << position;
-//                }
-//            } else {
-//                while (position < indentations.last() && parents.count() > 0) {
-//                    parents.pop_back();
-//                    indentations.pop_back();
-//                }
-//            }
-
-//            // Append a new item to the current parent's list of children.
-//            parents.last()->appendChild(new DriveTreeItem(columnData, parents.last()));
-//        }
-//        ++number;
-//    }
-//}

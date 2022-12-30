@@ -25,7 +25,9 @@ int DownloadsTableModel::columnCount(const QModelIndex &parent) const
 
 QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
 {
-    QVariant value;
+    if (!index.isValid()) {
+        return {};
+    }
 
     switch ( role )
     {
@@ -79,7 +81,7 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             break;
     }
 
-    return value;
+    return {};
 }
 
 QVariant DownloadsTableModel::headerData(int section, Qt::Orientation orientation, int role) const
