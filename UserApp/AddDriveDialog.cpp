@@ -22,8 +22,9 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
     connect(ui->m_driveName, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-        if (!nameTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
+        bool isDriveExists = mp_model->isDriveWithNameExists(text);
+        if (!nameTemplate.match(text).hasMatch() || isDriveExists) {
+            QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr(isDriveExists ? "Drive with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_driveName->setProperty("is_valid", false);
         } else {
@@ -87,8 +88,9 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDriveDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveDialog::reject);
 
+    bool isDriveExists = mp_model->isDriveWithNameExists(ui->m_driveName->text());
     if (!nameTemplate.match(ui->m_driveName->text()).hasMatch()) {
-        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
+        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr(isDriveExists ? "Drive with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_driveName->setProperty("is_valid", false);
     } else {
@@ -149,9 +151,7 @@ void AddDriveDialog::validate() {
 
 void AddDriveDialog::accept()
 {
-    auto hash = mp_onChainClient->addDrive( ui->m_driveName->text().toStdString(),
-                                            ui->m_size->text().toULongLong(),
-                                            ui->m_replicatorNumber->text().toULongLong() );
+    auto hash = mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong() );
 
     Drive drive;
     drive.setName(ui->m_driveName->text().toStdString());
@@ -162,10 +162,12 @@ void AddDriveDialog::accept()
 
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     mp_model->addDrive(drive);
-    mp_model->setCurrentDriveIndex( (int)mp_model->getDrives().size() - 1 );
+    mp_model->setCurrentDriveKey( drive.getKey() );
     mp_model->saveSettings();
-
-    emit updateDrivesCBox();
+    auto currentDrive = mp_model->currentDrive();
+    if (currentDrive) {
+        currentDrive->updateState(creating);
+    }
 
     QDialog::accept();
 }

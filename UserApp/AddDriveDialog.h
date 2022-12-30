@@ -17,9 +17,6 @@ public:
                              QWidget *parent = nullptr);
     ~AddDriveDialog() override;
 
-signals:
-    void updateDrivesCBox();
-
 public:
     void accept() override;
     void reject() override;
