@@ -2,6 +2,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMutex>
+#include <QCoreApplication>
 #include <iostream>
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
