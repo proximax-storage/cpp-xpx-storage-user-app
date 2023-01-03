@@ -1712,7 +1712,7 @@ void MainWin::setupDrivesTab()
 //            QDesktopServices::openUrl( QString::fromStdString( "file://" + driveInfo->m_localDriveFolder));
 
 #ifdef __APPLE__
-            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->m_localDriveFolder )));
+            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
 #else
             //QProcess::startDetached("xdg-open " + QString::fromStdString( driveInfo->m_localDriveFolder ));
             //system("/usr/bin/xdg-open file:///home/cempl");
