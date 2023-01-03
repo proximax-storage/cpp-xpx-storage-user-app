@@ -20,8 +20,6 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &StoragePaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &StoragePaymentDialog::reject);
 
-    ui->selectDriveBox->addItem("Select from my drives");
-
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     std::vector<std::string> drivesKeys;
@@ -30,6 +28,9 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
         drivesKeys.push_back(key);
         ui->selectDriveBox->addItem(value.getName().c_str());
     }
+
+    ui->selectDriveBox->model()->sort(0);
+    ui->selectDriveBox->insertItem(0, "Select from my drives");
 
     lock.unlock();
 

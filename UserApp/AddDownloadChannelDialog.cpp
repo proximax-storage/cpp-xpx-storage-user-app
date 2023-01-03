@@ -44,8 +44,6 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         validate();
     }
 
-    ui->selectDriveBox->addItem("Select from my drives");
-
     std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
 
     std::vector<std::string> drivesKeys;
@@ -54,6 +52,9 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         drivesKeys.push_back(key);
         ui->selectDriveBox->addItem(drive.getName().c_str());
     }
+
+    ui->selectDriveBox->model()->sort(0);
+    ui->selectDriveBox->insertItem(0, "Select from my drives");
 
     lock.unlock();
 

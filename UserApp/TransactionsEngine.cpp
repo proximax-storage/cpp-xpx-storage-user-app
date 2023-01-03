@@ -179,6 +179,8 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
 void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount) {
     QString drivePubKey = rawHashToHex(driveId);
 
+    qInfo() << "TransactionsEngine::storagePayment. Drive key: " << drivePubKey << " amount: " << amount;
+
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
@@ -191,7 +193,7 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
     const std::string hash = rawHashToHex(storagePaymentTransaction->hash()).toStdString();
     statusNotifier.set([this, hash, storagePaymentNotifierId = storagePaymentNotifier.getId(), driveId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
-            qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
+            qWarning() << "TransactionsEngine::storagePayment. Failed storage payment transaction: " << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), storagePaymentNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
@@ -205,7 +207,7 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
 
     storagePaymentNotifier.set([this, hash, statusNotifierId = statusNotifier.getId(), driveId](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
-            qInfo() << LOG_SOURCE << "confirmed storagePaymentTransaction hash: " << hash.c_str();
+            qInfo() << "TransactionsEngine::storagePayment. Confirmed storage payment transaction, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -376,6 +378,8 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
                                                const sirius::drive::ActionList& actions,
                                                const std::string& sandboxFolder,
                                                const std::vector<xpx_chain_sdk::Address>& replicators) {
+    qInfo() << "TransactionsEngine::applyDataModification. Drive key: " << rawHashToHex(driveId);
+
     if (!isValidHash(driveId)) {
         qWarning() << LOG_SOURCE << "bad driveId: empty!";
         emit internalError("bad driveId: empty!");
@@ -430,6 +434,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::ParseHexStringIntoContainer(downloadDataCDIHex.toStdString().c_str(), downloadDataCDIHex.size(), downloadDataCdi);
 
     const QString driveKeyHex = rawHashToHex(driveId);
+    qInfo() << "TransactionsEngine::sendModification. Drive key: " << driveKeyHex << " Download data CDI: " << downloadDataCDIHex;
+
     const QString pathToActionList = findFile(actionListFileName, sandboxFolder.c_str());
     if (pathToActionList.isEmpty()) {
         qCritical() << LOG_SOURCE << " actionList.bin not found: " << pathToActionList;
@@ -503,7 +509,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
-            qInfo() << LOG_SOURCE << "confirmed dataModificationTransaction hash: " << hash.c_str();
+            qInfo() << "TransactionsEngine::sendModification. Confirmed data modification transaction, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeUnconfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -534,6 +540,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             qWarning() << LOG_SOURCE << "modificationId already exists (skip!) : " << rawHashToHex(modificationId);
             return;
         }
+
+        qInfo() << "TransactionsEngine::sendModification. Confirmed data modification approval transaction, hash: " << notification.meta.hash;
 
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,

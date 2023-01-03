@@ -344,8 +344,8 @@
             </property>
             <property name="font">
              <font>
-              <family>.AppleSystemUIFont</family>
-              <pointsize>15</pointsize>
+              <family>Sans Serif</family>
+              <pointsize>12</pointsize>
               <bold>false</bold>
              </font>
             </property>
@@ -590,8 +590,14 @@
           </item>
           <item>
            <widget class="QLabel" name="m_drivePath">
+            <property name="font">
+             <font>
+              <family>Sans Serif</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <property name="text">
-             <string>TextLabel</string>
+             <string>Path:</string>
             </property>
            </widget>
           </item>
