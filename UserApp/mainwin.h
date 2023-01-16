@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QListWidget>
 #include <QCloseEvent>
+#include <QComboBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -101,11 +102,11 @@ private slots:
     void onInternalError(const QString& errorText);
     void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);
-    void updateChannelsCBox();
-    void updateDriveNameOnUi(const Drive& drive);
+    void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
+    void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);
-    void addDriveToUi(const Drive& drive);
-    void removeDriveFromUi(const Drive& drive);
+    void addEntityToUi(QComboBox* box, const std::string& name, const std::string& key);
+    void removeEntityFromUi(QComboBox* box, const std::string& key);
     void lockChannel(const std::string& channelId);
     void unlockChannel(const std::string& channelId);
     void lockDrive();

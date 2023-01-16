@@ -11,7 +11,6 @@ DiffTableModel::DiffTableModel(Model *model)
 
 void DiffTableModel::updateModel()
 {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto drive = mp_model->currentDrive();
     if (!drive) {
         qWarning () << "DiffTableModel::updateModel: Invalid drive pointer";

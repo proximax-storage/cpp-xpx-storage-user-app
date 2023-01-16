@@ -153,44 +153,38 @@ void MainWin::init()
     {
         qDebug() << LOG_SOURCE << "downloadChannelsLoaded pages amount: " << channelsPages.size();
         if (type == OnChainClient::ChannelsType::MyOwn) {
+            // load sponsored channels
+            m_onChainClient->loadDownloadChannels({});
             m_model->onMyOwnChannelsLoaded(channelsPages);
         } else if (type == OnChainClient::ChannelsType::Sponsored) {
             m_model->onSponsoredChannelsLoaded(channelsPages);
-        }
 
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-        m_model->setDownloadChannelsLoaded(true);
-
-        if (ui->m_channels->count() == 0) {
-            lockChannel("");
-        } else {
-            unlockChannel("");
-        }
-
-        int dnChannelIndex = m_model->currentDownloadChannelIndex();
-        if ( dnChannelIndex >= 0 && dnChannelIndex < m_model->getDownloadChannels().size())
-        {
-            ui->m_channels->setCurrentIndex( dnChannelIndex );
-        }
-        else if ( dnChannelIndex < m_model->getDownloadChannels().size() > 0 )
-        {
-            ui->m_channels->setCurrentIndex( 0 );
-        }
-        lock.unlock();
-
-        updateChannelsCBox();
-        for( auto& downloadInfo: m_model->downloads() )
-        {
-            if ( ! downloadInfo.isCompleted() )
+            for (const auto& [key, channel] : m_model->getDownloadChannels())
             {
-                if ( m_model->findChannel( downloadInfo.getDownloadChannelKey() ) == nullptr )
+                addEntityToUi(ui->m_channels, channel.getName(), key);
+            }
+
+            m_model->setDownloadChannelsLoaded(true);
+
+            if (ui->m_channels->count() == 0) {
+                lockChannel("");
+            } else {
+                unlockChannel("");
+            }
+
+            for( auto& downloadInfo: m_model->downloads() )
+            {
+                if ( ! downloadInfo.isCompleted() )
                 {
-                    downloadInfo.setChannelOutdated(true);
+                    if ( m_model->findChannel( downloadInfo.getDownloadChannelKey() ) == nullptr )
+                    {
+                        downloadInfo.setChannelOutdated(true);
+                    }
                 }
             }
-        }
 
-        connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
+            connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
+        }
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
@@ -273,9 +267,6 @@ void MainWin::init()
         xpx_chain_sdk::DownloadChannelsPageOptions options;
         options.consumerKey = m_model->getClientPublicKey();
         m_onChainClient->loadDownloadChannels(options);
-
-        // load sponsored channels
-        m_onChainClient->loadDownloadChannels({});
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
@@ -288,7 +279,7 @@ void MainWin::init()
 
     connect(this, &MainWin::drivesInitialized, this, [this]() {
         for (const auto& [key, drive] : m_model->getDrives()) {
-            addDriveToUi(drive);
+            addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
                 ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
                 onDriveStateChanged(drive.getKey(), drive.getState());
@@ -336,7 +327,7 @@ void MainWin::init()
         if ( rc==QMessageBox::Ok )
         {
             channel->setDeleting(true);
-            updateChannelsCBox();
+            updateDownloadChannelStatusOnUi(*channel);
             lockChannel(channel->getKey());
         }
     }, Qt::QueuedConnection);
@@ -538,28 +529,22 @@ void MainWin::setupDownloadsTab()
     menu->addAction(renameAction);
     connect( renameAction, &QAction::triggered, this, [this](bool)
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
         {
             std::string channelName = channelInfo->getName();
             std::string channelKey = channelInfo->getKey();
-            lock.unlock();
 
             EditDialog dialog( "Rename channel", "Channel name:", channelName );
             if ( dialog.exec() == QDialog::Accepted )
             {
                 qDebug() << "channelName: " << channelName.c_str();
-
-                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
                 if ( auto* channelInfo = m_model->findChannel(channelKey); channelInfo != nullptr )
                 {
                     qDebug() << "channelName renamed: " << channelName.c_str();
 
                     channelInfo->setName(channelName);
                     m_model->saveSettings();
-                    lock.unlock();
-                    updateChannelsCBox();
+                    updateEntityNameOnUi(ui->m_channels, channelName, channelInfo->getKey());
                 }
             }
             qDebug() << "channelName?: " << channelName;
@@ -579,17 +564,13 @@ void MainWin::setupDownloadsTab()
     menu->addAction(copyChannelKeyAction);
     connect( copyChannelKeyAction, &QAction::triggered, this, [this](bool)
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
         {
             std::string channelKey = channelInfo->getKey();
-            lock.unlock();
 
             QClipboard* clipboard = QApplication::clipboard();
             if ( !clipboard ) {
                 qWarning() << LOG_SOURCE << "bad clipboard";
-                lock.unlock();
                 return;
             }
 
@@ -604,8 +585,6 @@ void MainWin::setupDownloadsTab()
     menu->addAction(channelInfoAction);
     connect( channelInfoAction, &QAction::triggered, this, [this](bool)
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
         {
             ChannelInfoDialog dialog( *channelInfo, this );
@@ -742,8 +721,6 @@ void MainWin::selectDriveFsItem( int index )
 
 void MainWin::onDownloadBtn()
 {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     //
     // Download all selected files
     //
@@ -816,8 +793,6 @@ void MainWin::setupDownloadsTable()
 
     connect( ui->m_removeDownloadBtn, &QPushButton::released, this, [this] ()
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
 
         auto rows = ui->m_downloadsTableView->selectionModel()->selectedRows();
@@ -832,7 +807,6 @@ void MainWin::setupDownloadsTable()
         if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
         {
             DownloadInfo dnInfo = downloads[rowIndex];
-            lock.unlock();
 
             QMessageBox msgBox;
             const QString message = QString::fromStdString("'" + dnInfo.getFileName() + "' will be removed.");
@@ -1110,7 +1084,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         }
         case creating:
         {
-            addDriveToUi(*drive);
+            addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
             setCurrentDriveOnUi(drive->getKey());
             updateDriveStatusOnUi(*drive);
 
@@ -1121,12 +1095,14 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         }
         case unconfirmed:
         {
-            removeDriveFromUi(*drive);
-            m_model->removeDrive(drive->getKey());
-            m_model->removeChannelByDriveKey(drive->getKey());
+            removeEntityFromUi(ui->m_driveCBox, driveKey);
+            m_model->removeDrive(driveKey);
 
-            // TODO optimize the functions
-            updateChannelsCBox();
+            m_model->applyForChannels(driveKey, [this](auto& channel) {
+                removeEntityFromUi(ui->m_channels, channel.getKey());
+            });
+
+            m_model->removeChannelByDriveKey(drive->getKey());
             break;
         }
         case deleting:
@@ -1138,10 +1114,8 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             auto channel = m_model->currentDownloadChannel();
             if (channel) {
                 lockChannel(channel->getKey());
+                updateDownloadChannelStatusOnUi(*channel);
             }
-
-            // TODO optimize the functions
-            updateChannelsCBox();
 
             break;
         }
@@ -1149,13 +1123,15 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         {
             std::string driveName = drive->getName();
 
-            removeDriveFromUi(*drive);
-            m_model->removeDrive(drive->getKey());
-            m_model->removeChannelByDriveKey(drive->getKey());
-            m_diffTableModel->updateModel();
+            removeEntityFromUi(ui->m_driveCBox, driveKey);
+            m_model->removeDrive(driveKey);
 
-            // TODO optimize the functions
-            updateChannelsCBox();
+            m_model->applyForChannels(driveKey, [this](auto& channel) {
+                removeEntityFromUi(ui->m_channels, channel.getKey());
+            });
+
+            m_model->removeChannelByDriveKey(driveKey);
+            m_diffTableModel->updateModel();
 
             const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
             showNotification(message);
@@ -1177,42 +1153,6 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
     }
 }
 
-void MainWin::updateChannelsCBox()
-{
-    qDebug() << LOG_SOURCE << "updateChannelsCBox: " << m_model->isDownloadChannelsLoaded() << " : " << m_model->getDownloadChannels().size();
-
-    if ( !m_model->isDownloadChannelsLoaded() )
-    {
-        return;
-    }
-
-    ui->m_channels->clear();
-
-    for( const auto& channelInfo: m_model->getDownloadChannels() )
-    {
-        if ( channelInfo.isCreating() )
-        {
-            ui->m_channels->addItem( QString::fromStdString( channelInfo.getName() + "(creating...)") );
-        }
-        else if ( channelInfo.isDeleting() )
-        {
-            ui->m_channels->addItem( QString::fromStdString( channelInfo.getName() + "(...deleting)" ) );
-        }
-        else
-        {
-            ui->m_channels->addItem( QString::fromStdString( channelInfo.getName()) );
-        }
-    }
-
-    if ( m_model->currentDownloadChannel() == nullptr && !m_model->getDownloadChannels().empty() )
-    {
-        onCurrentChannelChanged(0);
-    }
-
-    qDebug() << LOG_SOURCE << "ui->m_channels: " << ui->m_channels->size();
-    ui->m_channels->setCurrentIndex(m_model->currentDownloadChannelIndex() );
-}
-
 void MainWin::addChannel( const std::string&              channelName,
                           const std::string&              channelKey,
                           const std::string&              driveKey,
@@ -1227,27 +1167,28 @@ void MainWin::addChannel( const std::string&              channelName,
     newChannel.setDeleting(false);
     newChannel.setCreatingTimePoint(std::chrono::steady_clock::now());
     m_model->addDownloadChannel(newChannel);
-    m_model->setCurrentDownloadChannelIndex((int) m_model->getDownloadChannels().size() - 1);
+    m_model->setCurrentDownloadChannelKey(channelKey);
 
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
         m_model->applyFsTreeForChannels(driveKey, drive->getFsTree(), drive->getRootHash());
     }
 
-    updateChannelsCBox();
+    addEntityToUi(ui->m_channels, channelName, channelKey);
+    updateDownloadChannelStatusOnUi(*m_model->findChannel(channelKey));
     lockChannel(channelKey);
 }
 
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
-    qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " key: " << channelKey;
+    qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey << " drive key: " << driveKey;
     auto channel = m_model->findChannel( channelKey );
     if ( channel )
     {
         channel->setCreating(false);
         m_model->saveSettings();
 
-        updateChannelsCBox();
+        updateDownloadChannelStatusOnUi(*channel);
         onRefresh();
 
         const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
@@ -1265,15 +1206,14 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 {
     qDebug() << "MainWin::onChannelCreationFailed: key:" << channelKey << " error: " << errorText;
 
-    auto channelInfo = m_model->findChannel( channelKey );
-    if (channelInfo) {
-        const QString message = QString::fromStdString( "Channel creation failed (" + channelInfo->getName() + ")\n It will be removed.");
+    auto channel = m_model->findChannel( channelKey );
+    if (channel) {
+        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\n It will be removed.");
         showNotification(message, errorText.c_str());
         addNotification(message);
-
+        unlockChannel(channelKey);
+        removeEntityFromUi(ui->m_channels, channelKey);
         m_model->removeChannel(channelKey);
-        updateChannelsCBox();
-        unlockChannel(channelInfo->getKey());
     } else {
         qWarning() << "MainWin::onChannelCreationFailed. Unknown channel: " << channelKey;
     }
@@ -1282,15 +1222,12 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
 {
     qDebug() << "MainWin::onDriveCreationConfirmed: key:" << driveKey;
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto drive = m_model->findDrive( driveKey );
     if ( drive )
     {
         m_modificationsWatcher->addPath(drive->getLocalFolder().c_str());
         drive->updateState(no_modifications);
         m_model->saveSettings();
-        lock.unlock();
 
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
         showNotification(message);
@@ -1410,33 +1347,22 @@ void MainWin::onRefresh()
 }
 
 void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     std::string channelName;
     const auto channelKey = sirius::drive::toString(channelId);
-    auto channelPtr = m_model->findChannel( channelKey );
-    if (channelPtr)
+    auto channel = m_model->findChannel( channelKey );
+    if (channel)
     {
-        channelName = channelPtr->getName();
-    }
-    lock.unlock();
-
-    m_model->removeChannel( sirius::drive::toString(channelId) );
-
-    if (channelPtr)
-    {
+        channelName = channel->getName();
         const QString message = QString::fromStdString( "Channel '" + channelName + "' closed (removed).");
         showNotification(message);
         addNotification(message);
     }
 
-    updateChannelsCBox();
-    loadBalance();
-    unlockChannel(channelKey);
+    removeEntityFromUi(ui->m_channels, channelKey);
+    unlockChannel("");
 
-    if (ui->m_channels->count() == 0) {
-        lockChannel("");
-    }
+    loadBalance();
+    m_model->removeChannel( sirius::drive::toString(channelId) );
 }
 
 void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
@@ -1518,13 +1444,9 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
 
 void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
     qDebug () << LOG_SOURCE << "Your last modification was registered: '" + rawHashToHex(modificationId);
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->updateState(uploading);
-        lock.unlock();
     }
     else
     {
@@ -1536,22 +1458,15 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
 
 void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
     qDebug () << LOG_SOURCE << "Your last modification was declined: '" + rawHashToHex(modificationId);
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->updateState(failed);
-        lock.unlock();
     }
 }
 
 void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32> &driveId,
                                                              const std::string &fileStructureCdi) {
     std::string driveAlias = rawHashToHex(driveId).toStdString();
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     auto drive = m_model->findDrive(driveAlias);
     if (drive) {
         drive->updateState(approved);
@@ -1559,8 +1474,6 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
-
-    lock.unlock();
 
     qDebug () << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
                  QString::fromStdString(driveAlias) + " CDI: " +
@@ -1605,9 +1518,7 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
 }
 
 void MainWin::loadBalance() {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto publicKey = m_model->getClientPublicKey();
-    lock.unlock();
     m_onChainClient->getBlockchainEngine()->getAccountInfo(publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
@@ -1630,7 +1541,8 @@ void MainWin::loadBalance() {
 void MainWin::onCurrentChannelChanged( int index )
 {
     if (index >= 0) {
-        m_model->setCurrentDownloadChannelIndex(index);
+        const auto channelKey = ui->m_channels->currentData().toString();
+        m_model->setCurrentDownloadChannelKey(channelKey.toStdString());
 
         auto channel = m_model->currentDownloadChannel();
         if ( !channel )
@@ -1770,24 +1682,19 @@ void MainWin::setupDrivesTab()
     menu->addAction(renameAction);
     connect( renameAction, &QAction::triggered, this, [this](bool)
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             std::string driveName = driveInfo->getName();
             std::string driveKey = driveInfo->getKey();
-            lock.unlock();
 
             EditDialog dialog( "Rename drive", "Drive name:", driveName );
             if ( dialog.exec() == QDialog::Accepted )
             {
-                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
                 if ( auto* driveInfo = m_model->findDrive(driveKey); driveInfo != nullptr )
                 {
                     driveInfo->setName(driveName);
                     m_model->saveSettings();
-                    lock.unlock();
-                    updateDriveNameOnUi(*driveInfo);
+                    updateEntityNameOnUi(ui->m_driveCBox, driveInfo->getName(), driveInfo->getKey());
                 }
             }
         }
@@ -1797,13 +1704,10 @@ void MainWin::setupDrivesTab()
     menu->addAction(changeFolderAction);
     connect( changeFolderAction, &QAction::triggered, this, [this](bool)
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             std::string driveName = driveInfo->getName();
             std::string driveKey = driveInfo->getKey();
-            lock.unlock();
 
             QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
     #ifdef Q_OS_LINUX
@@ -1817,7 +1721,6 @@ void MainWin::setupDrivesTab()
             }
             else
             {
-                std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
                 if ( auto driveInfo = m_model->findDrive(driveKey); driveInfo )
                 {
                     if (path.toStdString() != driveInfo->getLocalFolder()) {
@@ -1829,8 +1732,6 @@ void MainWin::setupDrivesTab()
                         m_model->saveSettings();
                         ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
                     }
-
-                    lock.unlock();
                 }
             }
         }
@@ -1849,18 +1750,13 @@ void MainWin::setupDrivesTab()
     connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: copyDriveKeyAction";
-
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             std::string driveKey = driveInfo->getKey();
-            lock.unlock();
 
             QClipboard* clipboard = QApplication::clipboard();
             if ( !clipboard ) {
                 qWarning() << LOG_SOURCE << "bad clipboard";
-                lock.unlock();
                 return;
             }
 
@@ -1876,9 +1772,6 @@ void MainWin::setupDrivesTab()
     connect( driveInfoAction, &QAction::triggered, this, [this](bool)
     {
         qDebug() << "TODO: driveInfoAction";
-
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             DriveInfoDialog dialog( *driveInfo, this);
@@ -1935,13 +1828,27 @@ void MainWin::addNotification(const QString& message)
     m_notificationsWidget->insertItem(0, item);
 }
 
-void MainWin::updateDriveNameOnUi(const Drive& drive)
+void MainWin::updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key)
 {
-    const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(drive.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
-        ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+        box->setItemText(index, QString::fromStdString(name));
     } else {
-        qWarning () << "MainWin::updateDriveNameOnUi. Unknown drive";
+        qWarning () << "MainWin::updateEntityNameOnUi. Unknown entity. Name: " << name << " Key: " << key;
+    }
+}
+
+void MainWin::updateDownloadChannelStatusOnUi(const DownloadChannel& channel)
+{
+    const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channel.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    if (index != -1) {
+        if (channel.isCreating()) {
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(creating...)"));
+        } else if (channel.isDeleting()) {
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(...deleting)"));
+        } else {
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName()));
+        }
     }
 }
 
@@ -1950,7 +1857,7 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
     const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(drive.getKey())), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
         if ( drive.getState() == creating ) {
-            ui->m_driveCBox->setItemText(index, QString::fromStdString( drive.getName() + "(creating...)"));
+            ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
         } else if (drive.getState() == deleting) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
         } else if (drive.getState() == no_modifications) {
@@ -1959,25 +1866,24 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
     }
 }
 
-void MainWin::addDriveToUi(const Drive& drive)
+void MainWin::addEntityToUi(QComboBox* box, const std::string& name, const std::string& key)
 {
-    const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(drive.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
     if (index == -1) {
-        ui->m_driveCBox->addItem(QString::fromStdString(drive.getName()), QString::fromStdString(drive.getKey()));
-        ui->m_driveCBox->model()->sort(0);
+        box->addItem(QString::fromStdString(name), QString::fromStdString(key));
+        box->model()->sort(0);
     }
-};
+}
 
-void MainWin::removeDriveFromUi(const Drive& drive)
+void MainWin::removeEntityFromUi(QComboBox* box, const std::string& key)
 {
-    const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(drive.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
-        ui->m_driveCBox->removeItem(index);
+        box->removeItem(index);
     }
 }
 
 void MainWin::lockChannel(const std::string &channelId) {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto channel = m_model->findChannel(channelId);
     if ((channel && (channel->isCreating() || channel->isDeleting())) || channelId.empty())
     {
@@ -1990,7 +1896,6 @@ void MainWin::lockChannel(const std::string &channelId) {
 }
 
 void MainWin::unlockChannel(const std::string &channelId) {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     auto channel = m_model->findChannel(channelId);
     if (((channel && !channel->isCreating() && !channel->isDeleting()) || (m_model->getDownloadChannels().empty())) || channelId.empty()) {
         ui->m_closeChannel->setEnabled(true);
@@ -2100,12 +2005,9 @@ void MainWin::lockMainButtons(bool state) {
 }
 
 void MainWin::closeEvent(QCloseEvent *event) {
-    if (event) {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
+    if (event) { ;
         m_model->setWindowGeometry(frameGeometry());
-        m_model->saveSettings();
-        lock.unlock();
-
+        m_model->saveSettings();;
         event->accept();
     }
 }

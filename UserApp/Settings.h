@@ -29,6 +29,7 @@ class Settings : public QObject
         std::string     m_replicatorBootstrap;
         std::string     m_udpPort  = "6846";
         QRect           m_windowGeometry;
+        bool            m_isDriveStructureAsTree;
 
     public:
         explicit Settings(QObject* parent = nullptr);
@@ -44,7 +45,6 @@ class Settings : public QObject
         std::vector<std::string> accountList();
         Account& config();
         fs::path downloadFolder();
-        DownloadChannel* currentChannelInfoPtr();
         void setCurrentAccountIndex( int currentAccountIndex );
         void onDownloadCompleted( lt::torrent_handle handle );
         void removeFromDownloads( int index );

@@ -16,12 +16,12 @@ Account& Account::operator=( const Account& a )
 {
     initAccount( a.m_accountName, a.m_privateKeyStr );
 
-    m_dnChannels            = a.m_dnChannels;
-    m_currentDnChannelIndex = a.m_currentDnChannelIndex;
-    m_downloadFolder        = a.m_downloadFolder;
-    m_downloads             = a.m_downloads;
-    m_drives                = a.m_drives;
-    m_currentDriveKey       = a.m_currentDriveKey;
+    m_dnChannels                = a.m_dnChannels;
+    m_currentDownloadChannelKey = a.m_currentDownloadChannelKey;
+    m_downloadFolder            = a.m_downloadFolder;
+    m_downloads                 = a.m_downloads;
+    m_drives                    = a.m_drives;
+    m_currentDriveKey           = a.m_currentDriveKey;
 
     return *this;
 }

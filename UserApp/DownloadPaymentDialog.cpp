@@ -21,18 +21,15 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DownloadPaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DownloadPaymentDialog::reject);
 
-    ui->selectChannelBox->addItem("Select from my channels");
-
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     std::vector<std::string> channelsKeys;
     channelsKeys.reserve(mpModel->getDownloadChannels().size());
-    for ( const auto& channel : mpModel->getDownloadChannels()) {
-        channelsKeys.push_back(channel.getKey());
+    for ( const auto& [key, channel] : mpModel->getDownloadChannels()) {
+        channelsKeys.push_back(key);
         ui->selectChannelBox->addItem(channel.getName().c_str());
     }
 
-    lock.unlock();
+    ui->selectChannelBox->model()->sort(0);
+    ui->selectChannelBox->addItem("Select from my channels");
 
     connect( ui->selectChannelBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, channelsKeys] (int index)
     {

@@ -27,8 +27,6 @@ inline bool VICTOR_LOCAL_TEST = false;
 inline const char* ROOT_HASH1 = "096975e6f49b924078e443e6c208283034d043dd42b4db9ccd1dffd795577e5d";
 inline const char* ROOT_HASH2 = "83f8349b1623008b58fd9e2ee678e47842787834e0671e4cd2f6634d8ebfd2e6";
 
-inline std::recursive_mutex gSettingsMutex;
-
 namespace fs = std::filesystem;
 
 class Settings;
@@ -66,9 +64,9 @@ class Model : public QObject
         // Channels
         //
         void addDownloadChannel(const DownloadChannel& channel);
-        std::vector<DownloadChannel> getDownloadChannels();
-        void                         setCurrentDownloadChannelIndex(int );
-        int                          currentDownloadChannelIndex();
+        std::map<std::string, DownloadChannel>& getDownloadChannels();
+        void setCurrentDownloadChannelKey(const std::string& channelKey);
+        std::string currentDownloadChannelKey();
         DownloadChannel*                 currentDownloadChannel();
         DownloadChannel*                 findChannel( const std::string& channelKey );
         void                         removeChannel( const std::string& channelKey );

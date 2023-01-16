@@ -18,6 +18,7 @@
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
+    , m_isDriveStructureAsTree(false)
 {}
 
 Settings::~Settings()
@@ -29,6 +30,7 @@ Settings::Settings(const Settings& s)
     m_replicatorBootstrap = s.m_replicatorBootstrap;
     m_udpPort = s.m_udpPort;
     m_windowGeometry = s.m_windowGeometry;
+    m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
     m_settingsVersion = s.m_settingsVersion;
     m_accounts = s.m_accounts;
     m_currentAccountIndex = s.m_currentAccountIndex;
@@ -44,6 +46,7 @@ Settings &Settings::operator=(const Settings &s) {
     m_replicatorBootstrap = s.m_replicatorBootstrap;
     m_udpPort = s.m_udpPort;
     m_windowGeometry = s.m_windowGeometry;
+    m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
     m_settingsVersion = s.m_settingsVersion;
     m_accounts = s.m_accounts;
     m_currentAccountIndex = s.m_currentAccountIndex;
@@ -142,6 +145,8 @@ bool Settings::load( const std::string& pwd )
             int height;
             iarchive( height );
             m_windowGeometry.setHeight(height);
+
+            iarchive( m_isDriveStructureAsTree );
         }
         catch(...)
         {
@@ -216,6 +221,7 @@ void Settings::save()
         archive( m_windowGeometry.left() );
         archive( m_windowGeometry.width() );
         archive( m_windowGeometry.height() );
+        archive( m_isDriveStructureAsTree );
 
         std::ofstream fStream( getSettingsFolder() / "config", std::ios::binary );
         fStream << os.str();
@@ -235,6 +241,7 @@ void Settings::save()
             archive( m_windowGeometry.left() );
             archive( m_windowGeometry.width() );
             archive( m_windowGeometry.height() );
+            archive( m_isDriveStructureAsTree );
 
             std::ofstream fStream( getSettingsFolder() / "config.json", std::ios::binary );
             fStream << os.str();
@@ -282,15 +289,6 @@ fs::path Settings::downloadFolder()
     return config().m_downloadFolder;
 }
 
-DownloadChannel* Settings::currentChannelInfoPtr()
-{
-    if ( config().m_currentDnChannelIndex < 0 || config().m_currentDnChannelIndex >= config().m_dnChannels.size() )
-    {
-        return nullptr;
-    }
-    return &config().m_dnChannels[config().m_currentDnChannelIndex];
-}
-
 void Settings::setCurrentAccountIndex( int currentAccountIndex )
 {
     qDebug() << LOG_SOURCE << "setCurrentAccountIndex: " << currentAccountIndex;
@@ -302,9 +300,6 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 {
     std::thread( [ this, handle ]
     {
-        qDebug() << LOG_SOURCE << "onDownloadCompleted: before lock";
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
         auto& downloads = config().m_downloads;
 
         int counter = 0;
@@ -370,8 +365,6 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
 void Settings::removeFromDownloads( int index )
 {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     auto& downloads = config().m_downloads;
 
     if ( index < 0 || index >= downloads.size() )

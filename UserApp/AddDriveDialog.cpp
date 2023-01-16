@@ -160,7 +160,6 @@ void AddDriveDialog::accept()
     drive.setSize(ui->m_size->text().toInt());
     drive.setLocalFolder(ui->m_localDriveFolder->text().toStdString());
 
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
     mp_model->addDrive(drive);
     mp_model->setCurrentDriveKey( drive.getKey() );
     mp_model->saveSettings();

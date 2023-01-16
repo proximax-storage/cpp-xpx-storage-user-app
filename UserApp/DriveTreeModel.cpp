@@ -47,8 +47,6 @@ DriveTreeModel::DriveTreeModel( Model* model, bool isDiffTree, QObject* parent)
     , mp_model(model)
     , m_isDiffTree(isDiffTree)
 {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     if ( ! mp_model->isDrivesLoaded() )
     {
         QList<QVariant> rootList;
@@ -76,7 +74,6 @@ DriveTreeModel::DriveTreeModel( Model* model, bool isDiffTree, QObject* parent)
     if ( localDrive != nullptr )
     {
         auto localDriveFolder = localDrive->getLocalFolder();
-        lock.unlock();
         scanFolderR( driveRoot, localDriveFolder );
     }
 }
@@ -111,8 +108,6 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder, bool skip
 
 void DriveTreeModel::updateModel( bool skipNotChanged )
 {
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     if ( const auto* localDrive = mp_model->currentDrive(); localDrive != nullptr )
     {
         QList<QVariant> rootList;

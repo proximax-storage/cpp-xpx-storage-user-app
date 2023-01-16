@@ -51,7 +51,6 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
         {
             if ( index.column() == 0 )
             {
-                std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
                 if ( mp_model->downloads()[index.row()].isChannelOutdated() )
                 {
                     return QVariant( QColor( Qt::red ) );
@@ -65,7 +64,6 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
             switch( index.column() )
             {
                 case 0: {
-                    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
                     if ( mp_model->downloads()[index.row()].isChannelOutdated() )
                     {
                         return QString::fromStdString( "no channel: " + mp_model->downloads()[index.row()].getFileName() );
@@ -73,17 +71,13 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                     return QString::fromStdString( mp_model->downloads()[index.row()].getFileName() );
                 }
                 case 1: {
-                    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-
                     const auto& dnInfo = mp_model->downloads()[index.row()];
                     if ( dnInfo.isCompleted() )
                     {
-                        //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("done");
                     }
                     if ( ! dnInfo.getHandle().is_valid() )
                     {
-                        //qDebug() << LOG_SOURCE << "isCompleted:"
                         return QString::fromStdString("0%");
                     }
 
@@ -107,8 +101,6 @@ QVariant DownloadsTableModel::headerData(int section, Qt::Orientation orientatio
 
 void DownloadsTableModel::updateProgress()
 {
-    std::lock_guard<std::recursive_mutex> lock(gSettingsMutex);
-
     auto& downloads = mp_model->downloads();
     beginResetModel();
     {

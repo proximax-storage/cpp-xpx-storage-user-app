@@ -200,8 +200,9 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
     mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
+    mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isChecked();
 
-    bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap       !=   mpSettingsDraft->m_replicatorBootstrap )
+    bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap           !=   mpSettingsDraft->m_replicatorBootstrap )
                                 ||  ( mpSettings->m_udpPort                   !=   mpSettingsDraft->m_udpPort )
                                 ||  ( mpSettings->config().m_privateKeyStr    !=   mpSettingsDraft->config().m_privateKeyStr );
 
@@ -222,6 +223,7 @@ void SettingsDialog::accept()
     mpSettings->m_replicatorBootstrap     = mpSettingsDraft->m_replicatorBootstrap;
     mpSettings->config().m_downloadFolder = mpSettingsDraft->config().m_downloadFolder;
     mpSettings->m_accounts                = mpSettingsDraft->m_accounts;
+    mpSettings->m_isDriveStructureAsTree  = mpSettingsDraft->m_isDriveStructureAsTree;
     mpSettings->setCurrentAccountIndex( mpSettingsDraft->m_currentAccountIndex );
     mpSettings->save();
 

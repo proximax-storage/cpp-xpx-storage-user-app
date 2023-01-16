@@ -186,8 +186,6 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
         case Qt::DecorationRole:
         {
             {
-                std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-
                 auto channelInfo = mp_model->currentDownloadChannel();
                 if ( channelInfo == nullptr || channelInfo->isDownloadingFsTree() || !mp_model->isDownloadChannelsLoaded() )
                 {
@@ -211,8 +209,6 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-
                     if ( !mp_model->isDownloadChannelsLoaded() )
                     {
                         return QString("Loading...");
@@ -275,8 +271,6 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
         case Qt::DecorationRole:
         {
             {
-                std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-
                 auto driveInfo = mp_model->currentDrive();
 
                 if ( driveInfo == nullptr || driveInfo->isDownloadingFsTree() || !mp_model->isDrivesLoaded() )
@@ -301,8 +295,6 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    std::lock_guard<std::recursive_mutex> lock( gSettingsMutex );
-
                     if ( ! mp_model->isDrivesLoaded() )
                     {
                         return QString("Loading...");

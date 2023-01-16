@@ -44,8 +44,6 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         validate();
     }
 
-    std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
-
     std::vector<std::string> drivesKeys;
     drivesKeys.reserve(mpModel->getDrives().size());
     for ( const auto& [key, drive] : mpModel->getDrives()) {
@@ -55,8 +53,6 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     ui->selectDriveBox->model()->sort(0);
     ui->selectDriveBox->insertItem(0, "Select from my drives");
-
-    lock.unlock();
 
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
     connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate, drivesKeys] (auto text)

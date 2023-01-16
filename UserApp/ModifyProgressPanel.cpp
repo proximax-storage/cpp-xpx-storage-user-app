@@ -33,7 +33,6 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
 
     connect( ui->m_cancel, &QPushButton::released, this, [this]
     {
-        std::unique_lock<std::recursive_mutex> lock( gSettingsMutex );
         auto drive = mp_model->currentDrive();
         if (drive) {
             drive->updateState(canceling);
@@ -41,8 +40,6 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
         } else {
             setVisible(false);
         }
-
-        lock.unlock();
     });
 
     stackUnder( this );

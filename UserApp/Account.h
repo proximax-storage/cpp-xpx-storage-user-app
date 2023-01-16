@@ -32,7 +32,7 @@ class Account : public QObject
                     m_accountName,
                     m_privateKeyStr,
                     m_dnChannels,
-                    m_currentDnChannelIndex,
+                    m_currentDownloadChannelKey,
                     m_downloadFolder,
                     m_drives,
                     m_currentDriveKey );
@@ -41,8 +41,8 @@ class Account : public QObject
         std::string m_accountName;
         std::string m_privateKeyStr;
         std::string m_publicKeyStr;
-        std::vector<DownloadChannel> m_dnChannels;
-        int m_currentDnChannelIndex = -1;
+        std::map<std::string, DownloadChannel> m_dnChannels;
+        std::string m_currentDownloadChannelKey;
         bool m_channelsLoaded = false;
         std::string m_downloadFolder;
         std::vector<DownloadInfo> m_downloads;
