@@ -152,6 +152,8 @@ void MainWin::init()
             [this](OnChainClient::ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages)
     {
         qDebug() << LOG_SOURCE << "downloadChannelsLoaded pages amount: " << channelsPages.size();
+
+        ui->m_channels->clear();
         if (type == OnChainClient::ChannelsType::MyOwn) {
             // load sponsored channels
             m_onChainClient->loadDownloadChannels({});
@@ -166,7 +168,7 @@ void MainWin::init()
 
             m_model->setDownloadChannelsLoaded(true);
 
-            if (ui->m_channels->count() == 0) {
+            if (m_model->getDownloadChannels().empty()) {
                 lockChannel("");
             } else {
                 unlockChannel("");
@@ -261,6 +263,10 @@ void MainWin::init()
         m_model->onDrivesLoaded(drivesPages);
         m_model->setDrivesLoaded(true);
 
+        if (drivesPages[0].pagination.totalEntries == 0) {
+            emit drivesInitialized();
+        }
+
         connect( m_onChainClient, &OnChainClient::downloadFsTreeDirect, this, &MainWin::onDownloadFsTreeDirect, Qt::QueuedConnection);
 
         // load my own channels
@@ -278,6 +284,7 @@ void MainWin::init()
     }, Qt::QueuedConnection);
 
     connect(this, &MainWin::drivesInitialized, this, [this]() {
+        ui->m_driveCBox->clear();
         for (const auto& [key, drive] : m_model->getDrives()) {
             addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
@@ -286,14 +293,14 @@ void MainWin::init()
             }
         }
 
-        if (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty()) {
+        if (!m_model->getDrives().empty() && (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
             const auto driveKey = ui->m_driveCBox->currentData().toString().toStdString();
             m_model->setCurrentDriveKey(driveKey);
             setCurrentDriveOnUi(driveKey);
             const auto drive = m_model->getDrives()[driveKey];
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
             onDriveStateChanged(drive.getKey(), drive.getState());
-        } else {
+        } else if (!m_model->getDrives().empty()) {
             setCurrentDriveOnUi(m_model->currentDriveKey());
         }
 
@@ -304,6 +311,7 @@ void MainWin::init()
         connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
 
         lockMainButtons(false);
+        unlockDrive();
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection);
@@ -370,13 +378,13 @@ void MainWin::init()
         options.owner = m_model->getClientPublicKey();
         m_onChainClient->loadDrives(options);
 
-        if (ui->m_channels->count() == 0) {
+        if (m_model->getDownloadChannels().empty()) {
             lockChannel("");
         } else {
             unlockChannel("");
         }
 
-        if (ui->m_driveCBox->count() == 0) {
+        if (m_model->getDrives().empty()) {
             lockDrive();
         } else {
             unlockDrive();
@@ -421,6 +429,8 @@ void MainWin::init()
     m_downloadUpdateTimer->start(500); // 2 times per second
 
     lockMainButtons(true);
+    lockDrive();
+    lockChannel("");
 
     auto modifyPanelCallback = [this](){
         cancelModification();
@@ -436,7 +446,7 @@ void MainWin::init()
 
         // Downloads tab
         if (index == 0) {
-            if (ui->m_channels->count() == 0) {
+            if (m_model->getDownloadChannels().empty()) {
                 lockChannel("");
             } else {
                 unlockChannel("");
@@ -445,7 +455,7 @@ void MainWin::init()
 
         // Drives tab
         if (index == 1) {
-            if (ui->m_driveCBox->count() == 0) {
+            if (m_model->getDrives().empty()) {
                 lockDrive();
             } else {
                 unlockDrive();
@@ -516,7 +526,6 @@ void MainWin::setupDownloadsTab()
     setupChannelFsTable();
     setupDownloadsTable();
 
-    ui->m_channels->clear();
     ui->m_channels->addItem( "Loading..." );
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
@@ -1139,7 +1148,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
 
             loadBalance();
 
-            if (ui->m_driveCBox->count() == 0) {
+            if (m_model->getDrives().empty()) {
                 lockDrive();
             }
 
@@ -1607,6 +1616,7 @@ void MainWin::onCurrentDriveChanged( int index )
 
 void MainWin::setupDrivesTab()
 {
+    ui->m_driveCBox->addItem( "Loading..." );
     setupDriveFsTable();
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
     {
@@ -1999,13 +2009,11 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
 void MainWin::lockMainButtons(bool state) {
     ui->m_refresh->setDisabled(state);
     ui->m_addChannel->setDisabled(state);
-    ui->m_closeChannel->setDisabled(state);
     ui->m_addDrive->setDisabled(state);
-    ui->m_closeDrive->setDisabled(state);
 }
 
 void MainWin::closeEvent(QCloseEvent *event) {
-    if (event) { ;
+    if (event) {
         m_model->setWindowGeometry(frameGeometry());
         m_model->saveSettings();;
         event->accept();
