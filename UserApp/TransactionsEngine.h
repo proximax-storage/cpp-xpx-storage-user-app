@@ -109,6 +109,7 @@ class TransactionsEngine : public QObject
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         BlockchainEngine* mpBlockchainEngine;
+        std::map<std::array<uint8_t, 32>, std::map<std::array<uint8_t, 32>, std::pair<bool, bool>>> mDataModifications;
         std::map<std::array<uint8_t, 32>, std::set<std::array<uint8_t, 32>>> mDataModificationApprovals;
 };
 

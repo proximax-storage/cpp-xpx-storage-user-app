@@ -476,23 +476,31 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     mpChainAccount->signTransaction(dataModificationTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
-    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationNotifier;
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationUnconfirmedNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationApprovalTransactionNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> replicatorsStatusNotifier;
 
     const std::string hash = rawHashToHex(dataModificationTransaction->hash()).toStdString();
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
+    if (!mDataModifications.contains(driveId)) {
+        mDataModifications.insert({ driveId, {} });
+    }
+
+    if (!mDataModifications[driveId].contains(modificationId)) {
+        mDataModifications[driveId].insert({ modificationId, { false, false } });
+    }
+
     emit modificationCreated(driveKeyHex, modificationId);
 
     statusNotifier.set([this, driveId, hash, modificationId, driveKeyHex, replicators,
-                        dataModificationNotifierId = dataModificationNotifier.getId(),
+                         dataModificationUnconfirmedNotifierId = dataModificationUnconfirmedNotifier.getId(),
                         approvalNotifierId = dataModificationApprovalTransactionNotifier.getId(),
                         statusNotifierId = replicatorsStatusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
-            removeUnconfirmedAddedNotifier(mpChainAccount->address(), dataModificationNotifierId);
+            removeUnconfirmedAddedNotifier(mpChainAccount->address(), dataModificationUnconfirmedNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
             unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId);
@@ -505,11 +513,11 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
                                                        [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
 
-    dataModificationNotifier.set([this, driveId, hash, statusNotifierId = statusNotifier.getId(), modificationId] (
+    dataModificationUnconfirmedNotifier.set([this, driveId, hash, statusNotifierId = statusNotifier.getId(), modificationId] (
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
-            qInfo() << "TransactionsEngine::sendModification. Confirmed data modification transaction, hash: " << hash.c_str();
+            qInfo() << "TransactionsEngine::sendModification. Data modification transaction added to unconfirmed pool, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeUnconfirmedAddedNotifier(mpChainAccount->address(), id);
@@ -632,7 +640,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     auto approvalNotifierId = dataModificationApprovalTransactionNotifier.getId();
     auto statusNotifierId = replicatorsStatusNotifier.getId();
-    mpChainClient->notifications()->addUnconfirmedAddedNotifiers(mpChainAccount->address(), { dataModificationNotifier },
+    mpChainClient->notifications()->addUnconfirmedAddedNotifiers(mpChainAccount->address(), { dataModificationUnconfirmedNotifier },
                                                                 [this, data = dataModificationTransaction->binary()]() { announceTransaction(data); },
                                                                 [this, hash, replicators, approvalNotifierId, statusNotifierId](auto error) {
         onError(hash, error);
