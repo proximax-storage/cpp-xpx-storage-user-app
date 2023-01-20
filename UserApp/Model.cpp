@@ -247,7 +247,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
             channel.setReplicators(remoteChannel.data.shardReplicators);
             channel.setCreating(false);
             channel.setDeleting(false);
-            auto creationTime = std::chrono::steady_clock::now(); //todo
+            auto creationTime = std::chrono::steady_clock::now();
             channel.setCreatingTimePoint(creationTime);
             validChannels.insert({ channel.getKey(), channel });
         } else {
@@ -286,7 +286,7 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
             channel.setReplicators(remoteChannel.data.shardReplicators);
             channel.setCreating(false);
             channel.setDeleting(false);
-            auto creationTime = std::chrono::steady_clock::now(); //todo
+            auto creationTime = std::chrono::steady_clock::now();
             channel.setCreatingTimePoint(creationTime);
             m_settings->config().m_dnChannels.insert({ channel.getKey(), channel });
         }

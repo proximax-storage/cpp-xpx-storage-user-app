@@ -467,6 +467,14 @@ void MainWin::init()
             onDriveStateChanged(drive->getKey(), drive->getState());
         }
     }, Qt::QueuedConnection);
+
+    if (m_settings->m_isDriveStructureAsTree) {
+        ui->m_driveFsTableView->hide();
+        ui->m_diffTableView->hide();
+    } else {
+        ui->m_driveTreeView->hide();
+        ui->m_diffTreeView->hide();
+    }
 }
 
 MainWin::~MainWin()
@@ -484,7 +492,10 @@ void MainWin::cancelModification()
     }
 
     CancelModificationDialog dialog(m_onChainClient, drive->getKey().c_str(), drive->getName().c_str(), this);
-    dialog.exec();
+    if ( dialog.exec() == QMessageBox::Ok )
+    {
+        drive->updateState(canceling);
+    }
 }
 
 void MainWin::setupIcons() {
@@ -564,7 +575,6 @@ void MainWin::setupDownloadsTab()
     menu->addAction(topUpAction);
     connect( topUpAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: topUpAction";
         DownloadPaymentDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
     });
@@ -996,14 +1006,8 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
 
             m_model->calcDiff();
 
-            m_driveTableModel->setFsTree(drive->getFsTree(), { drive->getLocalFolder() } );
-            m_diffTableModel->updateModel();
-
-            m_driveTreeModel->updateModel(false);
-            ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
-
-            m_diffTreeModel->updateModel(false);
-            ui->m_diffTreeView->expand(m_diffTreeModel->index(0, 0));
+            updateDriveView();
+            updateDiffView();
 
             if (isCurrentDrive(drive)) {
                 unlockDrive();
@@ -1402,7 +1406,7 @@ void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelI
         qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias);
+    const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias + "'");
     showNotification(message);
     addNotification(message);
     loadBalance();
@@ -1417,7 +1421,7 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
         qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias);
+    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "'");
     showNotification(message);
     addNotification(message);
 }
@@ -1431,7 +1435,7 @@ void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey)
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias);
+    const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias  + "'");
     showNotification(message);
     addNotification(message);
     loadBalance();
@@ -1446,7 +1450,7 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias);
+    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "'");
     showNotification(message);
     addNotification(message);
 }
@@ -1585,15 +1589,10 @@ void MainWin::onCurrentChannelChanged( int index )
 }
 
 void MainWin::onDriveLocalDirectoryChanged(const QString& path) {
-    for (auto& drive : m_model->getDrives()) {
-        if (drive.second.getLocalFolder() == path.toStdString() &&
-            m_model->currentDrive() &&
-            drive.second.getKey() == m_model->currentDrive()->getKey()) {
-
-			// TODO: calc diff and update view only
-            onDriveStateChanged(drive.second.getKey(), no_modifications);
-            break;
-        }
+    auto drive = m_model->currentDrive();
+    if (drive && drive->getLocalFolder() == path.toStdString()) {
+        m_model->calcDiff();
+        updateDiffView();
     }
 }
 
@@ -1654,9 +1653,9 @@ void MainWin::setupDrivesTab()
                 if (isOutdated) {
                     const auto rootHash = rawHashToHex(drive->getRootHash()).toStdString();
                     onDownloadFsTreeDirect(drive->getKey(), rootHash);
+                } else {
+                    m_model->calcDiff();
                 }
-
-                m_model->calcDiff();
             };
 
             checkDriveForUpdates(drive, callback);
@@ -1759,7 +1758,6 @@ void MainWin::setupDrivesTab()
     menu->addAction(copyDriveKeyAction);
     connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: copyDriveKeyAction";
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             std::string driveKey = driveInfo->getKey();
@@ -1781,7 +1779,6 @@ void MainWin::setupDrivesTab()
     menu->addAction(driveInfoAction);
     connect( driveInfoAction, &QAction::triggered, this, [this](bool)
     {
-        qDebug() << "TODO: driveInfoAction";
         if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
         {
             DriveInfoDialog dialog( *driveInfo, this);
@@ -1993,8 +1990,8 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         drive->setRootHash(fsTreeHash);
         drive->setFsTree(fsTree);
 
-        // TODO: fix, update view only. Do not close frame
-        onDriveStateChanged(drive->getKey(), no_modifications);
+        updateDriveView();
+        updateDiffView();
     }
 
     m_model->applyFsTreeForChannels(driveKey, fsTree, fsTreeHash);
@@ -2035,4 +2032,27 @@ bool MainWin::isCurrentDrive(Drive* drive)
     }
 
     return false;
+}
+
+void MainWin::updateDiffView() {
+    if (m_settings->m_isDriveStructureAsTree) {
+        m_diffTreeModel->updateModel(false);
+        ui->m_diffTreeView->expand(m_diffTreeModel->index(0, 0));
+    } else {
+        m_diffTableModel->updateModel();
+    }
+}
+
+void MainWin::updateDriveView() {
+    if (m_settings->m_isDriveStructureAsTree) {
+        m_driveTreeModel->updateModel(false);
+        ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
+    } else {
+        auto drive = m_model->currentDrive();
+        if (drive) {
+            m_driveTableModel->setFsTree(drive->getFsTree(), { drive->getLocalFolder() } );
+        } else {
+            qWarning() << "MainWin::updateDriveView: invalid drive";
+        }
+    }
 }

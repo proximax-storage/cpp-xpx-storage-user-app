@@ -94,6 +94,8 @@ private:
     void closeEvent(QCloseEvent* event) override;
     void addLocalModificationsWatcher();
     bool isCurrentDrive(Drive* drive);
+    void updateDiffView();
+    void updateDriveView();
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
