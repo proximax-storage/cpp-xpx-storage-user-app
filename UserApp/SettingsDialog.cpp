@@ -72,7 +72,6 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
 
     connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
-        //todo
         qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
         if ( mpSettingsDraft->accountList().size() > size_t(index) )
         {

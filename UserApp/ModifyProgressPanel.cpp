@@ -35,10 +35,14 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
     {
         auto drive = mp_model->currentDrive();
         if (drive) {
-            drive->updateState(canceling);
-            m_cancelModificationFunc();
+            if (ui->m_cancel->text() == "Cancel") {
+                m_cancelModificationFunc();
+            } else {
+                setVisible(false);
+                drive->updateState(no_modifications);
+            }
         } else {
-            setVisible(false);
+            qWarning () << "ModifyProgressPanel::cancel: invalid drive";
         }
     });
 
