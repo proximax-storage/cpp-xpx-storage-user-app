@@ -106,10 +106,20 @@ class TransactionsEngine : public QObject
         QString findFile(const QString& fileName, const QString& directory);
 
     private:
+        struct ModificationEntity
+        {
+            bool isConfirmed = false;
+            bool isApproved = false;
+            std::array<uint8_t, 32> id = { 0 };
+        };
+
+    private:
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         BlockchainEngine* mpBlockchainEngine;
-        std::map<std::array<uint8_t, 32>, std::map<std::array<uint8_t, 32>, std::pair<bool, bool>>> mDataModifications;
+
+        // driveId { modification { is confirmed by BC?, is approved by user? } }
+        std::map<std::array<uint8_t, 32>, std::vector<ModificationEntity>> mDataModifications;
         std::map<std::array<uint8_t, 32>, std::set<std::array<uint8_t, 32>>> mDataModificationApprovals;
 };
 
