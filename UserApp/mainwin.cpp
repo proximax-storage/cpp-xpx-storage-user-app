@@ -1134,6 +1134,8 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         }
         case deleted:
         {
+            m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
+
             std::string driveName = drive->getName();
 
             removeEntityFromUi(ui->m_driveCBox, driveKey);
@@ -1144,7 +1146,9 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             });
 
             m_model->removeChannelByDriveKey(driveKey);
-            m_diffTableModel->updateModel();
+
+            updateDriveView();
+            updateDiffView();
 
             const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
             showNotification(message);
@@ -1272,7 +1276,6 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
 
     auto drive = m_model->findDrive(driveKeyHex);
     if (drive) {
-        m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
         drive->updateState(deleted);
     } else {
         qWarning() << "MainWin::onDriveCloseConfirmed. Unknown drive: " << driveKeyHex;
@@ -2051,6 +2054,8 @@ void MainWin::updateDriveView() {
         auto drive = m_model->currentDrive();
         if (drive) {
             m_driveTableModel->setFsTree(drive->getFsTree(), { drive->getLocalFolder() } );
+        } else if(m_model->getDrives().empty()) {
+            m_driveTableModel->setFsTree({}, {} );
         } else {
             qWarning() << "MainWin::updateDriveView: invalid drive";
         }

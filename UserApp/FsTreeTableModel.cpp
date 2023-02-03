@@ -35,7 +35,11 @@ void FsTreeTableModel::updateRows()
 
     m_rows.clear();
     m_rows.reserve( m_currentFolder->childs().size() + 1 );
-    m_rows.emplace_back( Row { true, "..", 0 } );
+
+    if ((m_isChannelFsModel && !mp_model->getDownloadChannels().empty()) || !mp_model->getDrives().empty()) {
+        m_rows.emplace_back( Row { true, "..", 0 } );
+    }
+
     QModelIndex parentIndex = createIndex(0, 0);
     if (parentIndex.isValid()) {
         emit dataChanged(parentIndex, parentIndex);
@@ -209,21 +213,28 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    if ( !mp_model->isDownloadChannelsLoaded() )
-                    {
-                        return QString("Loading...");
+                    if (rowCount(index) == 0) {
+                        if ( !mp_model->isDownloadChannelsLoaded() )
+                        {
+                            return QString("Loading...");
+                        }
+
+                        if (mp_model->getDownloadChannels().empty())
+                        {
+                            return QString("You don't have download channels.");
+                        }
+
+                        auto channelInfo = mp_model->currentDownloadChannel();
+                        if ( !channelInfo )
+                        {
+                            return QString("No download channel selected");
+                        }
+                        if ( channelInfo->isDownloadingFsTree() )
+                        {
+                            return QString("Loading...");
+                        }
                     }
 
-                    auto channelInfo = mp_model->currentDownloadChannel();
-
-                    if ( channelInfo == nullptr )
-                    {
-                        return QString("No channel selected");
-                    }
-                    if ( channelInfo->isDownloadingFsTree() )
-                    {
-                        return QString("Loading...");
-                    }
                     return QString::fromStdString( m_rows[index.row()].m_name );
                 }
                 case 1:
@@ -295,20 +306,28 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    if ( ! mp_model->isDrivesLoaded() )
+                    if (rowCount(index) == 0)
                     {
-                        return QString("Loading...");
-                    }
+                        if ( ! mp_model->isDrivesLoaded() )
+                        {
+                            return QString("Loading...");
+                        }
 
-                    auto driveInfo = mp_model->currentDrive();
+                        if (mp_model->getDrives().empty())
+                        {
+                            return QString("You don't have drives.");
+                        }
 
-                    if ( driveInfo == nullptr )
-                    {
-                        return QString("No drive selected");
-                    }
-                    if ( driveInfo->isDownloadingFsTree() )
-                    {
-                        return QString("Loading...");
+                        auto driveInfo = mp_model->currentDrive();
+                        if ( !driveInfo )
+                        {
+                            return QString("No drive selected.");
+                        }
+
+                        if ( driveInfo->isDownloadingFsTree() )
+                        {
+                            return QString("Loading...");
+                        }
                     }
 
                     return QString::fromStdString( m_rows[index.row()].m_name );

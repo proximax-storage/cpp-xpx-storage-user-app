@@ -11,16 +11,11 @@ DiffTableModel::DiffTableModel(Model *model)
 
 void DiffTableModel::updateModel()
 {
-    auto drive = mp_model->currentDrive();
-    if (!drive) {
-        qWarning () << "DiffTableModel::updateModel: Invalid drive pointer";
-        return;
-    }
-
     beginResetModel();
 
     m_actionList.clear();
-    if ( drive->isLocalFolderExists() )
+    auto drive = mp_model->currentDrive();
+    if ( !mp_model->getDrives().empty() && drive && drive->isLocalFolderExists() )
     {
         m_actionList = drive->getActionsList();
         m_correctLocalFolder = true;
@@ -38,6 +33,8 @@ int DiffTableModel::rowCount(const QModelIndex &) const
     if ( m_correctLocalFolder )
     {
         return (int)m_actionList.size();
+    } else if (mp_model->getDrives().empty()) {
+        return 0;
     }
 
     return 1;
@@ -58,7 +55,7 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
     {
         case Qt::DecorationRole:
         {
-            if ( ! m_correctLocalFolder )
+            if ( ! m_correctLocalFolder || mp_model->getDrives().empty())
             {
                 return {};
             }
@@ -72,7 +69,11 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
 
         case Qt::ForegroundRole:
         {
-            if ( ! m_correctLocalFolder )
+            if (! m_correctLocalFolder && mp_model->getDrives().empty())
+            {
+                return {};
+            }
+            else if ( ! m_correctLocalFolder )
             {
                 return QVariant( QColor( Qt::red ) );
             }
@@ -98,7 +99,11 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
 
         case Qt::DisplayRole:
         {
-            if ( ! m_correctLocalFolder )
+            if (! m_correctLocalFolder && mp_model->getDrives().empty())
+            {
+                return {};
+            }
+            else if ( ! m_correctLocalFolder )
             {
                 return "Incorrect local folder";
             }
@@ -118,8 +123,6 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         default:
                             return QString::fromStdString( "???" );
                     }
-
-					return QString::fromStdString( "???" );
                 }
                 case 1:
                 {
@@ -132,8 +135,6 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         default:
                             return QString::fromStdString( "???" );
                     }
-
-                    return QString::fromStdString( "???" );
                 }
             }
         }
