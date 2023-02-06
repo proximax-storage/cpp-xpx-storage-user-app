@@ -19,8 +19,9 @@ StorageEngine::StorageEngine(Model* model, QObject *parent)
 sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
                                                   const sirius::Key &driveId,
                                                   const std::string &sandboxFolder,
-                                                  uint64_t &modifySize) {
-    return m_session->addActionListToSession(actions, driveId, {}, sandboxFolder, modifySize);
+                                                  uint64_t &modifySize )
+{
+    return m_session->addActionListToSession(actions, driveId, m_replicatorList, sandboxFolder, modifySize);
 }
 
 void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
@@ -92,15 +93,26 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
 }
 
 void StorageEngine::addReplicatorList( const sirius::drive::ReplicatorList& keys )
-{
+{    
     m_session->addReplicatorList( keys );
+
+    for( const auto& key: keys )
+    {
+        auto it = std::find_if( m_replicatorList.begin(), m_replicatorList.end(), [&key] ( const auto& item) {
+            return key == item;
+        });
+        if ( it == m_replicatorList.end() )
+        {
+            m_replicatorList.push_back( key );
+        }
+    }
 }
 
 
 void StorageEngine::downloadFsTree( const std::string&                      driveHash,
                                     const std::string&                      dnChannelId,
                                     const std::array<uint8_t,32>&           fsTreeHash,
-                                    const sirius::drive::ReplicatorList&    replicatorList )
+                                    const sirius::drive::ReplicatorList&    unused )
 {
     qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveHash;
 
@@ -145,7 +157,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicatorList);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, m_replicatorList);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
@@ -180,7 +192,8 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                        channelId,
                        mp_model->getDownloadFolder(),
                        "",
-                       {});
+                       {},
+                       m_replicatorList );
     return handle;
 }
 

@@ -24,6 +24,8 @@ class StorageEngine : public QObject
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
     std::recursive_mutex                            m_mutex;
 
+    sirius::drive::ReplicatorList                   m_replicatorList;
+
 public:
     StorageEngine(Model* model, QObject* parent = nullptr);
 
