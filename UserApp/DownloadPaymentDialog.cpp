@@ -29,11 +29,14 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     }
 
     ui->selectChannelBox->model()->sort(0);
-    ui->selectChannelBox->addItem("Select from my channels");
+    ui->selectChannelBox->insertItem(0, "Select from my channels");
 
     connect( ui->selectChannelBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, channelsKeys] (int index)
     {
-        if (index >= 1) {
+        if (index == 0) {
+            mCurrentChannelKey.clear();
+            ui->m_channelKey->setText("");
+        } else if (index >= 1) {
             mCurrentChannelKey = channelsKeys[--index];
             ui->m_channelKey->setText(mCurrentChannelKey.c_str());
         }

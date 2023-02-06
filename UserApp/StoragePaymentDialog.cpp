@@ -32,7 +32,10 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
 
     connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
     {
-        if (index >= 1) {
+        if (index == 0) {
+            mCurrentDriveKey.clear();
+            ui->m_driveKy->setText("");
+        } else if (index >= 1) {
             mCurrentDriveKey = drivesKeys[--index];
             ui->m_driveKy->setText(mCurrentDriveKey.c_str());
         }
