@@ -147,7 +147,7 @@ void Model::setCurrentDriveKey( const std::string& driveKey )
     const auto driveKyeUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
     if ( !m_settings->config().m_drives.contains(driveKyeUpperCase) )
     {
-        qDebug() << LOG_SOURCE << "setCurrentDriveKey: invalid drive key: " << driveKyeUpperCase;
+        qWarning() << "Model::setCurrentDriveKey: invalid drive key: " << driveKyeUpperCase;
     }
     else
     {

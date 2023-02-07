@@ -185,6 +185,11 @@ void MainWin::init()
                 }
             }
 
+            auto channel = m_model->currentDownloadChannel();
+            if (!channel && !m_model->getDownloadChannels().empty()) {
+                m_model->setCurrentDownloadChannelKey(m_model->getDownloadChannels().begin()->first);
+            }
+
             connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
         }
     }, Qt::QueuedConnection);
@@ -326,7 +331,7 @@ void MainWin::init()
     connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
         auto channel = m_model->currentDownloadChannel();
         if (!channel) {
-            qWarning() << LOG_SOURCE << "bad channel";
+            qWarning() << LOG_SOURCE << "Bad current download channel. Channels count: " << m_model->getDownloadChannels().size();
             return;
         }
 
@@ -877,6 +882,13 @@ void MainWin::checkDriveForUpdates(Drive* drive, const std::function<void(bool)>
 {
     if (!drive) {
         qWarning() << "MainWin::checkDriveForUpdates. Invalid pointer to drive";
+        callback(false);
+        return;
+    }
+
+    if (drive->getState() == DriveState::creating || drive->getState() == DriveState::deleting) {
+        qInfo() << "MainWin::checkDriveForUpdates. Drive in unacceptable state:" << getPrettyDriveState(drive->getState());
+        callback(false);
         return;
     }
 
@@ -911,6 +923,12 @@ void MainWin::checkDriveForUpdates(DownloadChannel* channel, const std::function
         return;
     }
 
+    if (channel->isCreating()) {
+        qInfo() << "MainWin::checkDriveForUpdates. Download channel is creating:" << channel->getKey();
+        callback(false);
+        return;
+    }
+
     qDebug () << "MainWin::checkDriveForUpdates. Channel key: " << channel->getKey();
 
     m_onChainClient->getBlockchainEngine()->getDriveById( channel->getDriveKey(),
@@ -941,13 +959,19 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
         return;
     }
 
+    if (channel->isCreating()) {
+        qInfo() << "MainWin::updateReplicatorsForChannel. Download channel is creating:" << channel->getKey();
+        callback();
+        return;
+    }
+
     qDebug () << "MainWin::updateReplicatorsForChannel. Channel key: " << channelId;
 
     m_onChainClient->getBlockchainEngine()->getDownloadChannelById( channelId,
     [channel, callback] (auto remoteChannel, auto isSuccess, auto message, auto code ) {
         bool result = false;
         if (!isSuccess) {
-            qWarning() << "MainWin::updateReplicatorsForChannel:: callback(): " << message.c_str() << " : " << code.c_str();
+            qWarning() << "MainWin::updateReplicatorsForChannel::callback(): " << message.c_str() << " : " << code.c_str();
             callback();
             return;
         }
@@ -1651,18 +1675,21 @@ void MainWin::setupDrivesTab()
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
     {
         auto drive = m_model->currentDrive();
-        if (drive) {
-            auto callback = [this, drive](bool isOutdated) {
-                if (isOutdated) {
-                    const auto rootHash = rawHashToHex(drive->getRootHash()).toStdString();
-                    onDownloadFsTreeDirect(drive->getKey(), rootHash);
-                } else {
-                    m_model->calcDiff();
-                }
-            };
-
-            checkDriveForUpdates(drive, callback);
+        if (!drive) {
+            qWarning () << "MainWin::m_calcDiffBtn::released. Invalid pointer to drive!";
+            return;
         }
+
+        auto callback = [this, drive](bool isOutdated) {
+            if (isOutdated) {
+                const auto rootHash = rawHashToHex(drive->getRootHash()).toStdString();
+                onDownloadFsTreeDirect(drive->getKey(), rootHash);
+            } else {
+                m_model->calcDiff();
+            }
+        };
+
+        checkDriveForUpdates(drive, callback);
     }, Qt::QueuedConnection);
 
     if ( ALEX_LOCAL_TEST )
