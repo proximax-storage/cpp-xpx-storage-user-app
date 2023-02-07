@@ -173,6 +173,19 @@ bool Model::isDriveWithNameExists(const QString& driveName) const
     return !(it == m_settings->config().m_drives.end());
 }
 
+bool Model::isChannelWithNameExists(const QString& channelName) const
+{
+    if (channelName.isEmpty()) {
+        return false;
+    }
+
+    auto it = std::find_if( m_settings->config().m_dnChannels.begin(), m_settings->config().m_dnChannels.end(), [&channelName] (const auto& iterator) {
+        return boost::iequals(iterator.second.getName(), channelName.toStdString());
+    });
+
+    return !(it == m_settings->config().m_dnChannels.end());
+}
+
 QRect Model::getWindowGeometry() const {
     return m_settings->m_windowGeometry;
 }

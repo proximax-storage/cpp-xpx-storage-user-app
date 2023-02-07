@@ -23,8 +23,9 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
     connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-        if (!nameTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
+        bool isChannelExists = mpModel->isChannelWithNameExists(text);
+        if (!nameTemplate.match(text).hasMatch() || isChannelExists) {
+            QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->name->setProperty("is_valid", false);
         } else {
@@ -34,8 +35,9 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         }
     });
 
+    bool isChannelExists = mpModel->isChannelWithNameExists(ui->name->text());
     if (!nameTemplate.match(ui->name->text()).hasMatch()) {
-        QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr("Invalid name!"), nullptr, {}, 3000);
+        QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->name->setProperty("is_valid", false);
     } else {

@@ -88,6 +88,7 @@ class Model : public QObject
         void                     setCurrentDriveKey( const std::string& driveKey );
         std::string              currentDriveKey();
         bool isDriveWithNameExists(const QString& driveName) const;
+        bool isChannelWithNameExists(const QString& channelName) const;
         QRect getWindowGeometry() const;
         void setWindowGeometry(const QRect& geometry);
         void initForTests();

@@ -559,7 +559,7 @@ void MainWin::setupDownloadsTab()
             std::string channelName = channelInfo->getName();
             std::string channelKey = channelInfo->getKey();
 
-            EditDialog dialog( "Rename channel", "Channel name:", channelName );
+            EditDialog dialog( "Rename channel", "Channel name:", channelName, EditDialog::DownloadChannel, m_model );
             if ( dialog.exec() == QDialog::Accepted )
             {
                 qDebug() << "channelName: " << channelName.c_str();
@@ -1726,7 +1726,7 @@ void MainWin::setupDrivesTab()
             std::string driveName = driveInfo->getName();
             std::string driveKey = driveInfo->getKey();
 
-            EditDialog dialog( "Rename drive", "Drive name:", driveName );
+            EditDialog dialog( "Rename drive", "Drive name:", driveName, EditDialog::Drive, m_model );
             if ( dialog.exec() == QDialog::Accepted )
             {
                 if ( auto* driveInfo = m_model->findDrive(driveKey); driveInfo != nullptr )

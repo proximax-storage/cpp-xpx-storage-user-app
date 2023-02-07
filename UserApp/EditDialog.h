@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include "Model.h"
 
 namespace Ui {
 class EditDialog;
@@ -11,7 +12,14 @@ class EditDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit EditDialog( const QString& title, const QString& text, std::string& renameText, QWidget *parent = nullptr );
+    enum EntityType
+    {
+        DownloadChannel,
+        Drive
+    };
+
+public:
+    explicit EditDialog( const QString& title, const QString& text, std::string& renameText, EntityType type, Model* model, QWidget *parent = nullptr );
     ~EditDialog();
 
 protected:
@@ -22,6 +30,6 @@ private:
 
 private:
     Ui::EditDialog *ui;
-    std::string&    m_renameText;
+    Model* mp_model;
 };
 
