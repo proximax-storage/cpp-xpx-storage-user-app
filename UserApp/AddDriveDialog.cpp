@@ -2,7 +2,6 @@
 #include "AddDriveDialog.h"
 #include "./ui_AddDriveDialog.h"
 
-#include <QIntValidator>
 #include <QFileDialog>
 #include <QRegularExpression>
 #include <QToolTip>

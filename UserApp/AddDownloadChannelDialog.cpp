@@ -156,7 +156,10 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
     {
-        if (index >= 1) {
+        if (index == 0) {
+            mCurrentDriveKey.clear();
+            ui->driveKey->setText("");
+        } else if (index >= 1) {
             mCurrentDriveKey = drivesKeys[--index];
             ui->driveKey->setText(mCurrentDriveKey.c_str());
         }
