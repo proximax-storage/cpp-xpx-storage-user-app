@@ -62,8 +62,9 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     });
 
     connect(ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this](auto text){
-        if (text.trimmed().isEmpty()) {
-            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
+        bool isDirExists = QDir(text).exists();
+        if (text.trimmed().isEmpty() || !isDirExists) {
+            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_localDriveFolder->setProperty("is_valid", false);
         } else {
@@ -118,8 +119,9 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
         validate();
     }
 
-    if (ui->m_localDriveFolder->text().trimmed().isEmpty()) {
-        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
+    bool isDirExists = QDir(ui->m_localDriveFolder->text().trimmed()).exists();
+    if (ui->m_localDriveFolder->text().trimmed().isEmpty() || !isDirExists) {
+        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_localDriveFolder->setProperty("is_valid", false);
     } else {

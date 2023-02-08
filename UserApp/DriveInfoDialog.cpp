@@ -19,7 +19,7 @@ DriveInfoDialog::DriveInfoDialog(const Drive& drive,
     ui->m_localDriveFolder->setText( QString::fromStdString(drive.getLocalFolder()) );
 
     QString title;
-    title.append("About drive");
+    title.append("About drive ");
     title.append("'");
     title.append(drive.getName().c_str());
     title.append("'");
