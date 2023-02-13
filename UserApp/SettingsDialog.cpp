@@ -119,8 +119,9 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     });
 
     connect(ui->m_dnFolderField, &QLineEdit::textChanged, this, [this](auto text){
-        if (text.trimmed().isEmpty()) {
-            QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr("Invalid path!"), nullptr, {}, 3000);
+        bool isDirExists = QDir(text).exists();
+        if (text.trimmed().isEmpty() || !isDirExists) {
+            QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_dnFolderField->setProperty("is_valid", false);
         } else {
@@ -163,8 +164,9 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         validate();
     }
 
-    if (ui->m_dnFolderField->text().trimmed().isEmpty()) {
-        QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr("Invalid download folder path!"), nullptr, {}, 3000);
+    bool isDirExists = QDir(ui->m_dnFolderField->text().trimmed()).exists();
+    if (ui->m_dnFolderField->text().trimmed().isEmpty() || !isDirExists) {
+        QToolTip::showText(ui->m_dnFolderField->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
         ui->m_dnFolderField->setProperty("is_valid", false);
