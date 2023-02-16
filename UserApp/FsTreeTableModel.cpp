@@ -36,7 +36,7 @@ void FsTreeTableModel::updateRows()
     m_rows.clear();
     m_rows.reserve( m_currentFolder->childs().size() + 1 );
 
-    if ((m_isChannelFsModel && !mp_model->getDownloadChannels().empty()) || !mp_model->getDrives().empty()) {
+    if ((m_isChannelFsModel && !mp_model->getDownloadChannels().empty()) || (!m_isChannelFsModel && !mp_model->getDrives().empty())) {
         m_rows.emplace_back( Row { true, "..", 0 } );
     }
 

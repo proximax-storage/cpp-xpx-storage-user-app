@@ -429,7 +429,7 @@ void Model::removeDrive( const std::string& driveKey )
     m_settings->save();
 }
 
-void Model::removeChannelByDriveKey(const std::string &driveKey) {
+void Model::removeChannelsByDriveKey(const std::string &driveKey) {
     auto& channels = m_settings->config().m_dnChannels;
     auto begin = channels.begin();
     while(begin != channels.end()) {

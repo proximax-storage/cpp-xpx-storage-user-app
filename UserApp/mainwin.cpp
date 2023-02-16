@@ -194,9 +194,11 @@ void MainWin::init()
                 m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
                 ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
             } else {
-                if (!m_model->getDownloadChannels().empty()) {
+                if (m_model->getDownloadChannels().empty()) {
+                    m_channelFsTreeTableModel->setFsTree( {}, {} );
+                } else {
                     m_model->setCurrentDownloadChannelKey(m_model->getDownloadChannels().begin()->first);
-                    m_channelFsTreeTableModel->setFsTree( m_model->getDownloadChannels().begin()->second.getFsTree(), m_model->getDownloadChannels().begin()->second.getLastOpenedPath() );
+                    m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(), m_model->getDownloadChannels().begin()->second.getLastOpenedPath() );
                     ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
                 }
             }
@@ -1057,7 +1059,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
 {
     auto drive = m_model->findDrive(driveKey);
     if (!drive) {
-        qWarning() << "MainWin::onDriveStateChanged. Invalid drive";
+        qWarning() << "MainWin::onDriveStateChanged. Drive not found!";
         return;
     }
 
@@ -1070,12 +1072,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             m_modifyProgressPanel->setVisible(false);
             updateDriveStatusOnUi(*drive);
 
-            m_model->calcDiff();
-
-            updateDriveView();
-            updateDiffView();
-
             if (isCurrentDrive(drive)) {
+                m_model->calcDiff();
+                updateDriveView();
+                updateDiffView();
                 unlockDrive();
             }
 
@@ -1184,7 +1184,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 removeEntityFromUi(ui->m_channels, channel.getKey());
             });
 
-            m_model->removeChannelByDriveKey(drive->getKey());
+            m_model->removeChannelsByDriveKey(drive->getKey());
             break;
         }
         case deleting:
@@ -1208,16 +1208,27 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             std::string driveName = drive->getName();
 
             removeEntityFromUi(ui->m_driveCBox, driveKey);
-            m_model->removeDrive(driveKey);
 
+            m_model->removeDrive(driveKey);
             m_model->applyForChannels(driveKey, [this](auto& channel) {
                 removeEntityFromUi(ui->m_channels, channel.getKey());
             });
 
-            m_model->removeChannelByDriveKey(driveKey);
+            m_model->removeChannelsByDriveKey(driveKey);
+            if (m_model->getDownloadChannels().empty()) {
+                m_channelFsTreeTableModel->setFsTree({}, {});
+                ui->m_path->setText( "Path:");
+            } else {
+                m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(),
+                                                     m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
 
-            updateDriveView();
-            updateDiffView();
+                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+            }
+
+            if (isCurrentDrive(drive)) {
+                updateDriveView();
+                updateDiffView();
+            }
 
             const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
             showNotification(message);
@@ -1227,6 +1238,15 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
 
             if (m_model->getDrives().empty()) {
                 lockDrive();
+
+                if (m_settings->m_isDriveStructureAsTree) {
+                    m_driveTreeModel->updateModel(false);
+                    ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
+                    m_diffTreeModel->updateModel(false);
+                } else {
+                    m_driveTableModel->setFsTree({}, {} );
+                    m_diffTableModel->updateModel();
+                }
             }
 
             break;
@@ -1275,7 +1295,7 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         m_model->saveSettings();
 
         updateDownloadChannelStatusOnUi(*channel);
-        onRefresh();
+        updateDownloadChannelData(channel);
 
         const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
         showNotification(message);
@@ -1410,24 +1430,7 @@ void MainWin::onRefresh()
         return;
     }
 
-    auto updateReplicatorsCallback = [this, channel]() {
-        auto driveUpdatesCallback = [this, channel](bool isOutdated) {
-            if (isOutdated) {
-                const auto rootHash = rawHashToHex(channel->getFsTreeHash()).toStdString();
-                downloadFsTreeByChannel(channel->getKey(), rootHash);
-            } else {
-                m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
-                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
-            }
-
-            loadBalance();
-        };
-
-        checkDriveForUpdates(channel, driveUpdatesCallback);
-        loadBalance();
-    };
-
-    updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
+    updateDownloadChannelData(channel);
 }
 
 void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
@@ -1447,6 +1450,11 @@ void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &cha
 
     loadBalance();
     m_model->removeChannel( sirius::drive::toString(channelId) );
+
+    if (m_model->getDownloadChannels().empty()) {
+        m_channelFsTreeTableModel->setFsTree( {}, {} );
+        ui->m_path->setText( "Path:");
+    }
 }
 
 void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
@@ -1624,39 +1632,25 @@ void MainWin::loadBalance() {
 
 void MainWin::onCurrentChannelChanged( int index )
 {
-    if (index >= 0) {
-        const auto channelKey = ui->m_channels->currentData().toString();
-        m_model->setCurrentDownloadChannelKey(channelKey.toStdString());
-
-        auto channel = m_model->currentDownloadChannel();
-        if ( !channel )
-        {
-            qWarning() << LOG_SOURCE << "bad channel";
-            m_channelFsTreeTableModel->setFsTree( {}, {} );
-            return;
-        }
-
-        auto updateReplicatorsCallback = [this, channel]() {
-            auto driveUpdatesCallback = [this, channel](bool isOutdated) {
-                if (isOutdated) {
-                    const auto rootHash = rawHashToHex(channel->getFsTreeHash()).toStdString();
-                    downloadFsTreeByChannel(channel->getKey(), rootHash);
-                } else {
-                    m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
-                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
-                }
-
-                loadBalance();
-            };
-
-            checkDriveForUpdates(channel, driveUpdatesCallback);
-            loadBalance();
-        };
-
-        updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
-        lockChannel(channel->getKey());
-        unlockChannel(channel->getKey());
+    if (index < 0) {
+        qWarning () << "MainWin::onCurrentChannelChanged: invalid index!";
+        return;
     }
+
+    const auto channelKey = ui->m_channels->currentData().toString();
+    m_model->setCurrentDownloadChannelKey(channelKey.toStdString());
+
+    auto channel = m_model->currentDownloadChannel();
+    if ( !channel )
+    {
+        qWarning() << "MainWin::onCurrentChannelChanged. Download channel not found!";
+        m_channelFsTreeTableModel->setFsTree( {}, {} );
+        return;
+    }
+
+    updateDownloadChannelData(channel);
+    lockChannel(channel->getKey());
+    unlockChannel(channel->getKey());
 }
 
 void MainWin::onDriveLocalDirectoryChanged(const QString& path) {
@@ -2064,8 +2058,10 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         drive->setRootHash(fsTreeHash);
         drive->setFsTree(fsTree);
 
-        updateDriveView();
-        updateDiffView();
+        if (isCurrentDrive(drive)) {
+            updateDriveView();
+            updateDiffView();
+        }
     }
 
     m_model->applyFsTreeForChannels(driveKey, fsTree, fsTreeHash);
@@ -2102,7 +2098,17 @@ bool MainWin::isCurrentDrive(Drive* drive)
 {
     auto currentDrive = m_model->currentDrive();
     if (drive && currentDrive) {
-        return drive->getKey() == currentDrive->getKey();
+        return boost::iequals(drive->getKey(), currentDrive->getKey());
+    }
+
+    return false;
+}
+
+bool MainWin::isCurrentDownloadChannel(DownloadChannel* channel)
+{
+    auto currentChannel = m_model->currentDownloadChannel();
+    if (channel && currentChannel) {
+        return boost::iequals(channel->getKey(), currentChannel->getKey());
     }
 
     return false;
@@ -2131,4 +2137,32 @@ void MainWin::updateDriveView() {
             qWarning() << "MainWin::updateDriveView: invalid drive";
         }
     }
+}
+
+void MainWin::updateDownloadChannelData(DownloadChannel* channel) {
+    if (!channel) {
+        qWarning () << "MainWin::updateDownloadChannelData. Invalid download channel!";
+        return;
+    }
+
+    auto updateReplicatorsCallback = [this, channel]() {
+        auto driveUpdatesCallback = [this, channel](bool isOutdated) {
+            if (isOutdated) {
+                const auto rootHash = rawHashToHex(channel->getFsTreeHash()).toStdString();
+                downloadFsTreeByChannel(channel->getKey(), rootHash);
+            } else {
+                if (isCurrentDownloadChannel(channel)) {
+                    m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
+                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+                }
+            }
+
+            loadBalance();
+        };
+
+        checkDriveForUpdates(channel, driveUpdatesCallback);
+        loadBalance();
+    };
+
+    updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }

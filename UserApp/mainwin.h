@@ -93,9 +93,11 @@ private:
     void lockMainButtons(bool state);
     void closeEvent(QCloseEvent* event) override;
     void addLocalModificationsWatcher();
+    bool isCurrentDownloadChannel(DownloadChannel* channel);
     bool isCurrentDrive(Drive* drive);
     void updateDiffView();
     void updateDriveView();
+    void updateDownloadChannelData(DownloadChannel* channel);
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);

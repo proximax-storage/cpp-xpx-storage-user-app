@@ -111,7 +111,7 @@ class Model : public QObject
 
         void removeDrive(const std::string &driveKey);
 
-        void removeChannelByDriveKey(const std::string &driveKey);
+        void removeChannelsByDriveKey(const std::string &driveKey);
 
         void removeFromDownloads(int rowIndex);
 
