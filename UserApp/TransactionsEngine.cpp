@@ -16,6 +16,7 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mpChainClient(client)
     , mpBlockchainEngine(blockchainEngine)
     , mpChainAccount(account)
+    , mSandbox("/modify_drive_data")
 {}
 
 std::string TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
@@ -384,6 +385,14 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
                 mDataModifications[driveKey].erase(iterator);
             }
 
+            const std::string pathToSandbox = getSettingsFolder().string() + "/" + drivePubKey.toStdString() + mSandbox;
+            const QString pathToActionList = findFile(modificationHex, pathToSandbox.c_str());
+            if (pathToActionList.isEmpty()) {
+                qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << pathToSandbox;
+            } else {
+                removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+            }
+
             emit cancelModificationConfirmed(driveKey, modificationHex);
         }
     });
@@ -395,8 +404,8 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
 
 void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& driveId,
                                                const sirius::drive::ActionList& actions,
-                                               const std::string& sandboxFolder,
-                                               const std::vector<xpx_chain_sdk::Address>& replicators) {
+                                               const std::vector<xpx_chain_sdk::Address>& addresses,
+                                               const std::vector<std::string>& replicators) {
     qInfo() << "TransactionsEngine::applyDataModification. Drive key: " << rawHashToHex(driveId);
 
     if (!isValidHash(driveId)) {
@@ -405,17 +414,18 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
         return;
     }
 
-    auto callback = [this, driveId, actions, sandboxFolder, replicators](auto totalModifyDataSize, auto infoHash) {
+    auto callback = [this, driveId, actions, addresses](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
             qWarning() << LOG_SOURCE << "invalid info hash: " << rawHashToHex(infoHash);
             emit internalError("invalid info hash: " + rawHashToHex(infoHash));
             return;
         }
 
-        sendModification(driveId, infoHash, actions, totalModifyDataSize, sandboxFolder, replicators);
+        sendModification(driveId, infoHash, actions, totalModifyDataSize, addresses);
     };
 
-    emit addActions(actions, driveId, sandboxFolder, callback);
+    const std::string pathToSandbox = getSettingsFolder().string() + "/" + rawHashToHex(driveId).toStdString() + mSandbox;
+    emit addActions(actions, driveId, pathToSandbox, replicators, callback);
 }
 
 bool TransactionsEngine::isValidHash(const std::array<uint8_t, 32> &hash) {
@@ -442,7 +452,6 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                           const std::array<uint8_t, 32>& infoHash,
                                           const sirius::drive::ActionList& actions,
                                           const uint64_t totalModifyDataSize,
-                                          const std::string& sandboxFolder,
                                           const std::vector<xpx_chain_sdk::Address>& replicators) {
     const QString actionListFileName = rawHashToHex(infoHash);
     qInfo() << "TransactionsEngine::sendModification. action list downloadDataCDI: " << actionListFileName;
@@ -455,7 +464,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     const QString driveKeyHex = rawHashToHex(driveId);
     qInfo() << "TransactionsEngine::sendModification. Drive key: " << driveKeyHex << " Download data CDI: " << downloadDataCDIHex;
 
-    const QString pathToActionList = findFile(actionListFileName, sandboxFolder.c_str());
+    const std::string pathToSandbox = getSettingsFolder().string() + "/" + driveKeyHex.toStdString() + mSandbox;
+    const QString pathToActionList = findFile(actionListFileName, pathToSandbox.c_str());
     if (pathToActionList.isEmpty()) {
         qCritical() << "TransactionsEngine::sendModification. actionList.bin not found: " << pathToActionList;
         emit internalError("file actionList.bin not found: " + pathToActionList + " . Drive key: " + driveKeyHex);
@@ -585,7 +595,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     });
 
     dataModificationApprovalTransactionNotifier.set([
-            this, modificationId, driveId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId()](
+            this, pathToSandbox, modificationId, driveId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (xpx_chain_sdk::TransactionType::Data_Modification_Approval != notification.data.type) {
@@ -607,7 +617,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,
-                                               [this, driveId, modificationId, notification,
+                                               [this, pathToActionList, pathToSandbox, driveId, modificationId, notification,
                                                 id, replicators, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 emit dataModificationApprovalFailed(driveId, {}, -1);
@@ -685,8 +695,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
             unsubscribeFromReplicators(replicators, id, statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
-            // TODO:
-            //removeDriveModifications(pathToActionList);
+            removeDriveModifications(pathToActionList, pathToSandbox.c_str());
         });
     });
 
@@ -875,6 +884,35 @@ QString TransactionsEngine::findFile(const QString& fileName, const QString& dir
     }
 
     return hitList.empty() ? "" : hitList[0].absoluteFilePath();
+}
+
+void TransactionsEngine::removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox) {
+    sirius::drive::ActionList actionList;
+    actionList.deserialize(pathToActionList.toStdString());
+
+    for (const auto& action : actionList) {
+        if (action.m_actionId == sirius::drive::action_list_id::upload) {
+
+            emit removeTorrent({ rawHashFromHex(action.m_param1.c_str()) });
+
+            const std::string pathToTorrentFile = pathToSandbox.toStdString() + "/" + action.m_param1 + ".torrent";
+            removeFile(pathToTorrentFile.c_str());
+        }
+    }
+
+    removeFile(pathToActionList);
+    removeFile(pathToActionList + ".torrent");
+}
+
+void TransactionsEngine::removeFile(const QString& path) {
+    QFile file(path);
+    if (file.exists()) {
+        if (!file.remove()) {
+            qWarning () << "TransactionsEngine::removeFile. File has NOT been removed: " << path;
+        }
+    } else {
+        qWarning () << "TransactionsEngine::removeFile. File not found: " << path;
+    }
 }
 
 void TransactionsEngine::subscribeOnReplicators(

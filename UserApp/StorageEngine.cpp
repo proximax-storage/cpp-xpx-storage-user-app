@@ -19,9 +19,24 @@ StorageEngine::StorageEngine(Model* model, QObject *parent)
 sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
                                                   const sirius::Key &driveId,
                                                   const std::string &sandboxFolder,
-                                                  uint64_t &modifySize )
+                                                  uint64_t &modifySize,
+                                                  const std::vector<std::string>& replicators)
 {
-    return m_session->addActionListToSession(actions, driveId, m_replicatorList, sandboxFolder, modifySize);
+    auto driveKey = rawHashToHex(driveId.array()).toStdString();
+    if (replicators.empty()) {
+        qWarning () << "StorageEngine::addActions. Replicators list is empty! Drive key: " << driveKey;
+    }
+
+    auto drive = mp_model->findDrive(driveKey);
+    if (!drive) {
+        qCritical () << "StorageEngine::addActions. Drive not found! Drive key: " << driveKey;
+        return {};
+    }
+
+    drive->setReplicators(replicators);
+    m_session->addReplicatorList( drive->getReplicators() );
+
+    return m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize);
 }
 
 void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
@@ -67,6 +82,11 @@ void StorageEngine::restart()
     //todo
 }
 
+void StorageEngine::addReplicators( const sirius::drive::ReplicatorList& replicators)
+{
+    m_session->addReplicatorList( replicators );
+}
+
 void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const std::string&              address,
                          const endpoint_list&            bootstraps,
@@ -92,37 +112,38 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
     });
 }
 
-void StorageEngine::addReplicatorList( const sirius::drive::ReplicatorList& keys )
-{    
-    m_session->addReplicatorList( keys );
-
-    for( const auto& key: keys )
-    {
-        auto it = std::find_if( m_replicatorList.begin(), m_replicatorList.end(), [&key] ( const auto& item) {
-            return key == item;
-        });
-        if ( it == m_replicatorList.end() )
-        {
-            m_replicatorList.push_back( key );
-        }
-    }
-}
-
-
-void StorageEngine::downloadFsTree( const std::string&                      driveHash,
+void StorageEngine::downloadFsTree( const std::string&                      driveId,
                                     const std::string&                      dnChannelId,
-                                    const std::array<uint8_t,32>&           fsTreeHash,
-                                    const sirius::drive::ReplicatorList&    unused )
+                                    const std::array<uint8_t,32>&           fsTreeHash )
 {
-    qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveHash;
+    qDebug() << LOG_SOURCE << "downloadFsTree(): driveHash: " << driveId;
 
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
     if ( Model::isZeroHash(fsTreeHash) )
     {
         qDebug() << LOG_SOURCE << "zero fstree received";
-        emit fsTreeReceived(driveHash, fsTreeHash, {});
+        emit fsTreeReceived(driveId, fsTreeHash, {});
         return;
+    }
+
+    sirius::drive::ReplicatorList replicators;
+    auto drive = mp_model->findDrive(driveId);
+    if (drive) {
+        replicators = drive->getReplicators();
+    } else {
+        auto channel = mp_model->findChannel(dnChannelId);
+        if (channel) {
+            replicators = channel->getReplicators();
+        } else {
+            qWarning () << "StorageEngine::downloadFile. Download channel not found! Channel key: " << dnChannelId;
+        }
+    }
+
+    if (replicators.empty()) {
+        qWarning () << "StorageEngine::downloadFsTree. Replicators list is empty! Channel key: " << dnChannelId;
+    } else {
+        m_session->addReplicatorList( replicators );
     }
 
     std::array<uint8_t,32> channelId{ 0 };
@@ -135,7 +156,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     const auto fsTreeHashUpperCase = QString::fromStdString(sirius::drive::toString(fsTreeHash)).toUpper().toStdString();
     auto fsTreeSaveFolder = getFsTreesFolder()/fsTreeHashUpperCase;
 
-    auto notification = [this, driveHash, fsTreeSaveFolder](sirius::drive::download_status::code code,
+    auto notification = [this, driveId, fsTreeSaveFolder](sirius::drive::download_status::code code,
                                                             const sirius::drive::InfoHash& infoHash,
                                                             const std::filesystem::path /*filePath*/,
                                                             size_t /*downloaded*/,
@@ -153,11 +174,11 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
             fsTree.addFile( {}, std::string("!!! bad FsTree: ") + ex.what(),{},0);
         }
 
-        emit fsTreeReceived(driveHash, infoHash.array(), fsTree);
+        emit fsTreeReceived(driveId, infoHash.array(), fsTree);
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, m_replicatorList);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicators);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
@@ -167,8 +188,23 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
 
     m_session->addDownloadChannel( channelId );
 
+    sirius::drive::ReplicatorList replicators;
+    auto channel = mp_model->findChannel(rawHashToHex(channelId).toStdString());
+    if (!channel) {
+        qWarning () << "StorageEngine::downloadFile. Download channel not found! Channel key: " << rawHashToHex(channelId);
+    } else {
+        replicators = channel->getReplicators();
+    }
+
+    if (replicators.empty()) {
+        qWarning () << "StorageEngine::downloadFile. Replicators list is empty! Channel Key: " << rawHashToHex(channelId);
+    } else {
+        m_session->addReplicatorList( replicators );
+    }
+
     qDebug() << LOG_SOURCE << "downloadFile(): m_session->download(...";
     qDebug() << LOG_SOURCE << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
+
     auto handle = m_session->download( sirius::drive::DownloadContext(
                                     sirius::drive::DownloadContext::file_from_drive,
 
@@ -193,7 +229,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                        mp_model->getDownloadFolder(),
                        "",
                        {},
-                       m_replicatorList );
+                       replicators );
     return handle;
 }
 

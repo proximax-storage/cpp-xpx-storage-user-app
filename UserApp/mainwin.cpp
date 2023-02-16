@@ -161,6 +161,10 @@ void MainWin::init()
         } else if (type == OnChainClient::ChannelsType::Sponsored) {
             m_model->onSponsoredChannelsLoaded(channelsPages);
 
+            for (const auto& [key, drive] : m_model->getDrives()) {
+                m_model->applyFsTreeForChannels(key, drive.getFsTree(), drive.getRootHash());
+            }
+
             for (const auto& [key, channel] : m_model->getDownloadChannels())
             {
                 addEntityToUi(ui->m_channels, channel.getName(), key);
@@ -186,8 +190,15 @@ void MainWin::init()
             }
 
             auto channel = m_model->currentDownloadChannel();
-            if (!channel && !m_model->getDownloadChannels().empty()) {
-                m_model->setCurrentDownloadChannelKey(m_model->getDownloadChannels().begin()->first);
+            if (channel) {
+                m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
+                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+            } else {
+                if (!m_model->getDownloadChannels().empty()) {
+                    m_model->setCurrentDownloadChannelKey(m_model->getDownloadChannels().begin()->first);
+                    m_channelFsTreeTableModel->setFsTree( m_model->getDownloadChannels().begin()->second.getFsTree(), m_model->getDownloadChannels().begin()->second.getLastOpenedPath() );
+                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+                }
             }
 
             connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
@@ -748,21 +759,27 @@ void MainWin::onDownloadBtn()
     //
     // Download all selected files
     //
-    auto selectedIndexes = ui->m_channelFsTableView->selectionModel()->selectedRows();
-    for( auto index: selectedIndexes )
-    {
-        int row = index.row();
-        if ( row < 1 || row >= m_channelFsTreeTableModel->m_rows.size() )
-        {
-            continue;
-        }
+    auto channel = m_model->currentDownloadChannel();
+    if (!channel) {
+        qWarning () << "MainWin::onDownloadBtn. Download channel not found! (Invalid pointer)";
+        return;
+    }
 
-        const auto& hash = m_channelFsTreeTableModel->m_rows[row].m_hash;
-        const auto& name = m_channelFsTreeTableModel->m_rows[row].m_name;
-
-        auto channel = m_model->currentDownloadChannel();
-        if ( channel )
+    auto updateReplicatorsCallback = [this, channel]() {
+        auto selectedIndexes = ui->m_channelFsTableView->selectionModel()->selectedRows();
+        for( auto index: selectedIndexes )
         {
+            int row = index.row();
+            if ( row < 1 || row >= m_channelFsTreeTableModel->m_rows.size() )
+            {
+                continue;
+            }
+
+            const auto& hash = m_channelFsTreeTableModel->m_rows[row].m_hash;
+            const auto& name = m_channelFsTreeTableModel->m_rows[row].m_name;
+
+            qInfo () << "MainWin::onDownloadBtn::updateReplicatorsCallback. File name: " << name << " File hash: " << rawHashToHex(hash);
+
             auto ltHandle = m_model->downloadFile( channel->getKey(),  hash );
 
             m_downloadsTableModel->beginResetModel();
@@ -781,7 +798,9 @@ void MainWin::onDownloadBtn()
             m_downloadsTableModel->endResetModel();
             m_model->saveSettings();
         }
-    }
+    };
+
+    updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
 
 void MainWin::setupDownloadsTable()
@@ -895,7 +914,7 @@ void MainWin::checkDriveForUpdates(Drive* drive, const std::function<void(bool)>
     qDebug () << "MainWin::checkDriveForUpdates. Drive key: " << drive->getKey();
 
     m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(),
-    [drive, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
+    [this, drive, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
         bool result = false;
         if (!isSuccess) {
             qWarning() << "MainWin::checkDriveForUpdates:: callback(false): " << message.c_str() << " : " << code.c_str();
@@ -904,6 +923,7 @@ void MainWin::checkDriveForUpdates(Drive* drive, const std::function<void(bool)>
         }
 
         drive->setReplicators(remoteDrive.data.replicators);
+        m_onChainClient->getStorageEngine()->addReplicators(drive->getReplicators());
 
         const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
         if (remoteRootHash != drive->getRootHash()) {
@@ -932,7 +952,7 @@ void MainWin::checkDriveForUpdates(DownloadChannel* channel, const std::function
     qDebug () << "MainWin::checkDriveForUpdates. Channel key: " << channel->getKey();
 
     m_onChainClient->getBlockchainEngine()->getDriveById( channel->getDriveKey(),
-    [channel, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
+    [this, channel, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
         bool result = false;
         if (!isSuccess) {
             qWarning() << "MainWin::checkDriveForUpdates:: callback(false): " << message.c_str() << " : " << code.c_str();
@@ -941,9 +961,29 @@ void MainWin::checkDriveForUpdates(DownloadChannel* channel, const std::function
         }
 
         const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
-        if (remoteRootHash != channel->getFsTreeHash()) {
-            channel->setFsTreeHash(remoteRootHash);
-            result = true;
+        auto drive = m_model->findDrive(channel->getDriveKey());
+        if (drive) {
+            drive->setReplicators(remoteDrive.data.replicators);
+            m_onChainClient->getStorageEngine()->addReplicators(drive->getReplicators());
+
+            if (remoteRootHash == drive->getRootHash() && remoteRootHash == channel->getFsTreeHash()) {
+                m_model->applyFsTreeForChannels(drive->getKey(), drive->getFsTree(), remoteRootHash);
+            } else if (remoteRootHash == drive->getRootHash() && remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                m_model->applyFsTreeForChannels(drive->getKey(), drive->getFsTree(), remoteRootHash);
+            } else if (remoteRootHash != drive->getRootHash() && remoteRootHash == channel->getFsTreeHash()) {
+                result = true;
+            } else if (remoteRootHash != drive->getRootHash() && remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                result = true;
+            } else {
+                qWarning () << "MainWin::checkDriveForUpdates. Unresolved case for update!";
+            }
+        } else {
+            if (remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                result = true;
+            }
         }
 
         callback(result);
@@ -968,7 +1008,7 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
     qDebug () << "MainWin::updateReplicatorsForChannel. Channel key: " << channelId;
 
     m_onChainClient->getBlockchainEngine()->getDownloadChannelById( channelId,
-    [channel, callback] (auto remoteChannel, auto isSuccess, auto message, auto code ) {
+    [this, channel, callback] (auto remoteChannel, auto isSuccess, auto message, auto code ) {
         bool result = false;
         if (!isSuccess) {
             qWarning() << "MainWin::updateReplicatorsForChannel::callback(): " << message.c_str() << " : " << code.c_str();
@@ -977,6 +1017,8 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
         }
 
         channel->setReplicators(remoteChannel.data.shardReplicators);
+        m_onChainClient->getStorageEngine()->addReplicators(channel->getReplicators());
+
         callback();
     });
 }
@@ -1127,6 +1169,9 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
 
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
             lockDrive();
+
+            updateDriveView();
+            updateDiffView();
 
             break;
         }
@@ -1347,9 +1392,8 @@ void MainWin::onApplyChanges()
         return;
     }
 
-    const std::string sandbox = getSettingsFolder().string() + "/" + drive->getKey() + "/modify_drive_data";
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-    m_onChainClient->applyDataModification(driveKeyHex, actionList, sandbox);
+    m_onChainClient->applyDataModification(driveKeyHex, actionList);
     drive->updateState(registering);
 }
 
@@ -1981,7 +2025,7 @@ void MainWin::onDownloadFsTreeDirect(const std::string& driveId, const std::stri
 
     drive->setDownloadingFsTree(true);
     const auto channelId = "0000000000000000000000000000000000000000000000000000000000000000";
-    m_onChainClient->getStorageEngine()->downloadFsTree(driveId, channelId, rawHashFromHex(fileStructureCdi.c_str()), drive->getReplicators());
+    m_onChainClient->getStorageEngine()->downloadFsTree(driveId, channelId, rawHashFromHex(fileStructureCdi.c_str()));
 }
 
 void MainWin::downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi)
@@ -2004,7 +2048,7 @@ void MainWin::downloadFsTreeByChannel(const std::string& channelId, const std::s
         onDownloadFsTreeDirect(drive->getKey(), fileStructureCdi);
     } else {
         channel->setDownloadingFsTree(true);
-        m_onChainClient->getStorageEngine()->downloadFsTree(channel->getDriveKey(), channelId, rawHashFromHex(fileStructureCdi.c_str()), channel->getReplicators());
+        m_onChainClient->getStorageEngine()->downloadFsTree(channel->getDriveKey(), channelId, rawHashFromHex(fileStructureCdi.c_str()));
     }
 }
 

@@ -329,7 +329,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             if ( !remoteDrive.data.replicators.empty() )
             {
                 drive.setReplicators(remoteDrive.data.replicators);
-                gStorageEngine->addReplicatorList( drive.getReplicators() );
+                gStorageEngine->addReplicators( drive.getReplicators() );
             }
 
             drive.updateState(creating);
@@ -349,7 +349,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             if ( !remoteDrive.data.replicators.empty() )
             {
                 drive.setReplicators(remoteDrive.data.replicators);
-                gStorageEngine->addReplicatorList( drive.getReplicators() );
+                gStorageEngine->addReplicators( drive.getReplicators() );
             }
 
             drive.updateState(creating);

@@ -33,8 +33,8 @@ class TransactionsEngine : public QObject
         void cancelDataModification(const std::array<uint8_t, 32> &driveKey);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
-                                   const std::string& sandboxFolder,
-                                   const std::vector<xpx_chain_sdk::Address>& replicators);
+                                   const std::vector<xpx_chain_sdk::Address>& addresses,
+                                   const std::vector<std::string>& replicators);
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
@@ -56,6 +56,7 @@ class TransactionsEngine : public QObject
         void addActions(const sirius::drive::ActionList& actionList,
                         const sirius::Key& drivePublicKey,
                         const std::string& sandboxFolder,
+                        const std::vector<std::string>& replicators,
                         std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
         void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
@@ -70,6 +71,7 @@ class TransactionsEngine : public QObject
         void replicatorOnBoardingConfirmed(const QString& replicatorPublicKey);
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey);
         void internalError(const QString& errorText);
+        void removeTorrent(const std::array<uint8_t, 32>& torrentId);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
@@ -83,7 +85,6 @@ class TransactionsEngine : public QObject
                               const std::array<uint8_t, 32>& infoHash,
                               const sirius::drive::ActionList& actionList,
                               uint64_t totalModifySize,
-                              const std::string& sandboxFolder,
                               const std::vector<xpx_chain_sdk::Address>& replicators);
 
         void removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
@@ -102,8 +103,14 @@ class TransactionsEngine : public QObject
                                   std::function<void(boost::beast::error_code errorCode)> onError = {});
 
         void announceTransaction(const std::vector<uint8_t>& data);
+
         void onError(const std::string& transactionId, boost::beast::error_code errorCode);
+
         QString findFile(const QString& fileName, const QString& directory);
+
+        void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox);
+
+        void removeFile(const QString& path);
 
     private:
         struct ModificationEntity
@@ -114,6 +121,7 @@ class TransactionsEngine : public QObject
         };
 
     private:
+        std::string mSandbox;
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         BlockchainEngine* mpBlockchainEngine;

@@ -150,10 +150,9 @@ void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveI
 }
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
-                                          const sirius::drive::ActionList &actions,
-                                          const std::string &sandboxFolder) {
+                                          const sirius::drive::ActionList &actions) {
     mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
-                                     [this, driveId, actions, sandboxFolder]
+                                     [this, driveId, actions]
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
@@ -175,7 +174,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
             addresses.emplace_back(key);
         }
 
-        mpTransactionsEngine->applyDataModification(driveId, actions, sandboxFolder, addresses);
+        mpTransactionsEngine->applyDataModification(driveId, actions, addresses, drive.data.replicators);
     });
 }
 
@@ -253,9 +252,9 @@ void OnChainClient::initConnects() {
         emit storagePaymentTransactionFailed(driveId, errorText);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto callback) {
+    connect(mpTransactionsEngine, &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto replicators, auto callback) {
         uint64_t modificationsSize = 0;
-        auto hash = mpStorageEngine->addActions(actionList, driveId,  sandboxFolder, modificationsSize);
+        auto hash = mpStorageEngine->addActions(actionList, driveId,  sandboxFolder, modificationsSize, replicators);
         callback(modificationsSize, hash.array());
     }, Qt::QueuedConnection);
 
@@ -301,6 +300,10 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalFailed, this,  [this](auto driveId, auto fileStructureCdi, auto code) {
         emit dataModificationApprovalTransactionFailed(driveId, fileStructureCdi, code);
+    }, Qt::QueuedConnection);
+
+    connect(mpTransactionsEngine, &TransactionsEngine::removeTorrent, this, [this](auto torrentId) {
+        mpStorageEngine->removeTorrentSync(torrentId);
     }, Qt::QueuedConnection);
 }
 

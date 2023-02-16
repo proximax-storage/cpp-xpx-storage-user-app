@@ -44,8 +44,7 @@ class OnChainClient : public QObject
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void cancelDataModification(const std::array<uint8_t, 32> &driveId);
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
-                                   const sirius::drive::ActionList& actions,
-                                   const std::string& sandboxFolder);
+                                   const sirius::drive::ActionList& actions);
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);

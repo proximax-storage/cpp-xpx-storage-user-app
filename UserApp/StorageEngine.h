@@ -24,26 +24,24 @@ class StorageEngine : public QObject
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
     std::recursive_mutex                            m_mutex;
 
-    sirius::drive::ReplicatorList                   m_replicatorList;
-
 public:
     StorageEngine(Model* model, QObject* parent = nullptr);
 
     sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,
                                        const sirius::Key& driveId,
                                        const std::string& sandboxFolder,
-                                       uint64_t& modifySize);
+                                       uint64_t& modifySize,
+                                       const std::vector<std::string>& replicators);
 
     void start( std::function<void()> addressAlreadyInUseHandler );
 
     void restart();
 
-    void addReplicatorList( const sirius::drive::ReplicatorList& );
+    void addReplicators( const sirius::drive::ReplicatorList& replicators);
 
     void downloadFsTree( const std::string&                     driveHash,
                          const std::string&                     dnChannelId,
-                         const std::array<uint8_t,32>&          fsTreeHash,
-                         const sirius::drive::ReplicatorList&   replicatorList );
+                         const std::array<uint8_t,32>&          fsTreeHash);
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&  channelInfo,
                                            const std::array<uint8_t,32>&  fileHash );
