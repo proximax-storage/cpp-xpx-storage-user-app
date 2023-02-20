@@ -160,6 +160,7 @@ void AddDriveDialog::accept()
     drive.setReplicatorsCount(ui->m_replicatorNumber->text().toInt());
     drive.setSize(ui->m_size->text().toInt());
     drive.setLocalFolder(ui->m_localDriveFolder->text().toStdString());
+    drive.setLocalFolderExists(true);
 
     mp_model->addDrive(drive);
     mp_model->setCurrentDriveKey( drive.getKey() );
