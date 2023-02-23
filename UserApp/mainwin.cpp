@@ -1181,7 +1181,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 removeEntityFromUi(ui->m_channels, channel.getKey());
             });
 
-            m_model->removeChannelsByDriveKey(drive->getKey());
+            m_model->removeChannelsByDriveKey(driveKey);
             break;
         }
         case deleting:
