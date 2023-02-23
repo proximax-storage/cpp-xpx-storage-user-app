@@ -26,6 +26,10 @@ public:
 
     void setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path );
 
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+
 public:
         QVariant channelData(const QModelIndex &index, int role) const;
         QVariant driveData(const QModelIndex &index, int role) const;
@@ -37,6 +41,7 @@ public:
         std::string m_name;
         size_t      m_size;
         std::array<uint8_t,32> m_hash;
+        std::vector<Row> m_chailds;
     };
 
     void updateRows();
@@ -44,9 +49,13 @@ public:
     std::vector<Row> m_rows;
 
 private:
-    bool                    m_isChannelFsModel;
-    sirius::drive::FsTree   m_fsTree = {};
-    FsTreePath              m_currentPath = {};
-    sirius::drive::Folder*  m_currentFolder;
-    Model*                  mp_model;
+    void readFolder(const sirius::drive::Folder& folder, std::vector<Row>& rows);
+
+private:
+    bool                            m_isChannelFsModel;
+    sirius::drive::FsTree           m_fsTree = {};
+    FsTreePath                      m_currentPath = {};
+    sirius::drive::Folder*          m_currentFolder;
+    Model*                          mp_model;
+    QSet<QPersistentModelIndex>     m_checkList;
 };

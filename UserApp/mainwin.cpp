@@ -557,10 +557,7 @@ void MainWin::setupDownloadsTab()
 
     ui->m_channels->addItem( "Loading..." );
 
-    connect( ui->m_downloadBtn, &QPushButton::released, this, [this] ()
-    {
-        onDownloadBtn();
-    }, Qt::QueuedConnection);
+    connect( ui->m_downloadBtn, &QPushButton::released, this, &MainWin::onDownloadBtn, Qt::QueuedConnection);
 
     auto menu = new PopupMenu(ui->m_moreChannelsBtn, this);
     auto renameAction = new QAction("Rename", this);

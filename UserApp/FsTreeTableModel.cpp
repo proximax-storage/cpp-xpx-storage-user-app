@@ -29,6 +29,37 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std
     updateRows();
 }
 
+bool FsTreeTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if ( !m_isChannelFsModel) {
+        return false;
+    }
+
+    if (index.column() == 0 && role == Qt::CheckStateRole) {
+        if (value == Qt::Checked) {
+            m_checkList.insert(index);
+        } else {
+            m_checkList.remove(index);
+        }
+
+        emit dataChanged(index, index);
+
+        return true;
+    }
+
+    emit dataChanged(index, index);
+
+    return true;
+}
+
+Qt::ItemFlags FsTreeTableModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+
+    return QAbstractItemModel::flags(index) | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
+}
+
 void FsTreeTableModel::updateRows()
 {
     beginResetModel();
@@ -45,26 +76,7 @@ void FsTreeTableModel::updateRows()
         emit dataChanged(parentIndex, parentIndex);
     }
 
-    int i = 1;
-    for( const auto& child : m_currentFolder->childs() )
-    {
-        if ( sirius::drive::isFolder(child.second) )
-        {
-            m_rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
-        }
-        else
-        {
-            const auto& file = sirius::drive::getFile(child.second);
-            m_rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
-        }
-
-        QModelIndex childIndex = createIndex(i, 0);
-        if (childIndex.isValid()) {
-            emit dataChanged(childIndex, childIndex);
-        }
-
-        i++;
-    }
+    readFolder(*m_currentFolder, m_rows);
 
     endResetModel();
 }
@@ -165,6 +177,11 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
 
     if ( m_isChannelFsModel )
     {
+        qInfo () << "CURRENT ROLE: " << role;
+        if (index.column() == 0 && role == Qt::CheckStateRole) {
+            return m_checkList.contains(index) ? Qt::Checked : Qt::Unchecked;
+        }
+
         return channelData( index, role );
     }
 
@@ -362,4 +379,21 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
 QVariant FsTreeTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     return {};
+}
+
+void FsTreeTableModel::readFolder(const sirius::drive::Folder& folder, std::vector<Row>& rows)
+{
+    for( const auto& child : folder.childs() )
+    {
+        if ( sirius::drive::isFolder(child.second) )
+        {
+            rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
+            readFolder(sirius::drive::getFolder(child.second), rows[rows.size() - 1].m_chailds);
+        }
+        else
+        {
+            const auto& file = sirius::drive::getFile(child.second);
+            rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
+        }
+    }
 }
