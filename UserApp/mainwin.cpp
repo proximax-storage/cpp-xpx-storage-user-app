@@ -457,6 +457,8 @@ void MainWin::init()
     m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
 
+    ui->tabWidget->setTabVisible( 3, false );
+    ui->tabWidget->setTabVisible( 4, false );
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
         if (index != 1) {
             m_modifyProgressPanel->setVisible(false);
