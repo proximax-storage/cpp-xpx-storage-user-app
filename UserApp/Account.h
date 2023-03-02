@@ -41,14 +41,17 @@ class Account : public QObject
         std::string m_accountName;
         std::string m_privateKeyStr;
         std::string m_publicKeyStr;
+
         std::map<std::string, DownloadChannel> m_dnChannels;
         std::string m_currentDownloadChannelKey;
         bool m_channelsLoaded = false;
         std::string m_downloadFolder;
         std::vector<DownloadInfo> m_downloads;
+
         std::map<std::string, Drive> m_drives;
         std::string m_currentDriveKey;
         bool m_drivesLoaded = false;
+
         std::optional<sirius::crypto::KeyPair> m_keyPair;
 };
 
