@@ -12,6 +12,7 @@ class FsTreeTableModel: public QAbstractListModel
 
 public:
     FsTreeTableModel( Model* model, bool isChannelFsModel );
+    ~FsTreeTableModel() override;
 
     int onDoubleClick( int row );
     std::string currentPathString() const;
@@ -37,12 +38,19 @@ public:
 public:
     struct Row
     {
+        Row(bool, const std::string&, const std::string&, size_t, const std::array<uint8_t,32>&, const std::vector<Row>&);
+        Row(const Row& row);
+        Row& operator=(const Row&);
+
         bool        m_isFolder;
         std::string m_name;
+        std::string m_path;
         size_t      m_size;
         std::array<uint8_t,32> m_hash;
         std::vector<Row> m_chailds;
     };
+
+    std::vector<Row> getSelectedRows();
 
     void updateRows();
 
@@ -50,6 +58,7 @@ public:
 
 private:
     void readFolder(const sirius::drive::Folder& folder, std::vector<Row>& rows);
+    void readFolder(const Row& parentRow, std::vector<Row>& rows, std::vector<Row>& result);
 
 private:
     bool                            m_isChannelFsModel;

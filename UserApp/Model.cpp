@@ -510,13 +510,14 @@ void Model::endStorageEngine()
     gStorageEngine.reset();
 }
 
-sirius::drive::lt_handle Model::downloadFile( const std::string&            channelIdStr,
-                                              const std::array<uint8_t,32>& fileHash )
+sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
+                                             const std::array<uint8_t, 32> &fileHash,
+                                             const std::string &path)
 {
     std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
 
-    return gStorageEngine->downloadFile( channelId, fileHash );
+    return gStorageEngine->downloadFile( channelId, fileHash, path );
 }
 
 void Model::calcDiff()

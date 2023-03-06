@@ -49,6 +49,9 @@ class Settings : public QObject
         void onDownloadCompleted( lt::torrent_handle handle );
         void removeFromDownloads( int index );
 
+    signals:
+        void downloadError(const QString& message);
+
     private:
         friend class PrivKeyDialog;
         friend class SettingsDialog;

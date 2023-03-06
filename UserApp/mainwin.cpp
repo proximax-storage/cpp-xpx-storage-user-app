@@ -486,6 +486,11 @@ void MainWin::init()
         }
     }, Qt::QueuedConnection);
 
+    connect(m_settings, &Settings::downloadError, this, [this](auto message){
+        addNotification(message);
+        showNotification(message);
+    }, Qt::QueuedConnection);
+
     if (m_settings->m_isDriveStructureAsTree) {
         ui->m_driveFsTableView->hide();
         ui->m_diffTableView->hide();
@@ -680,10 +685,6 @@ void MainWin::selectChannelFsItem( int index )
     }
 
     ui->m_channelFsTableView->selectRow( index );
-
-    if (!m_channelFsTreeTableModel->m_rows.empty()) {
-        ui->m_downloadBtn->setEnabled( ! m_channelFsTreeTableModel->m_rows[index].m_isFolder );
-    }
 }
 
 void MainWin::setupDriveFsTable()
@@ -755,9 +756,6 @@ void MainWin::selectDriveFsItem( int index )
 
 void MainWin::onDownloadBtn()
 {
-    //
-    // Download all selected files
-    //
     auto channel = m_model->currentDownloadChannel();
     if (!channel) {
         qWarning () << "MainWin::onDownloadBtn. Download channel not found! (Invalid pointer)";
@@ -765,29 +763,21 @@ void MainWin::onDownloadBtn()
     }
 
     auto updateReplicatorsCallback = [this, channel]() {
-        auto selectedIndexes = ui->m_channelFsTableView->selectionModel()->selectedRows();
-        for( auto index: selectedIndexes )
+        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
         {
-            int row = index.row();
-            if ( row < 1 || row >= m_channelFsTreeTableModel->m_rows.size() )
-            {
-                continue;
-            }
+            QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
 
-            const auto& hash = m_channelFsTreeTableModel->m_rows[row].m_hash;
-            const auto& name = m_channelFsTreeTableModel->m_rows[row].m_name;
-
-            qInfo () << "MainWin::onDownloadBtn::updateReplicatorsCallback. File name: " << name << " File hash: " << rawHashToHex(hash);
-
-            auto ltHandle = m_model->downloadFile( channel->getKey(),  hash );
-
+            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash, selectedRow.m_path );
             m_downloadsTableModel->beginResetModel();
 
+            qWarning () << "MainWin::onDownloadBtn. Download name: " << selectedRow.m_name;
+            qWarning () << "MainWin::onDownloadBtn. Download path: " << m_model->getDownloadFolder().string() + selectedRow.m_path;
+
             DownloadInfo downloadInfo;
-            downloadInfo.setHash(hash);
+            downloadInfo.setHash(selectedRow.m_hash);
             downloadInfo.setDownloadChannelKey(channel->getKey());
-            downloadInfo.setFileName(name);
-            downloadInfo.setSaveFolder(m_model->getDownloadFolder());
+            downloadInfo.setFileName(selectedRow.m_name);
+            downloadInfo.setSaveFolder(m_model->getDownloadFolder().string() + selectedRow.m_path);
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);
@@ -1721,6 +1711,10 @@ void MainWin::setupDrivesTab()
                 onDownloadFsTreeDirect(drive->getKey(), rootHash);
             } else {
                 m_model->calcDiff();
+                if (isCurrentDrive(drive)) {
+                    m_model->calcDiff();
+                    updateDiffView();
+                }
             }
         };
 

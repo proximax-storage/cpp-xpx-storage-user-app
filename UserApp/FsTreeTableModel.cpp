@@ -11,6 +11,9 @@ FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel)
     , mp_model(model)
 {}
 
+FsTreeTableModel::~FsTreeTableModel()
+{}
+
 void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
 {
     m_fsTree = fsTree;
@@ -68,7 +71,7 @@ void FsTreeTableModel::updateRows()
     m_rows.reserve( m_currentFolder->childs().size() + 1 );
 
     if ((m_isChannelFsModel && !mp_model->getDownloadChannels().empty()) || (!m_isChannelFsModel && !mp_model->getDrives().empty())) {
-        m_rows.emplace_back( Row { true, "..", 0 } );
+        m_rows.emplace_back( Row{ true, "..", "", 0, {}, {} } );
     }
 
     QModelIndex parentIndex = createIndex(0, 0);
@@ -137,7 +140,7 @@ std::string FsTreeTableModel::currentPathString() const
         return path;
     }
 
-    for( int i=1; i<m_currentPath.size(); i++)
+    for( int i = 1; i < m_currentPath.size(); i++ )
     {
         path += "/" + m_currentPath[i]->name();
     }
@@ -177,7 +180,6 @@ QVariant FsTreeTableModel::data(const QModelIndex &index, int role) const
 
     if ( m_isChannelFsModel )
     {
-        qInfo () << "CURRENT ROLE: " << role;
         if (index.column() == 0 && role == Qt::CheckStateRole) {
             return m_checkList.contains(index) ? Qt::Checked : Qt::Unchecked;
         }
@@ -383,17 +385,96 @@ QVariant FsTreeTableModel::headerData(int section, Qt::Orientation orientation, 
 
 void FsTreeTableModel::readFolder(const sirius::drive::Folder& folder, std::vector<Row>& rows)
 {
+    size_t i = 0;
     for( const auto& child : folder.childs() )
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-            rows.emplace_back( Row{ true, sirius::drive::getFolder(child.second).name(), 0, {} } );
+            rows.emplace_back(Row{ true, sirius::drive::getFolder(child.second).name(), "", i, {}, {}});
             readFolder(sirius::drive::getFolder(child.second), rows[rows.size() - 1].m_chailds);
         }
         else
         {
             const auto& file = sirius::drive::getFile(child.second);
-            rows.emplace_back( Row{ false, file.name(), file.size(), file.hash().array() } );
+            Row newRow( false, file.name(), "", file.size(), file.hash().array(), {});
+            rows.emplace_back(newRow);
+        }
+
+        i++;
+    }
+}
+
+void FsTreeTableModel::readFolder(const Row& parentRow, std::vector<Row>& rows, std::vector<Row>& result)
+{
+    for (auto& row : rows)
+    {
+        row.m_path = parentRow.m_path.empty() ? "/" + parentRow.m_name
+                                              : parentRow.m_path + "/" + parentRow.m_name;
+
+        if (row.m_isFolder)
+        {
+            readFolder(row, row.m_chailds, result);
+        }
+        else
+        {
+            result.emplace_back(row);
         }
     }
+}
+
+std::vector<FsTreeTableModel::Row> FsTreeTableModel::getSelectedRows()
+{
+    std::vector<FsTreeTableModel::Row> rows;
+    rows.reserve(m_checkList.size());
+    QSetIterator<QPersistentModelIndex> iterator(m_checkList);
+    while (iterator.hasNext()) {
+        const QModelIndex index = iterator.next();
+        if (index.isValid() && index.row() < m_rows.size()) {
+            auto row = m_rows[index.row()];
+            if (row.m_isFolder)
+            {
+                readFolder(row, row.m_chailds, rows);
+            }
+            else
+            {
+                rows.emplace_back(row);
+            }
+        }
+    }
+
+    return rows;
+}
+
+FsTreeTableModel::Row::Row(bool isFolder, const std::string& name, const std::string& path, size_t size, const std::array<uint8_t, 32>& hash, const std::vector<Row>& chailds)
+    : m_isFolder(isFolder)
+    , m_name(name)
+    , m_path(path)
+    , m_size(size)
+    , m_hash(hash)
+    , m_chailds(chailds)
+{
+}
+
+FsTreeTableModel::Row::Row(const FsTreeTableModel::Row &row) {
+    m_isFolder = row.m_isFolder;
+    m_name = row.m_name;
+    m_path = row.m_path;
+    m_size = row.m_size;
+    m_hash = row.m_hash;
+    m_chailds = row.m_chailds;
+}
+
+FsTreeTableModel::Row &FsTreeTableModel::Row::operator=(const FsTreeTableModel::Row& row) {
+    if (this == &row) {
+        return *this;
+    }
+
+    m_isFolder = row.m_isFolder;
+    m_name = row.m_name;
+    m_path = row.m_path;
+    m_size = row.m_size;
+    m_hash = row.m_hash;
+    m_chailds = row.m_chailds;
+
+    return *this;
 }

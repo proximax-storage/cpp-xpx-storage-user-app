@@ -347,13 +347,15 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
                 if ( ec )
                 {
-                    qDebug() << LOG_SOURCE << "onDownloadCompleted: Cannot save file: " << ec.message();
+                    qWarning() << LOG_SOURCE << "onDownloadCompleted: Cannot save file: " << ec.message();
 
-                    QMessageBox msgBox;
-                    msgBox.setText( QString::fromStdString( "Cannot save file: " + std::string(destPath.filename()) ) );
-                    msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.exec();
+                    QString message;
+                    message.append("Cannot save file: ");
+                    message.append(destPath.filename().string().c_str());
+                    message.append(" (");
+                    message.append(ec.message().c_str());
+                    message.append(")");
+                    emit downloadError(message);
                 }
 
                 dnInfo.setCompleted(true);

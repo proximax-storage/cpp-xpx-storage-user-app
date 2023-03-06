@@ -910,8 +910,6 @@ void TransactionsEngine::removeFile(const QString& path) {
         if (!file.remove()) {
             qWarning () << "TransactionsEngine::removeFile. File has NOT been removed: " << path;
         }
-    } else {
-        qWarning () << "TransactionsEngine::removeFile. File not found: " << path;
     }
 }
 
