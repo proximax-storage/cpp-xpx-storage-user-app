@@ -830,6 +830,901 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="contractTab">
+       <attribute name="title">
+        <string>Contracts</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_16">
+        <item>
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="Calling">
+           <attribute name="title">
+            <string>Calling</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_19">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_16">
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>Contract:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_3">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_6">
+                <property name="text">
+                 <string>&gt;</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>881</width>
+                  <height>17</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+              <item>
+               <widget class="QPushButton" name="pushButton_5">
+                <property name="text">
+                 <string>+</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_7">
+                <property name="text">
+                 <string>-</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>File:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="lineEdit_8"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>Function:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="lineEdit_7"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_18">
+              <item>
+               <spacer name="horizontalSpacer_11">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_25">
+              <item>
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>Parameters:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_6"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_21">
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>ExecutionCallPayment</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_2"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_12">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_24">
+              <item>
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>DownloadCallPayment</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_3"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_13">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_27">
+              <item>
+               <widget class="QTableWidget" name="tableWidget">
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <column>
+                 <property name="text">
+                  <string>mosaic</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>amount</string>
+                 </property>
+                </column>
+                <item row="0" column="0">
+                 <property name="text">
+                  <string>3478901</string>
+                 </property>
+                </item>
+                <item row="0" column="1">
+                 <property name="text">
+                  <string>100</string>
+                 </property>
+                </item>
+                <item row="1" column="0">
+                 <property name="text">
+                  <string>33303</string>
+                 </property>
+                </item>
+                <item row="1" column="1">
+                 <property name="text">
+                  <string>1000</string>
+                 </property>
+                </item>
+                <item row="2" column="0">
+                 <property name="text">
+                  <string>1784858</string>
+                 </property>
+                </item>
+                <item row="2" column="1">
+                 <property name="text">
+                  <string>10000</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_15">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="Deployment">
+           <attribute name="title">
+            <string>Deployment</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_19">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_16">
+              <item>
+               <widget class="QLabel" name="label_181">
+                <property name="text">
+                 <string>Drive</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="m_contractDiveCBox">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>881</width>
+                  <height>17</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_29">
+              <item>
+               <widget class="QLabel" name="label_19">
+                <property name="text">
+                 <string>Assignee</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractAssignee">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_16">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_30">
+              <item>
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>File:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractFile"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_31">
+              <item>
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>Function:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractFunction"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_25">
+              <item>
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>Parameters:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractParameters"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_21">
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>ExecutionCallPayment</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractExecutionCallPayment"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_12">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_24">
+              <item>
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>DownloadCallPayment</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="m_contractDownloadCallPayment"/>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_13">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_27">
+              <item>
+               <widget class="QTableWidget" name="m_contractMosaicTable">
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <row>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </row>
+                <column>
+                 <property name="text">
+                  <string>mosaic</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>amount</string>
+                 </property>
+                </column>
+                <item row="0" column="0">
+                 <property name="text">
+                  <string>3478901</string>
+                 </property>
+                </item>
+                <item row="0" column="1">
+                 <property name="text">
+                  <string>100</string>
+                 </property>
+                </item>
+                <item row="1" column="0">
+                 <property name="text">
+                  <string>33303</string>
+                 </property>
+                </item>
+                <item row="1" column="1">
+                 <property name="text">
+                  <string>1000</string>
+                 </property>
+                </item>
+                <item row="2" column="0">
+                 <property name="text">
+                  <string>1784858</string>
+                 </property>
+                </item>
+                <item row="2" column="1">
+                 <property name="text">
+                  <string>10000</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_28">
+                <item>
+                 <layout class="QFormLayout" name="formLayout_2">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_17">
+                    <property name="text">
+                     <string>AutomaticExecutionFileName</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_18">
+                    <property name="text">
+                     <string>AutomaticExecutionFunctionName</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_20">
+                    <property name="text">
+                     <string>AutomaticExecutionCallPayment</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_21">
+                    <property name="text">
+                     <string>AutomaticDownloadCallPayment</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="lineEdit_9"/>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLineEdit" name="lineEdit_10"/>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLineEdit" name="lineEdit_11"/>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLineEdit" name="lineEdit_12"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_22">
+                    <property name="text">
+                     <string>AutomaticExecutionsNumber</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLineEdit" name="lineEdit_14"/>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_26">
+              <item>
+               <widget class="QPushButton" name="m_contractDeployBtn">
+                <property name="text">
+                 <string>Deploy</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="streamTab">
+       <attribute name="title">
+        <string>Streaming</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QTabWidget" name="tabView">
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="viewerTab">
+           <attribute name="title">
+            <string>Viewing</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Stream ID:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="minimumContentsLength">
+                 <number>0</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_4">
+                <property name="text">
+                 <string>Add Stream Link</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_15">
+              <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Channel (created during add stream linkk):</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_2">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="text">
+               <string>Use external player</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Path to player:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_2">
+                <property name="text">
+                 <string>Browse</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_14">
+              <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_3">
+                <property name="text">
+                 <string>Start Viewing</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="broadcastingTab">
+           <attribute name="title">
+            <string>Broadcasting</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_22">
+              <item>
+               <widget class="QPushButton" name="pushButton_8">
+                <property name="text">
+                 <string>Prepare New Stream</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+              <item>
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>Stream:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_4">
+                <property name="minimumSize">
+                 <size>
+                  <width>600</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_19">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <widget class="QRadioButton" name="radioButton_2">
+                  <property name="text">
+                   <string>Use OBS</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton">
+                  <property name="text">
+                   <string>Use ffmpeg</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>Path To OBS:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_4"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_20">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_15">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_23">
+                  <item>
+                   <widget class="QLabel" name="label_14">
+                    <property name="text">
+                     <string>Work Folder:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_5"/>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_17">
+              <item>
+               <widget class="QPushButton" name="pushButton_9">
+                <property name="text">
+                 <string>Start Streaming</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_9">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>

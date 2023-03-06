@@ -19,7 +19,7 @@ EditDialog::EditDialog( const QString& title, const QString& text, std::string& 
     ui->name->selectAll();
 
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
-    connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate, type] (auto text)
+    connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate, type, &renameText] (auto text)
     {
         bool isEntityExists = type == Drive ? mp_model->isDriveWithNameExists(text) : mp_model->isChannelWithNameExists(text);
         if (!nameTemplate.match(text).hasMatch() || isEntityExists) {
@@ -29,8 +29,10 @@ EditDialog::EditDialog( const QString& title, const QString& text, std::string& 
         } else {
             QToolTip::hideText();
             ui->name->setProperty("is_valid", true);
-            validate();
+            renameText = ui->name->text().toStdString();
         }
+
+        validate();
     });
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);

@@ -90,7 +90,7 @@ std::string Model::getGatewayPort() {
     return gatewayEndpoint.size() == 2 ? gatewayEndpoint[1].toStdString() : "";
 }
 
-sirius::crypto::KeyPair& Model::getKeyPair() {
+const sirius::crypto::KeyPair& Model::getKeyPair() {
     return m_settings->config().m_keyPair.value();
 }
 
