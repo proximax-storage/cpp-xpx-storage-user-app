@@ -48,13 +48,11 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     std::vector<std::string> drivesKeys;
     drivesKeys.reserve(mpModel->getDrives().size());
+    ui->selectDriveBox->addItem("Select from my drives");
     for ( const auto& [key, drive] : mpModel->getDrives()) {
         drivesKeys.push_back(key);
         ui->selectDriveBox->addItem(drive.getName().c_str());
     }
-
-    ui->selectDriveBox->model()->sort(0);
-    ui->selectDriveBox->insertItem(0, "Select from my drives");
 
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
     connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate, drivesKeys] (auto text)
