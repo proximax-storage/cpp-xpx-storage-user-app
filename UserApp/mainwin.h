@@ -98,12 +98,14 @@ private:
     void updateDiffView();
     void updateDriveView();
     void updateDownloadChannelData(DownloadChannel* channel);
+    void getXpxId(std::function<void()> callback);
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
     void onInternalError(const QString& errorText);
+    void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);
     void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
@@ -142,4 +144,5 @@ private:
 
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
+    uint64_t                m_XPX_MOSAIC_ID;
 };

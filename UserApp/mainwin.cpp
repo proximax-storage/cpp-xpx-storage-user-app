@@ -54,6 +54,7 @@ MainWin::MainWin(QWidget *parent)
     , ui(new Ui::MainWin)
     , m_settings(new Settings(this))
     , m_model(new Model(m_settings, this))
+    , m_XPX_MOSAIC_ID(0)
 {
     ui->setupUi(this);
 }
@@ -389,7 +390,10 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName) {
         qDebug() << "network layer initialized successfully";
 
-        loadBalance();
+        getXpxId([this]() {
+            loadBalance();
+        });
+
         ui->m_networkName->setText(networkName);
 
         xpx_chain_sdk::DrivesPageOptions options;
@@ -628,11 +632,29 @@ void MainWin::setupDownloadsTab()
     menu->addAction(channelInfoAction);
     connect( channelInfoAction, &QAction::triggered, this, [this](bool)
     {
-        if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
-        {
-            ChannelInfoDialog dialog( *channelInfo, this );
-            dialog.exec();
+        auto channel = m_model->currentDownloadChannel();
+        if (!channel) {
+            qWarning() << "Channel info action. Unknown download channel (Invalid pointer to channel)";
+            return;
         }
+
+        m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel->getKey(),[this, channel]
+            (auto remoteChannel, auto isSuccess, auto message, auto code ){
+            if (!isSuccess) {
+                qWarning() << "Channel info action. Error: " << message.c_str() << " : " << code.c_str();
+                return;
+            }
+
+            ChannelInfoDialog dialog(this);
+            dialog.setName(channel->getName().c_str());
+            dialog.setId(channel->getKey().c_str());
+            dialog.setDriveId(channel->getDriveKey().c_str());
+            dialog.setReplicators(remoteChannel.data.shardReplicators);
+            dialog.setKeys(remoteChannel.data.listOfPublicKeys);
+            dialog.setPrepaid(remoteChannel.data.downloadSizeMegabytes);
+            dialog.init();
+            dialog.exec();
+        });
     });
 
     ui->m_moreChannelsBtn->setMenu(menu);
@@ -1022,6 +1044,30 @@ void MainWin::onInternalError(const QString& errorText)
     addNotification(errorText);
 }
 
+void MainWin::setDownloadChannelOnUi(const std::string& channelId)
+{
+    auto channel = m_model->findChannel(channelId);
+    if (!channel) {
+        qWarning() << "MainWin::setDownloadChannelOnUi. Unknown channel: " << channelId;
+        if (ui->m_channels->count() > 0) {
+            ui->m_channels->setCurrentIndex(0);
+            m_model->setCurrentDownloadChannelKey( ui->m_channels->currentData().toString().toStdString() );
+        }
+
+        return;
+    }
+
+    const auto currentChannelKey = ui->m_channels->currentData().toString();
+    if ( ! boost::iequals(channelId, currentChannelKey.toStdString())) {
+        const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channelId)), Qt::UserRole, Qt::MatchFixedString);
+        if (index != -1) {
+            ui->m_channels->setCurrentIndex(index);
+        } else {
+            qWarning() << "MainWin::setDownloadChannelOnUi. Channel not found in UI: " << channelId;
+        }
+    }
+}
+
 void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
 {
     auto drive = m_model->findDrive(driveKey);
@@ -1273,6 +1319,7 @@ void MainWin::addChannel( const std::string&              channelName,
 
     addEntityToUi(ui->m_channels, channelName, channelKey);
     updateDownloadChannelStatusOnUi(*m_model->findChannel(channelKey));
+    setDownloadChannelOnUi(channelKey);
     lockChannel(channelKey);
 }
 
@@ -1602,18 +1649,16 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
 
 void MainWin::loadBalance() {
     auto publicKey = m_model->getClientPublicKey();
-    m_onChainClient->getBlockchainEngine()->getAccountInfo(publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+    m_onChainClient->getBlockchainEngine()->getAccountInfo(
+            publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << LOG_SOURCE << message.c_str() << " : " << code.c_str();
+            qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
             return;
         }
 
-        // 1423072717967804887 - publicTest
-        // 992621222383397347 - local
-        const xpx_chain_sdk::MosaicName PRX_XPX { 1423072717967804887, { "prx.xpx" } };
-        auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [PRX_XPX]( auto mosaic )
+        auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [this]( auto mosaic )
         {
-            return mosaic.id == PRX_XPX.mosaicId;
+            return mosaic.id == m_XPX_MOSAIC_ID;
         });
 
         const uint64_t balance = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
@@ -2160,4 +2205,46 @@ void MainWin::updateDownloadChannelData(DownloadChannel* channel) {
     };
 
     updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
+}
+
+void MainWin::getXpxId(std::function<void()> callback) {
+    auto publicKey = m_model->getClientPublicKey();
+    m_onChainClient->getBlockchainEngine()->getAccountInfo(
+            publicKey, [this, callback](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            return;
+        }
+
+        std::vector<xpx_chain_sdk::MosaicId> mosaicIds;
+        for (const xpx_chain_sdk::Mosaic& mosaic : info.mosaics) {
+            mosaicIds.push_back(mosaic.id);
+        }
+
+        m_onChainClient->getBlockchainEngine()->getMosaicsNames(
+                mosaicIds, [this, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
+            if (!isSuccess) {
+                qWarning() << "loadBalance. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
+                return;
+            }
+
+            bool isMosaicFound = false;
+            for (const auto& rawInfo : mosaicDescriptors.names) {
+                for (const auto& name : rawInfo.names) {
+                    QString currentName(name.c_str());
+                    if (currentName.contains("xpx", Qt::CaseInsensitive)) {
+                        isMosaicFound = true;
+                        m_XPX_MOSAIC_ID = rawInfo.mosaicId;
+                        break;
+                    }
+                }
+
+                if (isMosaicFound) {
+                    break;
+                }
+            }
+
+            callback();
+        });
+    });
 }
