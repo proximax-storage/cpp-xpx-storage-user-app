@@ -277,6 +277,32 @@ void BlockchainEngine::getReplicatorById(
     emit runProcess(id, task);
 }
 
+
+void BlockchainEngine::getMosaicsNames(
+        const std::vector<xpx_chain_sdk::MosaicId>& ids,
+        const std::function<void(xpx_chain_sdk::MosaicNames, bool, std::string, std::string)>& callback )
+{
+    auto task = [this, ids]() {
+        try {
+            auto names = mpChainClient->mosaics()->getMosaicsNames(ids);
+            return QVariant::fromValue(names);
+        } catch (const xpx_chain_sdk::InvalidRequest& e) {
+            return QVariant::fromValue(e.getErrorMessage());
+        } catch (std::exception& e) {
+            return QVariant::fromValue(std::string(e.what()));
+        }
+    };
+
+    const QUuid id = QUuid::createUuid();
+    auto resolver = [this, id, callback] (QVariant data) {
+        emit removeResolver(id);
+        typeResolver<xpx_chain_sdk::MosaicNames>(data, callback);
+    };
+
+    emit addResolver(id, resolver);
+    emit runProcess(id, task);
+}
+
 void BlockchainEngine::onAddResolver(const QUuid &id, const std::function<void(QVariant)>& resolver) {
     mResolvers.emplace(id, resolver);
 }
