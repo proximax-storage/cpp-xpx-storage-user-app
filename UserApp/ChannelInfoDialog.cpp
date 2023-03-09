@@ -5,25 +5,11 @@
 #include <QToolTip>
 #include <QRegularExpression>
 
-ChannelInfoDialog::ChannelInfoDialog( const DownloadChannel& channel,
-                                                   QWidget *parent) :
+ChannelInfoDialog::ChannelInfoDialog( QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ChannelInfoDialog)
 {
     ui->setupUi(this);
-
-    ui->name->setText( QString::fromStdString(channel.getName()) );
-    ui->driveKey->setText( QString::fromStdString(channel.getDriveKey()) );
-
-    std::string allowedPublicKeys;
-    for( const auto& key : channel.getAllowedPublicKeys() )
-    {
-        allowedPublicKeys += "."+key;
-    }
-    ui->keysLine->setText( QString::fromStdString(allowedPublicKeys) );
-
-    ui->prepaidAmountLine->setText( "?" ); //QString::number(channel.m_prepaid) );
-
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ChannelInfoDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ChannelInfoDialog::reject);
@@ -43,4 +29,79 @@ void ChannelInfoDialog::accept() {
 
 void ChannelInfoDialog::reject() {
     QDialog::reject();
+}
+
+void ChannelInfoDialog::init()
+{
+    ui->name->setText(name);
+    ui->driveKey->setText(driveId);
+    ui->id->setText(id);
+
+    std::string allowedPublicKeys;
+    for( int i = 0; i < keys.size(); i++ )
+    {
+        if (i != 0 && i != keys.size() - 1)
+        {
+            allowedPublicKeys += ", " + keys[i];
+        }
+        else
+        {
+            allowedPublicKeys += keys[i];
+        }
+    }
+
+    std::string replicatorKeys;
+    for( int i = 0; i < replicators.size(); i++ )
+    {
+        if (i != 0 && i != replicators.size() - 1)
+        {
+            replicatorKeys += ", " + replicators[i];
+        }
+        else
+        {
+            replicatorKeys += replicators[i];
+        }
+    }
+
+    ui->replicators->setText(replicatorKeys.c_str());
+
+    ui->keysLine->setText( QString::fromStdString(allowedPublicKeys) );
+    ui->prepaidAmountLine->setText(QString::number(prepaid));
+
+    ui->name->setReadOnly(true);
+    ui->id->setReadOnly(true);
+    ui->replicators->setReadOnly(true);
+    ui->driveKey->setReadOnly(true);
+    ui->keysLine->setReadOnly(true);
+    ui->prepaidAmountLine->setReadOnly(true);
+}
+
+void ChannelInfoDialog::setName(const QString& channelName)
+{
+    name = channelName;
+}
+
+void ChannelInfoDialog::setId(const QString& channelId)
+{
+    id = channelId;
+}
+
+void ChannelInfoDialog::setDriveId(const QString& drive)
+{
+    driveId = drive;
+}
+
+void ChannelInfoDialog::setReplicators(const std::vector<std::string>& replicatorKeys)
+{
+    replicators = replicatorKeys;
+}
+
+void ChannelInfoDialog::setKeys(const std::vector<std::string>& pKeys)
+{
+    keys = pKeys;
+}
+
+void ChannelInfoDialog::setPrepaid(const uint64_t amount)
+{
+    prepaid = amount;
 }
