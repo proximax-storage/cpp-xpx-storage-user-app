@@ -64,14 +64,14 @@ class DownloadChannel {
         std::string m_key;
         std::string m_driveKey;
         std::vector<std::string> m_allowedPublicKeys;
-        bool m_isCreating = true;
-        bool m_isDeleting = false;
+        bool m_isCreating;
+        bool m_isDeleting;
         timepoint m_creationTimepoint;
         timepoint m_tobeDeletedTimepoint;
         std::vector<std::string> m_lastOpenedPath;
         std::array<uint8_t, 32> m_fsTreeHash;
         sirius::drive::FsTree m_fsTree;
-        bool m_downloadingFsTree = false;
+        bool m_downloadingFsTree;
         sirius::drive::ReplicatorList m_shardReplicators;
 };
 

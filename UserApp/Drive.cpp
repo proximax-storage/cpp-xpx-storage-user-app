@@ -8,7 +8,22 @@
 
 Drive::Drive(QObject* parent)
     : QObject(parent)
+    , m_driveKey("")
+    , m_name("")
+    , m_localDriveFolder("")
+    , m_localDriveFolderExists(false)
+    , m_size(0)
+    , m_replicatorNumber(0)
+    , m_replicatorList({})
+    , m_lastOpenedPath({})
+    , m_rootHash({ 0 })
+    , m_fsTree({})
+    , m_downloadingFsTree(false)
     , m_localDrive(std::make_shared<LocalDriveItem>())
+    , m_actionList({})
+    , m_currentModificationHash({ 0 })
+    , m_modificationEvents({})
+    , m_isInitialized(false)
 {
     initStateMachine(creating);
 }

@@ -2,6 +2,19 @@
 #include "utils/HexParser.h"
 
 DownloadChannel::DownloadChannel()
+    : m_name("")
+    , m_key("")
+    , m_driveKey("")
+    , m_allowedPublicKeys({})
+    , m_isCreating(false)
+    , m_isDeleting(false)
+    , m_creationTimepoint()
+    , m_tobeDeletedTimepoint()
+    , m_lastOpenedPath({})
+    , m_fsTreeHash({ 0 })
+    , m_fsTree({})
+    , m_downloadingFsTree(false)
+    , m_shardReplicators({})
 {}
 
 DownloadChannel::~DownloadChannel()

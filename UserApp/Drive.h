@@ -105,24 +105,24 @@ class Drive : public QObject
         std::string m_driveKey;
         std::string m_name;
         std::string m_localDriveFolder;
-        bool m_localDriveFolderExists = false;
-        uint64_t m_size = 0;
-        uint32_t m_replicatorNumber = 0;
+        bool m_localDriveFolderExists;
+        uint64_t m_size;
+        uint32_t m_replicatorNumber;
         sirius::drive::ReplicatorList m_replicatorList;
         std::vector<std::string> m_lastOpenedPath;
 
-        std::array<uint8_t, 32> m_rootHash = { 0 };
+        std::array<uint8_t, 32> m_rootHash;
         sirius::drive::FsTree m_fsTree;
-        bool m_downloadingFsTree = false;
+        bool m_downloadingFsTree;
 
         // diff
         std::shared_ptr<LocalDriveItem> m_localDrive;
         sirius::drive::ActionList m_actionList;
-        std::array<uint8_t, 32> m_currentModificationHash = { 0 };
+        std::array<uint8_t, 32> m_currentModificationHash;
         DriveState m_driveState;
         QStateMachine *mp_stateMachine;
         std::vector<DriveModificationEvent*> m_modificationEvents;
-        bool m_isInitialized = false;
+        bool m_isInitialized;
 };
 
 
