@@ -100,6 +100,8 @@ private:
     void updateDownloadChannelData(DownloadChannel* channel);
     void getXpxId(std::function<void()> callback);
 
+    void initStreaming();
+
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);

@@ -511,13 +511,12 @@ void Model::endStorageEngine()
 }
 
 sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
-                                             const std::array<uint8_t, 32> &fileHash,
-                                             const std::string &path)
+                                             const std::array<uint8_t, 32> &fileHash)
 {
     std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
 
-    return gStorageEngine->downloadFile( channelId, fileHash, path );
+    return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
 void Model::calcDiff()

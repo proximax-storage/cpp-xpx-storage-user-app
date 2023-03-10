@@ -38,6 +38,14 @@ void DownloadInfo::setSaveFolder(const std::string& folder) {
     m_saveFolder = folder;
 }
 
+std::string DownloadInfo::getDownloadFolder() const {
+    return m_downloadFolder;
+}
+
+void DownloadInfo::setDownloadFolder(const std::string& folder) {
+    m_downloadFolder = folder;
+}
+
 int DownloadInfo::getProgress() const {
     return m_progress;
 }

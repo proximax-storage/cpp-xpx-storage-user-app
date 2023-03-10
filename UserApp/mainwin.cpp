@@ -506,6 +506,8 @@ void MainWin::init()
         ui->m_driveTreeView->hide();
         ui->m_diffTreeView->hide();
     }
+
+    initStreaming();
 }
 
 MainWin::~MainWin()
@@ -793,7 +795,7 @@ void MainWin::onDownloadBtn()
         {
             QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
 
-            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash, selectedRow.m_path );
+            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
             m_downloadsTableModel->beginResetModel();
 
             qWarning () << "MainWin::onDownloadBtn. Download name: " << selectedRow.m_name;
@@ -804,6 +806,7 @@ void MainWin::onDownloadBtn()
             downloadInfo.setDownloadChannelKey(channel->getKey());
             downloadInfo.setFileName(selectedRow.m_name);
             downloadInfo.setSaveFolder(m_model->getDownloadFolder().string() + selectedRow.m_path);
+            downloadInfo.setDownloadFolder(m_model->getDownloadFolder().string());
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);
@@ -974,6 +977,9 @@ void MainWin::checkDriveForUpdates(DownloadChannel* channel, const std::function
             callback(result);
             return;
         }
+
+        qDebug () << "MainWin::checkDriveForUpdates. driveKey: " << channel->getDriveKey();
+        qDebug () << "MainWin::checkDriveForUpdates. remoteRootHash: " << remoteDrive.data.rootHash;
 
         const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
         auto drive = m_model->findDrive(channel->getDriveKey());
@@ -1907,6 +1913,7 @@ void MainWin::setupNotifications() {
 
     connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
         if (m_notificationsWidget->count() < 1) {
+            qDebug() << "before QCursor::pos()";
             QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
             return;
         }

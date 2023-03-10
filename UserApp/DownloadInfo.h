@@ -23,6 +23,9 @@ class DownloadInfo {
         std::string getSaveFolder() const;
         void setSaveFolder(const std::string& folder);
 
+        std::string getDownloadFolder() const;
+        void setDownloadFolder(const std::string& folder);
+
         int getProgress() const;
         void setProgress(int progress);
 
@@ -39,7 +42,7 @@ class DownloadInfo {
         template<class Archive>
         void serialize( Archive &ar )
         {
-            ar( m_hash, m_channelKey, m_fileName, m_saveFolder, m_isCompleted );
+            ar( m_hash, m_channelKey, m_fileName, m_saveFolder, m_downloadFolder, m_isCompleted );
         }
 
     private:
@@ -47,6 +50,7 @@ class DownloadInfo {
         std::string              m_channelKey;
         std::string              m_fileName;
         std::string              m_saveFolder;
+        std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
         bool                     m_isCompleted = false;
         bool                     m_channelIsOutdated = false;
         int                      m_progress = 0; // m_progress==1001 means completed

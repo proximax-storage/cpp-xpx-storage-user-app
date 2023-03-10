@@ -311,16 +311,34 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 counter++;
             }
         }
-        qDebug() << LOG_SOURCE << "onDownloadCompleted: counter: " << counter;
 
         for( auto& dnInfo: downloads )
         {
             if ( dnInfo.getHandle() == handle )
             {
-                fs::path srcPath = fs::path(dnInfo.getSaveFolder()) / sirius::drive::toString( dnInfo.getHash() );
+                fs::path srcPath = fs::path(dnInfo.getDownloadFolder()) / sirius::drive::toString( dnInfo.getHash() );
                 fs::path destPath = fs::path(dnInfo.getSaveFolder()) / dnInfo.getFileName();
+                qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath;
 
                 std::error_code ec;
+
+                if ( ! fs::exists( destPath.parent_path(), ec ) )
+                {
+                    fs::create_directories( destPath.parent_path(), ec );
+                }
+
+                if ( ec )
+                {
+                    qWarning() << "onDownloadCompleted: Cannot create destination subfolder: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+
+                    QString message;
+                    message.append("Cannot create destination subfolder: ");
+                    message.append(destPath.filename().string().c_str());
+                    message.append(" (");
+                    message.append(ec.message().c_str());
+                    message.append(")");
+                    emit downloadError(message);
+                }
 
                 int index = 0;
                 while( fs::exists(destPath,ec) )
@@ -336,18 +354,18 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
                 if ( --counter == 0 )
                 {
-                    qDebug() << LOG_SOURCE << "onDownloadCompleted: rename(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                    qDebug() <<  "onDownloadCompleted: rename(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
-                    qDebug() << LOG_SOURCE << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                    qDebug() << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     fs::copy( srcPath, destPath, ec );
                 }
 
                 if ( ec )
                 {
-                    qWarning() << LOG_SOURCE << "onDownloadCompleted: Cannot save file: " << ec.message();
+                    qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
 
                     QString message;
                     message.append("Cannot save file: ");

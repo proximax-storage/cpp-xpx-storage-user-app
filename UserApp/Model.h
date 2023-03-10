@@ -124,8 +124,7 @@ class Model : public QObject
         void endStorageEngine();
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
-                                               const std::array<uint8_t,32>& fileHash,
-                                               const std::string&            path);
+                                               const std::array<uint8_t,32>& fileHash );
 
         static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
 

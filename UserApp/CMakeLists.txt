@@ -51,6 +51,7 @@ set(TS_FILES StorageClientApp_en_US.ts)
 set(PROJECT_SOURCES
         main.cpp
         mainwin.h                     mainwin.cpp                 mainwin.ui
+        mainwin_streaming.cpp
         SettingsDialog.h              SettingsDialog.cpp          SettingsDialog.ui
         PrivKeyDialog.h               PrivKeyDialog.cpp           PrivKeyDialog.ui
         Model.h                       Model.cpp                   AddDownloadChannelDialog.ui
@@ -91,6 +92,8 @@ set(PROJECT_SOURCES
         DownloadChannel.h             DownloadChannel.cpp
         DownloadInfo.h                DownloadInfo.cpp
         Account.h                     Account.cpp
+
+        AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
 
         ${TS_FILES}
 )

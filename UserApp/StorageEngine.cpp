@@ -182,8 +182,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
-                                                      const std::array<uint8_t,32>& fileHash,
-                                                      const std::string &path)
+                                                      const std::array<uint8_t,32>& fileHash)
 {
     qDebug() << LOG_SOURCE << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 
@@ -227,7 +226,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                                     ""
                                 ),
                        channelId,
-                       mp_model->getDownloadFolder().string() + path,
+                       mp_model->getDownloadFolder().string(),
                        "",
                        {},
                        replicators );
