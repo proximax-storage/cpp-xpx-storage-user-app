@@ -318,7 +318,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
             {
                 fs::path srcPath = fs::path(dnInfo.getDownloadFolder()) / sirius::drive::toString( dnInfo.getHash() );
                 fs::path destPath = fs::path(dnInfo.getSaveFolder()) / dnInfo.getFileName();
-                qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath;
+                qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath.c_str();
 
                 std::error_code ec;
 
