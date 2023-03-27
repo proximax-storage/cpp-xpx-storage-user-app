@@ -135,6 +135,9 @@
          <property name="text">
           <string>Prepaid*</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item row="4" column="1">

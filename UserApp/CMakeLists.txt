@@ -66,6 +66,7 @@ set(PROJECT_SOURCES
         DriveTreeModel.h              DriveTreeModel.cpp          ModifyProgressPanel.ui
         DiffTableModel.h              DiffTableModel.cpp          ReplicatorOnBoardingDialog.ui
         Diff.h                        Diff.cpp                    ReplicatorOffBoardingDialog.ui
+        ReplicatorInfoDialog.h        ReplicatorInfoDialog.cpp    ReplicatorInfoDialog.ui
         ModifyProgressPanel.h         ModifyProgressPanel.cpp
         PopupMenu.h                   PopupMenu.cpp
 
@@ -84,6 +85,8 @@ set(PROJECT_SOURCES
         DownloadPaymentDialog.h       DownloadPaymentDialog.cpp
         StoragePaymentDialog.h        StoragePaymentDialog.cpp
         CancelModificationDialog.h    CancelModificationDialog.cpp
+        ReplicatorTreeItem.h          ReplicatorTreeItem.cpp
+        ReplicatorTreeModel.h         ReplicatorTreeModel.cpp
         ReplicatorOnBoardingDialog.h  ReplicatorOnBoardingDialog.cpp
         ReplicatorOffBoardingDialog.h ReplicatorOffBoardingDialog.cpp
         DriveModificationEvent.h      DriveModificationEvent.cpp
@@ -92,6 +95,7 @@ set(PROJECT_SOURCES
         DownloadChannel.h             DownloadChannel.cpp
         DownloadInfo.h                DownloadInfo.cpp
         Account.h                     Account.cpp
+        CachedReplicator.h            CachedReplicator.cpp
 
         AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
 
