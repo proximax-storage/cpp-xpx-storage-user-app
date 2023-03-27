@@ -186,12 +186,58 @@ void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const
     mpTransactionsEngine->storagePayment(driveId, amount);
 }
 
-void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, uint64_t capacityMB) {
-    mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB);
+void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, uint64_t capacityMB, bool isExists) {
+    auto keyPair = sirius::crypto::KeyPair::FromPrivate(sirius::crypto::PrivateKey::FromString(replicatorPrivateKey.toStdString()));
+    auto publicKey = rawHashToHex(keyPair.publicKey().array());
+    if (isExists) {
+        mpBlockchainEngine->getReplicatorById(publicKey.toStdString(),
+            [this, publicKey, replicatorPrivateKey](auto drivesPage, auto isSuccess, auto message, auto code){
+            if (!isSuccess) {
+                qWarning() << "nChainClient::replicatorOnBoarding. Replicator marked as exists, but not found!. Id: " << publicKey;
+
+                QString notification;
+                notification.append("Replicator marked as exists: ");
+                notification.append("'");
+                notification.append(publicKey);
+                notification.append("'");
+                notification.append(" but not found!");
+                emit newNotification(notification);
+                return;
+            }
+
+            qInfo() << "OnChainClient::replicatorOnBoarding. Callback. Replicator already exists: " << publicKey;
+            emit replicatorOnBoardingTransactionConfirmed(publicKey);
+        });
+    } else {
+        mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB);
+    }
 }
 
 void OnChainClient::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString &replicatorPrivateKey) {
     mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey);
+}
+
+void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t usedSpace)> callback) {
+    mpBlockchainEngine->getReplicatorById(publicKey.toStdString(), [this, callback] (auto replicator, auto isSuccess, auto message, auto code ) {
+        if (!isSuccess) {
+            qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator. Error: " << message.c_str() << " : " << code.c_str();
+            callback(0);
+            return;
+        }
+
+        for (const xpx_chain_sdk::DriveInfo& driveInfo : replicator.data.drivesInfo) {
+            mpBlockchainEngine->getDriveById(driveInfo.drive, [callback](auto drive, auto isSuccess, auto message, auto code ){
+                if (!isSuccess) {
+                    qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator:: drive info. Error: " << message << " Code: " << code;
+                    callback(0);
+                    return;
+                }
+
+                // megabytes
+                callback(drive.data.size);
+            });
+        }
+    });
 }
 
 StorageEngine* OnChainClient::getStorageEngine()
@@ -278,8 +324,8 @@ void OnChainClient::initConnects() {
         emit replicatorOnBoardingTransactionConfirmed(replicatorPublicKey);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey) {
-        emit replicatorOnBoardingTransactionFailed(replicatorPublicKey);
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey, auto replicatorPrivateKey) {
+        emit replicatorOnBoardingTransactionFailed(replicatorPublicKey, replicatorPrivateKey);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingConfirmed, this, [this](auto replicatorPublicKey) {

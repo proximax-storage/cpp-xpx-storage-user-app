@@ -142,6 +142,18 @@ void Model::setDownloadChannelsLoaded(bool state) {
     m_settings->config().m_channelsLoaded = state;
 }
 
+std::map<std::string, CachedReplicator> Model::getMyReplicators() const {
+    return m_settings->config().m_myReplicators;
+}
+
+void Model::addMyReplicator(const CachedReplicator& replicator) {
+    m_settings->config().m_myReplicators.insert_or_assign(replicator.getPrivateKey(), replicator);
+}
+
+void Model::removeMyReplicator(const std::string& replicatorKey) {
+    m_settings->config().m_myReplicators.erase(replicatorKey);
+}
+
 void Model::setCurrentDriveKey( const std::string& driveKey )
 {
     const auto driveKyeUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
@@ -184,6 +196,19 @@ bool Model::isChannelWithNameExists(const QString& channelName) const
     });
 
     return !(it == m_settings->config().m_dnChannels.end());
+}
+
+bool Model::isReplicatorWithNameExists(const QString& replicatorName) const
+{
+    if (replicatorName.isEmpty()) {
+        return false;
+    }
+
+    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [&replicatorName] (const auto& iterator) {
+        return boost::iequals(iterator.second.getName(), replicatorName.toStdString());
+    });
+
+    return !(it == m_settings->config().m_myReplicators.end());
 }
 
 QRect Model::getWindowGeometry() const {
@@ -410,6 +435,29 @@ Drive* Model::findDrive( const std::string& driveKey )
     return nullptr;
 }
 
+Drive* Model::findDriveByNameOrPublicKey( const std::string& value )
+{
+    auto& drives = m_settings->config().m_drives;
+    for (auto& drive : drives) {
+        if (drive.second.getName() == value || boost::iequals(drive.second.getKey(), value)) {
+            return &drive.second;
+        }
+    }
+
+    return nullptr;
+}
+
+CachedReplicator Model::findReplicatorByNameOrPublicKey( const std::string& value )
+{
+    for (const auto& replicator : m_settings->config().m_myReplicators) {
+        if (replicator.second.getName() == value || boost::iequals(replicator.second.getPublicKey(), value)) {
+            return replicator.second;
+        }
+    }
+
+    return {};
+}
+
 Drive* Model::findDriveByModificationId( const std::array<uint8_t, 32>& modificationId )
 {
     auto& drives = m_settings->config().m_drives;
@@ -465,6 +513,26 @@ DownloadChannel* Model::findChannel( const std::string& channelKey )
     });
 
     return it == channels.end() ? nullptr : &it->second;
+}
+
+CachedReplicator Model::findReplicatorByPublicKey(const std::string& replicatorPublicKey) const {
+    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
+    {
+        return boost::iequals( replicatorPublicKey, r.second.getPublicKey() );
+    });
+
+    return it == m_settings->config().m_myReplicators.end() ? CachedReplicator() : it->second;
+}
+
+void Model::updateReplicatorAlias(const std::string& replicatorPublicKey, const std::string& alias) const {
+    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
+    {
+        return boost::iequals( replicatorPublicKey, r.second.getPublicKey() );
+    });
+
+    if (it != m_settings->config().m_myReplicators.end()) {
+        it->second.setName(alias);
+    }
 }
 
 void Model::removeChannel( const std::string& channelKey )

@@ -10,6 +10,7 @@
 #include "Drive.h"
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
+#include "CachedReplicator.h"
 #include "drive/Utils.h"
 
 class Account : public QObject
@@ -35,13 +36,15 @@ class Account : public QObject
                     m_currentDownloadChannelKey,
                     m_downloadFolder,
                     m_drives,
-                    m_currentDriveKey );
+                    m_currentDriveKey,
+                    m_myReplicators );
         }
 
         std::string m_accountName;
         std::string m_privateKeyStr;
         std::string m_publicKeyStr;
 
+        std::map<std::string, CachedReplicator> m_myReplicators;
         std::map<std::string, DownloadChannel> m_dnChannels;
         std::string m_currentDownloadChannelKey;
         bool m_channelsLoaded = false;

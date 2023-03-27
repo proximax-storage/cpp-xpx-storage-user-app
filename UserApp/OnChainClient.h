@@ -48,8 +48,10 @@ class OnChainClient : public QObject
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
-        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB, bool isExists);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
+
+        void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t usedSpace)> callback);
 
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
         StorageEngine* getStorageEngine();
@@ -65,7 +67,6 @@ class OnChainClient : public QObject
         void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadChannelCloseTransactionFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
-        void fsTreeDownloaded(const std::string& driveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
         void prepareDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
         void prepareDriveTransactionFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText);
         void closeDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
@@ -82,7 +83,8 @@ class OnChainClient : public QObject
         void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
         void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
-        void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
+        void newNotification(const QString& notification);
         void internalError(const QString& errorText);
 
     // internal signals

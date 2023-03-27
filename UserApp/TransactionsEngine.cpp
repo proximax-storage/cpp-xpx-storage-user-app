@@ -727,7 +727,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
     replicatorAccount->signTransaction(replicatorOnBoardingTransaction.get());
 
     const std::string onBoardingTransactionHash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
-    statusNotifier.set([this, replicatorAccount, confirmedAddedNotifierId = onBoardingNotifier.getId(), onBoardingTransactionHash](
+    statusNotifier.set([this, replicatorAccount, replicatorPrivateKey, confirmedAddedNotifierId = onBoardingNotifier.getId(), onBoardingTransactionHash](
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, onBoardingTransactionHash)) {
@@ -736,7 +736,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
 
             auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
             qWarning() << LOG_SOURCE << "replicator key: " + replicatorPublicKey << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
-            emit replicatorOnBoardingFailed(replicatorPublicKey);
+            emit replicatorOnBoardingFailed(replicatorPublicKey, replicatorPrivateKey);
         }
     });
 

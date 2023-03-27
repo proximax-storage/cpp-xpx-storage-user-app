@@ -16,6 +16,7 @@ class FsTreeTableModel;
 class DownloadChannel;
 class Drive;
 class DownloadsTableModel;
+class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
 class OnChainClient;
@@ -45,6 +46,7 @@ public:
 
 signals:
     void drivesInitialized();
+    void refreshMyReplicatorsTable();
 
 private:
     bool requestPrivateKey();
@@ -84,8 +86,13 @@ private:
     void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t);
     void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+    void onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+    void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
+    void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+    void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
     void loadBalance();
     void setupDrivesTab();
+    void setupMyReplicatorTab();
     void setupNotifications();
     void showNotification(const QString& message, const QString& error = {});
     void addNotification(const QString& message);
@@ -98,7 +105,7 @@ private:
     void updateDiffView();
     void updateDriveView();
     void updateDownloadChannelData(DownloadChannel* channel);
-    void getXpxId(std::function<void()> callback);
+    void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
     void initStreaming();
 
@@ -133,6 +140,7 @@ private:
 
     FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
+    ReplicatorTreeModel*    m_myReplicatorsModel;
     Settings*               m_settings;
     Model*                  m_model;
 

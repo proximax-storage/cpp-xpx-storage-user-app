@@ -291,7 +291,7 @@ fs::path Settings::downloadFolder()
 
 void Settings::setCurrentAccountIndex( int currentAccountIndex )
 {
-    qDebug() << LOG_SOURCE << "setCurrentAccountIndex: " << currentAccountIndex;
+    qDebug() << "Settings::setCurrentAccountIndex: " << currentAccountIndex;
     m_currentAccountIndex = currentAccountIndex;
     ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() )
 }

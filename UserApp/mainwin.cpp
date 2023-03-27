@@ -21,8 +21,11 @@
 #include "CloseDriveDialog.h"
 #include "DownloadPaymentDialog.h"
 #include "StoragePaymentDialog.h"
+#include "ReplicatorTreeItem.h"
+#include "ReplicatorTreeModel.h"
 #include "ReplicatorOnBoardingDialog.h"
 #include "ReplicatorOffBoardingDialog.h"
+#include "ReplicatorInfoDialog.h"
 #include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
@@ -341,6 +344,10 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::storagePaymentTransactionFailed, this, &MainWin::onStoragePaymentFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::cancelModificationTransactionConfirmed, this, &MainWin::onCancelModificationTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this, &MainWin::onCancelModificationTransactionFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionConfirmed, this, &MainWin::onReplicatorOnBoardingTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionFailed, this, &MainWin::onReplicatorOnBoardingTransactionFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionConfirmed, this, &MainWin::onReplicatorOffBoardingTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionFailed, this, &MainWin::onReplicatorOffBoardingTransactionFailed, Qt::QueuedConnection);
 
     connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
         auto channel = m_model->currentDownloadChannel();
@@ -390,7 +397,8 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName) {
         qDebug() << "network layer initialized successfully";
 
-        getXpxId([this]() {
+        getMosaicIdByName(m_model->getClientPublicKey().c_str(), "xpx", [this](auto id) {
+            m_XPX_MOSAIC_ID = id;
             loadBalance();
         });
 
@@ -414,12 +422,12 @@ void MainWin::init()
     }, Qt::QueuedConnection);
 
     connect(ui->m_onBoardReplicator, &QPushButton::released, this, [this](){
-        ReplicatorOnBoardingDialog dialog(this);
+        ReplicatorOnBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
     });
 
     connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
-        ReplicatorOffBoardingDialog dialog(this);
+        ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
     });
 
@@ -429,9 +437,14 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::newNotification, this, [this](auto notification) {
+        showNotification(notification);
+        addNotification(notification);
+    }, Qt::QueuedConnection);
 
     setupDownloadsTab();
     setupDrivesTab();
+    setupMyReplicatorTab();
 
     // Start update-timer for downloads
     m_downloadUpdateTimer = new QTimer();
@@ -797,9 +810,6 @@ void MainWin::onDownloadBtn()
 
             auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
             m_downloadsTableModel->beginResetModel();
-
-            qWarning () << "MainWin::onDownloadBtn. Download name: " << selectedRow.m_name;
-            qWarning () << "MainWin::onDownloadBtn. Download path: " << m_model->getDownloadFolder().string() + selectedRow.m_path;
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash(selectedRow.m_hash);
@@ -1653,6 +1663,58 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     }
 }
 
+void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOnBoardingTransactionConfirmed" << replicatorPublicKey;
+
+    m_onChainClient->getBlockchainEngine()->getReplicatorById(replicatorPublicKey.toStdString(), [this] (auto replicator, auto isSuccess, auto message, auto code ) {
+        if (!isSuccess) {
+            qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
+            return;
+        }
+
+        m_myReplicatorsModel->setupModelData({ replicator }, m_model);
+    });
+
+    QString message;
+    message.append("Replicator onboarded successful: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
+}
+
+void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey) {
+    qInfo () << "MainWin::onReplicatorOnBoardingTransactionFailed" << replicatorPublicKey;
+
+    m_model->removeMyReplicator(replicatorPrivateKey.toStdString());
+    m_model->saveSettings();
+
+    QString message;
+    message.append("Replicator onboarded FAILED: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
+}
+
+void MainWin::onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOffBoardingTransactionConfirmed" << replicatorPublicKey;
+
+    QString message;
+    message.append("Replicator off-boarded successful: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
+}
+
+void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOffBoardingTransactionFailed" << replicatorPublicKey;
+
+    QString message;
+    message.append("Replicator off-boarded FAILED: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
+}
+
 void MainWin::loadBalance() {
     auto publicKey = m_model->getClientPublicKey();
     m_onChainClient->getBlockchainEngine()->getAccountInfo(
@@ -1903,6 +1965,84 @@ void MainWin::setupDrivesTab()
     ui->m_moreDrivesBtn->setMenu(menu);
 }
 
+void MainWin::setupMyReplicatorTab() {
+    m_myReplicatorsModel = new ReplicatorTreeModel(this);
+    ui->myReplicators->setModel(m_myReplicatorsModel);
+    ui->myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+    for (const auto& r : m_settings->config().m_myReplicators) {
+        m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this] (auto replicator, auto isSuccess, auto message, auto code ) {
+            if (!isSuccess) {
+                qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
+                return;
+            }
+
+            m_myReplicatorsModel->setupModelData({ replicator }, m_model);
+        });
+    }
+
+    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this](){
+        m_myReplicatorsModel->setupModelData(m_model->getMyReplicators());
+    }, Qt::QueuedConnection);
+
+    connect(ui->myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
+        if (!index.isValid()) {
+            return;
+        }
+
+        auto item = static_cast<ReplicatorTreeItem*>(index.internalPointer());
+        if (!item) {
+            qWarning() << "MainWin::setupMyReplicatorTab. Invalid item";
+            return;
+        }
+
+        auto dialog = new ReplicatorInfoDialog(item->getPublicKey().toStdString(), m_model, this);
+        dialog->open();
+
+        m_onChainClient->getBlockchainEngine()->getReplicatorById(item->getPublicKey().toStdString() ,[this, dialog] (auto r, auto isSuccess, auto m, auto c) {
+            if (!isSuccess) {
+                qWarning() << "ReplicatorInfoDialog::ReplicatorInfoDialog. Error: " << m << " : Code: " << c;
+                return;
+            }
+
+            if (dialog && dialog->isVisible()) {
+                dialog->updateChannelsAmount(r.data.downloadChannels.size());
+            }
+
+            if (dialog && dialog->isVisible()) {
+                dialog->updateDrivesAmount(r.data.drivesInfo.size());
+            }
+
+            getMosaicIdByName(r.data.key.c_str(), "so", [this, r, dialog](auto id) {
+                m_onChainClient->getBlockchainEngine()->getAccountInfo(
+                        r.data.key, [this, r, id, dialog](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+                            if (!isSuccess) {
+                                qWarning() << "loadBalance. ReplicatorInfoDialog: " << message.c_str() << " : " << code.c_str();
+                                return;
+                            }
+
+                            auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [id]( auto mosaic )
+                            {
+                                return mosaic.id == id;
+                            });
+
+                            const uint64_t freeSpace = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
+                            if (dialog && dialog->isVisible()) {
+                                dialog->updateFreeSpace(freeSpace);
+                            }
+
+                            // Can be called few times
+                            m_onChainClient->calculateUsedSpaceOfReplicator(r.data.key.c_str(), [dialog](auto usedSpace){
+                                if (dialog && dialog->isVisible()) {
+                                    dialog->updateUsedSpace(usedSpace);
+                                }
+                            });
+                        });
+            });
+        });
+    });
+}
+
 void MainWin::setupNotifications() {
     m_notificationsWidget = new QListWidget(this);
     m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
@@ -1913,7 +2053,6 @@ void MainWin::setupNotifications() {
 
     connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
         if (m_notificationsWidget->count() < 1) {
-            qDebug() << "before QCursor::pos()";
             QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
             return;
         }
@@ -2214,10 +2353,9 @@ void MainWin::updateDownloadChannelData(DownloadChannel* channel) {
     updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
 
-void MainWin::getXpxId(std::function<void()> callback) {
-    auto publicKey = m_model->getClientPublicKey();
+void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t mosaicId)> callback) {
     m_onChainClient->getBlockchainEngine()->getAccountInfo(
-            publicKey, [this, callback](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+            accountPublicKey.toStdString(), [this, mosaicName, callback](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
             return;
@@ -2229,19 +2367,20 @@ void MainWin::getXpxId(std::function<void()> callback) {
         }
 
         m_onChainClient->getBlockchainEngine()->getMosaicsNames(
-                mosaicIds, [this, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
+                mosaicIds, [mosaicName, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << "loadBalance. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
                 return;
             }
 
+            uint64_t id = 0;
             bool isMosaicFound = false;
             for (const auto& rawInfo : mosaicDescriptors.names) {
                 for (const auto& name : rawInfo.names) {
                     QString currentName(name.c_str());
-                    if (currentName.contains("xpx", Qt::CaseInsensitive)) {
+                    if (currentName.contains(mosaicName, Qt::CaseInsensitive)) {
+                        id = rawInfo.mosaicId;
                         isMosaicFound = true;
-                        m_XPX_MOSAIC_ID = rawInfo.mosaicId;
                         break;
                     }
                 }
@@ -2251,7 +2390,7 @@ void MainWin::getXpxId(std::function<void()> callback) {
                 }
             }
 
-            callback();
+            callback(id);
         });
     });
 }

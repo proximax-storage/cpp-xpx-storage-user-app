@@ -22,6 +22,7 @@ Account& Account::operator=( const Account& a )
     m_downloads                 = a.m_downloads;
     m_drives                    = a.m_drives;
     m_currentDriveKey           = a.m_currentDriveKey;
+    m_myReplicators             = a.m_myReplicators;
 
     return *this;
 }

@@ -20,6 +20,7 @@
 #include "Drive.h"
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
+#include "CachedReplicator.h"
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;
@@ -67,8 +68,10 @@ class Model : public QObject
         std::map<std::string, DownloadChannel>& getDownloadChannels();
         void setCurrentDownloadChannelKey(const std::string& channelKey);
         std::string currentDownloadChannelKey();
-        DownloadChannel*                 currentDownloadChannel();
-        DownloadChannel*                 findChannel( const std::string& channelKey );
+        DownloadChannel*             currentDownloadChannel();
+        DownloadChannel*             findChannel( const std::string& channelKey );
+        CachedReplicator             findReplicatorByPublicKey(const std::string& replicatorPublicKey) const;
+        void                         updateReplicatorAlias(const std::string& replicatorPublicKey, const std::string& alias) const;
         void                         removeChannel( const std::string& channelKey );
         void                         applyForChannels( const std::string& driveKey, std::function<void(DownloadChannel&)> );
         void                         applyFsTreeForChannels( const std::string& driveKey, const sirius::drive::FsTree& fsTree, const std::array<uint8_t, 32>& fsTreeHash );
@@ -77,6 +80,9 @@ class Model : public QObject
         bool isDownloadChannelsLoaded();
         void setDownloadChannelsLoaded(bool state);
 
+        std::map<std::string, CachedReplicator> getMyReplicators() const;
+        void addMyReplicator(const CachedReplicator& replicator);
+        void removeMyReplicator(const std::string& replicator);
 
         //
         // Drives
@@ -89,6 +95,7 @@ class Model : public QObject
         std::string              currentDriveKey();
         bool isDriveWithNameExists(const QString& driveName) const;
         bool isChannelWithNameExists(const QString& channelName) const;
+        bool isReplicatorWithNameExists(const QString& replicatorName) const;
         QRect getWindowGeometry() const;
         void setWindowGeometry(const QRect& geometry);
         void initForTests();
@@ -107,7 +114,11 @@ class Model : public QObject
 
         Drive *findDrive(const std::string &driveKey);
 
+        Drive *findDriveByNameOrPublicKey(const std::string &value);
+
         Drive *findDriveByModificationId(const std::array<uint8_t, 32> &modificationId);
+
+        CachedReplicator findReplicatorByNameOrPublicKey( const std::string& value );
 
         void removeDrive(const std::string &driveKey);
 
