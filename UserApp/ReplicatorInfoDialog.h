@@ -23,7 +23,7 @@ public:
     void accept() override;
     void reject() override;
     void updateFreeSpace(uint64_t freeSpace);
-    void updateUsedSpace(uint64_t usedSpace);
+    void updateTotalSpace(uint64_t index, uint64_t totalSpace);
     void updateDrivesAmount(uint64_t freeSpace);
     void updateChannelsAmount(uint64_t usedSpace);
 
