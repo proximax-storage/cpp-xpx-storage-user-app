@@ -286,6 +286,8 @@ void MainWin::init()
         m_model->setDrivesLoaded(true);
 
         if (drivesPages[0].pagination.totalEntries == 0) {
+            m_model->getDrives().clear();
+            m_model->saveSettings();
             emit drivesInitialized();
         }
 
@@ -1804,12 +1806,14 @@ void MainWin::setupDrivesTab()
 #ifdef __APPLE__
             QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
 #else
+            qDebug() << "TRY OPEN " << driveInfo->getLocalFolder();
+            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
             //QProcess::startDetached("xdg-open " + QString::fromStdString( driveInfo->m_localDriveFolder ));
             //system("/usr/bin/xdg-open file:///home/cempl");
-            qDebug() << "TRY OPEN";
-            auto result = system("/home/cempl/repositories/cpp-xpx-storage-user-app/resources/scripts/open_local_folder.sh");
-            qDebug() << "TRY OPEN " << result;
-            qDebug() << "TRY OPEN " << std::strerror(errno);
+//            qDebug() << "TRY OPEN";
+//            auto result = system("/home/cempl/repositories/cpp-xpx-storage-user-app/resources/scripts/open_local_folder.sh");
+//            qDebug() << "TRY OPEN " << result;
+//            qDebug() << "TRY OPEN " << std::strerror(errno);
 #endif
         }
     });
@@ -1971,9 +1975,10 @@ void MainWin::setupMyReplicatorTab() {
     ui->myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     for (const auto& r : m_settings->config().m_myReplicators) {
-        m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this] (auto replicator, auto isSuccess, auto message, auto code ) {
+        m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this, r] (auto replicator, auto isSuccess, auto message, auto code ) {
             if (!isSuccess) {
                 qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
+                m_model->removeMyReplicator(r.first);
                 return;
             }
 
@@ -2032,9 +2037,9 @@ void MainWin::setupMyReplicatorTab() {
                             }
 
                             // Can be called few times
-                            m_onChainClient->calculateUsedSpaceOfReplicator(r.data.key.c_str(), [dialog](auto usedSpace){
+                            m_onChainClient->calculateUsedSpaceOfReplicator(r.data.key.c_str(), [dialog](auto index, auto usedSpace){
                                 if (dialog && dialog->isVisible()) {
-                                    dialog->updateUsedSpace(usedSpace);
+                                    dialog->updateTotalSpace(index, usedSpace);
                                 }
                             });
                         });

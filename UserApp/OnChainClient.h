@@ -51,7 +51,7 @@ class OnChainClient : public QObject
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB, bool isExists);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
-        void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t usedSpace)> callback);
+        void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback);
 
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
         StorageEngine* getStorageEngine();

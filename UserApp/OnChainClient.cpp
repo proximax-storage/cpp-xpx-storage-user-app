@@ -217,24 +217,24 @@ void OnChainClient::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId
     mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey);
 }
 
-void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t usedSpace)> callback) {
+void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback) {
     mpBlockchainEngine->getReplicatorById(publicKey.toStdString(), [this, callback] (auto replicator, auto isSuccess, auto message, auto code ) {
         if (!isSuccess) {
             qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator. Error: " << message.c_str() << " : " << code.c_str();
-            callback(0);
+            callback(0, 0);
             return;
         }
 
-        for (const xpx_chain_sdk::DriveInfo& driveInfo : replicator.data.drivesInfo) {
-            mpBlockchainEngine->getDriveById(driveInfo.drive, [callback](auto drive, auto isSuccess, auto message, auto code ){
+        for (uint64_t i = 0; i < replicator.data.drivesInfo.size(); i++) {
+            mpBlockchainEngine->getDriveById(replicator.data.drivesInfo[i].drive, [callback, i](auto drive, auto isSuccess, auto message, auto code ){
                 if (!isSuccess) {
                     qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator:: drive info. Error: " << message << " Code: " << code;
-                    callback(0);
+                    callback(i, 0);
                     return;
                 }
 
                 // megabytes
-                callback(drive.data.size);
+                callback(i ,drive.data.size);
             });
         }
     });
