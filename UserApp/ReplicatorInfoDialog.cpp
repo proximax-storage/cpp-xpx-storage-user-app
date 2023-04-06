@@ -86,9 +86,13 @@ void ReplicatorInfoDialog::updateFreeSpace(uint64_t freeSpace) {
 }
 
 void ReplicatorInfoDialog::updateTotalSpace(uint64_t index, uint64_t totalSpace) {
-    ui->totalSpace->setText(QString::number(totalSpace + ui->totalSpace->text().toULongLong()));
-    if (index == ui->drivesAmount->text().toULongLong() - 1) {
-        ui->totalSpace->setText(QString::number(ui->totalSpace->text().toULongLong() + ui->freeSpace->text().toULongLong()));
+    if (ui->drivesAmount->text().toULongLong() == 0) {
+        ui->totalSpace->setText(ui->freeSpace->text());
+    } else {
+        ui->totalSpace->setText(QString::number(totalSpace + ui->totalSpace->text().toULongLong()));
+        if (index == ui->drivesAmount->text().toULongLong() - 1) {
+            ui->totalSpace->setText(QString::number(ui->totalSpace->text().toULongLong() + ui->freeSpace->text().toULongLong()));
+        }
     }
 }
 

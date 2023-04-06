@@ -225,6 +225,10 @@ void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std
             return;
         }
 
+        if (replicator.data.drivesInfo.empty()) {
+            callback(0, 0);
+        }
+
         for (uint64_t i = 0; i < replicator.data.drivesInfo.size(); i++) {
             mpBlockchainEngine->getDriveById(replicator.data.drivesInfo[i].drive, [callback, i](auto drive, auto isSuccess, auto message, auto code ){
                 if (!isSuccess) {
