@@ -805,6 +805,11 @@ void MainWin::onDownloadBtn()
         return;
     }
 
+    if (m_channelFsTreeTableModel->getSelectedRows().empty()) {
+        qInfo() << "MainWin::onDownload. Select at least one row";
+        return;
+    }
+
     auto updateReplicatorsCallback = [this, channel]() {
         for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
         {

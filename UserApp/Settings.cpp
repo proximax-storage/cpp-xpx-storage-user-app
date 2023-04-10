@@ -348,6 +348,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                                     + " (" + std::to_string(index) + ")"
                                     + fs::path(dnInfo.getFileName()).extension().string();
                     destPath = fs::path(dnInfo.getSaveFolder()) / newName;
+                    dnInfo.setFileName(newName);
                 }
 
                 dnInfo.getFileName() = destPath.filename();
