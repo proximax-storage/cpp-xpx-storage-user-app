@@ -14,7 +14,6 @@ public:
     Diff( LocalDriveItem&                   driveRoot,
           fs::path                          localFolderPath,
           const sirius::drive::FsTree&      fsTree,
-          const std::array<uint8_t,32>&     driveKey,
           sirius::drive::ActionList&        outDiffActionList )
 
       : m_diffActionList( outDiffActionList )

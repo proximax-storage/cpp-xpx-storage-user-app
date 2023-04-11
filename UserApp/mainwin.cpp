@@ -58,6 +58,8 @@ MainWin::MainWin(QWidget *parent)
     , m_settings(new Settings(this))
     , m_model(new Model(m_settings, this))
     , m_XPX_MOSAIC_ID(0)
+    , mpWorker(new Worker)
+    , mpThread(new QThread)
 {
     ui->setupUi(this);
 }
@@ -116,6 +118,8 @@ void MainWin::init()
             msgBox.exec();
         }
     }
+
+    initWorker();
 
     m_model->startStorageEngine( [this]
     {
@@ -490,7 +494,12 @@ void MainWin::init()
             if (m_model->getDownloadChannels().empty()) {
                 lockChannel("");
             } else {
-                unlockChannel("");
+                auto channel = m_model->currentDownloadChannel();
+                if (channel) {
+                    lockChannel(channel->getKey());
+                } else {
+                    unlockChannel("");
+                }
             }
         }
 
@@ -887,7 +896,7 @@ void MainWin::setupDownloadsTable()
             DownloadInfo dnInfo = downloads[rowIndex];
 
             QMessageBox msgBox;
-            const QString message = QString::fromStdString("'" + dnInfo.getFileName() + "' will be removed.");
+            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
@@ -1133,9 +1142,11 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             updateDriveStatusOnUi(*drive);
 
             if (isCurrentDrive(drive)) {
-                m_model->calcDiff();
+                calculateDiffAsync([this](auto, auto){
+                    updateDiffView();
+                });
+
                 updateDriveView();
-                updateDiffView();
                 unlockDrive();
             }
 
@@ -1161,8 +1172,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 m_modifyProgressPanel->setApproved();
                 m_modifyProgressPanel->setVisible(true);
 
-                //startCalcDiff();
-                //onRefresh();
+                updateDiffView();
 
                 QString message;
                 message.append("Your modification was applied. Drive: ");
@@ -1767,8 +1777,9 @@ void MainWin::onCurrentChannelChanged( int index )
 void MainWin::onDriveLocalDirectoryChanged(const QString& path) {
     auto drive = m_model->currentDrive();
     if (drive && drive->getLocalFolder() == path.toStdString()) {
-        m_model->calcDiff();
-        updateDiffView();
+        calculateDiffAsync([this](auto, auto){
+            updateDiffView();
+        });
     }
 }
 
@@ -1781,6 +1792,8 @@ void MainWin::onCurrentDriveChanged( int index )
         auto drive = m_model->currentDrive();
         if (drive) {
             onDriveStateChanged(drive->getKey(), drive->getState());
+            updateDriveView();
+            updateDiffView();
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
         } else {
             qWarning() << "MainWin::onCurrentDriveChanged. Drive not found (Invalid pointer to drive)";
@@ -1836,10 +1849,12 @@ void MainWin::setupDrivesTab()
                 const auto rootHash = rawHashToHex(drive->getRootHash()).toStdString();
                 onDownloadFsTreeDirect(drive->getKey(), rootHash);
             } else {
-                m_model->calcDiff();
                 if (isCurrentDrive(drive)) {
-                    m_model->calcDiff();
-                    updateDiffView();
+                    calculateDiffAsync([this](auto, auto){
+                        updateDiffView();
+                    });
+                } else {
+                    calculateDiffAsync({});
                 }
             }
         };
@@ -2403,4 +2418,50 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
             callback(id);
         });
     });
+}
+
+void MainWin::initWorker() {
+    mpWorker->moveToThread(mpThread);
+    connect(mpThread, &QThread::started, mpWorker, [w = mpWorker]() { w->init(0, false); }, Qt::QueuedConnection);
+    connect(mpWorker, &Worker::done, this, &MainWin::callbackResolver, Qt::QueuedConnection);
+    connect(mpThread, &QThread::finished, mpThread, &QThread::deleteLater);
+    connect(mpThread, &QThread::finished, mpWorker, &Worker::deleteLater);
+    connect(this, &MainWin::addResolver, this, &MainWin::onAddResolver, Qt::QueuedConnection);
+    connect(this, &MainWin::removeResolver, this, &MainWin::onRemoveResolver, Qt::QueuedConnection);
+    connect(this, &MainWin::runProcess, mpWorker, &Worker::process, Qt::QueuedConnection);
+    mpThread->start();
+}
+
+void MainWin::onAddResolver(const QUuid &id, const std::function<void(QVariant)>& resolver) {
+    mResolvers.emplace(id, resolver);
+}
+
+void MainWin::onRemoveResolver(const QUuid &id) {
+    mResolvers.erase(id);
+}
+
+void MainWin::callbackResolver(const QUuid& id, const QVariant& data) {
+    mResolvers[id](data);
+}
+
+void MainWin::calculateDiffAsync(const std::function<void(int, std::string)>& callback) {
+    auto taskCalcDiff = [this]() {
+        try {
+            m_model->calcDiff();
+            return QVariant::fromValue(0);
+        } catch (std::exception& e) {
+            return QVariant::fromValue(std::string(e.what()));
+        }
+    };
+
+    const QUuid id = QUuid::createUuid();
+    auto resolver = [this, id, callback] (QVariant data) {
+        emit removeResolver(id);
+        if (callback) {
+            typeResolver<int>(data, callback);
+        }
+    };
+
+    emit addResolver(id, resolver);
+    emit runProcess(id, taskCalcDiff);
 }

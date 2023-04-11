@@ -24,13 +24,14 @@ signals:
     void done(const QUuid& id, const QVariant& data);
 
 public slots:
-    void init(int delay);
+    void init(int delay, bool isLimited = true);
     void process(const QUuid& id, const std::function<QVariant()>& request);
 
 private slots:
     void handler();
 
 private:
+    bool mIsLimited;
     bool mIsInitialized;
     int mDelay;
     QTimer *mpTimer;

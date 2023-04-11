@@ -612,7 +612,7 @@ void Model::calcDiff()
         auto localDrive = std::make_shared<LocalDriveItem>();
         Diff::calcLocalDriveInfoR( *localDrive, drive->getLocalFolder(), true, &driveKey );
         sirius::drive::ActionList actionList;
-        Diff diff( *localDrive, drive->getLocalFolder(), drive->getFsTree(), driveKey, actionList);
+        Diff diff( *localDrive, drive->getLocalFolder(), drive->getFsTree(), actionList);
 
         drive->setActionsList(actionList);
         drive->setLocalDriveItem(std::move(localDrive));

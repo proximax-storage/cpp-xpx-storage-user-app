@@ -4,21 +4,28 @@ Worker::Worker()
     : mIsInitialized(false)
 {}
 
-void Worker::init(int delay) {
-    mDelay = delay;
-    mpTimer = new QTimer(this);
-    connect(mpTimer, &QTimer::timeout, this, &Worker::handler);
-    mIsInitialized = true;
+void Worker::init(int delay, bool isLimited) {
+    mIsLimited = isLimited;
+    if (mIsLimited) {
+        mDelay = delay;
+        mpTimer = new QTimer(this);
+        connect(mpTimer, &QTimer::timeout, this, &Worker::handler);
 
-    if (!mRequests.empty() && !mpTimer->isActive()) {
-        mpTimer->start(mDelay);
+        mIsInitialized = true;
+        if (!mRequests.empty() && !mpTimer->isActive()) {
+            mpTimer->start(mDelay);
+        }
     }
 }
 
 void Worker::process(const QUuid& id, const std::function<QVariant()>& request) {
-    mRequests.emplace(id, request);
-    if (mIsInitialized && !mpTimer->isActive()) {
-        mpTimer->start(mDelay);
+    if (mIsLimited) {
+        mRequests.emplace(id, request);
+        if (mIsInitialized && !mpTimer->isActive()) {
+            mpTimer->start(mDelay);
+        }
+    } else {
+        emit done(id, request());
     }
 }
 
@@ -34,7 +41,7 @@ void Worker::handler() {
 
 Worker::~Worker()
 {
-    if (mpTimer) {
+    if (mIsLimited && mpTimer) {
         mpTimer->deleteLater();
     }
 }

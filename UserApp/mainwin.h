@@ -7,6 +7,7 @@
 #include <QListWidget>
 #include <QCloseEvent>
 #include <QComboBox>
+#include "Worker.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -47,6 +48,9 @@ public:
 signals:
     void drivesInitialized();
     void refreshMyReplicatorsTable();
+    void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
+    void removeResolver(const QUuid& id);
+    void runProcess(const QUuid& id, const std::function<QVariant()>& task);
 
 private:
     bool requestPrivateKey();
@@ -108,6 +112,20 @@ private:
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
     void initStreaming();
+    void initWorker();
+
+    void callbackResolver(const QUuid& id, const QVariant& data);
+
+    template<class Type>
+    void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
+        if (data.canConvert<Type>()) {
+            callback(data.value<Type>(), "");
+        } else if (data.canConvert<std::string>()) {
+            callback(Type(), data.value<std::string>());
+        } else {
+            callback(Type(), "unknown error");
+        }
+    }
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
@@ -128,6 +146,9 @@ private slots:
     void unlockDrive();
     void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
     void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
+    void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
+    void onRemoveResolver(const QUuid& id);
+    void calculateDiffAsync(const std::function<void(int, std::string)>& callback);
 
 public:
     // if private key is not set it will be 'true'
@@ -155,4 +176,7 @@ private:
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
     uint64_t                m_XPX_MOSAIC_ID;
+    Worker*                 mpWorker;
+    QThread*                mpThread;
+    std::map<QUuid, std::function<void(QVariant)>> mResolvers;
 };
