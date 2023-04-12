@@ -128,9 +128,16 @@ void MainWin::initStreaming()
         }
         
         StreamInfo streamInfo;
-        streamInfo.parseLink(link);
-        m_model->addStreamRef(streamInfo);
-        updateViewerCBox();
+        try
+        {
+            streamInfo.parseLink(link);
+            m_model->addStreamRef(streamInfo);
+            updateViewerCBox();
+        }
+        catch(...)
+        {
+            qWarning() << "bad stream link: " << link;
+        }
     }, Qt::QueuedConnection);
 
     // m_delStreamRefBtn
