@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "Drive.h"
+#include "StreamInfo.h"
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
@@ -37,7 +38,13 @@ class Account : public QObject
                     m_downloadFolder,
                     m_drives,
                     m_currentDriveKey,
-                    m_myReplicators );
+                    m_myReplicators,
+                    m_streams,
+                    m_currentStreamIndex,
+                    m_streamRefs,
+                    m_currentStreamRefIndex,
+                    m_currentDriveKey,
+                    m_lastUniqueStreamIndex );
         }
 
         std::string m_accountName;
@@ -54,6 +61,12 @@ class Account : public QObject
         std::map<std::string, Drive> m_drives;
         std::string m_currentDriveKey;
         bool m_drivesLoaded = false;
+
+        std::vector<StreamInfo> m_streams;
+        int                     m_currentStreamIndex = -1;
+        std::vector<StreamInfo> m_streamRefs; // viewer part
+        int                     m_currentStreamRefIndex = -1;
+        uint64_t                m_lastUniqueStreamIndex = 0;
 
         std::optional<sirius::crypto::KeyPair> m_keyPair;
 };

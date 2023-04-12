@@ -12,7 +12,7 @@
 
 #include <cereal/types/chrono.hpp>
 
-#include "drive/ClientSession.h"
+#include "drive/ViewerSession.h"
 #include "drive/FsTree.h"
 #include "xpxchaincpp/model/storage/drives_page.h"
 #include "xpxchaincpp/model/storage/download_channels_page.h"
@@ -32,6 +32,23 @@ namespace fs = std::filesystem;
 
 class Settings;
 struct LocalDriveItem;
+struct StreamInfo;
+
+enum ViewerStatus
+{
+    vs_no_viewing,
+    vs_waiting_channel_creation,
+    vs_waiting_stream_start,
+    vs_viewing,
+};
+
+enum StreamerStatus
+{
+    ss_no_streaming,
+//    vs_channel_creation,
+//    vs_waiting_stream_id,
+//    vs_viewing,
+};
 
 class Model : public QObject
 {
@@ -137,7 +154,29 @@ class Model : public QObject
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
                                                const std::array<uint8_t,32>& fileHash );
 
+        void                     removeTorrentSync( sirius::drive::InfoHash infoHash );
+
         static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
+    
+
+        //
+        // Streaming
+        //
+        void                            addStreamerAnnouncement( const StreamInfo& streamInfo );
+        void                            deleteStreamerAnnouncement( int index );
+        const std::vector<StreamInfo>&  streamerAnnouncements() const;
+
+        //
+        // Viewing
+        //
+        void                            addStreamRef( const StreamInfo& streamInfo );
+        void                            deleteStreamRef( int index );
+        const std::vector<StreamInfo>&  streamRefs() const;
+        int                             currentStreamIndex() const;
+        const StreamInfo*               getStreamRef( int index ) const;
+        StreamInfo*                     getStreamRef( int index );
+
+        void                            requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler );
 
         //
         // Standalone test
@@ -155,4 +194,8 @@ class Model : public QObject
         Settings* m_settings;
         uint64_t m_loadedDrivesCount;
         uint64_t m_outdatedDriveNumber;
+    
+    public:
+        ViewerStatus    m_viewerStatus   = vs_no_viewing;
+        StreamerStatus  m_streamerStatus = ss_no_streaming;
 };

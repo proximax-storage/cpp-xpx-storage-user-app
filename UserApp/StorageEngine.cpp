@@ -1,5 +1,6 @@
 #include "StorageEngine.h"
 #include "mainwin.h"
+#include "drive/ViewerSession.h"
 #include "drive/ClientSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
@@ -94,7 +95,11 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
 {
     qDebug() << LOG_SOURCE << "createClientSession: address: " << address.c_str();
     qDebug() << LOG_SOURCE << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
+#ifdef USE_CLIENT_SESSION
     m_session = sirius::drive::createClientSession(  keyPair,
+#else
+    m_session = sirius::drive::createViewerSession(  keyPair,
+#endif
                                                      address,
                                                      [addressAlreadyInUseHandler]( const lt::alert* alert )
                                                      {
@@ -242,3 +247,13 @@ void StorageEngine::removeTorrentSync( sirius::drive::InfoHash infoHash )
 void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHash )
 {
 }
+
+void StorageEngine::requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler )
+{
+    std::unique_lock<std::recursive_mutex> lock( m_mutex );
+
+    //
+    //m_session->requestStreamStatus( streamRef->m_driveKey, streamStatusResponseHandler );
+    //m_session->requestStreamStatus( driveKey, streamStatusResponseHandler );
+}
+

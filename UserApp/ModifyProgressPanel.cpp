@@ -114,3 +114,25 @@ void ModifyProgressPanel::setCanceled()
     ui->m_cancel->setEnabled(true);
     adjustSize();
 }
+
+void ModifyProgressPanel::setWaitingChannelCreation()
+{
+    ui->m_statusLabel->setText( "Waiting channel creation");
+    ui->m_statusIcon->setScaledContents(false);
+    ui->m_cancel->setText("Cancel");
+    ui->m_cancel->setEnabled(true);
+    ui->m_statusIcon->setMovie(m_loading);
+    m_loading->start();
+    adjustSize();
+}
+
+void ModifyProgressPanel::setWaitingStreamStart()
+{
+    ui->m_statusLabel->setText( "Waiting stream start");
+    ui->m_statusIcon->setScaledContents(false);
+    ui->m_cancel->setText("Cancel");
+    ui->m_cancel->setEnabled(true);
+    ui->m_statusIcon->setMovie(m_loading);
+    m_loading->start();
+    adjustSize();
+}

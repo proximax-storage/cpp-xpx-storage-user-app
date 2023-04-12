@@ -480,11 +480,21 @@ void MainWin::init()
     m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
 
+    m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
+    m_startViewingProgressPanel->setVisible(false);
+
+    m_startStreamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); });
+    m_startStreamingProgressPanel->setVisible(false);
+
 #ifndef __APPLE__
     ui->tabWidget->setTabVisible( 3, false );
     ui->tabWidget->setTabVisible( 4, false );
 #endif
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+        
+        updateViewerProgressPanel( index );
+        updateStreamerProgressPanel( index );
+
         if (index != 1) {
             m_modifyProgressPanel->setVisible(false);
         }

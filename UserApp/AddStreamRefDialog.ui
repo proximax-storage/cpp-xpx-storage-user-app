@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AddStreamAnnouncementDialog</class>
- <widget class="QDialog" name="AddStreamAnnouncementDialog">
+ <class>AddStreamRefDialog</class>
+ <widget class="QDialog" name="AddStreamRefDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -16,40 +16,8 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Stream folder*</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="m_localDriveFolder">
+     <item row="4" column="1">
+      <widget class="QPushButton" name="m_localFolderBtn">
        <property name="minimumSize">
         <size>
          <width>450</width>
@@ -63,35 +31,29 @@
         </size>
        </property>
        <property name="text">
-        <string/>
+        <string>Choose stream directory</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="selectDriveBox"/>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_4">
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Start time*</string>
+        <string>Stream local folder*</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Drive*</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <item row="2" column="1">
+      <widget class="QDateTimeEdit" name="m_dateTime">
+       <property name="calendarPopup">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="m_title">
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="m_localDriveFolder">
        <property name="minimumSize">
         <size>
          <width>450</width>
@@ -119,45 +81,76 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QDateTimeEdit" name="m_dateTime">
-       <property name="calendarPopup">
-        <bool>true</bool>
+     <item row="5" column="1">
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLabel" name="m_errorText">
-         <property name="styleSheet">
-          <string notr="true">color: #CC0000</string>
-         </property>
-         <property name="text">
-          <string>Error text</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="m_localFolderBtn">
-         <property name="minimumSize">
-          <size>
-           <width>200</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>200</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Choose stream directory</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Start time*</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="m_title">
+       <property name="minimumSize">
+        <size>
+         <width>450</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="minimumSize">
+        <size>
+         <width>450</width>
+         <height>30</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Stream link*</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -168,7 +161,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>AddStreamAnnouncementDialog</receiver>
+   <receiver>AddStreamRefDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -184,7 +177,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>AddStreamAnnouncementDialog</receiver>
+   <receiver>AddStreamRefDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

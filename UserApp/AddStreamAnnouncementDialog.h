@@ -26,6 +26,8 @@ private:
 
 private:
     Ui::AddStreamAnnouncementDialog* ui;
-    Model* mpModel;
-    OnChainClient* mp_onChainClient;
+    Model*                           mpModel;
+    OnChainClient*                   mp_onChainClient;
+    std::string                      mCurrentDriveKey;
+    std::string                      mStreamFolder;
 };

@@ -24,6 +24,9 @@ public:
     void setFailed();
     void setCanceling();
     void setCanceled();
+    
+    void setWaitingChannelCreation();
+    void setWaitingStreamStart();
 
 private:
     std::function<void()> m_cancelModificationFunc;

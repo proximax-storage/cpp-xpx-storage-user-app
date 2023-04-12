@@ -68,7 +68,7 @@ void Settings::initForTests()
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_genkins_2", "b04fbd908d0fd4315efc4e970bb899d5f82f3828256b7b1f3d4782fef02820e1" );
+        config().initAccount( "test", "4DC8F4C8C84ED4A829E79A685A98E4A0BB97A3C6DA9C49FA83CA133676993D08" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();

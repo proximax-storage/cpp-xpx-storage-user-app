@@ -28,6 +28,7 @@ class Settings;
 namespace sirius { namespace drive
 {
     class FsTree;
+    struct DriveKey;
 }}
 
 class MainWin : public QMainWindow
@@ -112,6 +113,22 @@ private:
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
     void initStreaming();
+    void updateStreamerTable();
+    void updateViewerCBox();
+
+    void startViewingStream();
+    void cancelViewingStream();
+    void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
+                                 bool                           isStreaming,
+                                 const std::array<uint8_t,32>&  streamId );
+
+
+    void updateViewerProgressPanel( int tabIndex );
+
+    void cancelStreaming();
+    void updateStreamerProgressPanel( int tabIndex );
+
+
     void initWorker();
 
     void callbackResolver(const QUuid& id, const QVariant& data);
@@ -176,6 +193,10 @@ private:
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
     uint64_t                m_XPX_MOSAIC_ID;
+    
+    ModifyProgressPanel*    m_startViewingProgressPanel;
+    ModifyProgressPanel*    m_startStreamingProgressPanel;
+
     Worker*                 mpWorker;
     QThread*                mpThread;
     std::map<QUuid, std::function<void(QVariant)>> mResolvers;

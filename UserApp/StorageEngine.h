@@ -9,19 +9,32 @@
 #include "drive/FsTree.h"
 #include "drive/ActionList.h"
 
+#define USE_CLIENT_SESSION
+
 namespace sirius::drive {
     class ClientSession;
+    class ViewerSession;
+    struct DriveKey;
 }
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
 
 class Model;
+struct StreamInfo;
+
+using StreamStatusResponseHandler = std::function<void( const sirius::drive::DriveKey&  driveKey,
+                                                        bool                            isStreaming,
+                                                        const std::array<uint8_t,32>&   streamId )>;
 
 class StorageEngine : public QObject
 {
     Q_OBJECT
 
+#ifdef USE_CLIENT_SESSION
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
+#else
+    std::shared_ptr<sirius::drive::ViewerSession>   m_session;
+#endif
     std::recursive_mutex                            m_mutex;
 
 public:
@@ -47,17 +60,18 @@ public:
                                            const std::array<uint8_t,32>&  fileHash);
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
+    
+    void requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler );
 
-signals:
-    void fsTreeReceived(const std::string& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
-
-private:
     void init(const sirius::crypto::KeyPair&  keyPair,
               const std::string&              address,
               const endpoint_list&            bootstraps,
               std::function<void()>           addressAlreadyInUseHandler );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
+
+signals:
+    void fsTreeReceived(const std::string& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
 
 private:
     Model* mp_model;

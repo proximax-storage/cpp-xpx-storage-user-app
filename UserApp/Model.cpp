@@ -4,6 +4,7 @@
 #include "LocalDriveItem.h"
 #include "StorageEngine.h"
 #include "utils/HexParser.h"
+#include "drive/ViewerSession.h"
 #include "Settings.h"
 
 #include <boost/algorithm/string.hpp>
@@ -491,7 +492,7 @@ void Model::removeChannelsByDriveKey(const std::string &driveKey) {
 
 void Model::removeFromDownloads( int rowIndex )
 {
-    m_settings->removeFromDownloads(rowIndex);
+    m_settings->removeFromDownloads( rowIndex );
 }
 
 DownloadChannel* Model::currentDownloadChannel()
@@ -631,6 +632,90 @@ void Model::onDriveStateChanged(const Drive& drive) {
     {
         emit driveStateChanged(driveKey, state);
     });
+}
+
+void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )
+{
+    gStorageEngine->removeTorrentSync( infoHash );
+}
+
+void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
+{
+    auto& streams = m_settings->config().m_streams;
+    streams.push_back( streamInfo );
+    streams.back().m_streamIndex = m_settings->config().m_lastUniqueStreamIndex;
+    m_settings->config().m_lastUniqueStreamIndex++;
+    std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
+        return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
+    });
+    
+    m_settings->save();
+}
+
+void Model::deleteStreamerAnnouncement( int index )
+{
+    auto& streams = m_settings->config().m_streams;
+    streams.erase( streams.begin() + index );
+    m_settings->save();
+}
+
+const std::vector<StreamInfo>& Model::streamerAnnouncements() const
+{
+    return m_settings->config().m_streams;
+}
+
+void Model::addStreamRef( const StreamInfo& streamInfo )
+{
+    auto& streams = m_settings->config().m_streamRefs;
+    streams.push_back( streamInfo );
+    std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
+        return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
+    });
+    
+    m_settings->save();
+}
+
+void Model::deleteStreamRef( int index )
+{
+    auto& streams = m_settings->config().m_streamRefs;
+    streams.erase( streams.begin() + index );
+    m_settings->save();
+}
+
+const std::vector<StreamInfo>& Model::streamRefs() const
+{
+    return m_settings->config().m_streamRefs;
+}
+
+int Model::currentStreamIndex() const
+{
+    return m_settings->config().m_currentStreamIndex;
+}
+
+const StreamInfo*  Model::getStreamRef( int index ) const
+{
+    if ( index >= 0 && index < m_settings->config().m_streamRefs.size() )
+    {
+        return &m_settings->config().m_streamRefs[index];
+    }
+    return nullptr;
+}
+
+StreamInfo*  Model::getStreamRef( int index )
+{
+    if ( index >= 0 && index < m_settings->config().m_streamRefs.size() )
+    {
+        return &m_settings->config().m_streamRefs[index];
+    }
+    return nullptr;
+}
+
+void Model::requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler )
+{
+//    if ( const auto* driveInfo = findDrive( streamInfo.m_driveKey ); driveInfo != nullptr )
+//    {
+//        gStorageEngine->requestStreamStatus( streamInfo, driveInfo->m_replicatorList, streamStatusResponseHandler );
+//    }
 }
 
 void Model::stestInitChannels()

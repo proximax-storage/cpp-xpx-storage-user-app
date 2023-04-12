@@ -96,8 +96,10 @@ set(PROJECT_SOURCES
         DownloadInfo.h                DownloadInfo.cpp
         Account.h                     Account.cpp
         CachedReplicator.h            CachedReplicator.cpp
+        StreamInfo.h                  StreamInfo.cpp
 
         AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
+        AddStreamRefDialog.h          AddStreamRefDialog.cpp          AddStreamRefDialog.ui
 
         ${TS_FILES}
 )
