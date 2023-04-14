@@ -3,6 +3,8 @@
 
 #include "AddStreamAnnouncementDialog.h"
 #include "AddStreamRefDialog.h"
+#include "AddDownloadChannelDialog.h"
+
 #include "Model.h"
 #include "StreamInfo.h"
 #include "ModifyProgressPanel.h"
@@ -223,11 +225,10 @@ void MainWin::updateViewerCBox()
 
         QDateTime dateTime = QDateTime::currentDateTime();
         dateTime.setSecsSinceEpoch( streamRef.m_secsSinceEpoch );
-        row = dateTime.toString() + " ❘ " + QString::fromStdString( streamRef.m_title );
+        row = dateTime.toString("yyyy-MMM-dd HH:mm") + " ❘ " + QString::fromStdString( streamRef.m_title );
         ui->m_streamRefCBox->addItem( row );
     }
 }
-
 
 void MainWin::updateViewerProgressPanel( int tabIndex )
 {
@@ -263,20 +264,70 @@ void MainWin::updateStreamerProgressPanel( int tabIndex )
 
 void MainWin::startViewingStream()
 {
+    dbg();
+    return;
+    
     if ( m_model->m_viewerStatus != vs_no_viewing )
     {
         return;
     }
     
-    const StreamInfo* streamRef = m_model->getStreamRef( ui->m_streamRefCBox->currentIndex() );
-    if ( streamRef == nullptr )
+    const StreamInfo* streamInfo = m_model->getStreamRef( ui->m_streamRefCBox->currentIndex() );
+    if ( streamInfo == nullptr )
     {
         return;
     }
+    m_model->m_currentStreamInfo = *streamInfo;
 
-    m_model->requestStreamStatus( *streamRef, [this] ( const sirius::drive::DriveKey& driveKey,
-                                                       bool                           isStreaming,
-                                                       const std::array<uint8_t,32>&  streamId )
+    // find channel
+    auto channelMap = m_model->getDownloadChannels();
+    std::vector<DownloadChannel> channels;
+    for( auto [key,channelInfo] : channelMap )
+    {
+        if ( boost::iequals( channelInfo.getDriveKey(), streamInfo->m_driveKey ) )
+        {
+            channels.push_back( channelInfo );
+        }
+    }
+    
+    if ( channels.size() == 0 )
+    {
+        // create channel
+        //
+        QMessageBox msgBox;
+        msgBox.setText( QString::fromStdString( "No channel for selected stream" ) );
+        msgBox.setInformativeText( "Do You want to create channel?" );
+        msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+        int reply = msgBox.exec();
+        if ( reply == QMessageBox::Cancel )
+        {
+            return;
+        }
+
+        AddDownloadChannelDialog dialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
+        connect( &dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel );
+        auto rc = dialog.exec();
+        if ( rc )
+        {
+            m_model->m_viewerStatus = vs_waiting_channel_creation;
+        }
+        return;
+    }
+
+    if ( channels.size() > 1 )
+    {
+        // select channel
+        return;
+    }
+    
+    startViewingStream2();
+}
+    
+void MainWin::startViewingStream2()
+{
+    m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
+                                                                         bool                           isStreaming,
+                                                                         const std::array<uint8_t,32>&  streamId )
     {
         onStreamStatusResponse( driveKey, isStreaming, streamId );
     });
@@ -284,6 +335,20 @@ void MainWin::startViewingStream()
     m_model->m_viewerStatus = vs_waiting_stream_start;
     m_startViewingProgressPanel->setWaitingStreamStart();
     m_startViewingProgressPanel->setVisible( true );
+
+    QTimer::singleShot(10, this, [this]
+    {
+        if ( m_model->m_viewerStatus == vs_waiting_stream_start )
+        {
+            m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
+                                                                                 bool                           isStreaming,
+                                                                                 const std::array<uint8_t,32>&  streamId )
+            {
+                qWarning() << "timer: ";
+                onStreamStatusResponse( driveKey, isStreaming, streamId );
+            });
+        }
+    });
 }
 
 void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
@@ -303,6 +368,13 @@ void MainWin::cancelStreaming()
 {
     m_model->m_streamerStatus = ss_no_streaming;
     m_startStreamingProgressPanel->setVisible(false);
+}
+
+void MainWin::dbg()
+{
+    m_model->requestModificationStatus( "CA428CB868CF0DBFB9896FEF3A89E8F482A0A9F90BC29DC8C5DE01CCEFE7BAD1",
+                                        "0100000000050607080900010203040506070809000102030405060708090001",
+                                        "AB0F0F0F00000000000000000000000000000000000000000000000000000000" );
 }
 
 //        if ( Model::homeFolder() == "/Users/alex" )

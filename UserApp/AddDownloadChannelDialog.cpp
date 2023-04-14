@@ -10,7 +10,8 @@
 
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                                                    Model* model,
-                                                   QWidget *parent) :
+                                                   QWidget *parent,
+                                                   std::string driveKey ) :
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
@@ -164,6 +165,8 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
             ui->driveKey->setText(mCurrentDriveKey.c_str());
         }
     }, Qt::QueuedConnection);
+    
+    ui->driveKey->setText( QString::fromStdString( driveKey ) );
 
     setWindowTitle("Add new download channel");
     setFocus();

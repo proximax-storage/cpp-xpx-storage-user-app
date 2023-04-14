@@ -21,6 +21,7 @@
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
+#include "StreamInfo.h"
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;
@@ -32,7 +33,6 @@ namespace fs = std::filesystem;
 
 class Settings;
 struct LocalDriveItem;
-struct StreamInfo;
 
 enum ViewerStatus
 {
@@ -49,6 +49,14 @@ enum StreamerStatus
 //    vs_waiting_stream_id,
 //    vs_viewing,
 };
+
+using ModificationStatusResponseHandler = std::function<void( const sirius::drive::ReplicatorKey&       replicatorKey,
+                                                              const sirius::Hash256&                    modificationHash,
+                                                              const sirius::drive::ModifyTrafficInfo&   msg,
+                                                              lt::string_view                           currentTask,
+                                                              bool                                      isModificationQueued,
+                                                              bool                                      isModificationFinished,
+                                                              const std::string&                        error )>;
 
 class Model : public QObject
 {
@@ -158,6 +166,10 @@ class Model : public QObject
 
         static std::array<uint8_t,32>   hexStringToHash( const std::string& str );
     
+        void                            setModificationStatusResponseHandler( ModificationStatusResponseHandler handler );
+        void                            requestModificationStatus(  const std::string&      replicatorKey,
+                                                                    const std::string&      driveKey,
+                                                                    const std::string&      modificationHash );
 
         //
         // Streaming
@@ -197,5 +209,7 @@ class Model : public QObject
     
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;
+        StreamInfo      m_currentStreamInfo;
+
         StreamerStatus  m_streamerStatus = ss_no_streaming;
 };

@@ -117,6 +117,7 @@ private:
     void updateViewerCBox();
 
     void startViewingStream();
+    void startViewingStream2();
     void cancelViewingStream();
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
                                  bool                           isStreaming,
@@ -143,6 +144,8 @@ private:
             callback(Type(), "unknown error");
         }
     }
+    
+    void dbg();
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);

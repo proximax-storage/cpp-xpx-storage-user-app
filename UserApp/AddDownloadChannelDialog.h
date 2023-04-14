@@ -23,7 +23,8 @@ class AddDownloadChannelDialog : public QDialog
 public:
     explicit AddDownloadChannelDialog(OnChainClient* onChainClient,
                                       Model* model,
-                                      QWidget *parent = nullptr);
+                                      QWidget *parent = nullptr,
+                                      std::string driveKey = "" );
     ~AddDownloadChannelDialog();
 
 public:

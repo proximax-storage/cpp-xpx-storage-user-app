@@ -80,6 +80,9 @@ class Drive : public QObject
 
         sirius::drive::ReplicatorList getReplicators() const;
         void setReplicators(const std::vector<std::string>& replicators);
+    
+        const sirius::drive::ReplicatorList& replicatorList() const { return m_replicatorList; }
+
 
         void updateState(DriveState state);
 

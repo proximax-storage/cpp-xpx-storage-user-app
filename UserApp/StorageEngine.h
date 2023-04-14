@@ -30,6 +30,7 @@ class StorageEngine : public QObject
 {
     Q_OBJECT
 
+public:
 #ifdef USE_CLIENT_SESSION
     std::shared_ptr<sirius::drive::ClientSession>   m_session;
 #else
@@ -61,7 +62,9 @@ public:
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
     
-    void requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler );
+    void requestStreamStatus( const std::array<uint8_t,32>& driveKey,
+                              const sirius::drive::ReplicatorList&,
+                              StreamStatusResponseHandler streamStatusResponseHandler );
 
     void init(const sirius::crypto::KeyPair&  keyPair,
               const std::string&              address,

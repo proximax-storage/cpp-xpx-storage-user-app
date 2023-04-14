@@ -248,12 +248,14 @@ void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHa
 {
 }
 
-void StorageEngine::requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler )
+void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          driveKey,
+                                         const sirius::drive::ReplicatorList&   replicatorList,
+                                         StreamStatusResponseHandler            streamStatusResponseHandler )
 {
     std::unique_lock<std::recursive_mutex> lock( m_mutex );
 
-    //
-    //m_session->requestStreamStatus( streamRef->m_driveKey, streamStatusResponseHandler );
-    //m_session->requestStreamStatus( driveKey, streamStatusResponseHandler );
+#ifndef USE_CLIENT_SESSION
+    m_session->requestStreamStatus( driveKey, replicatorList, streamStatusResponseHandler );
+#endif
 }
 

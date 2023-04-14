@@ -712,9 +712,35 @@ StreamInfo*  Model::getStreamRef( int index )
 
 void Model::requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler streamStatusResponseHandler )
 {
-//    if ( const auto* driveInfo = findDrive( streamInfo.m_driveKey ); driveInfo != nullptr )
+    if ( const auto* driveInfo = findDrive( streamInfo.m_driveKey ); driveInfo != nullptr )
+    {
+        gStorageEngine->requestStreamStatus( hexStringToHash(streamInfo.m_driveKey), driveInfo->replicatorList(), streamStatusResponseHandler );
+    }
+}
+
+void Model::setModificationStatusResponseHandler( ModificationStatusResponseHandler handler )
+{
+    gStorageEngine->m_session->setModificationStatusResponseHandler( handler );
+}
+
+void Model::requestModificationStatus(  const std::string&     replicatorKey,
+                                        const std::string&     driveKey,
+                                        const std::string&     modificationHash )
+{
+//    if ( Model::homeFolder() == "/Users/alex" )
 //    {
-//        gStorageEngine->requestStreamStatus( streamInfo, driveInfo->m_replicatorList, streamStatusResponseHandler );
+//        boost::asio::ip::tcp::endpoint endpoint{ boost::asio::ip::make_address("192.168.2.101"), 5001 };
+//
+//        gStorageEngine->m_session->sendModificationStatusRequestToReplicator( hexStringToHash(replicatorKey),
+//                                                                              hexStringToHash(driveKey),
+//                                                                              hexStringToHash(modificationHash),
+//                                                                              endpoint );
+//    }
+//    else
+//    {
+        gStorageEngine->m_session->sendModificationStatusRequestToReplicator( hexStringToHash(replicatorKey),
+                                                                              hexStringToHash(driveKey),
+                                                                              hexStringToHash(modificationHash) );
 //    }
 }
 
