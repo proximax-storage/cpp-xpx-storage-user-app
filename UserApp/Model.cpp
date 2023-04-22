@@ -639,10 +639,10 @@ void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )
     gStorageEngine->removeTorrentSync( infoHash );
 }
 
-void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
+void Model::approveLastStreamerAnnouncement()
 {
     auto& streams = m_settings->config().m_streams;
-    streams.push_back( streamInfo );
+    streams.push_back( m_settings->config().m_approvingStream.value() );
     streams.back().m_streamIndex = m_settings->config().m_lastUniqueStreamIndex;
     m_settings->config().m_lastUniqueStreamIndex++;
     std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
@@ -650,6 +650,12 @@ void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
     });
     
     m_settings->save();
+}
+
+void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
+{
+    assert( m_settings->config().m_approvingStream );
+    m_settings->config().m_approvingStream = streamInfo;
 }
 
 void Model::deleteStreamerAnnouncement( int index )

@@ -14,6 +14,7 @@
 
 #include "drive/ViewerSession.h"
 #include "drive/FsTree.h"
+#include "drive/FlatDrive.h"
 #include "xpxchaincpp/model/storage/drives_page.h"
 #include "xpxchaincpp/model/storage/download_channels_page.h"
 #include "DriveModificationTransition.h"
@@ -175,6 +176,7 @@ class Model : public QObject
         // Streaming
         //
         void                            addStreamerAnnouncement( const StreamInfo& streamInfo );
+        void                            approveLastStreamerAnnouncement();
         void                            deleteStreamerAnnouncement( int index );
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
 

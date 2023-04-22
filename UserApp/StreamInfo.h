@@ -18,19 +18,19 @@ struct StreamInfo
     uint64_t                m_streamIndex = -1; // unique index of stream on this drive
     std::string             m_title;
     uint64_t                m_secsSinceEpoch;
-    std::string             m_localFolder;
+    std::string             m_streamFolder;
 
     StreamInfo() {}
     StreamInfo( const std::string&  driveKey,
                 const std::string&  title,
                 uint64_t            secsSinceEpoch,
-                const std::string&  localFolder )
+                const std::string&  streamFolder )
         :
          m_version(1)
         ,m_driveKey(driveKey)
         ,m_title(title)
         ,m_secsSinceEpoch(secsSinceEpoch)
-        ,m_localFolder(localFolder)
+        ,m_streamFolder(streamFolder)
     {
     }
 
@@ -42,7 +42,7 @@ struct StreamInfo
             m_streamIndex,
             m_title,
             m_secsSinceEpoch,
-            m_localFolder
+            m_streamFolder
            );
     }
 

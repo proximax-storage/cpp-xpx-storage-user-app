@@ -117,18 +117,18 @@ private:
     void updateViewerCBox();
 
     void startViewingStream();
+    void updateCreateChannelStatusForVieweing( const DownloadChannel& channel );
     void startViewingStream2();
     void cancelViewingStream();
+
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
                                  bool                           isStreaming,
                                  const std::array<uint8_t,32>&  streamId );
-
 
     void updateViewerProgressPanel( int tabIndex );
 
     void cancelStreaming();
     void updateStreamerProgressPanel( int tabIndex );
-
 
     void initWorker();
 

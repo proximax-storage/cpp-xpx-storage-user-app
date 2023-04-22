@@ -14,6 +14,8 @@
 #include "CachedReplicator.h"
 #include "drive/Utils.h"
 
+#define STREAM_ROOT_FOLDER_NAME ".Streams"
+
 class Account : public QObject
 {
     Q_OBJECT
@@ -42,6 +44,7 @@ class Account : public QObject
                     m_streams,
                     m_currentStreamIndex,
                     m_streamRefs,
+                    m_viewerStreamRootFolder,
                     m_currentStreamRefIndex,
                     m_currentDriveKey,
                     m_lastUniqueStreamIndex );
@@ -62,6 +65,9 @@ class Account : public QObject
         std::string m_currentDriveKey;
         bool m_drivesLoaded = false;
 
+        std::string             m_viewerStreamRootFolder;
+    
+        std::optional<StreamInfo> m_approvingStream;
         std::vector<StreamInfo> m_streams;
         int                     m_currentStreamIndex = -1;
         std::vector<StreamInfo> m_streamRefs; // viewer part

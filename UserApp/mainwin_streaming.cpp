@@ -199,7 +199,7 @@ void MainWin::updateStreamerTable()
             }
             else
             {
-                ui->m_streamAnnouncementTable->setItem( rowIndex, 1, new QTableWidgetItem( QString::fromStdString( announcement.m_localFolder ) ) );
+                ui->m_streamAnnouncementTable->setItem( rowIndex, 1, new QTableWidgetItem( QString::fromStdString( announcement.m_streamFolder ) ) );
             }
         }
         {
@@ -264,17 +264,19 @@ void MainWin::updateStreamerProgressPanel( int tabIndex )
 
 void MainWin::startViewingStream()
 {
-    dbg();
-    return;
+//    dbg();
+//    return;
     
     if ( m_model->m_viewerStatus != vs_no_viewing )
     {
         return;
     }
     
+    // set current viewing stream info
     const StreamInfo* streamInfo = m_model->getStreamRef( ui->m_streamRefCBox->currentIndex() );
     if ( streamInfo == nullptr )
     {
+        qWarning() << "streamInfo == nullptr; index: " << ui->m_streamRefCBox->currentIndex();
         return;
     }
     m_model->m_currentStreamInfo = *streamInfo;
@@ -323,6 +325,17 @@ void MainWin::startViewingStream()
     startViewingStream2();
 }
     
+void MainWin::updateCreateChannelStatusForVieweing( const DownloadChannel& channel )
+{
+    if ( m_model->m_viewerStatus != vs_waiting_channel_creation ||
+         boost::iequals( m_model->m_currentStreamInfo.m_driveKey, channel.getDriveKey() ) )
+    {
+        return;
+    }
+    
+    startViewingStream2();
+}
+
 void MainWin::startViewingStream2()
 {
     m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,

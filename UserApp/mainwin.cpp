@@ -2138,6 +2138,7 @@ void MainWin::updateDownloadChannelStatusOnUi(const DownloadChannel& channel)
 {
     const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channel.getKey())), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
+        updateCreateChannelStatusForVieweing( channel );
         if (channel.isCreating()) {
             ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(creating...)"));
         } else if (channel.isDeleting()) {

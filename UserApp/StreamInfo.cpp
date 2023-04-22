@@ -21,7 +21,7 @@ std::string StreamInfo::getLink() const
     archive( m_driveKey );
     archive( m_title );
     archive( m_secsSinceEpoch );
-    archive( m_localFolder );
+    archive( m_streamFolder );
 
     auto rawString = os.str();
     
@@ -74,7 +74,7 @@ void StreamInfo::parseLink( const std::string& linkString )
     iarchive( m_driveKey );
     iarchive( m_title );
     iarchive( m_secsSinceEpoch );
-    iarchive( m_localFolder );
+    iarchive( m_streamFolder );
 }
 
 
