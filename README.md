@@ -63,7 +63,7 @@ In case you are using Visual Studio Code (VS Code), and you are not able to enab
 Open the link: https://cmake.org/download/ 
 
 This is what the page looks like:
-![2  CMake Website](https://user-images.githubusercontent.com/121498420/234028864-6a5071a6-aa82-4d38-a797-0572bd79b70a.png)
+![image](https://user-images.githubusercontent.com/121498420/234049026-6b57e98c-d80f-4bbb-8372-c439558bd3ff.png)
 
 Choose Windows x64 Installer: `cmake-3.26.3-windows-x86_64.msi` (you need to download the 32 bit version if your PC is 32 bit).
 
@@ -71,8 +71,9 @@ Run the .msi file and install CMake.
 
 This is what it looks like after installation:
 
-![3  CMake Icon](https://user-images.githubusercontent.com/121498420/234028983-60977429-4800-45b1-8a8f-a9f7645b1c09.png)
-![4  CMake App](https://user-images.githubusercontent.com/121498420/234030435-dba795d3-6442-4350-871a-94277c9bffad.png)
+![image](https://user-images.githubusercontent.com/121498420/234049096-22dc1694-3691-4f03-95cf-ed829f6c2661.png)
+
+![image](https://user-images.githubusercontent.com/121498420/234049197-8c47c4c8-2461-4e12-8b6e-6aa09af8936b.png)
 
 Using Command Prompt to check if it has been successfully installed:
 ![5  CMake Check](https://user-images.githubusercontent.com/121498420/234030513-365341fa-7cf6-4890-a1e5-e64bef28aacc.png)
@@ -80,56 +81,59 @@ Using Command Prompt to check if it has been successfully installed:
 ### Install Conan
 Open the link: https://conan.io/
 This is what the page looks like:
-![6  Conan Website](https://user-images.githubusercontent.com/121498420/234030765-59e028ca-a494-4f1b-a680-f7c44c8452de.png)
+![image](https://user-images.githubusercontent.com/121498420/234049829-b88d8473-099e-44fc-990c-af5390682dcd.png)
 
 Press `Downloads`
 
 Choose Windows version (32 bit or 64 bit, depending on your PC), and start the download.
-![7  Conan Installation](https://user-images.githubusercontent.com/121498420/234030879-43c965b0-5280-4310-8b7a-a155257ee142.png)
+![image](https://user-images.githubusercontent.com/121498420/234049736-e1b4078e-6828-4a7d-af43-0fef89d9fb98.png)
 
 Run the installation file and install Conan.
 
 This is what it looks like after installation:
 
-![8  Conan Icon](https://user-images.githubusercontent.com/121498420/234030946-b15ff529-5bde-46ee-931e-9a535ccb3ebd.png)
+![image](https://user-images.githubusercontent.com/121498420/234049910-54bc6f02-5dfc-4a1f-a12d-89179bd1bc8a.png)
 
-![9  Conan App](https://user-images.githubusercontent.com/121498420/234030990-310acb5c-3f50-469b-a945-da381002a49f.png)
+![image](https://user-images.githubusercontent.com/121498420/234050080-d9c22004-7cf4-49ff-b7a3-71c4ed0f3817.png)
 
 Using Command Prompt to check whether it has been successfully installed:
+
 ![10  Conan Check](https://user-images.githubusercontent.com/121498420/234031116-0e3f53c8-0af4-46f4-8242-ade0ca77f79b.png)
 
 ### Install QT
 Open the link: https://www.qt.io/download-open-source 
 Scroll down and press `Download the Qt Online Installer`
 
-![11  QT Website](https://user-images.githubusercontent.com/121498420/234031277-2fe42da2-d94b-40d3-916c-6d50cba60c5c.png)
+![image](https://user-images.githubusercontent.com/121498420/234043992-ed5d7f33-0ce6-441b-bf9e-4ac4c543b405.png)
 
 Choose `Windows` and press `Qt Online Installer for Windows`
-![12  QT Installer Installation](https://user-images.githubusercontent.com/121498420/234031378-04c569ad-4185-4153-86f9-d460866a0fc9.png)
+
+![image](https://user-images.githubusercontent.com/121498420/234044366-3b1921b5-d8da-427f-bea1-3db2c9caf0db.png)
 
 The installer should look something like this
-![13  QT Installer Login](https://user-images.githubusercontent.com/121498420/234031465-e41a45dc-1628-4679-baa8-08d6d6be9e14.png)
+![image](https://user-images.githubusercontent.com/121498420/234045148-465cde14-5672-4bd5-92d7-a4c98cf93f3e.png)
 
 Create your account if you don’t have one, then press `Next`
 
 Tick the box, and press `Next`
-![14  QT Installer Obligations](https://user-images.githubusercontent.com/121498420/234031638-2523b5dd-d3b1-474c-a7cf-1cf8b1507cd1.png)
+
+![image](https://user-images.githubusercontent.com/121498420/234045508-a368ab8b-60bb-43f9-846f-ba76196d613e.png)
 
 Press `Next`
-![15  QT Setup](https://user-images.githubusercontent.com/121498420/234031708-95013821-8d7d-4dd4-9b92-38fce294bfc8.png)
+![image](https://user-images.githubusercontent.com/121498420/234045663-6eddb4ee-9e57-49fa-ba92-4fb6e6bcab13.png)
 
 Choose whichever option you prefer, and press `Next`
-![16  QT Contribute Page](https://user-images.githubusercontent.com/121498420/234031836-c98f9a57-d028-4dab-9469-4008ff283d2a.png)
+![image](https://user-images.githubusercontent.com/121498420/234046341-3d35ab19-67a2-44a5-80b1-1e13b8e83e62.png)
 
 Specify your installation directory, preferably the one with more space, because the installation will take a lot of space. Then press `Next`.
-![17  QT Installer Install Folder](https://user-images.githubusercontent.com/121498420/234031989-35a5ac0e-e492-4787-9e89-754380ed808b.png)
+![image](https://user-images.githubusercontent.com/121498420/234046566-321f8192-10b3-453c-a3f3-8537b665a666.png)
 
 Choose Qt 6.4.3, including all the components within it (including the whole `Additional Libraries` too)
-![18  QT Components 1](https://user-images.githubusercontent.com/121498420/234032090-d4c24759-4fb2-42ac-9dcb-003df23992c8.png)
+![image](https://user-images.githubusercontent.com/121498420/234048012-c3e60e55-a8fd-47e8-a343-d8cbab517cad.png)
 
-![19  QT Components 2](https://user-images.githubusercontent.com/121498420/234032154-f66f2053-c353-4788-bd9c-98e4445a840f.png)
+![image](https://user-images.githubusercontent.com/121498420/234048192-8a186e5a-b360-4e91-8154-10f093f53873.png)
 
-![20  QT Components 3](https://user-images.githubusercontent.com/121498420/234032230-4b34571d-2569-4797-9012-7c48322a0fc6.png)
+![image](https://user-images.githubusercontent.com/121498420/234048415-31a4fea0-3e3e-45e4-8935-1460151b3199.png)
 
 And then press `Next`, and wait for the installation.
 
