@@ -57,7 +57,7 @@ int main()
 The correct output should be:
 ```result: 0```
 
-In case you are using Visual Studio Code (VS Code), and you are not able to enable C++20 support. You can try to download Microsoft Visual Studio (Visual Studio) instead (see `Troubleshooting` > `C++20 related Issues` section below).
+In case you are using Visual Studio Code (VS Code), and you are not able to enable C++20 support. You can try to download Microsoft Visual Studio (Visual Studio) instead (see `Troubleshooting (for Windows)` > `C++20 related Issues` section below).
 
 ### Install CMake
 Open the link: https://cmake.org/download/ 
@@ -80,6 +80,7 @@ Using Command Prompt to check if it has been successfully installed:
 
 ### Install Conan
 Open the link: https://conan.io/
+
 This is what the page looks like:
 ![image](https://user-images.githubusercontent.com/121498420/234049829-b88d8473-099e-44fc-990c-af5390682dcd.png)
 
@@ -102,6 +103,7 @@ Using Command Prompt to check whether it has been successfully installed:
 
 ### Install QT
 Open the link: https://www.qt.io/download-open-source 
+
 Scroll down and press `Download the Qt Online Installer`
 
 ![image](https://user-images.githubusercontent.com/121498420/234043992-ed5d7f33-0ce6-441b-bf9e-4ac4c543b405.png)
@@ -110,10 +112,10 @@ Choose `Windows` and press `Qt Online Installer for Windows`
 
 ![image](https://user-images.githubusercontent.com/121498420/234044366-3b1921b5-d8da-427f-bea1-3db2c9caf0db.png)
 
-The installer should look something like this
+The installer should look something like this:
 ![image](https://user-images.githubusercontent.com/121498420/234045148-465cde14-5672-4bd5-92d7-a4c98cf93f3e.png)
 
-Create your account if you don’t have one, then press `Next`
+Create an account if you don’t have one, then press `Next`
 
 Tick the box, and press `Next`
 
@@ -125,7 +127,7 @@ Press `Next`
 Choose whichever option you prefer, and press `Next`
 ![image](https://user-images.githubusercontent.com/121498420/234046341-3d35ab19-67a2-44a5-80b1-1e13b8e83e62.png)
 
-Specify your installation directory, preferably the one with more space, because the installation will take a lot of space. Then press `Next`.
+Specify your installation directory, preferably the one with more space, because the installation will take a lot of space. Then press `Next`
 ![image](https://user-images.githubusercontent.com/121498420/234046566-321f8192-10b3-453c-a3f3-8537b665a666.png)
 
 Choose Qt 6.4.3, including all the components within it (including the whole `Additional Libraries` too)
@@ -139,7 +141,7 @@ And then press `Next`, and wait for the installation.
 
 ** Please note that the installation may take time since there are a lot to install.
 
-After installation is complete, you can exit the installer.
+After the installation is complete, you can exit the installer.
 
 According to your installation folder and Qt version, add a new system variable:
 ```
@@ -167,7 +169,7 @@ b2
 b2 --build-dir=build/x64 address-model=64 threading=multi --build-type=complete --stagedir=./stage/x64 -j 4
 ```
 
-** Preferably use command prompt, as Windows PowerShell might not work when running `bootstrap gcc` command
+** Preferably use command prompt, as Windows PowerShell might not work when running `bootstrap gcc` command.
 
 ** Note that running the last two b2 commands may take time.
 
@@ -198,4 +200,5 @@ address=localhost:5555
 bootstrap_nodes=localhost:3000
 ```
 
+## Troubleshooting (for Windows)
 
