@@ -206,9 +206,11 @@ bootstrap_nodes=localhost:3000
 
 ## Troubleshooting (for Windows)
 
-### Post Installation Issues
+### Persisting Errors
 
 If you have just done installations and encounter errors when running any command. Try to close your command prompt, restart your PC, and try again.
+
+In case you encounter the same build error after trying out some solutions, you can try to delete the build folder and then re-build again.
 
 ### C++20 related Issues
 
@@ -248,7 +250,7 @@ https://strawberryperl.com/releases.html
 - If you encounter error related to Qt versioning, and you installed Qt version 5.
 ![image](https://user-images.githubusercontent.com/121498420/234162042-39d7c715-56e4-4726-85f0-c67a956aa339.png)
 
-&emsp;&emsp;You can try to change line of code in cpp-xpx-storage-user-app/CMakeLists.txt from:
+&emsp;&emsp;You can try to change line of code in `cpp-xpx-storage-user-app/CMakeLists.txt` from:
 
 &emsp;&emsp;`find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)`
 
@@ -256,6 +258,84 @@ https://strawberryperl.com/releases.html
 
 &emsp;&emsp;`find_package(QT NAMES Qt5 COMPONENTS Widgets REQUIRED)`
 
-&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234160802-4ce1439e-4d5c-4d0b-9561-8e7213724e02.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234164452-7f8ddc2f-f2d1-4f31-8eb6-095d9487b684.png)
+
+### Boost related Issues
+
+**Build and libraries-build issues**
+
+When re-building the Boost or Boost libraries:
+- Try to clear the cache for Boost to detect again, or try cleaning up before re-building (b2 clean). And make sure everything is build
+- Make sure that the Boost version you built was properly installed
+- Remember to reset caches (delete CMake cache) when running CMake
+- If you get `missing stacktrace_backtrace` error, and you are still not able to build the stacktrace library by using b2 command, then refer to `Missing stacktrace_backtrace` section below.
+
+**Missing stacktrace_backtrace error**
+
+![image](https://user-images.githubusercontent.com/121498420/234168962-3dde7a51-f45c-44d6-aa01-79941942e01c.png)
+
+If you encounter `missing: stacktrace_backtrace` error on Boost, try the following solution:
+
+1. Exclude/disable stacktrace_backtrace from the required packages in cpp-xpx-storage-user-app/cpp-xpx-storage-sdk/CMakeLists.txt
+
+&emsp;&emsp;You can do this by changing the following:
+
+&emsp;&emsp;`find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random stacktrace_backtrace REQUIRED)`
+
+&emsp;&emsp;Into:
+
+&emsp;&emsp;`find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)`
+
+&emsp;&emsp;And comment out:
+
+&emsp;&emsp;`add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)`
+
+&emsp;&emsp;`set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSHOW_BACKTRACE")`
+
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234169312-621a1baf-288a-4d9a-bfb7-1683d121a161.png)
+
+2. **(Do not use this solution, refer to option 1 instead)** Install libbacktrace (https://github.com/ianlancetaylor/libbacktrace) (instructions to install is written below on section `Libbacktrace installation`)
+
+**Libbacktrace installation** **(Do NOT use this! We need to skip using libbacktrace/stacktrace since there are reports about libbacktrace that causes deadlocks. i.e. Skip this, no need to install libbacktrace. Instead we need to disable the use of backtrace in the project as described in option 1. This is provided only for reference in case it is needed in the future.)**
+
+If your Boost is not able to detect stacktrace library (stacktrace is not found). You can try to install libbacktrace separately.
+
+Open the link:
+https://github.com/ianlancetaylor/libbacktrace 
+
+Go to `Code > Download ZIP`
+
+![image](https://user-images.githubusercontent.com/121498420/234170469-7b461605-a847-41ba-b93f-0daa04c70e06.png)
+
+Extract the Zip file on your C drive.
+
+Download MSYS2 by following instructions in this link:
+https://www.msys2.org/ 
+
+Just follow step 1 to 5. Step 6 onwards is about downloading MinGW. We do not need to follow it because we already install MinGW version we wanted earlier.
+
+After that, follow these steps:
+1. Open MSYS2 UCRT64
+2. Navigate to your extracted libbacktrace folder. For example, if you extract it at C:/libbacktrace-master, then use cd /c/libbacktrace-master
+3. Run `./configure` by specifying the gcc and g++ file path from the MinGW you installed earlier. For example, `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe`
+4. Run `make` command. Make sure `libbacktrace.la` is produced, because it is required for the next step.
+
+&emsp;&emsp;If your MSYS does not have `make` command yet, install it first. (Other command installation is similar to this, please search it up on the internet for relevant command installation on MSYS)
+
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234170671-0a4d754a-71da-4111-befe-0c469e228848.png)
+
+5. After that, run `./libtool --mode=install /usr/bin/install -c libbacktrace.la '/c/libbacktrace-master'`
+6. Go to your installed Boost folder, and find `project-config.jam`
+And paste this:
+`using gcc : 6 : "C:/mingw64/bin/g++.exe" : <compileflags>-I"C:/libbacktrace-master/" <linkflags>-L"C:/libbacktrace-master/" ;`
+7. In Command Prompt, you can run this:
+`b2.exe toolset=gcc-6 --with-stacktrace`
+
+The link below is used as reference only for the instructions written above (cited from instructions under the section `MinGW and MinGW-w64 specific notes`). Please follow the instructions written above instead.
+
+https://www.boost.org/doc/libs/1_70_0/doc/html/stacktrace/configuration_and_build.html 
+
+![image](https://user-images.githubusercontent.com/121498420/234170825-edf199bc-4560-4eee-8ae9-d0475ad877ce.png)
+
 
 
