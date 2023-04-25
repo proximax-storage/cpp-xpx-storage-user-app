@@ -226,17 +226,18 @@ https://www.youtube.com/watch?v=XsDR01GMxEI&list=PLmFgNcAR5bdLavrHkKFcwfjeeMw8An
 
 ### QT related Issues
 
-Online Installer Error
+**Online Installer Error**
 - If during installation, you encounter an installation error for a particular file. You can try to press `Retry` to re-install that particular file that rises the error. The installation will usually still run as long as there is no error message (including when you just keep `Retry` re-installing the same file that raises an error).
 
 - If the same installation error message keep appearing after so many times, and it stops the installation. You may try to install Qt version 6.5.0 instead, or the latest version.
 
-Offline Installer Error
 - If you encounter any issue with the online installer, you can use an offline installer instead. Sometimes the online installer may have some issue, and you may need to wait for the Qt team to fix it. (Note: It is recommended to install Qt via Online installer whenever possible, since adding components later using the Maintenance Tool from the offline installer might be a bit more difficult to do because you need to find the repository for installing additional components)
 
-- Open this link and try to install the offline installer (if possible, try to find and install offline installer version 6 instead): https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-windows-x86-5.12.12.exe.mirrorlist 
+&emsp;&emsp;Open this link and try to install the offline installer (if possible, try to install Qt version 6 inside the installer): https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-windows-x86-5.12.12.exe.mirrorlist 
 
-- Tick the components (similar to set of components in online installer, including Qt State Machine as this can be another issue later if not installed)
+&emsp;&emsp;Tick the components (similar to set of components in online installer, including Qt State Machine as this can be another issue later if not installed)
+
+**Offline Installer Error**
 
 - If during installation, you encounter any file installation error. Keep press `Retry`. If the same error still persists after several times, you can try to press `Ignore`. One possible error may look like this (issue with strawberry-perl installation):
 
@@ -264,11 +265,11 @@ https://strawberryperl.com/releases.html
 
 **Build and libraries-build issues**
 
-When re-building the Boost or Boost libraries:
+When re-building the Boost or Boost libraries, you can try to check these first:
 - Try to clear the cache for Boost to detect again, or try cleaning up before re-building (b2 clean). And make sure everything is build
 - Make sure that the Boost version you built was properly installed
 - Remember to reset caches (delete CMake cache) when running CMake
-- If you get `missing stacktrace_backtrace` error, and you are still not able to build the stacktrace library by using b2 command, then refer to `Missing stacktrace_backtrace` section below.
+- If you get `missing stacktrace_backtrace` error, and you are still not able to build the stacktrace library by using b2 command, then refer to `Missing stacktrace_backtrace error` section below.
 
 **Missing stacktrace_backtrace error**
 
@@ -294,9 +295,10 @@ If you encounter `missing: stacktrace_backtrace` error on Boost, try the followi
 
 &emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234169312-621a1baf-288a-4d9a-bfb7-1683d121a161.png)
 
-2. **(Do not use this solution, refer to option 1 instead)** Install libbacktrace (https://github.com/ianlancetaylor/libbacktrace) (instructions to install is written below on section `Libbacktrace installation`)
+2. **_(Do not use this solution, refer to option 1 instead)_** Install libbacktrace (https://github.com/ianlancetaylor/libbacktrace) (instructions to install is written below on section `Libbacktrace installation`)
 
-**Libbacktrace installation** **(Do NOT use this! We need to skip using libbacktrace/stacktrace since there are reports about libbacktrace that causes deadlocks. i.e. Skip this, no need to install libbacktrace. Instead we need to disable the use of backtrace in the project as described in option 1. This is provided only for reference in case it is needed in the future.)**
+**libbacktrace installation**
+**IMPORTANT NOTICE: (Do not use this! We need to skip using libbacktrace/stacktrace since there are reports about libbacktrace that causes deadlocks. i.e. Skip this, no need to install libbacktrace. Instead we need to disable the use of backtrace in the project as described in option 1. This is provided only for reference in case it is needed in the future.)**
 
 If your Boost is not able to detect stacktrace library (stacktrace is not found). You can try to install libbacktrace separately.
 
@@ -331,7 +333,7 @@ And paste this:
 7. In Command Prompt, you can run this:
 `b2.exe toolset=gcc-6 --with-stacktrace`
 
-The link below is used as reference only for the instructions written above (cited from instructions under the section `MinGW and MinGW-w64 specific notes`). Please follow the instructions written above instead.
+The link below is used as reference by the instructions written above (cited from instructions under the section `MinGW and MinGW-w64 specific notes`). Please follow the instructions written above.
 
 https://www.boost.org/doc/libs/1_70_0/doc/html/stacktrace/configuration_and_build.html 
 
@@ -353,7 +355,7 @@ Possible errors after you run `make` command:
 
 &emsp;&emsp;Steps:
 
-&emsp;&emsp;Open the file `configure.ac`
+&emsp;&emsp;Open the file `configure.ac` in libbacktrace folder.
 
 &emsp;&emsp;Locate `LT_INIT`
 
@@ -377,7 +379,7 @@ Possible errors after you run `make` command:
 
 &emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188100-f81af243-b19e-4be3-a923-e636abca0840.png)
 
-&emsp;&emsp;If you do not have command `autoreconf` installed in your MSYS, you need to first install it (similar to how we install `make` command in the preceding section).
+&emsp;&emsp;If you do not have command `autoreconf` installed in your MSYS2, you need to first install it (similar to how we install `make` command in the preceding section).
 
 &emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188179-1a74240d-54f0-41ac-952b-b1c1cd00033b.png)
 
@@ -395,9 +397,9 @@ Possible errors after you run `make` command:
 
 &emsp;&emsp;Steps:
 
-&emsp;&emsp;Install `ar` in your MSYS, configure the `$PATH` of your `ar` in MSYS (either temporary or permanent way). After that, if you are able to see the path for your `ar`, then you can run the `autoreconf -fi`, then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
+&emsp;&emsp;Install `ar` in your MSYS2, configure the `$PATH` of your `ar` in MSYS2 (either temporary or permanent way). After that, if you are able to see the path for your `ar`, then you can run the `autoreconf -fi`, then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
 	
-&emsp;&emsp;If the path is not found from `$PATH`, try to explicitly define it in `./configure` (temporary environment variable only available on current MSYS terminal session)
+&emsp;&emsp;If the path is not found from `$PATH`, try to explicitly define it in `./configure` (temporary environment variable only available on current MSYS2 terminal session)
 
 &emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188417-fb483eea-5b49-45a9-93b3-e4386ca783c5.png)
 
@@ -444,6 +446,7 @@ Follow this link for installation steps:
 https://thesecmaster.com/procedure-to-install-openssl-on-the-windows-platform/ 
 
 **GTest related Issues**
+
 ![image](https://user-images.githubusercontent.com/121498420/234189116-c0d5daff-5ff4-4524-afc2-d7c8dbfc007c.png)
 
 This means you have not installed GTest yet.
@@ -451,7 +454,7 @@ This means you have not installed GTest yet.
 Follow the installation steps in this link:
 https://youtu.be/3zUqJEilhnM 
 
-And then try to re-build again:
+And then try to re-build again.
 
 **cpp-xpx-storage-user-app build related Issues**
 
