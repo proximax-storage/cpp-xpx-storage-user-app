@@ -272,7 +272,7 @@ When re-building the Boost or Boost libraries:
 
 **Missing stacktrace_backtrace error**
 
-![image](https://user-images.githubusercontent.com/121498420/234168962-3dde7a51-f45c-44d6-aa01-79941942e01c.png)
+![image](https://user-images.githubusercontent.com/121498420/234193577-a4bc456b-8a46-4b04-a513-729ca70c5d94.png)
 
 If you encounter `missing: stacktrace_backtrace` error on Boost, try the following solution:
 
@@ -305,22 +305,22 @@ https://github.com/ianlancetaylor/libbacktrace
 
 Go to `Code > Download ZIP`
 
-![image](https://user-images.githubusercontent.com/121498420/234170469-7b461605-a847-41ba-b93f-0daa04c70e06.png)
+![image](https://user-images.githubusercontent.com/121498420/234193872-fa969aee-a670-4507-acf9-6f6743f0f052.png)
 
-Extract the Zip file on your C drive.
+Extract the Zip file on your `C drive`.
 
-Download MSYS2 by following instructions in this link:
+Download `MSYS2` by following instructions in this link:
 https://www.msys2.org/ 
 
 Just follow step 1 to 5. Step 6 onwards is about downloading MinGW. We do not need to follow it because we already install MinGW version we wanted earlier.
 
 After that, follow these steps:
-1. Open MSYS2 UCRT64
-2. Navigate to your extracted libbacktrace folder. For example, if you extract it at C:/libbacktrace-master, then use cd /c/libbacktrace-master
+1. Open `MSYS2 UCRT64`
+2. Navigate to your extracted libbacktrace folder. For example, if you extract it at `C:/libbacktrace-master`, then use `cd /c/libbacktrace-master`
 3. Run `./configure` by specifying the gcc and g++ file path from the MinGW you installed earlier. For example, `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe`
 4. Run `make` command. Make sure `libbacktrace.la` is produced, because it is required for the next step.
 
-&emsp;&emsp;If your MSYS does not have `make` command yet, install it first. (Other command installation is similar to this, please search it up on the internet for relevant command installation on MSYS)
+&emsp;&emsp;If your `MSYS2` does not have `make` command yet, install it first. (Other command installation is similar to this, please search it up on the internet for relevant command installation on `MSYS2`)
 
 &emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234170671-0a4d754a-71da-4111-befe-0c469e228848.png)
 
@@ -345,82 +345,90 @@ Possible errors after you run `make` command:
 
 1. `libtool: link: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries`
 
-Solution sources:
+&emsp;&emsp;Solution sources:
 
-https://github.com/Ancurio/SDL_sound/issues/3 
+&emsp;&emsp;https://github.com/Ancurio/SDL_sound/issues/3 
 
-https://stackoverflow.com/questions/61215047/how-to-fix-libtool-undefined-symbols-not-allowed-in-x86-64-pc-msys-shared 
+&emsp;&emsp;https://stackoverflow.com/questions/61215047/how-to-fix-libtool-undefined-symbols-not-allowed-in-x86-64-pc-msys-shared 
 
-Steps:
+&emsp;&emsp;Steps:
 
-Open the file `configure.ac`
+&emsp;&emsp;Open the file `configure.ac`
 
-Locate `LT_INIT`
+&emsp;&emsp;Locate `LT_INIT`
 
-Add `LT_INIT([win32-dll])` as seen in line 91 (applies for both Windows 32 bit and 64 bit)
+&emsp;&emsp;Add `LT_INIT([win32-dll])` as seen in line 91 (applies for both Windows 32 bit and 64 bit)
 
-Save the file
+&emsp;&emsp;Save the file
 
-![image](https://user-images.githubusercontent.com/121498420/234187967-38334f3b-dae9-46b3-b347-8dc84839b348.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234187967-38334f3b-dae9-46b3-b347-8dc84839b348.png)
 
-Go to `Makefile.am` inside the libbacktrace folder.
+&emsp;&emsp;Go to `Makefile.am` inside the libbacktrace folder.
 
-Locate the block of variables that define the linker flags for `libbacktrace.la` (as seen in line 79 to 88).
+&emsp;&emsp;Locate the block of variables that define the linker flags for `libbacktrace.la` (as seen in line 79 to 88).
 
-As seen in line 88, add the line `libbacktrace_la_LDFLAGS = -no-undefined`, or just add `-no-undefined` if the variable already exists.
+&emsp;&emsp;As seen in line 88, add the line `libbacktrace_la_LDFLAGS = -no-undefined`, or just add `-no-undefined` if the variable already exists.
 
-Once you have modified the `Makefile.am` file, save it.
+&emsp;&emsp;Once you have modified the `Makefile.am` file, save it.
 
-You will need to regenerate the `Makefile.in` file by running the `autoreconf` command. After that, you should be able to rebuild libbacktrace with the `-no-undefined` flag.
+&emsp;&emsp;You will need to regenerate the `Makefile.in` file by running the `autoreconf` command. After that, you should be able to rebuild libbacktrace with the `-no-undefined` flag.
 
-Run the `autoreconf -fi` command
+&emsp;&emsp;Run the `autoreconf -fi` command
 
-![image](https://user-images.githubusercontent.com/121498420/234188100-f81af243-b19e-4be3-a923-e636abca0840.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188100-f81af243-b19e-4be3-a923-e636abca0840.png)
 
-If you do not have command `autoreconf` installed in your MSYS, you need to first install it (similar to how we install `make` command in the preceding section).
+&emsp;&emsp;If you do not have command `autoreconf` installed in your MSYS, you need to first install it (similar to how we install `make` command in the preceding section).
 
-![image](https://user-images.githubusercontent.com/121498420/234188179-1a74240d-54f0-41ac-952b-b1c1cd00033b.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188179-1a74240d-54f0-41ac-952b-b1c1cd00033b.png)
 
 2. `libtool: link: false cru. libs/libbacktrace.a atomic.o dwarf.o fileline.o posix.o print.o sort.o state.o backtrace.o simple.o pecoff.o read.o alloc.o`
 
-Solution sources:
+&emsp;&emsp;Solution sources:
 
-http://www.imagemagick.org/discourse-server/viewtopic.php?t=17683 
+&emsp;&emsp;http://www.imagemagick.org/discourse-server/viewtopic.php?t=17683 
 
-https://groups.google.com/g/jansson-users/c/U7U5UXzjSS0 
+&emsp;&emsp;https://groups.google.com/g/jansson-users/c/U7U5UXzjSS0 
 
-![image](https://user-images.githubusercontent.com/121498420/234188280-72da95ff-7a59-4b4c-9f08-c331c810786e.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188280-72da95ff-7a59-4b4c-9f08-c331c810786e.png)
 
-Reason of error: Libtool uses `false cru` instead of `ar cru`
+&emsp;&emsp;Reason of error: Libtool uses `false cru` instead of `ar cru`
 
-Steps:
+&emsp;&emsp;Steps:
 
-Install `ar` in your MSYS, configure the `$PATH` of your `ar` in MSYS (either temporary or permanent way). After that, if you are able to see the path for your `ar`, then you can run the `autoreconf -fi`, then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
+&emsp;&emsp;Install `ar` in your MSYS, configure the `$PATH` of your `ar` in MSYS (either temporary or permanent way). After that, if you are able to see the path for your `ar`, then you can run the `autoreconf -fi`, then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
 	
-If the path is not found from `$PATH`, try to explicitly define it in `./configure` (temporary environment variable only available on current MSYS terminal session)
+&emsp;&emsp;If the path is not found from `$PATH`, try to explicitly define it in `./configure` (temporary environment variable only available on current MSYS terminal session)
 
-![image](https://user-images.githubusercontent.com/121498420/234188417-fb483eea-5b49-45a9-93b3-e4386ca783c5.png)
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234188417-fb483eea-5b49-45a9-93b3-e4386ca783c5.png)
 
-To check if `ar` has been successfully installed:
-`ar --version`
+&emsp;&emsp;To check if `ar` has been successfully installed:
 
-To check where your `ar` is installed:
-`which ar`
+&emsp;&emsp;`ar --version`
 
-To check your environment variables in MSYS:
-`echo $PATH`
+&emsp;&emsp;To check where your `ar` is installed:
 
-To add path for your `ar` permanently:
-`nano ~/.bashrc`
-`export PATH=$PATH:/usr/bin/ar`
-Write the `export` line of code at the end of the line of `bashrc`, save the file and exit. Make sure you enter the correct path of your `ar` inside the `export` code.
+&emsp;&emsp;`which ar`
 
-It is good to run the `autoreconf -fi` command again to regenerate `configure` script. And then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
+&emsp;&emsp;To check your environment variables in MSYS:
+
+&emsp;&emsp;`echo $PATH`
+
+&emsp;&emsp;To add path for your `ar` permanently:
+
+&emsp;&emsp;`nano ~/.bashrc`
+
+&emsp;&emsp;`export PATH=$PATH:/usr/bin/ar`
+
+&emsp;&emsp;Write the `export` line of code at the end of the line of `bashrc`, save the file and exit. Make sure you enter the correct path of your `ar` inside the `export` code.
+
+&emsp;&emsp;It is good to run the `autoreconf -fi` command again to regenerate `configure` script. And then run `./configure CC=/c/mingw64/bin/gcc.exe CXX=/c/mingw64/bin/g++.exe` and `make` command again.
 
 **OpenSSL related issues**
+
 When running `cmake -G "MinGW Makefiles" -DSIRIUS_DRIVE_MULTI=ON ..` command, you may encounter issue related to unsuitable OpenSSL version. The possible cause of this issue might be because you have incompatible OpenSSL version in your machine, or probably you install the lower version of OpenSSL together with Qt installation.
 
 The error may look like:
+
 ![image](https://user-images.githubusercontent.com/121498420/234188548-83884287-5cf2-4827-96a6-91deea6a53e8.png)
 
 In this case, you just need to install the required version of OpenSSL (version 1.1.1 variants). Please do not install OpenSSL version 3 because the Boost library does not support it yet. Don’t forget to also set the environment variable for your installed OpenSSL.
@@ -430,7 +438,7 @@ To install, follow this steps:
 Open this link: https://slproweb.com/products/Win32OpenSSL.html 
 
 Depending on your machine (32 or 64 bit), install Win32 OpenSSL v1.1.1t or Win64 OpenSSL v1.1.1t
-![image](https://user-images.githubusercontent.com/121498420/234188610-f8e94fc6-067f-434b-bb63-22477098ecda.png)
+![image](https://user-images.githubusercontent.com/121498420/234195245-b53876ba-e23a-4782-bb27-760476542e8a.png)
 
 Follow this link for installation steps:
 https://thesecmaster.com/procedure-to-install-openssl-on-the-windows-platform/ 
@@ -449,14 +457,19 @@ And then try to re-build again:
 
 `cmake` command related issue
 - Qt State Machine not found (Qt5StateMachineConfig.cmake or qt5statemachine-config.cmake is not found)
-![image](https://user-images.githubusercontent.com/121498420/234189291-6de330f1-01b3-467d-b3b3-26ac3f8ab1c8.png)
-- Try to search the required file inside your Qt folder installation and set the required system variable with the correct file path. After that, exit the command prompt and try running the command again.
-- If you cannot find the State Machine Config file, install it using the Maintenance Tool (this can be solved easier if you use online installer to install Qt). If you are using an offline installer, it requires a repository to install the components. You can try to refer to this link for the installation repository: https://forum.qt.io/topic/31796/no-default-repositories-in-maintenance-tool/6 
-- If you are using Qt version 5, try installing Qt version 6 instead. You can try to install Qt version 6.4.3 instead (or the latest version of Qt) using the online installer.
+
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234189291-6de330f1-01b3-467d-b3b3-26ac3f8ab1c8.png)
+
+&emsp;&emsp;- Try to search the required file inside your Qt folder installation and set the required system variable with the correct file path. After that, exit the command prompt and try running the command again.
+
+&emsp;&emsp;- If you cannot find the State Machine Config file, install it using the Maintenance Tool (this can be solved easier if you use online installer to install Qt). If you are using an offline installer, it requires a repository to install the components. You can try to refer to this link for the installation repository: https://forum.qt.io/topic/31796/no-default-repositories-in-maintenance-tool/6 
+
+&emsp;&emsp;- If you are using Qt version 5, try installing Qt version 6 instead. You can try to install Qt version 6.4.3 instead (or the latest version of Qt) using the online installer.
 
 - Qt config cmake file not found (Qt6Config.cmake not found)
-- Try to search the required file inside your Qt folder installation and set the required system variable with the correct file path. After that, exit the command prompt and try running the command again.
+
+&emsp;&emsp;- Try to search the required file inside your Qt folder installation and set the required system variable with the correct file path. After that, exit the command prompt and try running the command again.
 
 `mingw32-make` command related issue
-- `pending`
+- `will be added once the errors have been resolved`
 
