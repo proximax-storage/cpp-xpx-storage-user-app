@@ -181,10 +181,14 @@ BOOST_LIBRARYDIR    "C:\boost_1_79_0\stage\x64\lib"
 BOOST_ROOT          "C:\boost_1_79_0"
 ```
 
+### Cereal
+
+No need to install Cereal as it has been included in this repository.
+
 ### Build cpp-xpx-storage-user-app
 From cmd, go to the cpp-xpx-storage-user-app directory, then do the following:
 ```
-cd cpp-xpx-storage-client
+cd cpp-xpx-storage-user-app
 mkdir _build
 cd _build
 cmake -G "MinGW Makefiles" -DSIRIUS_DRIVE_MULTI=ON ..
@@ -201,4 +205,57 @@ bootstrap_nodes=localhost:3000
 ```
 
 ## Troubleshooting (for Windows)
+
+### Post Installation Issues
+
+If you have just done installations and encounter errors when running any command. Try to close your command prompt, restart your PC, and try again.
+
+### C++20 related Issues
+
+This link can be useful to enable C++20 support for Visual Studio Code and Microsoft Visual Studio:
+
+https://codevoweb.com/set-up-vs-code-to-write-and-debug-cpp-programs/ 
+
+This link can be useful to enable C++20 support for Microsoft Visual Studio:
+
+https://www.youtube.com/watch?v=XsDR01GMxEI&list=PLmFgNcAR5bdLavrHkKFcwfjeeMw8AnUEn&index=9 
+
+(Video Title: `Using Microsoft Visual Studio 2019 for C++ 20`)
+
+### QT related Issues
+
+Online Installer Error
+- If during installation, you encounter an installation error for a particular file. You can try to press `Retry` to re-install that particular file that rises the error. The installation will usually still run as long as there is no error message (including when you just keep `Retry` re-installing the same file that raises an error).
+
+- If the same installation error message keep appearing after so many times, and it stops the installation. You may try to install Qt version 6.5.0 instead, or the latest version.
+
+Offline Installer Error
+- If you encounter any issue with the online installer, you can use an offline installer instead. Sometimes the online installer may have some issue, and you may need to wait for the Qt team to fix it. (Note: It is recommended to install Qt via Online installer whenever possible, since adding components later using the Maintenance Tool from the offline installer might be a bit more difficult to do because you need to find the repository for installing additional components)
+
+- Open this link and try to install the offline installer (if possible, try to find and install offline installer version 6 instead): https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-windows-x86-5.12.12.exe.mirrorlist 
+
+- Tick the components (similar to set of components in online installer, including Qt State Machine as this can be another issue later if not installed)
+
+- If during installation, you encounter any file installation error. Keep press `Retry`. If the same error still persists after several times, you can try to press `Ignore`. One possible error may look like this (issue with strawberry-perl installation):
+
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234160337-a2b9cded-4d00-48c6-86f9-3a0f3b471b97.png)
+
+- In this case, you can try to install strawberry-perl manually:
+https://strawberryperl.com/releases.html 
+
+&emsp;&emsp;But if you encounter other file installation error, you can try to search up the file online.
+
+- If you encounter error related to Qt versioning, and you installed Qt version 5.
+![image](https://user-images.githubusercontent.com/121498420/234162042-39d7c715-56e4-4726-85f0-c67a956aa339.png)
+
+&emsp;&emsp;You can try to change line of code in cpp-xpx-storage-user-app/CMakeLists.txt from:
+
+&emsp;&emsp;`find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)`
+
+&emsp;&emsp;Into:
+
+&emsp;&emsp;`find_package(QT NAMES Qt5 COMPONENTS Widgets REQUIRED)`
+
+&emsp;&emsp;![image](https://user-images.githubusercontent.com/121498420/234160802-4ce1439e-4d5c-4d0b-9561-8e7213724e02.png)
+
 
