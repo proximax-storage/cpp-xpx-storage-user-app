@@ -513,6 +513,12 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     const std::string hash = rawHashToHex(dataModificationTransaction->hash()).toStdString();
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
+    if (uploadSize == 0) {
+        emit internalError("Invalid size of upload data: " + QString::number(uploadSize) + ". Modification canceled!");
+        emit dataModificationFailed(driveId, modificationId);
+        return;
+    }
+
     if (!mDataModifications.contains(driveId)) {
         mDataModifications.insert({ driveId, {} });
     }
