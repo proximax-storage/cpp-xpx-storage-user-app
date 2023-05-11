@@ -60,7 +60,7 @@ Refer to the links below to check the correct emscipten version:<br>
 Compatible emscipten version for Qt version 6: https://doc.qt.io/qt-6/wasm.html <br>
 Compatible emscipten version for Qt version 5: https://doc.qt.io/qt-5/wasm.html
 
-For example, if you installed Qt 6.4.3, the compatible emscripten version is 3.1.25<br>
+For example, if you installed Qt 6.4.3, the compatible emscripten version is 3.1.14<br>
 Ensure that after your emscripten installation, you have activate it and configure the path correctly.
 
 It is also better if you could verify your emscripten installation, whether it can run properly in your machine:<br>
