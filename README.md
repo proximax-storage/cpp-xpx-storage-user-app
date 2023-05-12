@@ -28,3 +28,45 @@ cmake -DSIRIUS_DRIVE_MULTI=ON ..
 make -j 4
 sudo make install
 ```
+
+## Web Deployment
+
+### Additional Prerequisites
+* Qt WebAssembly 5.15 or later (same version as your installed Qt)
+(for now we are using Qt 6.4.3) (<-- to be removed, need to clarify if this works well in Qt 6.5)
+* emscripten (need to install version that is compatible with your Qt version)
+
+### Install Qt WebAssembly
+Normally, this should have been installed together with your Qt application if you installed the whole components.<br><br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/ae00de89-faea-451f-9735-3f751f4c8549) <br>
+
+If you have not installed Qt WebAssembly, you can navigate to your installed Qt folder/directory. And run the MaintenanceTool application/executable.<br><br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/bc09a41c-9df4-4592-b4e3-67c8804723ff) <br>
+
+Similar to how you installed Qt at the first time, you just need to install the Qt WebAssembly component (with the same version as your installed Qt). Just tick the WebAssembly option, and press `Next`<br><br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/870ec821-2dd6-49ca-90e4-0f521a97efe1)<br>
+
+
+### Install emscripten
+emscripten is a toolchain used for compiling to WebAssembly:<br>
+emscripten Introduction: https://emscripten.org/docs/introducing_emscripten/index.html
+
+The following is the reference on how to download emscripten on your machine:<br>
+emscripten Download: https://emscripten.org/docs/getting_started/downloads.html
+
+Make sure you download emscripten version that is compatibles with your Qt version.<br>
+
+Refer to the links below to check the correct emscipten version:<br>
+Compatible emscipten version for Qt version 6: https://doc.qt.io/qt-6/wasm.html <br>
+Compatible emscipten version for Qt version 5: https://doc.qt.io/qt-5/wasm.html
+
+For example, if you installed Qt 6.4.3, the compatible emscripten version is 3.1.14<br>
+Ensure that after your emscripten installation, you have activate it and configure the path correctly.
+
+It is also better if you could verify your emscripten installation, whether it can run properly in your machine:<br>
+Verifying emscripten installation: https://emscripten.org/docs/getting_started/Tutorial.html#tutorial
+
+### Web Deploy
+
+Follow steps written in this link:<br>
+Reference for Web Deployment: https://doc.qt.io/qtcreator/creator-setup-webassembly.html
