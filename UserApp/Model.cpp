@@ -91,6 +91,10 @@ std::string Model::getGatewayPort() {
     return gatewayEndpoint.size() == 2 ? gatewayEndpoint[1].toStdString() : "";
 }
 
+double Model::getFeeMultiplier() {
+    return m_settings->m_feeMultiplier;
+}
+
 const sirius::crypto::KeyPair& Model::getKeyPair() {
     return m_settings->config().m_keyPair.value();
 }
@@ -341,7 +345,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
 
-    qDebug() << LOG_SOURCE << "onDrivesLoaded: " << remoteDrives.size();
+    qDebug() << "Model::onDrivesLoaded: " << remoteDrives.size();
     auto& drives = m_settings->config().m_drives;
 
     for( auto& remoteDrive : remoteDrives )

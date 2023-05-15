@@ -29,6 +29,8 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     fillAccountCbox( initSettings );
     updateAccountFields();
 
+    ui->m_transactionFeeMultiplier->setText(QString::number(mpSettings->m_feeMultiplier));
+
     QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
     {
@@ -131,6 +133,20 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         }
     });
 
+    QRegularExpression feeMultiplierTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
+    connect(ui->m_transactionFeeMultiplier, &QLineEdit::textChanged, this, [this, feeMultiplierTemplate] (auto text)
+    {
+        if (!feeMultiplierTemplate.match(text).hasMatch()) {
+            QToolTip::showText(ui->m_transactionFeeMultiplier->mapToGlobal(QPoint(0, 15)), tr("Invalid fee multiplier!"), nullptr, {}, 3000);
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_transactionFeeMultiplier->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_transactionFeeMultiplier->setProperty("is_valid", true);
+            validate();
+        }
+    });
+
     if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
         QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
@@ -161,6 +177,17 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_portField->setProperty("is_valid", true);
+        validate();
+    }
+
+    if (!feeMultiplierTemplate.match(ui->m_transactionFeeMultiplier->text()).hasMatch()) {
+        QToolTip::showText(ui->m_transactionFeeMultiplier->mapToGlobal(QPoint(0, 15)), tr("Invalid fee multiplier!"), nullptr, {}, 3000);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_transactionFeeMultiplier->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_transactionFeeMultiplier->setProperty("is_valid", true);
         validate();
     }
 
@@ -200,6 +227,7 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
     mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
+    mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
     mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
     mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isChecked();
 
@@ -281,6 +309,7 @@ void SettingsDialog::validate() {
     if (ui->m_restBootAddrField->property("is_valid").toBool() &&
         ui->m_replicatorBootAddrField->property("is_valid").toBool() &&
         ui->m_portField->property("is_valid").toBool() &&
+        ui->m_transactionFeeMultiplier->property("is_valid").toBool() &&
         ui->m_dnFolderField->property("is_valid").toBool()) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
     } else {
