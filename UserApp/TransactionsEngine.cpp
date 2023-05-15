@@ -24,7 +24,6 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
                                                    const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
                                                    const uint64_t &feedbacksNumber) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
-    qInfo() << "TransactionsEngine::addDownloadChannel. Drive id: " << drivePubKey;
 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
@@ -47,6 +46,8 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadNotifier;
 
     std::string hash = rawHashToHex(downloadTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::addDownloadChannel. Drive id: " << drivePubKey << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, downloadNotifierId = downloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -87,8 +88,6 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     if( channelId.empty()) {
         qWarning() << "TransactionsEngine::closeDownloadChannel. Bad channelId: empty!";
         return;
-    } else {
-        qInfo() << "TransactionsEngine::closeDownloadChannel. Channel id: " << channelIdHex;
     }
 
     xpx_chain_sdk::Key channelIdKey;
@@ -102,6 +101,8 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> finishDownloadNotifier;
 
     const std::string hash = rawHashToHex(finishDownloadTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::closeDownloadChannel. Channel id: " << channelIdHex << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, channelId, finishDownloadNotifierId = finishDownloadNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -135,7 +136,6 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
 
 void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t prepaidSize) {
     const QString channelIdHex = rawHashToHex(channelId);
-    qInfo() << "TransactionsEngine::downloadPayment. Channel id: " << channelIdHex << " prepaid size: " << prepaidSize;
 
     xpx_chain_sdk::Key channelIdKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(channelIdHex.toStdString().c_str(), channelIdHex.size(), channelIdKey);
@@ -150,6 +150,8 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadPaymentNotifier;
 
     const std::string hash = rawHashToHex(downloadPaymentTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::downloadPayment. Channel id: " << channelIdHex << " prepaid size: " << prepaidSize << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, downloadPaymentNotifierId = downloadPaymentNotifier.getId(), channelId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -184,8 +186,6 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
 void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount) {
     QString drivePubKey = rawHashToHex(driveId);
 
-    qInfo() << "TransactionsEngine::storagePayment. Drive key: " << drivePubKey << " amount: " << amount;
-
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
@@ -196,6 +196,8 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> storagePaymentNotifier;
 
     const std::string hash = rawHashToHex(storagePaymentTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::storagePayment. Drive key: " << drivePubKey << " amount: " << amount << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, storagePaymentNotifierId = storagePaymentNotifier.getId(), driveId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << "TransactionsEngine::storagePayment. Failed storage payment transaction: " << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -227,8 +229,6 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
 }
 
 std::string TransactionsEngine::addDrive(const uint64_t& driveSize, const ushort replicatorsCount) {
-    qInfo() << "TransactionsEngine::addDrive. Drive size: " << driveSize << " replicators count: " << replicatorsCount;
-
     xpx_chain_sdk::Amount verificationFeeAmount = 100;
     auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(prepareDriveTransaction.get());
@@ -237,6 +237,8 @@ std::string TransactionsEngine::addDrive(const uint64_t& driveSize, const ushort
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> prepareDriveNotifier;
 
     std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::addDrive. Drive size: " << driveSize << " replicators count: " << replicatorsCount << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, prepareDriveNotifierId = prepareDriveNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -274,7 +276,6 @@ std::string TransactionsEngine::addDrive(const uint64_t& driveSize, const ushort
 
 void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
-    qInfo() << "TransactionsEngine::closeDrive. Drive key: " << drivePubKey;
 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
@@ -286,6 +287,8 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> driveClosureNotifier;
 
     const std::string hash = rawHashToHex(driveClosureTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::closeDrive. Drive key: " << drivePubKey << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, drivePubKey, rawDrivePubKey, driveClosureNotifierId = driveClosureNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
             qWarning() << LOG_SOURCE << notification.status.c_str() << " hash: " << notification.hash.c_str();
@@ -338,8 +341,6 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
     const auto modificationId = lastModification.id;
     const QString modificationHex = rawHashToHex(modificationId);
 
-    qInfo() << "TransactionsEngine::cancelDataModification. Started 'cancel modification': " << modificationHex;
-
     xpx_chain_sdk::Hash256 modificationHash256;
     xpx_chain_sdk::ParseHexStringIntoContainer(modificationHex.toStdString().c_str(), modificationHex.size(), modificationHash256);
 
@@ -351,6 +352,8 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationCancelNotifier;
 
     const std::string hash = rawHashToHex(dataModificationCancelTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::cancelDataModification. Started 'cancel modification': " << modificationHex << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, driveKey, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), modificationHex](
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {
@@ -448,6 +451,10 @@ bool TransactionsEngine::isValidHash(const std::array<uint8_t, 32> &hash) {
     return result;
 }
 
+std::array<uint8_t, 32> TransactionsEngine::getLatestModificationId(const std::array<uint8_t, 32> &driveId) {
+    return mDataModifications[driveId][mDataModifications[driveId].size() - 1].id;
+}
+
 void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId,
                                           const std::array<uint8_t, 32>& infoHash,
                                           const sirius::drive::ActionList& actions,
@@ -511,6 +518,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> replicatorsStatusNotifier;
 
     const std::string hash = rawHashToHex(dataModificationTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::sendModification: modification id 1: " << hash;
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
     if (uploadSize == 0) {
@@ -525,8 +533,9 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     ModificationEntity modificationEntity;
     modificationEntity.id = modificationId;
-    mDataModifications[driveId].push_back(modificationEntity);
 
+    mDataModifications[driveId].push_back(modificationEntity);
+    qInfo() << "TransactionsEngine::sendModification: modification id 2: " << rawHashToHex(mDataModifications[driveId][mDataModifications[driveId].size() - 1].id);
     emit modificationCreated(driveKeyHex, modificationId);
 
     statusNotifier.set([this, driveId, hash, modificationId, driveKeyHex, replicators,
@@ -717,8 +726,6 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 }
 
 void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const uint64_t capacityMB) {
-    qInfo() << "TransactionsEngine::replicatorOnBoarding. Replicator private key: " << replicatorPrivateKey << " capacity(MB): " << capacityMB;
-
     auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
         xpx_chain_sdk::Key key;
         ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
@@ -763,6 +770,8 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
     });
 
     const std::string hash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::replicatorOnBoarding. Replicator private key: " << replicatorPrivateKey << " capacity(MB): " << capacityMB << " transaction id: " << hash;
+
     mpChainClient->notifications()->addConfirmedAddedNotifiers(replicatorAccount->address(), { onBoardingNotifier },
                                                                [this, data = replicatorOnBoardingTransaction->binary()]() { announceTransaction(data); },
                                                                [this, hash](auto error) { onError(hash, error); });
@@ -780,8 +789,6 @@ void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &dr
         return;
     }
 
-    qInfo() << "TransactionsEngine::replicatorOffBoarding. Drive id: " << driveIdHex << " replicator private key: " << replicatorPrivateKey;
-
     xpx_chain_sdk::Key rawDriveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveIdHex.c_str(), driveIdHex.size(), rawDriveKey);
 
@@ -798,6 +805,8 @@ void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &dr
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> offBoardingNotifier;
 
     const std::string hash = rawHashToHex(offBoardingTransaction->hash()).toStdString();
+    qInfo() << "TransactionsEngine::replicatorOffBoarding. Drive id: " << driveIdHex << " replicator private key: " << replicatorPrivateKey << " transaction id: " << hash;
+
     statusNotifier.set([this, hash, replicatorAccount, offBoardingNotifierId = offBoardingNotifier.getId()](
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {

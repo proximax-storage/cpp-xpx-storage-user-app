@@ -38,6 +38,7 @@ class TransactionsEngine : public QObject
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
+        std::array<uint8_t, 32> getLatestModificationId(const std::array<uint8_t, 32> &driveId);
 
     signals:
         void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
