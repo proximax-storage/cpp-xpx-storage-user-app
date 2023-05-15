@@ -188,7 +188,7 @@ void PrivKeyDialog::accept()
     if ( it != mp_settings->m_accounts.end() )
     {
         QMessageBox msgBox;
-        msgBox.setText("Account with same private key\n already exists");
+        msgBox.setText("Account with same private key\n already exists!");
         msgBox.setStandardButtons(QMessageBox::Close);
         msgBox.exec();
         return;

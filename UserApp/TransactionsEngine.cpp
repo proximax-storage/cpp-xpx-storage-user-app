@@ -521,8 +521,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     qInfo() << "TransactionsEngine::sendModification: modification id 1: " << hash;
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
-    if (uploadSize == 0) {
-        emit internalError("Invalid size of upload data: " + QString::number(uploadSize) + ". Modification canceled!");
+    if (uploadSize == 0 || totalModifyDataSize == 0) {
+        emit internalError("Invalid size of upload data: 0. Modification canceled!");
         emit dataModificationFailed(driveId, modificationId);
         return;
     }

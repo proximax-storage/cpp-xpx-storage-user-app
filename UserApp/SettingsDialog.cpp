@@ -19,7 +19,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     mpSettingsDraft = new Settings(this);
     mpSettingsDraft = mpSettings;
 
-    qDebug() << "mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
+    qDebug() << "SettingsDialog::SettingsDialog. mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
@@ -74,13 +74,13 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
 
     connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
-        qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
+        qDebug() << "Settings::QComboBox::currentIndexChanged: " << index;
         if ( mpSettingsDraft->accountList().size() > size_t(index) )
         {
             mpSettingsDraft->setCurrentAccountIndex(index);
-            qDebug() << LOG_SOURCE << "selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
-            qDebug() << LOG_SOURCE << "selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
-            qDebug() << LOG_SOURCE << "selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
             updateAccountFields();
         }
     });
@@ -294,15 +294,15 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
 void SettingsDialog::onNewAccountBtn()
 {
-    PrivKeyDialog pKeyDialog( mpSettingsDraft, this );
-    pKeyDialog.exec();
+    auto pKeyDialog = new PrivKeyDialog( mpSettingsDraft, this );
 
-    if ( pKeyDialog.result() == QDialog::Accepted )
-    {
-        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr ));
+    connect(pKeyDialog, &PrivKeyDialog::accepted, this, [this](){
+        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_accountName ));
         int index = mpSettingsDraft->m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
-    }
+    });
+
+    pKeyDialog->open();
 }
 
 void SettingsDialog::validate() {
