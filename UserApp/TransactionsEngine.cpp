@@ -476,14 +476,15 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     if (pathToActionList.isEmpty()) {
         qCritical() << "TransactionsEngine::sendModification. actionList.bin not found: " << pathToActionList;
         emit internalError("file actionList.bin not found: " + pathToActionList + " . Drive key: " + driveKeyHex);
+        emit dataModificationFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         return;
     } else {
         qInfo() << "TransactionsEngine::sendModification. actionList.bin found: " << pathToActionList;
     }
 
-    for (int i = 0; i < actions.size(); i++) {
-        if (actions[i].m_actionId == sirius::drive::action_list_id::upload) {
-            const QString path = actions[i].m_param1.c_str();
+    for (const auto & action : actions) {
+        if (action.m_actionId == sirius::drive::action_list_id::upload) {
+            const QString path = action.m_param1.c_str();
             qInfo() << "TransactionsEngine::sendModification. path for upload: " << path;
 
             if (!QFile::exists(path)) {
@@ -560,19 +561,12 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
                                                        [](auto errorCode) {qCritical() << "TransactionsEngine::sendModification. " << errorCode.message().c_str(); });
 
-    dataModificationUnconfirmedNotifier.set([this, driveId, hash,
-                                             statusNotifierId = statusNotifier.getId(),
-                                             confirmedNotifierId = dataModificationConfirmedNotifier.getId(),
-                                             modificationId] (
+    dataModificationUnconfirmedNotifier.set([this, hash] (
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
             qInfo() << "TransactionsEngine::sendModification. Data modification transaction added to unconfirmed pool: " << hash.c_str();
-
-            removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeUnconfirmedAddedNotifier(mpChainAccount->address(), id);
-
-            emit dataModificationConfirmed(driveId, modificationId);
         }
     });
 
@@ -585,7 +579,9 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         if (boost::iequals(notification.meta.hash, hash)) {
             qInfo() << "TransactionsEngine::sendModification. Data modification transaction confirmed, hash: " << hash.c_str();
 
+            removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
+            emit dataModificationConfirmed(driveId, modificationId);
 
             for (auto& modificationEntity : mDataModifications[driveId]) {
                 if (modificationEntity.id == modificationId) {
