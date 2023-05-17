@@ -22,6 +22,8 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
     m_loaded = new QPixmap(getResource("./resources/icons/loaded.png"));
     m_error = new QPixmap(getResource("./resources/icons/error.png"));
 
+    ui->m_requestedSize->setText("0");
+    ui->m_unitsType->setText("Bytes");
     ui->m_title->setWindowTitle("Modification status");
     ui->m_title->setAlignment(Qt::AlignCenter);
     setGeometry( QRect( x, y, 255, 130) );
@@ -58,6 +60,7 @@ ModifyProgressPanel::~ModifyProgressPanel()
 
 void ModifyProgressPanel::setRegistering()
 {
+    ui->m_requestedSize->setText("0");
     ui->m_statusLabel->setText( "Modification is registering ");
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
@@ -71,6 +74,13 @@ void ModifyProgressPanel::setUploading()
 {
     ui->m_statusLabel->setText( "Modification is uploading ");
     ui->m_cancel->setEnabled(true);
+    adjustSize();
+}
+
+void ModifyProgressPanel::setApproving()
+{
+    ui->m_statusLabel->setText( "Modification is completing ");
+    ui->m_cancel->setEnabled(false);
     adjustSize();
 }
 
@@ -135,4 +145,10 @@ void ModifyProgressPanel::setWaitingStreamStart()
     ui->m_statusIcon->setMovie(m_loading);
     m_loading->start();
     adjustSize();
+}
+
+void ModifyProgressPanel::updateUploadedDataAmount(const uint64_t amount)
+{
+    uint64_t currentAmount = ui->m_requestedSize->text().toULongLong();
+    ui->m_requestedSize->setText(QString::number(amount + currentAmount));
 }

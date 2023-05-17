@@ -8,6 +8,8 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include "Worker.h"
+#include "types.h"
+#include "drive/FlatDrive.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -52,6 +54,8 @@ signals:
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
+    void updateUploadedDataAmount(const uint64_t receivedSize);
+    void modificationFinishedByReplicators();
 
 private:
     bool requestPrivateKey();
@@ -169,6 +173,13 @@ private slots:
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void onRemoveResolver(const QUuid& id);
     void calculateDiffAsync(const std::function<void(int, std::string)>& callback);
+    void dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
+                                        const sirius::Hash256 &modificationHash,
+                                        const sirius::drive::ModifyTrafficInfo &msg,
+                                        lt::string_view currentTask,
+                                        bool isModificationQueued,
+                                        bool isModificationFinished,
+                                        const std::string &error);
 
 public:
     // if private key is not set it will be 'true'
@@ -178,6 +189,7 @@ private:
     Ui::MainWin*            ui;
 
     QTimer*                 m_downloadUpdateTimer;
+    QTimer*                 m_modificationStatusTimer;
 
     FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;

@@ -129,7 +129,7 @@ void MainWin::init()
 //         msgBox.setStandardButtons( QMessageBox::Ok );
 //         msgBox.exec();
 
-        qWarning() << LOG_SOURCE << "Address already in use: udoPort: " << m_model->getUdpPort();
+        qWarning() << "MainWin::init. Address already in use: udoPort: " << m_model->getUdpPort();
         exit(1);
     });
 
@@ -144,9 +144,9 @@ void MainWin::init()
     }, Qt::QueuedConnection);
 
     const std::string privateKey = m_model->getClientPrivateKey();
-    qDebug() << LOG_SOURCE << "privateKey: " << privateKey;
+    qDebug() << "MainWin::init. Private key: " << privateKey;
 
-    m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), this);
+    m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier(), this);
     m_modificationsWatcher = new QFileSystemWatcher(this);
 
     connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
@@ -434,7 +434,7 @@ void MainWin::init()
 
     connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
         ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
-        dialog.exec();
+        dialog.open();
     });
 
     connect(m_onChainClient, &OnChainClient::internalError, this, &MainWin::onInternalError, Qt::QueuedConnection);
@@ -453,7 +453,7 @@ void MainWin::init()
     setupMyReplicatorTab();
 
     // Start update-timer for downloads
-    m_downloadUpdateTimer = new QTimer();
+    m_downloadUpdateTimer = new QTimer(this);
     connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this]
     {
         auto selectedIndexes = ui->m_downloadsTableView->selectionModel()->selectedRows();
@@ -467,7 +467,24 @@ void MainWin::init()
         ui->m_removeDownloadBtn->setEnabled( ! selectedIndexes.empty() );
 
     }, Qt::QueuedConnection);
+
     m_downloadUpdateTimer->start(500); // 2 times per second
+
+    m_modificationStatusTimer = new QTimer(this);
+    connect( m_modificationStatusTimer, &QTimer::timeout, this, [this] {
+        auto drive = m_model->currentDrive();
+        if (drive && isCurrentDrive(drive) && drive->getState() == DriveState::uploading) {
+            auto drivePubKey = rawHashFromHex(drive->getKey().c_str());
+            auto modificationId = m_onChainClient->transactionsEngine()->getLatestModificationId(drivePubKey);
+            for (const auto& replicator : drive->getReplicators()) {
+                m_model->requestModificationStatus(rawHashToHex(replicator.array()).toStdString(), drive->getKey(), rawHashToHex(modificationId).toStdString());
+            }
+        } else {
+            if (m_modificationStatusTimer->isActive()) {
+                m_modificationStatusTimer->stop();
+            }
+        }
+    }, Qt::QueuedConnection);
 
     lockMainButtons(true);
     lockDrive();
@@ -479,6 +496,22 @@ void MainWin::init()
 
     m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
+
+    connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){
+        if (m_modifyProgressPanel->isVisible()) {
+            m_modifyProgressPanel->updateUploadedDataAmount(amount);
+        }
+    }, Qt::QueuedConnection);
+
+    connect(this, &MainWin::modificationFinishedByReplicators, this, [this]() {
+        if (m_modificationStatusTimer->isActive()) {
+            m_modificationStatusTimer->stop();
+        }
+
+        if (m_modifyProgressPanel->isVisible()) {
+            m_modifyProgressPanel->setApproving();
+        }
+    }, Qt::QueuedConnection);
 
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
@@ -540,6 +573,16 @@ void MainWin::init()
         ui->m_driveTreeView->hide();
         ui->m_diffTreeView->hide();
     }
+
+    m_model->setModificationStatusResponseHandler(
+            [this](auto replicatorKey, auto modificationHash,auto msg, auto currentTask, bool isQueued, bool isFinished, auto error){
+        dataModificationsStatusHandler(replicatorKey, modificationHash, msg, currentTask, isQueued, isFinished, error);
+    });
+
+    // TODO temporary hide
+    // Replicators tab: contributed, used
+    ui->label_2->hide();
+    ui->label_7->hide();
 
     initStreaming();
 }
@@ -929,10 +972,11 @@ bool MainWin::requestPrivateKey()
 
         if ( pKeyDialog.result() != QDialog::Accepted )
         {
-            qDebug() << LOG_SOURCE << "not accepted";
+            qDebug() << "MainWin::requestPrivateKey. Not accepted!";
             return false;
         }
-        qDebug() << LOG_SOURCE << "accepted";
+
+        qDebug() << "MainWin::requestPrivateKey. Accepted!";
     }
 
     SettingsDialog settingsDialog( m_settings, this, true );
@@ -1190,6 +1234,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 addNotification(message);
                 loadBalance();
                 unlockDrive();
+
+                if (m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->stop();
+                }
             }
 
             break;
@@ -1203,6 +1251,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 const QString message = "Your modification was declined.";
                 addNotification(message);
 
+                if (m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->stop();
+                }
+
                 loadBalance();
                 unlockDrive();
             }
@@ -1214,6 +1266,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setCanceling();
                 m_modifyProgressPanel->setVisible(true);
+
                 lockDrive();
             }
 
@@ -1224,6 +1277,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setCanceled();
                 m_modifyProgressPanel->setVisible(true);
+
+                if (m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->stop();
+                }
 
                 loadBalance();
                 unlockDrive();
@@ -1237,6 +1294,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 m_modifyProgressPanel->setUploading();
                 m_modifyProgressPanel->setVisible(true);
                 lockDrive();
+
+                if (!m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->start(1000);
+                }
             }
 
             break;
@@ -1263,6 +1324,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             m_model->applyForChannels(driveKey, [this](auto& channel) {
                 removeEntityFromUi(ui->m_channels, channel.getKey());
             });
+
+            if (m_modificationStatusTimer->isActive()) {
+                m_modificationStatusTimer->stop();
+            }
 
             m_model->removeChannelsByDriveKey(driveKey);
             break;
@@ -1308,6 +1373,10 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             if (isCurrentDrive(drive)) {
                 updateDriveView();
                 updateDiffView();
+
+                if (m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->stop();
+                }
             }
 
             const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
@@ -1616,21 +1685,21 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
 }
 
 void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
-    qDebug () << LOG_SOURCE << "Your last modification was registered: '" + rawHashToHex(modificationId);
+    qDebug () << "MainWin::onDataModificationTransactionConfirmed. Your last modification was registered: '" + rawHashToHex(modificationId);
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->updateState(uploading);
     }
     else
     {
-        qDebug () << LOG_SOURCE << "Your last modification was NOT registered: !!! drive not found";
+        qDebug () << "MainWin::onDataModificationTransactionConfirmed. Your last modification was NOT registered: !!! drive not found";
     }
 
     loadBalance();
 }
 
 void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
-    qDebug () << LOG_SOURCE << "Your last modification was declined: '" + rawHashToHex(modificationId);
+    qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->updateState(failed);
@@ -2475,4 +2544,34 @@ void MainWin::calculateDiffAsync(const std::function<void(int, std::string)>& ca
 
     emit addResolver(id, resolver);
     emit runProcess(id, taskCalcDiff);
+}
+
+void MainWin::dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
+                                             const sirius::Hash256 &modificationHash,
+                                             const sirius::drive::ModifyTrafficInfo &msg,
+                                             lt::string_view,
+                                             bool isModificationQueued,
+                                             bool isModificationFinished,
+                                             const std::string &error) {
+    if (error == "not found" || isModificationQueued) {
+        return;
+    }
+
+    if (!error.empty()) {
+        qInfo() << "MainWin::dataModificationsStatusHandler. Error: " << error;
+        return;
+    }
+
+    uint64_t receivedSize = 0;
+    for (const auto& replicatorInfo : msg.m_modifyTrafficMap) {
+        receivedSize += replicatorInfo.second.m_receivedSize;
+    }
+
+    if (receivedSize > 0) {
+        emit updateUploadedDataAmount(receivedSize);
+    }
+
+    if (isModificationFinished) {
+        emit modificationFinishedByReplicators();
+    }
 }
