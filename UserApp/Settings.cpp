@@ -168,6 +168,8 @@ bool Settings::load( const std::string& pwd )
             exit(1);
         }
 
+        qDebug() << "Settings::load. New session of storage tool started.";
+
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );

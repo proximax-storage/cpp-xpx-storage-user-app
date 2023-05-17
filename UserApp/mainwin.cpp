@@ -1186,7 +1186,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         return;
     }
 
-    qInfo() << "MainWin::onDriveStateChanged: " << drive->getKey() << " state: " << getPrettyDriveState(state);
+    qInfo() << "MainWin::onDriveStateChanged. Drive key: " << drive->getKey() << " state: " << getPrettyDriveState(state);
 
     switch(state)
     {

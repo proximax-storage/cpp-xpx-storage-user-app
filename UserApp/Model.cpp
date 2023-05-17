@@ -392,7 +392,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 //            auto& lastModification = remoteDrive.data.activeDataModifications.back();
 //            it->setModificationHash(Model::hexStringToHash( lastModification.dataModification.id ));
 //            //TODO load torrent and other data to session to continue, check cancel modifications also
-//            // add transation from no_modifications to loading (start/end session and continue uploading)
+//            // add transaction from no_modifications to loading (start/end session and continue uploading)
 //            it->updateState(uploading);
 //        }
     }
