@@ -164,6 +164,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
             emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
             return;
         }
 
