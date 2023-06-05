@@ -7,13 +7,14 @@ OnChainClient::OnChainClient(StorageEngine* storage,
                              const std::string& privateKey,
                              const std::string& address,
                              const std::string& port,
+                             const double feeMultiplier,
                              QObject* parent)
     : QObject(parent)
     , mpStorageEngine(storage)
 {
     qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
 
-    init(address, port, privateKey);
+    init(address, port, feeMultiplier, privateKey);
 
     connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){
         if (drivesPage.pagination.totalPages <= 1 ) {
@@ -163,6 +164,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
             emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
             return;
         }
 
@@ -370,10 +372,12 @@ void OnChainClient::initAccount(const std::string &privateKey) {
 
 void OnChainClient::init(const std::string& address,
                          const std::string& port,
+                         const double feeMultiplier,
                          const std::string& privateKey) {
     xpx_chain_sdk::Config& config = xpx_chain_sdk::GetConfig();
     config.nodeAddress = address;
     config.port = port;
+    config.TransactionFeeMultiplier = feeMultiplier;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
     mpBlockchainEngine = new BlockchainEngine(mpChainClient, this);

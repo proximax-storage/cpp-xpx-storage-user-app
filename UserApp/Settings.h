@@ -28,6 +28,7 @@ class Settings : public QObject
         std::string     m_restBootstrap;
         std::string     m_replicatorBootstrap;
         std::string     m_udpPort  = "6846";
+        double          m_feeMultiplier = 150000;
         QRect           m_windowGeometry;
         bool            m_isDriveStructureAsTree;
 

@@ -29,6 +29,7 @@ Settings::Settings(const Settings& s)
     m_restBootstrap = s.m_restBootstrap;
     m_replicatorBootstrap = s.m_replicatorBootstrap;
     m_udpPort = s.m_udpPort;
+    m_feeMultiplier = s.m_feeMultiplier;
     m_windowGeometry = s.m_windowGeometry;
     m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
     m_settingsVersion = s.m_settingsVersion;
@@ -45,6 +46,7 @@ Settings &Settings::operator=(const Settings &s) {
     m_restBootstrap = s.m_restBootstrap;
     m_replicatorBootstrap = s.m_replicatorBootstrap;
     m_udpPort = s.m_udpPort;
+    m_feeMultiplier = s.m_feeMultiplier;
     m_windowGeometry = s.m_windowGeometry;
     m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
     m_settingsVersion = s.m_settingsVersion;
@@ -122,6 +124,7 @@ bool Settings::load( const std::string& pwd )
             iarchive( m_restBootstrap );
             iarchive( m_replicatorBootstrap );
             iarchive( m_udpPort );
+            iarchive( m_feeMultiplier );
             iarchive( m_currentAccountIndex );
             iarchive( m_accounts );
 
@@ -159,6 +162,8 @@ bool Settings::load( const std::string& pwd )
             msgBox.exec();
             exit(1);
         }
+
+        qDebug() << "Settings::load. New session of storage tool started.";
 
         for( auto& account: m_accounts )
         {
@@ -210,6 +215,7 @@ void Settings::save()
         archive( m_restBootstrap );
         archive( m_replicatorBootstrap );
         archive( m_udpPort );
+        archive( m_feeMultiplier );
         archive( m_currentAccountIndex );
         archive( m_accounts );
         archive( m_windowGeometry.top() );
@@ -230,6 +236,7 @@ void Settings::save()
             archive( m_restBootstrap );
             archive( m_replicatorBootstrap );
             archive( m_udpPort );
+            archive( m_feeMultiplier );
             archive( m_currentAccountIndex );
             archive( m_accounts );
             archive( m_windowGeometry.top() );

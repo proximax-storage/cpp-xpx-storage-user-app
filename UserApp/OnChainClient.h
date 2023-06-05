@@ -20,6 +20,7 @@ class OnChainClient : public QObject
                       const std::string& privateKey,
                       const std::string& address,
                       const std::string& port,
+                      const double feeMultiplier,
                       QObject* parent = nullptr);
 
         ~OnChainClient() = default;
@@ -97,6 +98,7 @@ class OnChainClient : public QObject
         void initAccount(const std::string& privateKey);
         void init(const std::string& address,
                   const std::string& port,
+                  const double feeMultiplier,
                   const std::string& privateKey);
         void loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
         void loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
