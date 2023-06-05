@@ -25,6 +25,8 @@ class ModifyProgressPanel;
 class Model;
 class Settings;
 
+struct StreamInfo;
+
 namespace sirius { namespace drive
 {
     class FsTree;
@@ -113,7 +115,11 @@ private:
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
     void initStreaming();
-    void updateStreamerTable();
+    void updateStreamerTable( const std::string& streamFolderName = "" );
+    void readStreamingAnnotaions( std::vector<StreamInfo>& );
+    void onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
+                                              const std::array<uint8_t,32>& fsTreeHash,
+                                              const sirius::drive::FsTree& );
     void updateViewerCBox();
 
     void startViewingStream();

@@ -654,7 +654,7 @@ void Model::approveLastStreamerAnnouncement()
 
 void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
 {
-    assert( m_settings->config().m_approvingStream );
+    assert( ! m_settings->config().m_approvingStream );
     m_settings->config().m_approvingStream = streamInfo;
 }
 

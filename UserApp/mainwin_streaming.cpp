@@ -9,6 +9,7 @@
 #include "StreamInfo.h"
 #include "ModifyProgressPanel.h"
 #include "StorageEngine.h"
+#include "Account.h"
 
 #include <cerrno>
 #include <qdebug.h>
@@ -61,6 +62,7 @@ void MainWin::initStreaming()
         auto rc = dialog.exec();
         if ( rc )
         {
+            auto streamFolderName = dialog.streamFolderName();
             updateStreamerTable();
         }
     }, Qt::QueuedConnection);
@@ -176,36 +178,93 @@ void MainWin::initStreaming()
     updateViewerCBox();
 }
 
-void MainWin::updateStreamerTable()
+void MainWin::readStreamingAnnotaions( std::vector<StreamInfo>& streamInfoVector )
 {
-    ui->m_streamAnnouncementTable->clearContents();
-    const auto& announcements = m_model->streamerAnnouncements();
-
-    qDebug() << "announcements: " << announcements.size();
-
-    for( const auto& announcement: announcements )
+    streamInfoVector.clear();
+    
+    const std::map<std::string, Drive>& drives = m_model->getDrives();
+    for( const auto [key,driveInfo] : drives )
     {
+        auto path = fs::path( driveInfo.getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME;
+        
+        std::error_code ec;
+        if ( ! fs::is_directory(path,ec) )
+        {
+            continue;
+        }
+        
+        for( const auto& entry : std::filesystem::directory_iterator( path ) )
+        {
+            const auto entryName = entry.path().filename().string();
+            if ( entry.is_directory() )
+            {
+                auto fileName = path / entryName / STREAM_INFO_FILE_NAME;
+                try
+                {
+                    std::ifstream is( fileName, std::ios::binary );
+                    cereal::PortableBinaryInputArchive iarchive(is);
+                    StreamInfo streamInfo;
+                    iarchive( streamInfo );
+                    streamInfoVector.push_back( streamInfo );
+                }
+                catch (...) {
+                    qWarning() << "Internal error: cannot read stream annotation: " << fileName;
+                }
+            }
+        }
+    }
+    std::sort( streamInfoVector.begin(), streamInfoVector.end(),
+        [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
+    {
+        return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
+    });
+}
+
+void MainWin::updateStreamerTable( const std::string& streamFolderName )
+{
+    std::vector<StreamInfo> streamAnnotaions;
+    readStreamingAnnotaions( streamAnnotaions );
+    
+    ui->m_streamAnnouncementTable->clearContents();
+
+    qDebug() << "announcements: " << streamAnnotaions.size();
+
+    for( const auto& streamInfo: streamAnnotaions )
+    {
+        if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
+        {
+            continue;
+        }
+            
         size_t rowIndex = ui->m_streamAnnouncementTable->rowCount();
         ui->m_streamAnnouncementTable->insertRow( rowIndex );
         {
             QDateTime dateTime = QDateTime::currentDateTime();
-            dateTime.setSecsSinceEpoch( announcement.m_secsSinceEpoch );
+            dateTime.setSecsSinceEpoch( streamInfo.m_secsSinceEpoch );
             ui->m_streamAnnouncementTable->setItem( rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
         }
         {
-            if ( auto* drive = m_model->findDrive( announcement.m_driveKey ); drive == nullptr )
+            QTableWidgetItem* item = new QTableWidgetItem();
+            if ( streamInfo.m_streamingStatus != StreamInfo::ss_creating )
             {
-                ui->m_streamAnnouncementTable->setItem( rowIndex, 1, new QTableWidgetItem( "Removed drive" ) );
+                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (creating...)") );
+            }
+            else if ( streamInfo.m_streamingStatus != StreamInfo::ss_registring )
+            {
+                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (registring...)") );
+            }
+            else if ( streamInfo.m_streamingStatus != StreamInfo::ss_started )
+            {
+                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (running...)") );
             }
             else
             {
-                ui->m_streamAnnouncementTable->setItem( rowIndex, 1, new QTableWidgetItem( QString::fromStdString( announcement.m_streamFolder ) ) );
+                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
             }
+            ui->m_streamAnnouncementTable->setItem( rowIndex, 1, item );
         }
         {
-            QTableWidgetItem* item = new QTableWidgetItem();
-            item->setData( Qt::DisplayRole, QString::fromStdString( announcement.m_title ) );
-            ui->m_streamAnnouncementTable->setItem( rowIndex, 2, item );
+            ui->m_streamAnnouncementTable->setItem( rowIndex, 2, new QTableWidgetItem( QString::fromStdString( streamInfo.m_streamFolder ) ) );
         }
     }
     QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
@@ -381,6 +440,13 @@ void MainWin::cancelStreaming()
 {
     m_model->m_streamerStatus = ss_no_streaming;
     m_startStreamingProgressPanel->setVisible(false);
+}
+
+void MainWin::onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
+                                          const std::array<uint8_t,32>& fsTreeHash,
+                                          const sirius::drive::FsTree& )
+{
+    
 }
 
 void MainWin::dbg()

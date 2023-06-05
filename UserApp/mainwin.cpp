@@ -95,15 +95,8 @@ void MainWin::init()
 
     if ( Model::homeFolder() == "/Users/alex" )
     {
-        if ( m_model->getAccountName() == "alex_local_test" )
-        {
-            m_model->setBootstrapReplicator("192.168.2.101:5001");
-            m_model->setCurrentAccountIndex(2);
-        }
-        else
-        {
-            m_model->setBootstrapReplicator("15.206.164.53:7904");
-        }
+//            m_model->setBootstrapReplicator("15.206.164.53:7904");
+            m_model->setBootstrapReplicator("13.250.14.143:7904");
     }
 
     if ( !fs::exists( getFsTreesFolder() ) )
@@ -520,11 +513,12 @@ void MainWin::init()
             } else {
                 unlockDrive();
             }
-        }
-
-        auto drive = m_model->currentDrive();
-        if (index == 1 && !m_model->getDrives().empty() && drive) {
-            onDriveStateChanged(drive->getKey(), drive->getState());
+            
+            if ( ui->m_driveCBox->currentText() != "Loading..." ) {
+                if ( auto drive = m_model->currentDrive(); drive != nullptr ) {
+                    onDriveStateChanged(drive->getKey(), drive->getState());
+                }
+            }
         }
     }, Qt::QueuedConnection);
 
@@ -2272,6 +2266,9 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
 {
     qDebug()  << "MainWin::onFsTreeReceived. Drive key: " << driveKey.c_str();
     fsTree.dbgPrint();
+
+    // inform stream annotations about possible changes
+    onFsTreeReceivedForStreamAnnotaions( driveKey, fsTreeHash, fsTree );
 
     auto drive = m_model->findDrive( driveKey );
     if (drive) {

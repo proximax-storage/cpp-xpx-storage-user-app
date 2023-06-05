@@ -21,13 +21,15 @@ public:
     void accept() override;
     void reject() override;
 
+    std::string streamFolderName() const { return mUniqueFolderName; };
+
 private:
     void validate();
 
 private:
     Ui::AddStreamAnnouncementDialog* ui;
-    Model*                           mpModel;
+    Model*                           m_model;
     OnChainClient*                   mp_onChainClient;
-    std::string                      mCurrentDriveKey;
-    std::string                      mStreamFolder;
+    std::string                      mDriveKey;
+    std::string                      mUniqueFolderName;
 };
