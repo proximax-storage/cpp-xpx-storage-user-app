@@ -26,6 +26,7 @@ class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;
+class DeploymentData;
 
 namespace sirius { namespace drive
 {
@@ -137,6 +138,10 @@ private:
     void initWorker();
 
     void callbackResolver(const QUuid& id, const QVariant& data);
+
+    DeploymentData* contractDeploymentData();
+
+//    void validateContractDrive();
 
     template<class Type>
     void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
