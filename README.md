@@ -32,7 +32,7 @@ sudo make install
 ## User Manual
 
 ### Log In
-When you open the storage tool application for your first time, you will be prompted to create a storage tool account.
+When you open the storage tool application for your first time, you will be prompted to create a storage tool account.<br>
 ![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/d079346f-8c39-44e3-9c9e-05387028ff5d)
 <br>Enter your preferred storage tool `Account name`, your `Private key` from your wallet account that have XPX in it, and `Save`.<br><br>
 
@@ -62,5 +62,27 @@ For now, the application only works if you put `200000`.
 You can also choose to set the drive structure style to `Drive structure as tree`.
 
 After that, `Save` your changes and the application will restart.
+
+### Drives
+
+This is what our `Drives` tab looks like:<br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/273ac6b4-1320-4c39-a55f-30b4ede9d4e2)
+
+We can create a new drive to store our local files. To do this, we can press the `+` sign. This will prompt out a new window to create new drive.
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/eeed860a-262a-49b6-8e87-6554f905d6b7)
+
+Enter your preferred drive `Name`, `Replicator number`, `Max drive size` (in Megabytes), and your `Local drive folder` (folder in your PC that you want to make available as a drive), and then `Confirm`. After that, wait until there is notification that drive is created successfully.
+
+For now, the number of replicator we should use is `4`.
+Currently, each replicator can only store 2 GB data. So please create a smaller size drive (e.g. 100 MB, 200 MB).
+
+If you do not have any files within the local drive folder, then the drive will be empty. We can start adding files to local drive folder, and then the right window of the drive will show which files are available in the local drive folder, but not inside the drive (marked as green, which mean we can perform an upload) and which files are not available in the local drive folder, but available inside the drive (marked as red, which mean we can perform a remove).
+
+
+
+
+
+
+
 
 
