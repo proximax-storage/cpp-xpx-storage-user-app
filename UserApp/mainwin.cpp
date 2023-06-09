@@ -1816,7 +1816,7 @@ void MainWin::loadBalance() {
     m_onChainClient->getBlockchainEngine()->getAccountInfo(
             publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            qWarning() << "MainWin::loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
             return;
         }
 
@@ -2462,7 +2462,14 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
     m_onChainClient->getBlockchainEngine()->getAccountInfo(
             accountPublicKey.toStdString(), [this, mosaicName, callback](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            qWarning() << "MainWin::getMosaicIdByName. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            const QString clientPublicKey = QString::fromStdString(message);
+            if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive)) {
+                onInternalError("Current account not found, try to use another account or switch to other API Gateway!");
+            } else {
+                onInternalError(message.c_str());
+            }
+
             return;
         }
 
@@ -2474,7 +2481,7 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
         m_onChainClient->getBlockchainEngine()->getMosaicsNames(
                 mosaicIds, [mosaicName, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
-                qWarning() << "loadBalance. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
+                qWarning() << "MainWin::getMosaicIdByName. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
                 return;
             }
 
