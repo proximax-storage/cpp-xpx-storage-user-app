@@ -642,7 +642,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                 return;
             }
 
-            auto dataModificationApprovalTransaction = reinterpret_cast<xpx_chain_sdk::transactions_info::DataModificationApprovalTransaction*>(transaction.get());
+            auto dataModificationApprovalTransaction = dynamic_cast<xpx_chain_sdk::transactions_info::DataModificationApprovalTransaction*>(transaction.get());
             if (!dataModificationApprovalTransaction) {
                 emit dataModificationApprovalFailed(driveId, {}, -1);
                 qWarning() << "TransactionsEngine::sendModification. Bad pointer to dataModificationApprovalTransaction";
@@ -663,6 +663,14 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                 case (uint8_t)sirius::drive::ModificationStatus::SUCCESS:
                 {
                     qInfo() << "TransactionsEngine::sendModification. Data modification approval success. Code: " << dataModificationApprovalTransaction->modificationStatus;
+                    qInfo() << "TransactionsEngine::sendModification. Confirmed dataModificationApprovalTransaction hash: "
+                            << notification.meta.hash.c_str() << " modificationId: "
+                            << rawHashToHex(modificationId) << " fileStructureCdi: "
+                            << dataModificationApprovalTransaction->fileStructureCdi.c_str();
+
+                    mDataModificationApprovals[driveId].insert(modificationId);
+
+                    emit dataModificationApprovalConfirmed(driveId, dataModificationApprovalTransaction->fileStructureCdi);
                     break;
                 }
 
@@ -670,39 +678,30 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                 {
                     emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
                     qWarning() << "TransactionsEngine::sendModification. Data modification approval failed: ACTION_LIST_IS_ABSENT";
-                    return;
+                    break;
                 }
 
                 case (uint8_t)sirius::drive::ModificationStatus::DOWNLOAD_FAILED:
                 {
                     emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
                     qWarning() << "TransactionsEngine::sendModification. Data modification approval failed: DOWNLOAD_FAILED";
-                    return;
+                    break;
                 }
 
                 case (uint8_t)sirius::drive::ModificationStatus::INVALID_ACTION_LIST:
                 {
                     emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
                     qWarning() << "TransactionsEngine::sendModification. Data modification approval failed: INVALID_ACTION_LIST";
-                    return;
+                    break;
                 }
 
                 case (uint8_t)sirius::drive::ModificationStatus::NOT_ENOUGH_SPACE:
                 {
                     emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
                     qWarning() << "TransactionsEngine::sendModification. Data modification approval failed: NOT_ENOUGH_SPACE";
-                    return;
+                    break;
                 }
             }
-
-            qInfo() << "TransactionsEngine::sendModification. Confirmed dataModificationApprovalTransaction hash: "
-                    << notification.meta.hash.c_str() << " modificationId: "
-                    << rawHashToHex(modificationId) << " fileStructureCdi: "
-                    << dataModificationApprovalTransaction->fileStructureCdi.c_str();
-
-            mDataModificationApprovals[driveId].insert(modificationId);
-
-            emit dataModificationApprovalConfirmed(driveId, dataModificationApprovalTransaction->fileStructureCdi);
 
             unsubscribeFromReplicators(replicators, id, statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
