@@ -306,8 +306,10 @@ void MainWin::init()
 
     connect(this, &MainWin::drivesInitialized, this, [this]() {
         ui->m_driveCBox->clear();
+        ui->m_streamDriveCBox->clear();
         for (const auto& [key, drive] : m_model->getDrives()) {
             addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
                 ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
                 onDriveStateChanged(drive.getKey(), drive.getState());
@@ -1299,6 +1301,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         case creating:
         {
             addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive->getName(), drive->getKey());
             setCurrentDriveOnUi(drive->getKey());
             updateDriveStatusOnUi(*drive);
 
@@ -1313,6 +1316,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         case unconfirmed:
         {
             removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
             m_model->removeDrive(driveKey);
 
             m_model->applyForChannels(driveKey, [this](auto& channel) {
@@ -1347,6 +1351,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             std::string driveName = drive->getName();
 
             removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
 
             m_model->removeDrive(driveKey);
             m_model->applyForChannels(driveKey, [this](auto& channel) {
@@ -1878,6 +1883,7 @@ void MainWin::onCurrentDriveChanged( int index )
 void MainWin::setupDrivesTab()
 {
     ui->m_driveCBox->addItem( "Loading..." );
+    ui->m_streamDriveCBox->addItem( "Loading..." );
     setupDriveFsTable();
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
     {
@@ -2218,10 +2224,13 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
     if (index != -1) {
         if ( drive.getState() == creating ) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
         } else if (drive.getState() == deleting) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
         }
     }
 }

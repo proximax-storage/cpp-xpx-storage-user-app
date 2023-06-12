@@ -65,12 +65,12 @@ void Settings::initForTests()
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_genkins", "FD7BFAC074A2F0FA9383C298E1392472FBFE3731E659D46FB094D75EEA609585" );
+        config().initAccount( "test_staging_A04", "A04F01F652364657087FB254DFA69460E7137247854373E49D3E590F96D14994" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test", "888833F237AD397DA043E250F1B802FD1A645C866A671C4AA48AAE3B5EF8CE32" );
+        config().initAccount( "test_staging_C62", "C62F0F5E3A2A00BDBEABDF5DD45B9DCC01A210A09CF1D442B711B6C0F45B53E8" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         if ( ! ALEX_LOCAL_TEST )

@@ -14,6 +14,7 @@ public:
 public:
     explicit AddStreamAnnouncementDialog( OnChainClient* onChainClient,
                              Model* model,
+                             std::string driveKey,
                              QWidget *parent = nullptr);
     ~AddStreamAnnouncementDialog() override;
 

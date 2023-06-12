@@ -13,11 +13,13 @@
 
 AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChainClient,
                                                           Model*         model,
+                                                          std::string    driveKey,
                                                           QWidget*       parent ) :
     QDialog( parent ),
     ui( new Ui::AddStreamAnnouncementDialog() ),
     mp_onChainClient(onChainClient),
-    m_model(model)
+    m_model(model),
+    mDriveKey(driveKey)
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
@@ -26,27 +28,6 @@ AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChain
     ui->m_errorText->setText("");
 
     ui->m_dateTime->setDateTime( QDateTime::currentDateTime().addSecs(180) );
-
-    // Drive
-    std::vector<std::string> drivesKeys;
-    drivesKeys.reserve(m_model->getDrives().size());
-    ui->selectDriveBox->addItem("Select from my drives");
-    for ( const auto& [key, drive] : m_model->getDrives()) {
-        drivesKeys.push_back(key);
-        ui->selectDriveBox->addItem(drive.getName().c_str());
-    }
-
-    ui->selectDriveBox->setCurrentIndex(0);
-
-    connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
-    {
-        if (index == 0) {
-            mDriveKey.clear();
-        } else if (index >= 1) {
-            mDriveKey = drivesKeys[--index];
-        }
-        validate();
-    }, Qt::QueuedConnection);
 
     // Title
     connect(ui->m_title, &QLineEdit::textChanged, this, [this](auto text){
@@ -115,14 +96,6 @@ void AddStreamAnnouncementDialog::validate()
     if ( mDriveKey.empty() )
     {
         ui->m_errorText->setText("Drive not assigned");
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
-    }
-
-    auto* drive = m_model->findDrive( mDriveKey );
-    if ( drive == nullptr )
-    {
-        ui->m_errorText->setText("Drive not found");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         return;
     }

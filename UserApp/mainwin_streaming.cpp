@@ -29,11 +29,11 @@
 
 void MainWin::initStreaming()
 {
-    // tabWidget_2
-    connect(ui->tabWidget_2, &QTabWidget::currentChanged, this, [this](int index)
+    // m_streamingTabView
+    connect(ui->m_streamingTabView, &QTabWidget::currentChanged, this, [this](int index)
     {
-        updateViewerProgressPanel( index );
-        updateStreamerProgressPanel( index );
+        updateViewerProgressPanel( ui->tabWidget->currentIndex() );
+        updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
     });
             
     //
@@ -58,7 +58,15 @@ void MainWin::initStreaming()
 
     // m_addStreamAnnouncementBtn
     connect(ui->m_addStreamAnnouncementBtn, &QPushButton::released, this, [this] () {
-        AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, this);
+        std::string driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
+
+        if ( m_model->findDrive(driveKey) == nullptr )
+        {
+            qWarning() << LOG_SOURCE << "bad driveKey";
+            return;
+        }
+        
+        AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, driveKey, this);
         auto rc = dialog.exec();
         if ( rc )
         {
@@ -312,12 +320,17 @@ void MainWin::updateStreamerProgressPanel( int tabIndex )
     if ( tabIndex != 4 )
     {
         m_startStreamingProgressPanel->setVisible(false);
-        return;
     }
-    
-    if ( ui->m_streamingTabView->currentIndex() == 1 )
+    else
     {
-        m_startStreamingProgressPanel->setVisible(true);
+        if ( ui->m_streamingTabView->currentIndex() == 1 )
+        {
+//todo            m_startStreamingProgressPanel->setVisible(true);
+        }
+        else
+        {
+            m_startStreamingProgressPanel->setVisible(false);
+        }
     }
 }
 
