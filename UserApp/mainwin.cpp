@@ -470,6 +470,14 @@ void MainWin::init() {
              &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection );
     connect( m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this,
              &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionFailed, this,
+             &MainWin::onDeployContractTransactionFailed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
     connect( ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection );
     connect( m_onChainClient, &OnChainClient::newNotification, this, [this]( auto notification ) {
         showNotification( notification );
@@ -1176,6 +1184,8 @@ void MainWin::setupDownloadsTable() {
             }
         }
     } );
+
+    connect( ui->m_contractDeployBtn, &QPushButton::released, this, &MainWin::onDeployContract, Qt::QueuedConnection );
 }
 
 bool MainWin::requestPrivateKey() {
@@ -2880,7 +2890,7 @@ void MainWin::dataModificationsStatusHandler( const sirius::drive::ReplicatorKey
     }
 }
 
-DeploymentData* MainWin::contractDeploymentData() {
+ContractDeploymentData* MainWin::contractDeploymentData() {
     if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
         return nullptr;
     }
@@ -2891,6 +2901,49 @@ DeploymentData* MainWin::contractDeploymentData() {
         return nullptr;
     }
     return &contractDriveIt->second;
+}
+
+void
+MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( contract_deploying );
+    }
+}
+
+void
+MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( no_modifications );
+    }
+}
+
+void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 32> driveKey,
+                                                            std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( contract_deployed );
+    }
+}
+
+void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32> driveKey,
+                                                         std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( no_modifications );
+    }
+}
+
+void MainWin::onDeployContract() {
+    if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
+        return;
+    }
+    auto driveKey = ui->m_contractDriveCBox->currentData().toString().toStdString();
+    auto& contractDrives = m_model->driveContractModel().getContractDrives();
+    auto contractDriveIt = contractDrives.find( driveKey );
+    if ( contractDriveIt == contractDrives.end()) {
+        return;
+    }
+
+    m_onChainClient->deployContract(rawHashFromHex(QString::fromStdString(contractDriveIt->first)),
+                                    contractDriveIt->second);
 }
 
 //void MainWin::validateContractDrive() {

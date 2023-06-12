@@ -341,6 +341,22 @@ void OnChainClient::initConnects() {
         emit replicatorOffBoardingTransactionFailed(replicatorPublicKey);
     });
 
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractConfirmed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionConfirmed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractFailed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionFailed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractApprovalConfirmed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionApprovalConfirmed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractApprovalFailed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionApprovalFailed(driveId, contractId);
+    });
+
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 const QString driveKey = rawHashToHex(driveId);
@@ -460,4 +476,32 @@ void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::downlo
 
     channelsPage.data.channels = channels;
     emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
+}
+
+void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data ) {
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveKey).toStdString(),
+                                     [this, driveKey, data]
+                                     (auto drive, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+            emit internalError(message.c_str());
+            return;
+        }
+
+        if (drive.data.replicators.empty()) {
+            qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            return;
+        }
+
+        std::vector<xpx_chain_sdk::Address> addresses;
+        addresses.reserve(drive.data.replicators.size());
+        for (const auto& replicator : drive.data.replicators) {
+            xpx_chain_sdk::Key key;
+            xpx_chain_sdk::ParseHexStringIntoContainer(replicator.c_str(), replicator.size(), key);
+            addresses.emplace_back(key);
+        }
+
+        mpTransactionsEngine->deployContract(driveKey, data, addresses);
+    });
 }
