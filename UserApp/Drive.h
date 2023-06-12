@@ -19,7 +19,9 @@ enum DriveState
     uploading,
     failed,
     canceling,
-    canceled
+    canceled,
+    contract_deploying,
+    contract_deployed
 };
 
 class DriveModificationEvent;

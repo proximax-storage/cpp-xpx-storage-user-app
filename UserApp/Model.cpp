@@ -635,6 +635,7 @@ void Model::onDriveStateChanged(const Drive& drive) {
     connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state)
     {
         emit driveStateChanged(driveKey, state);
+        m_settings->config().m_driveContractModel.onDriveStateChanged(driveKey, state);
     });
 }
 
@@ -732,6 +733,10 @@ void Model::setModificationStatusResponseHandler( ModificationStatusResponseHand
 {
     gStorageEngine->m_session->setModificationStatusResponseHandler( handler );
 }
+
+DriveContractModel& Model::driveContractModel() {
+    return m_settings->config().m_driveContractModel;
+};
 
 void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     driveKey,
