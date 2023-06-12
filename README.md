@@ -31,7 +31,7 @@ sudo make install
 
 ## User Manual
 
-**Note that most operations within the storage tool application uses XPX.**
+**Note that most operations within the storage tool application uses XPX.**<br><br>
 
 ### Log In
 When you open the storage tool application for your first time, you will be prompted to create a storage tool account.<br>
@@ -63,7 +63,7 @@ For now, the application only works if you put `200000`.
 
 You can also choose to set the drive structure style to `Drive structure as tree`.
 
-After that, `Save` your changes and the application will restart.
+After that, `Save` your changes and the application will restart.<br><br>
 
 ### Drives
 
@@ -76,23 +76,23 @@ We can create a new drive to store our local files. To do this, we can press the
 
 Enter your preferred drive `Name`, `Replicator number`, `Max drive size` (in Megabytes), and your `Local drive folder` (folder in your PC that you want to make available as a drive), and then `Confirm`. After that, wait until there is notification that the drive is created successfully.
 
-For now, the number of replicator we should use is `4`.
-Currently, each replicator can only store 2 GB data. So please create a smaller size drive (e.g. 100 MB, 200 MB).
+**For now, the number of replicator we should use is `4`.**<br>
+**Currently, each replicator can only store 2 GB data. So please create a smaller size drive (e.g. 100 MB, 200 MB).**
 
-The `Open local folder` button below the left side window can be used if you want to see files and folders inside your local drive folder.
+The `Open local folder` button below the left side tab can be used if you want to see files and folders inside your local drive folder.
 
-#### Drive Windows (Left Side and Right Side Windows)
-If you do not have any files within the local drive folder, then the drive will be empty. We can start adding files to local drive folder, and then the right window of the drive will show which files are available in the local drive folder, but not inside the drive (marked as green, which mean we can perform an upload operation) and which files are not available in the local drive folder, but available inside the drive (marked as red, which mean we can perform a remove operation).
+#### Drive Tabs (Left Side and Right Side Tabs)
+If you do not have any files within the local drive folder, then the drive will be empty. We can start adding files to local drive folder, and then the right tab of the drive will show which files are available in the local drive folder, but not inside the drive (marked as green, which mean we can perform an upload operation) and which files are not available in the local drive folder, but available inside the drive (marked as red, which mean we can perform a remove operation).
 
-The file differences between drive and local drive folder is what we call "diff". This is why we have `Calculate diff` button below the right window side. But the diff will be automatically calculated if we just add or remove files on the local drive folder's root (root is the top/upper level of a folder). When we add or remove files inside sub-folder (folder inside other folder) of the local drive folder, this is where we need to use `Calculate diff` because the diff is not automatically calculated in this case.
+The file differences between drive and local drive folder is what we call "diff". This is why we have `Calculate diff` button below the right tab side. But the diff will be automatically calculated if we just add or remove files on the local drive folder's root (root is the top/upper level of a folder). When we add or remove files inside sub-folder (folder inside other folder) of the local drive folder, this is where we need to use `Calculate diff` because the diff is not automatically calculated in this case.
 
 #### Upload and Remove Files and Folders
 For example, in this case:
 ![Upload_Remove](./images/6_upload_remove.png)
 
-The left side window (the drive) already have file_2.txt uploaded earlier. And the right side windows (the diff between drive and local drive folder) shows that our file_1.txt has just been added to our local drive folder and not yet uploaded to the drive (green colour), and the file_2.txt has just been removed from our local drive folder and not yet been removed from the drive (red colour). To make the changes (to upload file_1.txt to the drive and remove file_2.txt from the drive), we can use `Apply changes`. 
+The left side tab (the drive) already have file_2.txt uploaded earlier. And the right side tab (the diff between drive and local drive folder) shows that our file_1.txt has just been added to our local drive folder and not yet uploaded to the drive (green colour), and the file_2.txt has just been removed from our local drive folder and not yet been removed from the drive (red colour). To make the changes (to upload file_1.txt to the drive and remove file_2.txt from the drive), we can use `Apply changes`. 
 
-And then the modification status will appear (modification phases: registering, uploading, completing).<br>
+And then the modification status will appear (with modification phases: registering, uploading, completing).<br>
 ![Modification_status](./images/7_modification_status.png)
 
 And after that, both the drive and local drive folder will have the same files (but not same folders because empty folder is not uploaded).<br>
@@ -111,7 +111,7 @@ The options are:<br>
 `Change local folder`: To change your local drive folder.<br>
 `Top-up`: To allows you to choose a drive and perform top up.<br>
 `Copy drive key`: To allows you to copy the drive's key for your needs.
-`Drive info`: To see the drive information (drive name, replicator number, max drive size, local drive folder).<br>
+`Drive info`: To see the drive information (drive name, replicator number, max drive size, local drive folder).<br><br>
 
 ### Downloads
 
@@ -137,7 +137,7 @@ The `Remove` button is used to remove the files you are trying to download/have 
 #### Download Files
 To download files from download channel, first you need to choose/checklist the box on the left side of the filenames you want to download.<br>
 
-For example, in this case, I choose the file_1.txt to download.
+For example, in this case, I choose the `file_1.txt` to download.
 ![Download_files](./images/13_download_files.png)
 
 Then press `>>` to download the file to your download folder (the one we configured in `Settings` tab).<br>
