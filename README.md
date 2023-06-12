@@ -31,7 +31,7 @@ sudo make install
 
 ## User Manual
 
-**Note that most operations within the storage tool application uses XPX.
+**Note that most operations within the storage tool application uses XPX.**
 
 ### Log In
 When you open the storage tool application for your first time, you will be prompted to create a storage tool account.<br>
@@ -74,7 +74,7 @@ This is what our `Drives` tab looks like:<br>
 We can create a new drive to store our local files. To do this, we can press the `+` sign. This will prompt out a new window to create new drive.
 ![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/eeed860a-262a-49b6-8e87-6554f905d6b7)
 
-Enter your preferred drive `Name`, `Replicator number`, `Max drive size` (in Megabytes), and your `Local drive folder` (folder in your PC that you want to make available as a drive), and then `Confirm`. After that, wait until there is notification that drive is created successfully.
+Enter your preferred drive `Name`, `Replicator number`, `Max drive size` (in Megabytes), and your `Local drive folder` (folder in your PC that you want to make available as a drive), and then `Confirm`. After that, wait until there is notification that the drive is created successfully.
 
 For now, the number of replicator we should use is `4`.
 Currently, each replicator can only store 2 GB data. So please create a smaller size drive (e.g. 100 MB, 200 MB).
@@ -92,7 +92,7 @@ For example, in this case:
 
 The left side window (the drive) already have file_2.txt uploaded earlier. And the right side windows (the diff between drive and local drive folder) shows that our file_1.txt has just been added to our local drive folder and not yet uploaded to the drive (green colour), and the file_2.txt has just been removed from our local drive folder and not yet been removed from the drive (red colour). To make the changes (to upload file_1.txt to the drive and remove file_2.txt from the drive), we can use `Apply changes`. 
 
-And then the modification status will appear (modification registering, uploading, completing).<br>
+And then the modification status will appear (modification phases: registering, uploading, completing).<br>
 ![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/1a15f214-3f17-44a4-ae13-460605075fed)
 
 And after that, both the drive and local drive folder will have the same files (but not same folders because empty folder is not uploaded).<br>
@@ -105,5 +105,49 @@ We can also remove the drive by choosing which drive we want to remove, and pres
 #### More Options for Drive Operations
 You can also choose more options for drive operations through `...` button.
 ![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/725723ba-9d23-4dc0-a1cf-325bffef35d4)
+
+The options are:
+`Rename`: To rename your drive.<br>
+`Change local folder`: To change your local drive folder.<br>
+`Top up`: To allows you to choose a drive and perform top up.<br>
+`Copy drive key`: To allows you to copy the drive's key for your needs.
+`Drive info`: To see the drive information (drive name, replicator number, max drive size, local drive folder).<br>
+
+### Downloads
+
+This is what our `Downloads` tab looks like:<br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/a7603273-5730-4b99-9f7c-c2a3b07bd81f)
+
+#### Create Download Channel
+
+We can create a new download channel by pressing the `+` button. This will prompt out a new window to create a new download channel. Download channel is where we are able to download files from drives.<br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/58e9a8ea-96bd-4d80-8a3f-8aa079626daa)
+
+Enter your preferred download channel's `Name`, the `Drive` that you want to download the files from, `Keys` (optional), `Prepaid` amount, and then press `Confirm`. After that, wait until there is notification that the channel is created successfully.
+
+#### Download Channel Tabs (Left Side and Right Side Tabs)
+The left tab will be displaying files within the drives you have choose earlier. In other words, the left tab is the download channel. The right tab will display the files you have downloaded from the download channel, including the status of download (for example: percentage (download progress), done).
+
+The file changes (add or remove) you made from the drive will be automatically reflected in the download channel.
+
+You can also refresh the download channel through `Refresh` button.
+The `Open local folder` is used to open your download folder locally.
+The `Remove` button is used to remove the files you are trying to download/have downloaded, and this will be reflected to your local download folder (in other word, it will also delete files in your download folder).
+
+#### Download Files
+To download files from download channel, first you need to choose/checklist the box on the left side of the filenames you want to download.<br>
+
+For example, in this case, I choose the file_1.txt to download.
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/36991648-ddad-4108-9909-2cb6625dbb97)
+
+Then press `>>` to download the file to your download folder (the one we configured in `Settings` tab).<br>
+
+Wait for the file to be downloaded (will be shown in percentage). Wait until the status is done like below:
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/430793ff-3983-41b0-b269-b76ea2481f0e)
+
+And then you can see that the file is in your download folder now.
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/3b21daac-2eaa-4d5d-8e2e-349ea32952e6)
+
+
 
 
