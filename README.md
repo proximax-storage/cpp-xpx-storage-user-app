@@ -100,16 +100,16 @@ And after that, both the drive and local drive folder will have the same files (
 
 #### Remove Drive
 We can also remove the drive by choosing which drive we want to remove, and press `-` button.
-![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/e2c1114b-d465-480f-a09a-171119c1f578)
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/c2398e1a-d23b-4931-b5de-5f75e079cda6)
 
 #### More Options for Drive Operations
 You can also choose more options for drive operations through `...` button.
-![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/725723ba-9d23-4dc0-a1cf-325bffef35d4)
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/0e0c4351-c24d-4002-824a-f26f9ff489a4)
 
-The options are:
+The options are:<br>
 `Rename`: To rename your drive.<br>
 `Change local folder`: To change your local drive folder.<br>
-`Top up`: To allows you to choose a drive and perform top up.<br>
+`Top-up`: To allows you to choose a drive and perform top up.<br>
 `Copy drive key`: To allows you to copy the drive's key for your needs.
 `Drive info`: To see the drive information (drive name, replicator number, max drive size, local drive folder).<br>
 
@@ -147,6 +147,23 @@ Wait for the file to be downloaded (will be shown in percentage). Wait until the
 
 And then you can see that the file is in your download folder now.
 ![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/3b21daac-2eaa-4d5d-8e2e-349ea32952e6)
+
+#### Remove Download Channel
+
+Similar to remove drive, we can also remove download channel by choosing which download channel we want to remove, and press `-` button.<br>
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/eb4d7492-ebc7-45be-9cdd-7dbd675c038c)
+
+#### More Options for Download Channel Operations
+
+You can also choose more options for download channel operations through `...` button.
+![image](https://github.com/proximax-storage/cpp-xpx-storage-user-app/assets/121498420/95a9c1a5-e3f6-4fcf-bdaf-521046f483c3)
+
+The options are:<br>
+`Rename`: To rename the download channel.<br>
+`Top-up`: To allows you to choose a download channel and perform top up.<br>
+`Copy channel key`: To allows you to copy the download channel's key for your needs.<br>
+`Channel info`: To see the download channel information (download channel name, ID, drive ID, replicators assigned, keys, and prepaid amount).<br>
+
 
 
 
