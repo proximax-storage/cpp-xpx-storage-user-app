@@ -97,6 +97,7 @@ set(PROJECT_SOURCES
         Account.h                     Account.cpp
         CachedReplicator.h            CachedReplicator.cpp
         StreamInfo.h                  StreamInfo.cpp
+        DriveContractModel.h          DriveContractModel.cpp
 
         AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
         AddStreamRefDialog.h          AddStreamRefDialog.cpp          AddStreamRefDialog.ui

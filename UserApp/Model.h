@@ -23,6 +23,7 @@
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
 #include "StreamInfo.h"
+#include "DriveContractModel.h"
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;
@@ -172,6 +173,9 @@ class Model : public QObject
         void                            requestModificationStatus(  const std::string&      replicatorKey,
                                                                     const std::string&      driveKey,
                                                                     const std::string&      modificationHash );
+
+        // Super contract
+        DriveContractModel&             driveContractModel();
 
         //
         // Streaming
