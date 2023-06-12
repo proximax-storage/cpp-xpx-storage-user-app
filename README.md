@@ -82,17 +82,17 @@ Enter your preferred drive `Name`, `Replicator number`, `Max drive size` (in Meg
 The `Open local folder` button below the left side tab can be used if you want to see files and folders inside your local drive folder.
 
 #### Drive Tabs (Left Side and Right Side Tabs)
-If you do not have any files within the local drive folder, then the drive will be empty. We can start adding files to local drive folder, and then the right tab of the drive will show which files are available in the local drive folder, but not inside the drive (marked as green, which mean we can perform an upload operation) and which files are not available in the local drive folder, but available inside the drive (marked as red, which mean we can perform a remove operation).
+If you do not have any files within the local drive folder, then the drive (left side tab) will be empty. We can start adding files to local drive folder, and then the right side tab of the drive will show which files are available in the local drive folder, but not inside the drive (marked as green, which mean we can perform an upload operation) and which files are not available in the local drive folder, but available inside the drive (marked as red, which mean we can perform a remove operation).
 
-The file differences between drive and local drive folder is what we call "diff". This is why we have `Calculate diff` button below the right tab side. But the diff will be automatically calculated if we just add or remove files on the local drive folder's root (root is the top/upper level of a folder). When we add or remove files inside sub-folder (folder inside other folder) of the local drive folder, this is where we need to use `Calculate diff` because the diff is not automatically calculated in this case.
+These file differences between drive and local drive folder is what we call "diff", in which `Calculate diff` button below the right side tab of the drive is created to calculate these diff. But the diff will be automatically calculated if we just add or remove files on the local drive folder's root (root is the top/upper level of a folder). When we add or remove files inside sub-folder (folder inside other folder) of the local drive folder, this is where we need to use `Calculate diff` because the diff is not automatically calculated in this case.
 
 #### Upload and Remove Files and Folders
 For example, in this case:
 ![Upload_Remove](./images/6_upload_remove.png)
 
-The left side tab (the drive) already have file_2.txt uploaded earlier. And the right side tab (the diff between drive and local drive folder) shows that our file_1.txt has just been added to our local drive folder and not yet uploaded to the drive (green colour), and the file_2.txt has just been removed from our local drive folder and not yet been removed from the drive (red colour). To make the changes (to upload file_1.txt to the drive and remove file_2.txt from the drive), we can use `Apply changes`. 
+The left side tab (the drive) already have `file_2.txt` uploaded earlier. And the right side tab (the diff between drive and local drive folder) shows that our `file_1.txt` has just been added to our local drive folder and not yet uploaded to the drive (green colour), and the `file_2.txt` has just been removed from our local drive folder and not yet been removed from the drive (red colour). To make the changes (to upload `file_1.txt` to the drive and remove `file_2.txt` from the drive), we can use `Apply changes`. 
 
-And then the modification status will appear (with modification phases: registering, uploading, completing).<br>
+And then the modification status will appear (the modification phases are: registering, uploading, completing).<br>
 ![Modification_status](./images/7_modification_status.png)
 
 And after that, both the drive and local drive folder will have the same files (but not same folders because empty folder is not uploaded).<br>
@@ -109,8 +109,8 @@ You can also choose more options for drive operations through `...` button.
 The options are:<br>
 `Rename`: To rename your drive.<br>
 `Change local folder`: To change your local drive folder.<br>
-`Top-up`: To allows you to choose a drive and perform top up.<br>
-`Copy drive key`: To allows you to copy the drive's key for your needs.
+`Top-up`: To allows you to choose a drive and perform a top up.<br>
+`Copy drive key`: To allows you to copy the drive's key for your needs.<br>
 `Drive info`: To see the drive information (drive name, replicator number, max drive size, local drive folder).<br><br>
 
 ### Downloads
@@ -120,19 +120,17 @@ This is what our `Downloads` tab looks like:<br>
 
 #### Create Download Channel
 
-We can create a new download channel by pressing the `+` button. This will prompt out a new window to create a new download channel. Download channel is where we are able to download files from drives.<br>
+We can create a new download channel by pressing the `+` button. This will prompt out a new window to create a new download channel. Download channel is the place where we are able to download files from drives.<br>
 ![Create_download_channel](./images/12_create_download_channel.png)
 
 Enter your preferred download channel's `Name`, the `Drive` that you want to download the files from, `Keys` (optional), `Prepaid` amount, and then press `Confirm`. After that, wait until there is notification that the channel is created successfully.
 
 #### Download Channel Tabs (Left Side and Right Side Tabs)
-The left tab will be displaying files within the drives you have choose earlier. In other words, the left tab is the download channel. The right tab will display the files you have downloaded from the download channel, including the status of download (for example: percentage (download progress), done).
+The left side tab will be displaying files within the drives you have choose earlier. In other words, the left side tab is the download channel. The right side tab will display the files you have downloaded from the download channel, including the status of download (for example: `%` (download progress in percentage) status, `done` status).
 
 The file changes (add or remove) you made from the drive will be automatically reflected in the download channel.
 
-You can also refresh the download channel through `Refresh` button.
-The `Open local folder` is used to open your download folder locally.
-The `Remove` button is used to remove the files you are trying to download/have downloaded, and this will be reflected to your local download folder (in other word, it will also delete files in your download folder).
+You can also refresh the download channel through `Refresh` button. The `Open local folder` is used to open your download folder locally. And the `Remove` button is used to remove the files you are trying to download/have downloaded, and this will be reflected to your local download folder (in other word, it will also delete files in your download folder).
 
 #### Download Files
 To download files from download channel, first you need to choose/checklist the box on the left side of the filenames you want to download.<br>
@@ -160,7 +158,7 @@ You can also choose more options for download channel operations through `...` b
 
 The options are:<br>
 `Rename`: To rename the download channel.<br>
-`Top-up`: To allows you to choose a download channel and perform top up.<br>
+`Top-up`: To allows you to choose a download channel and perform a top up.<br>
 `Copy channel key`: To allows you to copy the download channel's key for your needs.<br>
 `Channel info`: To see the download channel information (download channel name, ID, drive ID, replicators assigned, keys, and prepaid amount).<br>
 
