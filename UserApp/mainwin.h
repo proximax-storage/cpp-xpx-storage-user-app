@@ -26,6 +26,7 @@ class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;
+class ContractDeploymentData;
 
 namespace sirius { namespace drive
 {
@@ -116,6 +117,13 @@ private:
     void updateDownloadChannelData(DownloadChannel* channel);
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
+    void onDeployContract();
+
+    void onDeployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+
     void initStreaming();
     void updateStreamerTable();
     void updateViewerCBox();
@@ -137,6 +145,10 @@ private:
     void initWorker();
 
     void callbackResolver(const QUuid& id, const QVariant& data);
+
+    ContractDeploymentData* contractDeploymentData();
+
+//    void validateContractDrive();
 
     template<class Type>
     void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
