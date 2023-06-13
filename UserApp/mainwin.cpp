@@ -147,6 +147,7 @@ void MainWin::init()
     qDebug() << "MainWin::init. Private key: " << privateKey;
 
     m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier(), this);
+
     m_modificationsWatcher = new QFileSystemWatcher(this);
 
     connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
@@ -1124,10 +1125,14 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
     });
 }
 
-void MainWin::onInternalError(const QString& errorText)
+void MainWin::onInternalError(const QString& errorText, bool isExit)
 {
     showNotification(errorText);
     addNotification(errorText);
+
+    if (isExit) {
+        QApplication::exit(3);
+    }
 }
 
 void MainWin::setDownloadChannelOnUi(const std::string& channelId)
@@ -2465,9 +2470,9 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
             qWarning() << "MainWin::getMosaicIdByName. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
             const QString clientPublicKey = QString::fromStdString(message);
             if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive)) {
-                onInternalError("Current account not found, try to use another account or switch to other API Gateway!");
+                onInternalError("Current account not found, try to use another account or switch to other API Gateway!", false);
             } else {
-                onInternalError(message.c_str());
+                onInternalError(message.c_str(), false);
             }
 
             return;

@@ -204,6 +204,11 @@ class Model : public QObject
         void stestInitDrives();
 
     signals:
+        void addTorrentFileToStorageSession(const std::string &torrentFilename,
+                                            const std::string &folderWhereFileIsLocated,
+                                            const std::array<uint8_t, 32>& driveKey,
+                                            const std::array<uint8_t, 32>& modifyTx);
+
         void driveStateChanged(const std::string& driveKey, int state);
 
     private:
