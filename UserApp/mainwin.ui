@@ -1486,7 +1486,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -1890,7 +1890,7 @@
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_34">
                   <item>
-                   <widget class="QPushButton" name="pushButton_9">
+                   <widget class="QPushButton" name="m_startStreamingBtn">
                     <property name="text">
                      <string>Start Streaming</string>
                     </property>

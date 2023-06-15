@@ -245,10 +245,10 @@ void AddStreamAnnouncementDialog::accept()
     //
     // Start modification
     //
-//todo++
-//    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-//    mp_onChainClient->applyDataModification(driveKeyHex, actionList);
-//    drive->updateState(registering);
+
+    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+    mp_onChainClient->applyDataModification(driveKeyHex, actionList);
+    drive->updateState(registering);
     
     QDialog::accept();
 }

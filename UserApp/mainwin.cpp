@@ -561,7 +561,7 @@ void MainWin::init() {
         updateViewerProgressPanel( index );
         updateStreamerProgressPanel( index );
 
-        if ( index != 1 ) {
+        if ( index != 1 && index != 4 ) {
             m_modifyProgressPanel->setVisible( false );
         }
 
@@ -591,6 +591,10 @@ void MainWin::init() {
         auto drive = m_model->currentDrive();
         if ( index == 1 && !m_model->getDrives().empty() && drive ) {
             onDriveStateChanged( drive->getKey(), drive->getState());
+        }
+        if ( index == 4 && ui->m_streamingTabView->currentIndex() == 2 ) {
+            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+            onDriveStateChanged( drive->getKey(), drive->getState() );
         }
     }, Qt::QueuedConnection );
 
@@ -1464,6 +1468,14 @@ void MainWin::onDriveStateChanged( const std::string& driveKey, int state ) {
                 m_modifyProgressPanel->setRegistering();
                 m_modifyProgressPanel->setVisible( true );
                 lockDrive();
+            }
+            if ( ui->tabWidget->currentIndex() == 1 && ui->m_streamingTabView->currentIndex() == 4 ) {
+                if ( boost::iequals( drive->getKey(), ui->m_streamDriveCBox->currentText().toStdString() ) )
+                {
+                    m_modifyProgressPanel->setRegistering();
+                    m_modifyProgressPanel->setVisible( true );
+                    lockDrive();
+                }
             }
             break;
         }

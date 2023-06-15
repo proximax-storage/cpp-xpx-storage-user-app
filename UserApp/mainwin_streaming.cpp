@@ -29,12 +29,32 @@
 
 void MainWin::initStreaming()
 {
+    //todo remove streamerAnnouncements from serializing
+    m_model->streamerAnnouncements().clear();
+    
     // m_streamingTabView
     connect(ui->m_streamingTabView, &QTabWidget::currentChanged, this, [this](int index)
     {
         updateViewerProgressPanel( ui->tabWidget->currentIndex() );
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
     });
+    
+    connect( ui->m_streamDriveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, [this](int index)
+    {
+        if ( index >= 0 )
+        {
+            auto driveMap = m_model->getDrives();
+            auto it = std::next( driveMap.begin(), index );
+            if ( it == driveMap.end() )
+            {
+                qWarning() << LOG_SOURCE << "bad drive index";
+                return;
+            }
+            
+            updateStreamerTable( it->second );
+        }
+    }, Qt::QueuedConnection );
+
             
     //
     // m_streamAnnouncementTable
@@ -68,11 +88,11 @@ void MainWin::initStreaming()
         
         AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, driveKey, this);
         auto rc = dialog.exec();
-        if ( rc )
-        {
-            auto streamFolderName = dialog.streamFolderName();
-            updateStreamerTable();
-        }
+//todo++        if ( rc )
+//        {
+//            auto streamFolderName = dialog.streamFolderName();
+//            updateStreamerTable();
+//        }
     }, Qt::QueuedConnection);
 
     // m_delStreamAnnouncementBtn
@@ -108,6 +128,7 @@ void MainWin::initStreaming()
         {
             int rowIndex = rowList.constFirst().row();
             try {
+                auto streamAnnouncements = m_model->streamerAnnouncements();
                 std::string link = m_model->streamerAnnouncements().at(rowIndex).getLink();
 
                 QClipboard* clipboard = QApplication::clipboard();
@@ -121,6 +142,24 @@ void MainWin::initStreaming()
                     clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
                 }
             } catch (...) {
+                return;
+            }
+        }
+    }, Qt::QueuedConnection);
+    
+    // m_addStreamAnnouncementBtn
+    connect(ui->m_startStreamingBtn, &QPushButton::released, this, [this] ()
+    {
+        auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
+        if ( rowList.count() == 0 )
+        {
+            if ( m_model->streamerAnnouncements().size() == 0 )
+            {
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "Add stream announcement" ) );
+                msgBox.setInformativeText( "Press button '+'" );
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.exec();
                 return;
             }
         }
@@ -155,7 +194,7 @@ void MainWin::initStreaming()
     // m_delStreamRefBtn
     connect(ui->m_delStreamRefBtn, &QPushButton::released, this, [this] () {
         auto rowIndex = ui->m_streamRefCBox->currentIndex();
-        if ( rowIndex > 0 )
+        if ( rowIndex >= 0 )
         {
             std::string streamTitle;
             try {
@@ -173,6 +212,7 @@ void MainWin::initStreaming()
             if ( reply == QMessageBox::Ok )
             {
                 m_model->deleteStreamRef( rowIndex );
+                updateViewerCBox();
             }
         }
     }, Qt::QueuedConnection);
@@ -182,23 +222,20 @@ void MainWin::initStreaming()
         startViewingStream();
     }, Qt::QueuedConnection);
 
-    updateStreamerTable();
     updateViewerCBox();
 }
 
-void MainWin::readStreamingAnnotaions( std::vector<StreamInfo>& streamInfoVector )
+void MainWin::readStreamingAnnotations( std::vector<StreamInfo>& streamInfoVector, Drive&  driveInfo )
 {
     streamInfoVector.clear();
     
-    const std::map<std::string, Drive>& drives = m_model->getDrives();
-    for( const auto [key,driveInfo] : drives )
     {
         auto path = fs::path( driveInfo.getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME;
         
         std::error_code ec;
         if ( ! fs::is_directory(path,ec) )
         {
-            continue;
+            return;
         }
         
         for( const auto& entry : std::filesystem::directory_iterator( path ) )
@@ -228,16 +265,15 @@ void MainWin::readStreamingAnnotaions( std::vector<StreamInfo>& streamInfoVector
     });
 }
 
-void MainWin::updateStreamerTable( const std::string& streamFolderName )
+void MainWin::updateStreamerTable( Drive& driveInfo )
 {
-    std::vector<StreamInfo> streamAnnotaions;
-    readStreamingAnnotaions( streamAnnotaions );
+    readStreamingAnnotations( m_model->streamerAnnouncements(), driveInfo );
     
     ui->m_streamAnnouncementTable->clearContents();
 
-    qDebug() << "announcements: " << streamAnnotaions.size();
+    qDebug() << "announcements: " << m_model->streamerAnnouncements().size();
 
-    for( const auto& streamInfo: streamAnnotaions )
+    for( const auto& streamInfo: m_model->streamerAnnouncements() )
     {
         if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
         {
