@@ -173,7 +173,7 @@ private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
-    void onInternalError(const QString& errorText);
+    void onInternalError(const QString& errorText, bool isExit);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);

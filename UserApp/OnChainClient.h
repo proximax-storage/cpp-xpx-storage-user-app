@@ -95,7 +95,7 @@ class OnChainClient : public QObject
         void deployContractTransactionApprovalFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
 
         void newNotification(const QString& notification);
-        void internalError(const QString& errorText);
+        void internalError(const QString& errorText, bool isExit);
 
     // internal signals
     signals:

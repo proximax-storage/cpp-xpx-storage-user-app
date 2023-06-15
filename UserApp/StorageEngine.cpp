@@ -116,6 +116,8 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
     {
         mp_model->onDownloadCompleted( handle );
     });
+
+    connect(mp_model, &Model::addTorrentFileToStorageSession, this, &StorageEngine::addTorrentFileToSession, Qt::QueuedConnection);
 }
 
 void StorageEngine::downloadFsTree( const std::string&                      driveId,
@@ -247,6 +249,25 @@ void StorageEngine::removeTorrentSync( sirius::drive::InfoHash infoHash )
 
 void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHash )
 {
+}
+
+void StorageEngine::addTorrentFileToSession(const std::string &torrentFilename,
+                                            const std::string &folderWhereFileIsLocated,
+                                            const std::array<uint8_t, 32>& driveKey,
+                                            const std::array<uint8_t, 32> &modifyTx)
+{
+    qDebug() << "StorageEngine::addTorrentFileToSession. torrentFilename: " << torrentFilename;
+    qDebug() << "StorageEngine::addTorrentFileToSession. folderWhereFileIsLocated: " << folderWhereFileIsLocated;
+    qDebug() << "StorageEngine::addTorrentFileToSession. driveKey: " << rawHashToHex(driveKey);
+    qDebug() << "StorageEngine::addTorrentFileToSession. modifyTx: " << rawHashToHex(modifyTx);
+
+    auto drive = mp_model->findDrive(rawHashToHex(driveKey).toStdString());
+    if (!drive) {
+        qWarning () << "StorageEngine::addTorrentFileToSession. Drive not found!";
+        return;
+    }
+
+    m_session->addTorrentFileToSession(torrentFilename, folderWhereFileIsLocated, driveKey, modifyTx, drive->getReplicators());
 }
 
 void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          driveKey,
