@@ -253,7 +253,7 @@ void MainWin::readStreamingAnnotations( std::vector<StreamInfo>& streamInfoVecto
                     streamInfoVector.push_back( streamInfo );
                 }
                 catch (...) {
-                    qWarning() << "Internal error: cannot read stream annotation: " << fileName;
+                    qWarning() << "Internal error: cannot read stream annotation: " << fileName.c_str();
                 }
             }
         }
