@@ -692,7 +692,7 @@ void Model::approveLastStreamerAnnouncement()
 
 void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
 {
-    assert( m_settings->config().m_approvingStream );
+    assert( ! m_settings->config().m_approvingStream );
     m_settings->config().m_approvingStream = streamInfo;
 }
 
@@ -704,6 +704,11 @@ void Model::deleteStreamerAnnouncement( int index )
 }
 
 const std::vector<StreamInfo>& Model::streamerAnnouncements() const
+{
+    return m_settings->config().m_streams;
+}
+
+std::vector<StreamInfo>& Model::streamerAnnouncements()
 {
     return m_settings->config().m_streams;
 }

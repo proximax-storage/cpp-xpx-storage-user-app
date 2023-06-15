@@ -184,6 +184,7 @@ class Model : public QObject
         void                            approveLastStreamerAnnouncement();
         void                            deleteStreamerAnnouncement( int index );
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
+        std::vector<StreamInfo>&        streamerAnnouncements();
 
         //
         // Viewing

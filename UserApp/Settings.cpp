@@ -59,23 +59,18 @@ Settings &Settings::operator=(const Settings &s) {
 
 void Settings::initForTests()
 {
-    if ( Model::homeFolder() == "/Users/alex" )
+    if ( m_accounts.empty() && Model::homeFolder() == "/Users/alex" )
     {
         m_restBootstrap       = "54.151.169.225:3000";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_genkins", "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4" );
+        config().initAccount( "test_staging_A04", "A04F01F652364657087FB254DFA69460E7137247854373E49D3E590F96D14994" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test", "4DC8F4C8C84ED4A829E79A685A98E4A0BB97A3C6DA9C49FA83CA133676993D08" );
-        config().m_downloadFolder = "/Users/alex/000-Downloads";
-
-        m_accounts.emplace_back();
-        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
+        config().initAccount( "test_staging_C62", "C62F0F5E3A2A00BDBEABDF5DD45B9DCC01A210A09CF1D442B711B6C0F45B53E8" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         if ( ! ALEX_LOCAL_TEST )

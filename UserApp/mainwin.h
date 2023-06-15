@@ -28,6 +28,8 @@ class Model;
 class Settings;
 class ContractDeploymentData;
 
+struct StreamInfo;
+
 namespace sirius { namespace drive
 {
     class FsTree;
@@ -125,7 +127,11 @@ private:
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
 
     void initStreaming();
-    void updateStreamerTable();
+    void updateStreamerTable( Drive& );
+    void readStreamingAnnotations( std::vector<StreamInfo>&, Drive& );
+    void onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
+                                              const std::array<uint8_t,32>& fsTreeHash,
+                                              const sirius::drive::FsTree& );
     void updateViewerCBox();
 
     void startViewingStream();

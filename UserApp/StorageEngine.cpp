@@ -67,7 +67,8 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
     {
         endpoint_list bootstraps;
         std::vector<std::string> addressAndPort;
-        boost::split( addressAndPort, mp_model->getBootstrapReplicator(), [](char c){ return c==':'; } );
+        std::string bootstrapReplicatorEndpoint = mp_model->getBootstrapReplicator();
+        boost::split( addressAndPort, bootstrapReplicatorEndpoint, [](char c){ return c==':'; } );
         bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
                                (uint16_t)atoi(addressAndPort[1].c_str()) );
 

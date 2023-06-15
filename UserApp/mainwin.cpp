@@ -95,15 +95,8 @@ void MainWin::init()
 
     if ( Model::homeFolder() == "/Users/alex" )
     {
-        if ( m_model->getAccountName() == "alex_local_test" )
-        {
-            m_model->setBootstrapReplicator("192.168.2.101:5001");
-            m_model->setCurrentAccountIndex(2);
-        }
-        else
-        {
-            m_model->setBootstrapReplicator("15.206.164.53:7904");
-        }
+//            m_model->setBootstrapReplicator("15.206.164.53:7904");
+            m_model->setBootstrapReplicator("13.250.14.143:7904");
     }
 
     if ( !fs::exists( getFsTreesFolder() ) )
@@ -314,8 +307,10 @@ void MainWin::init()
 
     connect(this, &MainWin::drivesInitialized, this, [this]() {
         ui->m_driveCBox->clear();
+        ui->m_streamDriveCBox->clear();
         for (const auto& [key, drive] : m_model->getDrives()) {
             addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
                 ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
                 onDriveStateChanged(drive.getKey(), drive.getState());
@@ -529,8 +524,8 @@ void MainWin::init()
         updateViewerProgressPanel( index );
         updateStreamerProgressPanel( index );
 
-        if (index != 1) {
-            m_modifyProgressPanel->setVisible(false);
+        if ( index != 1 && index != 4 ) {
+            m_modifyProgressPanel->setVisible( false );
         }
 
         // Downloads tab
@@ -560,7 +555,11 @@ void MainWin::init()
         if (index == 1 && !m_model->getDrives().empty() && drive) {
             onDriveStateChanged(drive->getKey(), drive->getState());
         }
-    }, Qt::QueuedConnection);
+        if ( index == 4 && ui->m_streamingTabView->currentIndex() == 2 ) {
+            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+            onDriveStateChanged( drive->getKey(), drive->getState() );
+        }
+    }, Qt::QueuedConnection );
 
     connect(m_settings, &Settings::downloadError, this, [this](auto message){
         addNotification(message);
@@ -1223,6 +1222,14 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 m_modifyProgressPanel->setVisible(true);
                 lockDrive();
             }
+            if ( ui->tabWidget->currentIndex() == 1 && ui->m_streamingTabView->currentIndex() == 4 ) {
+                if ( boost::iequals( drive->getKey(), ui->m_streamDriveCBox->currentText().toStdString() ) )
+                {
+                    m_modifyProgressPanel->setRegistering();
+                    m_modifyProgressPanel->setVisible( true );
+                    lockDrive();
+                }
+            }
             break;
         }
         case approved:
@@ -1310,6 +1317,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         case creating:
         {
             addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive->getName(), drive->getKey());
             setCurrentDriveOnUi(drive->getKey());
             updateDriveStatusOnUi(*drive);
 
@@ -1324,6 +1332,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
         case unconfirmed:
         {
             removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
             m_model->removeDrive(driveKey);
 
             m_model->applyForChannels(driveKey, [this](auto& channel) {
@@ -1358,6 +1367,7 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
             std::string driveName = drive->getName();
 
             removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
 
             m_model->removeDrive(driveKey);
             m_model->applyForChannels(driveKey, [this](auto& channel) {
@@ -1889,6 +1899,7 @@ void MainWin::onCurrentDriveChanged( int index )
 void MainWin::setupDrivesTab()
 {
     ui->m_driveCBox->addItem( "Loading..." );
+    ui->m_streamDriveCBox->addItem( "Loading..." );
     setupDriveFsTable();
     connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
     {
@@ -2229,10 +2240,13 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
     if (index != -1) {
         if ( drive.getState() == creating ) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
         } else if (drive.getState() == deleting) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
         }
     }
 }
@@ -2346,6 +2360,9 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
 {
     qDebug()  << "MainWin::onFsTreeReceived. Drive key: " << driveKey.c_str();
     fsTree.dbgPrint();
+
+    // inform stream annotations about possible changes
+    onFsTreeReceivedForStreamAnnotaions( driveKey, fsTreeHash, fsTree );
 
     auto drive = m_model->findDrive( driveKey );
     if (drive) {
@@ -2587,3 +2604,73 @@ void MainWin::dataModificationsStatusHandler(const sirius::drive::ReplicatorKey 
         emit modificationFinishedByReplicators();
     }
 }
+
+ContractDeploymentData* MainWin::contractDeploymentData() {
+    if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
+        return nullptr;
+    }
+    auto driveKey = ui->m_contractDriveCBox->currentData().toString().toStdString();
+    auto& contractDrives = m_model->driveContractModel().getContractDrives();
+    auto contractDriveIt = contractDrives.find( driveKey );
+    if ( contractDriveIt == contractDrives.end()) {
+        return nullptr;
+    }
+    return &contractDriveIt->second;
+}
+
+void
+MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( contract_deploying );
+    }
+}
+
+void
+MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( no_modifications );
+    }
+}
+
+void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 32> driveKey,
+                                                            std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( contract_deployed );
+    }
+}
+
+void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32> driveKey,
+                                                         std::array<uint8_t, 32> contractId ) {
+    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
+        drive->updateState( no_modifications );
+    }
+}
+
+void MainWin::onDeployContract() {
+    if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
+        return;
+    }
+    auto driveKey = ui->m_contractDriveCBox->currentData().toString().toStdString();
+    auto& contractDrives = m_model->driveContractModel().getContractDrives();
+    auto contractDriveIt = contractDrives.find( driveKey );
+    if ( contractDriveIt == contractDrives.end()) {
+        return;
+    }
+
+    m_onChainClient->deployContract(rawHashFromHex(QString::fromStdString(contractDriveIt->first)),
+                                    contractDriveIt->second);
+}
+
+//void MainWin::validateContractDrive() {
+//    bool isContractValid =
+//            ui->m_contractAssignee->property( "is_valid" ).toBool() &&
+//            ui->m_contractFile->property( "is_valid" ).toBool() &&
+//            ui->m_contractFunction->property( "is_valid" ).toBool();
+//            ui->m_contractParameters->property( "is_valid" ).toBool();
+//    std::cout << "is valid " << ui->m_contractAssignee->property( "is_valid" ).toBool() << " " <<
+//                                ui->m_contractFile->property( "is_valid" ).toBool() << " " <<
+//                                ui->m_contractFunction->property( "is_valid" ).toBool() << " " <<
+//                                ui->m_contractParameters->property( "is_valid" ).toBool() << " "
+//    << std::endl;
+//    ui->m_contractDeployBtn->setDisabled( !isContractValid );
+//}
