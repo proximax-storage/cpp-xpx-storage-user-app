@@ -168,16 +168,17 @@ bool Settings::load( const std::string& pwd )
             exit(1);
         }
 
-        qDebug() << "Settings::load. New session of storage tool started.";
+        qDebug() << "/*****************************************************************************************/.";
+        qDebug() << "Settings::load. New session started.";
 
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );
-            qDebug() << LOG_SOURCE << "account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
+            qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
-        qDebug() << LOG_SOURCE << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
-        qDebug() << LOG_SOURCE << "currentAccountIndex: " << m_currentAccountIndex;
+        qDebug() << "Settings::load. Current account public key: " << config().m_publicKeyStr.c_str();
+        qDebug() << "/*****************************************************************************************/.";
     }
     catch( std::runtime_error& err )
     {
@@ -266,7 +267,7 @@ void Settings::save()
         exit(1);
     }
 
-    qDebug() << LOG_SOURCE << "Settings saved";
+    qDebug() << "Settings::save. Settings saved";
 }
 
 bool Settings::loaded() const
@@ -397,7 +398,7 @@ void Settings::removeFromDownloads( int index )
 
     if ( index < 0 || index >= downloads.size() )
     {
-        qDebug() << LOG_SOURCE << "removeFromDownloads: invalid index: " << index << "; downloads.size()=" << downloads.size();
+        qDebug() << "Settings::removeFromDownloads. Invalid index: " << index << "; downloads.size()=" << downloads.size();
         return;
     }
 
@@ -413,7 +414,7 @@ void Settings::removeFromDownloads( int index )
         }
     }
 
-    qDebug() << LOG_SOURCE << "hashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
+    qDebug() << "Settings::removeFromDownloads. HashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
 
     if ( hashCounter == 1 )
     {
@@ -425,12 +426,12 @@ void Settings::removeFromDownloads( int index )
     if ( dnInfo.isCompleted() )
     {
         fs::remove( downloadFolder() / dnInfo.getFileName(), ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << "Settings::removeFromDownloads. Remove(1): " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
     }
     else if ( hashCounter == 1 )
     {
         fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash()), ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << "Settings::removeFromDownloads. Remove(2): " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );

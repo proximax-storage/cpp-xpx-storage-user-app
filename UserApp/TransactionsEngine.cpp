@@ -524,6 +524,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     if (uploadSize == 0 || totalModifyDataSize == 0) {
         emit internalError("Invalid size of upload data: 0. Modification canceled!");
+        qWarning() << "Invalid size of upload data: 0. Modification canceled! Drive key: " << driveKeyHex << " modificationId: " << hash.c_str();
         emit dataModificationFailed(driveId, modificationId);
         return;
     }
