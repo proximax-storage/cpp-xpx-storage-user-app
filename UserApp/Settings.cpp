@@ -164,7 +164,7 @@ bool Settings::load( const std::string& pwd )
         }
 
         qDebug() << "/*****************************************************************************************/.";
-        qDebug() << "Settings::load. New session started.";
+        qDebug() << "Settings::load. New session has been started.";
 
         for( auto& account: m_accounts )
         {
