@@ -12,6 +12,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
 
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,./lib")
+endif()
+
 if (APPLE)
     # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
     # the property added to Info.plist
