@@ -1,6 +1,7 @@
 FROM debian:bullseye AS BUILDER
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
     build-essential \
     cmake \
     pkg-config \
@@ -46,6 +47,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN pip install conan
 RUN pip install aqtinstall
 
+WORKDIR /linuxdeployqt
+RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage
+RUN chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
+
 ARG QT=6.5.0
 ARG QT_MODULES="qtscxml "
 ARG QT_ARCHIVES="qttools qtbase icu"
@@ -59,33 +64,49 @@ ENV QT_PLUGIN_PATH /opt/qt/${QT}/gcc_64/plugins/
 ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 
+ENV BUILD_DIR /app-build
+ENV DEST_DIR /sirius
+
 # FROM sirius-so-app:1 AS BUILDER
 
+WORKDIR $BUILD_DIR
 COPY . /app-src
-WORKDIR /sirius
 RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE /app-src \
    && make -j$(nproc)\
    && make install
 
-RUN /app-src/ci/copyDeps.sh /sirius/UserApp/StorageClientApp /deps
+ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:/sirius/bin:/sirius/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
+RUN cp  /app-src/tool.desktop $BUILD_DIR/UserApp/
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage $BUILD_DIR/UserApp/tool.desktop -verbose=1
+
+WORKDIR $DEST_DIR
+RUN cp $BUILD_DIR/UserApp/StorageClientApp $DEST_DIR
+RUN cp -r $BUILD_DIR/UserApp/resources $DEST_DIR
+RUN cp -r $BUILD_DIR/translations $DEST_DIR
+RUN cp -r $BUILD_DIR/lib $DEST_DIR
+RUN cp -r $BUILD_DIR/plugins $DEST_DIR
+
+RUN cp $BUILD_DIR/bin/*.so $DEST_DIR/lib/
+RUN cp $BUILD_DIR/cpp-xpx-chain-sdk/*.so $DEST_DIR/lib
+RUN chmod a+x $DEST_DIR/StorageClientApp
 
 
-FROM debian:bullseye-slim
+# FROM debian:bullseye-slim
 
-WORKDIR /sirius
-COPY --from=BUILDER /sirius/UserApp/StorageClientApp /sirius
-COPY --from=BUILDER /deps /
-COPY --from=BUILDER /opt/qt /opt/qt
+# WORKDIR /sirius
+# COPY --from=BUILDER /sirius/UserApp/StorageClientApp /sirius
+# COPY --from=BUILDER /deps /
+# COPY --from=BUILDER /opt/qt /opt/qt
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    xauth \
-    '^libxcb.*-dev' \
-    libx11-xcb-dev \
-    libglu1-mesa-dev \
-    libxrender-dev \
-    libxi-dev \
-    libxkbcommon-dev \
-    libxkbcommon-x11-dev \
-    libfontconfig
+# RUN apt-get update && apt-get install --no-install-recommends -y \
+#     xauth \
+#     '^libxcb.*-dev' \
+#     libx11-xcb-dev \
+#     libglu1-mesa-dev \
+#     libxrender-dev \
+#     libxi-dev \
+#     libxkbcommon-dev \
+#     libxkbcommon-x11-dev \
+#     libfontconfig
 
-ENV PATH /opt/qt/${QT}/gcc_64/bin:$PATH
+# ENV PATH /opt/qt/${QT}/gcc_64/bin:$PATH
