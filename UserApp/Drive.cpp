@@ -265,10 +265,6 @@ void Drive::initStateMachine(DriveState initialState) {
     deletingToNoModificationsTransition->setTargetState(noModificationsState);
     deletingState->addTransition(deletingToNoModificationsTransition);
 
-    auto registeringToCancelingTransition = new DriveModificationTransition(canceling);
-    registeringToCancelingTransition->setTargetState(cancelingState);
-    registeringState->addTransition(registeringToCancelingTransition);
-
     auto registeringToFailedTransition = new DriveModificationTransition(failed);
     registeringToFailedTransition->setTargetState(failedState);
     registeringState->addTransition(registeringToFailedTransition);

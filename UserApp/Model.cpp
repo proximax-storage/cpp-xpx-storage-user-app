@@ -95,6 +95,10 @@ std::string Model::getGatewayPort() {
     return gatewayEndpoint.size() == 2 ? gatewayEndpoint[1].toStdString() : "";
 }
 
+double Model::getFeeMultiplier() {
+    return m_settings->m_feeMultiplier;
+}
+
 const sirius::crypto::KeyPair& Model::getKeyPair() {
     return m_settings->config().m_keyPair.value();
 }
@@ -345,7 +349,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         std::copy(page.data.drives.begin(), page.data.drives.end(), std::back_inserter(remoteDrives));
     }
 
-    qDebug() << LOG_SOURCE << "onDrivesLoaded: " << remoteDrives.size();
+    qDebug() << "Model::onDrivesLoaded: " << remoteDrives.size();
     auto& drives = m_settings->config().m_drives;
 
     for( auto& remoteDrive : remoteDrives )
@@ -385,16 +389,49 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             drive.updateState(creating);
             drive.updateState(no_modifications);
         }
-// TODO: continue uploading after tools is started
-//        if ( ! remoteDrive.data.activeDataModifications.empty() )
-//        {
-//            qWarning () << LOG_SOURCE << "drive modification status: is_registring: " << it->getName();
-//            auto& lastModification = remoteDrive.data.activeDataModifications.back();
-//            it->setModificationHash(Model::hexStringToHash( lastModification.dataModification.id ));
-//            //TODO load torrent and other data to session to continue, check cancel modifications also
-//            // add transation from no_modifications to loading (start/end session and continue uploading)
-//            it->updateState(uploading);
-//        }
+
+        Drive& currentDrive = drives[QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString()];
+        if ( ! remoteDrive.data.activeDataModifications.empty() ) {
+            auto lastModificationIndex = remoteDrive.data.activeDataModifications.size();
+            auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
+            currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
+
+            const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + "/modify_drive_data";
+            bool isDirExists = QDir(pathToDriveData.c_str()).exists();
+            if (isDirExists) {
+                std::map<QString, QFileInfo> filesData;
+                QFileInfoList torrentsList;
+                QDirIterator it(pathToDriveData.c_str(), QDirIterator::Subdirectories);
+
+                QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9.torrent]{72})")));
+                while (it.hasNext()) {
+                    QString currentFileName = it.next();
+                    QFileInfo file(currentFileName);
+
+                    if (file.isDir()) {
+                        continue;
+                    }
+
+                    if (nameTemplate.match(file.fileName()).hasMatch()) {
+                        torrentsList.append(file);
+                    } else {
+                        filesData.insert_or_assign(file.fileName() + ".torrent", file);
+                    }
+                }
+
+                for (const auto& t : torrentsList) {
+                    if (filesData.contains(t.fileName())) {
+                        emit addTorrentFileToStorageSession(t.fileName().toStdString(),
+                                                            pathToDriveData,
+                                                            rawHashFromHex(currentDrive.getKey().c_str()),
+                                                            currentDrive.getModificationHash());
+                    }
+                }
+            }
+
+            currentDrive.updateState(registering);
+            currentDrive.updateState(uploading);
+        }
     }
 
     for (auto& d : drives)
@@ -635,6 +672,7 @@ void Model::onDriveStateChanged(const Drive& drive) {
     connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state)
     {
         emit driveStateChanged(driveKey, state);
+        m_settings->config().m_driveContractModel.onDriveStateChanged(driveKey, state);
     });
 }
 
@@ -658,7 +696,7 @@ void Model::approveLastStreamerAnnouncement()
 
 void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
 {
-    assert( m_settings->config().m_approvingStream );
+    assert( ! m_settings->config().m_approvingStream );
     m_settings->config().m_approvingStream = streamInfo;
 }
 
@@ -670,6 +708,11 @@ void Model::deleteStreamerAnnouncement( int index )
 }
 
 const std::vector<StreamInfo>& Model::streamerAnnouncements() const
+{
+    return m_settings->config().m_streams;
+}
+
+std::vector<StreamInfo>& Model::streamerAnnouncements()
 {
     return m_settings->config().m_streams;
 }
@@ -732,6 +775,10 @@ void Model::setModificationStatusResponseHandler( ModificationStatusResponseHand
 {
     gStorageEngine->m_session->setModificationStatusResponseHandler( handler );
 }
+
+DriveContractModel& Model::driveContractModel() {
+    return m_settings->config().m_driveContractModel;
+};
 
 void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     driveKey,

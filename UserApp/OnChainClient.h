@@ -9,6 +9,7 @@
 #include "StorageEngine.h"
 #include "BlockchainEngine.h"
 #include "TransactionsEngine.h"
+#include "ContractDeploymentData.h"
 
 class OnChainClient : public QObject
 {
@@ -19,6 +20,7 @@ class OnChainClient : public QObject
                       const std::string& privateKey,
                       const std::string& address,
                       const std::string& port,
+                      const double feeMultiplier,
                       QObject* parent = nullptr);
 
         ~OnChainClient() = default;
@@ -53,6 +55,8 @@ class OnChainClient : public QObject
 
         void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback);
 
+        void deployContract(const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data);
+
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
         StorageEngine* getStorageEngine();
 
@@ -84,8 +88,14 @@ class OnChainClient : public QObject
         void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
         void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
+
+        void deployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+        void deployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+        void deployContractTransactionApprovalConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+        void deployContractTransactionApprovalFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+
         void newNotification(const QString& notification);
-        void internalError(const QString& errorText);
+        void internalError(const QString& errorText, bool isExit);
 
     // internal signals
     signals:
@@ -97,6 +107,7 @@ class OnChainClient : public QObject
         void initAccount(const std::string& privateKey);
         void init(const std::string& address,
                   const std::string& port,
+                  const double feeMultiplier,
                   const std::string& privateKey);
         void loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
         void loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);

@@ -20,6 +20,7 @@ public:
 
     void setRegistering();
     void setUploading();
+    void setApproving();
     void setApproved();
     void setFailed();
     void setCanceling();
@@ -27,6 +28,8 @@ public:
     
     void setWaitingChannelCreation();
     void setWaitingStreamStart();
+
+    void updateUploadedDataAmount(const uint64_t amount);
 
 private:
     std::function<void()> m_cancelModificationFunc;

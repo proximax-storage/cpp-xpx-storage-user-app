@@ -6,6 +6,7 @@
 #include <BlockchainEngine.h>
 #include <utils/HexFormatter.h>
 #include <drive/ActionList.h>
+#include "ContractDeploymentData.h"
 
 class TransactionsEngine : public QObject
 {
@@ -38,6 +39,11 @@ class TransactionsEngine : public QObject
         void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
+        std::array<uint8_t, 32> getLatestModificationId(const std::array<uint8_t, 32> &driveId);
+
+        void deployContract( const std::array<uint8_t, 32>& driveId,
+                             const ContractDeploymentData& data,
+                             const std::vector<xpx_chain_sdk::Address>& replicators );
 
     signals:
         void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
@@ -72,6 +78,13 @@ class TransactionsEngine : public QObject
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
         void internalError(const QString& errorText);
         void removeTorrent(const std::array<uint8_t, 32>& torrentId);
+
+        void deployContractInitiated(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
+        void deployContractConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
+        void deployContractFailed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
+        void deployContractApprovalConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
+        void deployContractApprovalFailed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
+
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
@@ -111,6 +124,10 @@ class TransactionsEngine : public QObject
         void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox);
 
         void removeFile(const QString& path);
+
+        void sendContractDeployment( const std::array<uint8_t, 32>& driveId,
+                                     const ContractDeploymentData& data,
+                                     const std::vector<xpx_chain_sdk::Address>& replicators );
 
     private:
         struct ModificationEntity

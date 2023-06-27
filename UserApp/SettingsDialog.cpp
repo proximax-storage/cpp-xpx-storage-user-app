@@ -19,7 +19,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     mpSettingsDraft = new Settings(this);
     mpSettingsDraft = mpSettings;
 
-    qDebug() << "mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
+    qDebug() << "SettingsDialog::SettingsDialog. mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
@@ -28,6 +28,8 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
 
     fillAccountCbox( initSettings );
     updateAccountFields();
+
+    ui->m_transactionFeeMultiplier->setText(QString::number(mpSettings->m_feeMultiplier));
 
     QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
@@ -72,13 +74,13 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
 
     connect(ui->m_accountCbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] (int index)
     {
-        qDebug() << LOG_SOURCE << "Settings::QComboBox::currentIndexChanged: " << index;
+        qDebug() << "Settings::QComboBox::currentIndexChanged: " << index;
         if ( mpSettingsDraft->accountList().size() > size_t(index) )
         {
             mpSettingsDraft->setCurrentAccountIndex(index);
-            qDebug() << LOG_SOURCE << "selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
-            qDebug() << LOG_SOURCE << "selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
-            qDebug() << LOG_SOURCE << "selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
             updateAccountFields();
         }
     });
@@ -131,6 +133,20 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         }
     });
 
+    QRegularExpression feeMultiplierTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,100})")));
+    connect(ui->m_transactionFeeMultiplier, &QLineEdit::textChanged, this, [this, feeMultiplierTemplate] (auto text)
+    {
+        if (!feeMultiplierTemplate.match(text).hasMatch()) {
+            QToolTip::showText(ui->m_transactionFeeMultiplier->mapToGlobal(QPoint(0, 15)), tr("Invalid fee multiplier!"), nullptr, {}, 3000);
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_transactionFeeMultiplier->setProperty("is_valid", false);
+        } else {
+            QToolTip::hideText();
+            ui->m_transactionFeeMultiplier->setProperty("is_valid", true);
+            validate();
+        }
+    });
+
     if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
         QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
@@ -161,6 +177,17 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_portField->setProperty("is_valid", true);
+        validate();
+    }
+
+    if (!feeMultiplierTemplate.match(ui->m_transactionFeeMultiplier->text()).hasMatch()) {
+        QToolTip::showText(ui->m_transactionFeeMultiplier->mapToGlobal(QPoint(0, 15)), tr("Invalid fee multiplier!"), nullptr, {}, 3000);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_transactionFeeMultiplier->setProperty("is_valid", false);
+    } else {
+        QToolTip::hideText();
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        ui->m_transactionFeeMultiplier->setProperty("is_valid", true);
         validate();
     }
 
@@ -200,6 +227,7 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
     mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
+    mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
     mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
     mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isChecked();
 
@@ -266,21 +294,22 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
 void SettingsDialog::onNewAccountBtn()
 {
-    PrivKeyDialog pKeyDialog( mpSettingsDraft, this );
-    pKeyDialog.exec();
+    auto pKeyDialog = new PrivKeyDialog( mpSettingsDraft, this );
 
-    if ( pKeyDialog.result() == QDialog::Accepted )
-    {
-        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr ));
+    connect(pKeyDialog, &PrivKeyDialog::accepted, this, [this](){
+        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_accountName ));
         int index = mpSettingsDraft->m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
-    }
+    });
+
+    pKeyDialog->open();
 }
 
 void SettingsDialog::validate() {
     if (ui->m_restBootAddrField->property("is_valid").toBool() &&
         ui->m_replicatorBootAddrField->property("is_valid").toBool() &&
         ui->m_portField->property("is_valid").toBool() &&
+        ui->m_transactionFeeMultiplier->property("is_valid").toBool() &&
         ui->m_dnFolderField->property("is_valid").toBool()) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
     } else {

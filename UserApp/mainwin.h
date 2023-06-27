@@ -9,6 +9,8 @@
 #include <QComboBox>
 #include "Worker.h"
 #include "OnChainClient.h"
+#include "types.h"
+#include "drive/FlatDrive.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -25,6 +27,9 @@ class DiffTableModel;
 class ModifyProgressPanel;
 class Model;
 class Settings;
+class ContractDeploymentData;
+
+struct StreamInfo;
 
 namespace sirius { namespace drive
 {
@@ -53,6 +58,8 @@ signals:
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
+    void updateUploadedDataAmount(const uint64_t receivedSize);
+    void modificationFinishedByReplicators();
 
 private:
     bool requestPrivateKey();
@@ -113,8 +120,19 @@ private:
     void updateDownloadChannelData(DownloadChannel* channel);
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
+    void onDeployContract();
+
+    void onDeployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+
     void initStreaming();
-    void updateStreamerTable();
+    void updateStreamerTable( Drive& );
+    void readStreamingAnnotations( std::vector<StreamInfo>&, Drive& );
+    void onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
+                                              const std::array<uint8_t,32>& fsTreeHash,
+                                              const sirius::drive::FsTree& );
     void updateViewerCBox();
 
     void startViewingStream();
@@ -135,6 +153,10 @@ private:
 
     void callbackResolver(const QUuid& id, const QVariant& data);
 
+    ContractDeploymentData* contractDeploymentData();
+
+//    void validateContractDrive();
+
     template<class Type>
     void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
         if (data.canConvert<Type>()) {
@@ -152,7 +174,7 @@ private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
-    void onInternalError(const QString& errorText);
+    void onInternalError(const QString& errorText, bool isExit);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);
@@ -170,6 +192,13 @@ private slots:
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void onRemoveResolver(const QUuid& id);
     void calculateDiffAsync(const std::function<void(int, std::string)>& callback);
+    void dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
+                                        const sirius::Hash256 &modificationHash,
+                                        const sirius::drive::ModifyTrafficInfo &msg,
+                                        lt::string_view currentTask,
+                                        bool isModificationQueued,
+                                        bool isModificationFinished,
+                                        const std::string &error);
 
 public:
     // if private key is not set it will be 'true'
@@ -179,6 +208,7 @@ private:
     Ui::MainWin*            ui;
 
     QTimer*                 m_downloadUpdateTimer;
+    QTimer*                 m_modificationStatusTimer;
 
     FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;

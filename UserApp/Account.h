@@ -13,8 +13,10 @@
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
 #include "drive/Utils.h"
+#include "DriveContractModel.h"
 
-#define STREAM_ROOT_FOLDER_NAME ".Streams"
+#define STREAM_ROOT_FOLDER_NAME ".videos"
+#define STREAM_INFO_FILE_NAME   "info"
 
 class Account : public QObject
 {
@@ -66,7 +68,9 @@ class Account : public QObject
         bool m_drivesLoaded = false;
 
         std::string             m_viewerStreamRootFolder;
-    
+
+        DriveContractModel      m_driveContractModel;
+
         std::optional<StreamInfo> m_approvingStream;
         std::vector<StreamInfo> m_streams;
         int                     m_currentStreamIndex = -1;

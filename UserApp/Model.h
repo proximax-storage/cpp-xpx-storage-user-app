@@ -23,6 +23,7 @@
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
 #include "StreamInfo.h"
+#include "DriveContractModel.h"
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;
@@ -84,6 +85,7 @@ class Model : public QObject
         std::string getUdpPort();
         std::string getGatewayIp();
         std::string getGatewayPort();
+        double getFeeMultiplier();
         const sirius::crypto::KeyPair& getKeyPair();
         void onDownloadCompleted( lt::torrent_handle handle );
 
@@ -172,6 +174,9 @@ class Model : public QObject
                                                                     const std::string&      driveKey,
                                                                     const std::string&      modificationHash );
 
+        // Super contract
+        DriveContractModel&             driveContractModel();
+
         //
         // Streaming
         //
@@ -179,6 +184,7 @@ class Model : public QObject
         void                            approveLastStreamerAnnouncement();
         void                            deleteStreamerAnnouncement( int index );
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
+        std::vector<StreamInfo>&        streamerAnnouncements();
 
         //
         // Viewing
@@ -199,6 +205,11 @@ class Model : public QObject
         void stestInitDrives();
 
     signals:
+        void addTorrentFileToStorageSession(const std::string &torrentFilename,
+                                            const std::string &folderWhereFileIsLocated,
+                                            const std::array<uint8_t, 32>& driveKey,
+                                            const std::array<uint8_t, 32>& modifyTx);
+
         void driveStateChanged(const std::string& driveKey, int state);
 
     private:

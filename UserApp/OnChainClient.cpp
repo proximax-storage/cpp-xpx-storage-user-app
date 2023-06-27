@@ -7,13 +7,14 @@ OnChainClient::OnChainClient(StorageEngine* storage,
                              const std::string& privateKey,
                              const std::string& address,
                              const std::string& port,
+                             const double feeMultiplier,
                              QObject* parent)
     : QObject(parent)
     , mpStorageEngine(storage)
 {
     qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
 
-    init(address, port, privateKey);
+    init(address, port, feeMultiplier, privateKey);
 
     connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){
         if (drivesPage.pagination.totalPages <= 1 ) {
@@ -156,13 +157,14 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-            emit internalError(message.c_str());
+            emit internalError(message.c_str(), false);
             return;
         }
 
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
-            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
+            emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
             return;
         }
 
@@ -251,7 +253,7 @@ StorageEngine* OnChainClient::getStorageEngine()
 
 void OnChainClient::initConnects() {
     connect(mpTransactionsEngine, &TransactionsEngine::internalError, this, [this](auto errorText) {
-        emit internalError(errorText);
+        emit internalError(errorText, false);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
@@ -340,6 +342,22 @@ void OnChainClient::initConnects() {
         emit replicatorOffBoardingTransactionFailed(replicatorPublicKey);
     });
 
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractConfirmed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionConfirmed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractFailed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionFailed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractApprovalConfirmed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionApprovalConfirmed(driveId, contractId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::deployContractApprovalFailed, this, [this](auto driveId, auto contractId) {
+        emit deployContractTransactionApprovalFailed(driveId, contractId);
+    });
+
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 const QString driveKey = rawHashToHex(driveId);
@@ -370,17 +388,25 @@ void OnChainClient::initAccount(const std::string &privateKey) {
 
 void OnChainClient::init(const std::string& address,
                          const std::string& port,
+                         const double feeMultiplier,
                          const std::string& privateKey) {
     xpx_chain_sdk::Config& config = xpx_chain_sdk::GetConfig();
     config.nodeAddress = address;
     config.port = port;
+    config.TransactionFeeMultiplier = feeMultiplier;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
+    mpChainClient->notifications()->connect([this](auto message, auto code) {
+        const QString error = QString::fromStdString("Network error: " + message + ". Code: " + std::to_string(code));
+        qCritical () << "OnChainClient::init. " << error;
+        emit internalError(error, true);
+    });
+
     mpBlockchainEngine = new BlockchainEngine(mpChainClient, this);
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
     mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << LOG_SOURCE << __FILE__ << "message: " << message.c_str() << " code: " << code.c_str();
+            qWarning() << "OnChainClient::init. getNetworkInfo. Message: " << message.c_str() << " code: " << code.c_str();
             emit initializedFailed(message.c_str());
             return;
         }
@@ -403,7 +429,7 @@ void OnChainClient::init(const std::string& address,
 
         mpBlockchainEngine->getBlockByHeight(1, [this, &config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
-                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                qWarning() << "OnChainClient::init. getBlockByHeight. Message: " << message.c_str() << " code: " << code.c_str();
                 emit initializedFailed(message.c_str());
                 return;
             }
@@ -457,4 +483,32 @@ void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::downlo
 
     channelsPage.data.channels = channels;
     emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
+}
+
+void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data ) {
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveKey).toStdString(),
+                                     [this, driveKey, data]
+                                     (auto drive, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+            emit internalError(message.c_str(), false);
+            return;
+        }
+
+        if (drive.data.replicators.empty()) {
+            qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
+            return;
+        }
+
+        std::vector<xpx_chain_sdk::Address> addresses;
+        addresses.reserve(drive.data.replicators.size());
+        for (const auto& replicator : drive.data.replicators) {
+            xpx_chain_sdk::Key key;
+            xpx_chain_sdk::ParseHexStringIntoContainer(replicator.c_str(), replicator.size(), key);
+            addresses.emplace_back(key);
+        }
+
+        mpTransactionsEngine->deployContract(driveKey, data, addresses);
+    });
 }

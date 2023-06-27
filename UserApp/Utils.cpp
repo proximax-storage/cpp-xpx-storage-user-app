@@ -13,7 +13,7 @@
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    Q_UNUSED(context);
+    Q_UNUSED(context)
 
     static QMutex mutex;
     QMutexLocker lock(&mutex);
@@ -42,7 +42,8 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
 
     std::cerr << qPrintable(qFormatLogMessage(type, context, txt)) << std::endl;
 
-    static QFile file("logs.log");
+    const std::string path = getSettingsFolder().string() + "/logs.log";
+    static QFile file(path.c_str());
     static bool logFileIsOpen = file.open(QIODevice::WriteOnly | QIODevice::Append);
 
     if (logFileIsOpen) {

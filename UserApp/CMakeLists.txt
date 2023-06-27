@@ -50,6 +50,10 @@ find_package(Threads REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS atomic system date_time regex timer chrono log log_setup thread filesystem program_options random REQUIRED)
 find_package(OpenSSL 1.1.1 REQUIRED)
 
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,./lib")
+endif()
+
 if (APPLE)
     # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
     # the property added to Info.plist
@@ -132,6 +136,7 @@ set(PROJECT_SOURCES
         Account.h                     Account.cpp
         CachedReplicator.h            CachedReplicator.cpp
         StreamInfo.h                  StreamInfo.cpp
+        DriveContractModel.h          DriveContractModel.cpp
 
         AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
         AddStreamRefDialog.h          AddStreamRefDialog.cpp          AddStreamRefDialog.ui
