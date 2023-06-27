@@ -77,7 +77,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKA
 
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:/sirius/bin:/sirius/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 RUN cp  /app-src/tool.desktop $BUILD_DIR/UserApp/
-RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage $BUILD_DIR/UserApp/tool.desktop -verbose=1
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1
 
 WORKDIR $DEST_DIR
 RUN cp $BUILD_DIR/UserApp/StorageClientApp $DEST_DIR
