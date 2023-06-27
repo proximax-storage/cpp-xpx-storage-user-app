@@ -13,7 +13,6 @@
 class OnChainClient : public QObject
 {
     Q_OBJECT
-    Q_ENUM()
 
     public:
         OnChainClient(StorageEngine* storage,
@@ -26,6 +25,7 @@ class OnChainClient : public QObject
 
     public:
         enum ChannelsType { MyOwn, Sponsored, Others };
+        Q_ENUM(ChannelsType)
 
     public:
         void loadDrives(const xpx_chain_sdk::DrivesPageOptions& options);

@@ -220,7 +220,7 @@ void AddStreamAnnouncementDialog::accept()
     if ( ec )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
+        msgBox.setText( QString::fromStdString( "Cannot create folder: " + getSettingsFolder().string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();

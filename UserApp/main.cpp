@@ -45,4 +45,6 @@ restart_label:
     auto rc = QApplication::exec();
     if ( rc == 1024 )
         goto restart_label;
+
+    return 0;
 }

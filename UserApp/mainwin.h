@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include "Worker.h"
+#include "OnChainClient.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -20,7 +21,7 @@ class DownloadsTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
-class OnChainClient;
+//class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;
