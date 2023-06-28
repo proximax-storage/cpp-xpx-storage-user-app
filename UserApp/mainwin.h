@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include "Worker.h"
+#include "OnChainClient.h"
 #include "types.h"
 #include "drive/FlatDrive.h"
 
@@ -22,7 +23,7 @@ class DownloadsTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
-class OnChainClient;
+//class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;

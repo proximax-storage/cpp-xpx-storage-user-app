@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 project(StorageClientApp VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -10,7 +14,41 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
+set(Boost_NO_WARN_NEW_VERSIONS 1)
+
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
+endif ()
+
+if (MSVC)
+    add_definitions(-D_BOOST_LOG_DLL)
+    add_definitions(-D_BOOST_ALL_DYN_LINK)
+    add_definitions(-D_BOOST_USE_WINAPI_VERSION=0x0A00)
+    add_definitions(-D_BOOST_ALL_NO_LIB)
+    add_definitions(-D_WIN32_WINNT=0x0601 /w44287 /w44388)
+    add_definitions(-DNOMINMAX)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-D _WIN32_WINNT=0x0601)
+
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_MULTITHREADED ON)
+    set(Boost_USE_STATIC_RUNTIME OFF)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /EHsc /DBOOST_LOG_DYN_LINK")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /D_SCL_SECURE_NO_WARNINGS /wd4701")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD /Zi")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG:FASTLINK")
+    set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /DEBUG")
+endif ()
+
+if (MSVC)
+    set(BOOST_STACKTRACE_BACKTRACE_INCLUDE_FILE "${Bost_INCLUDE_DIR}boost/stacktrace.hpp")
+endif ()
+
+find_package(Threads REQUIRED)
+find_package(Boost 1.71.0 REQUIRED COMPONENTS atomic system date_time regex timer chrono log log_setup thread filesystem program_options random REQUIRED)
+find_package(OpenSSL 1.1.1 REQUIRED)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,./lib")
@@ -25,9 +63,6 @@ if (APPLE)
     set(APP_ICON_MACOSX ./resources/icons/icon.png)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
             MACOSX_PACKAGE_LOCATION "resources/icons")
-
-    find_package(Threads REQUIRED)
-    find_package(Boost 1.71.0 REQUIRED)
 
     set(CMAKE_VERBOSE_MAKEFILE ON)
     set(BOOST_INCLUDE_DIR "/usr/local/include")
@@ -134,7 +169,32 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(StorageClientApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::StateMachine torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+if (WIN32)
+    target_link_libraries(StorageClientApp PRIVATE
+            ${Boost_LIBRARIES}
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::StateMachine
+            wsock32
+            ws2_32
+            torrent-sirius
+            drive
+            connection
+            sdk_external
+            nodediscovery
+            ionet
+            crypto
+            net
+            model
+            utils
+            xpxchaincpp)
+
+    target_compile_definitions(StorageClientApp
+            PRIVATE
+            BOOST_EXCEPTION_DISABLE
+            )
+else()
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::StateMachine torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+endif()
 
 set_target_properties(StorageClientApp PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
@@ -143,6 +203,10 @@ set_target_properties(StorageClientApp PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+if (MSVC)
+    target_compile_options(StorageClientApp PUBLIC "/Zc:__cplusplus")
+endif ()
 
 set(simpletreemodel_resource_files
     "tree.txt"

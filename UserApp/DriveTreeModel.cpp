@@ -6,7 +6,7 @@
 
 void scanFolderR( DriveTreeItem* parent, const fs::path& path )
 {
-    if ( !isFolderExists(path) )
+    if ( !isFolderExists(path.string()) )
     {
         return;
     }

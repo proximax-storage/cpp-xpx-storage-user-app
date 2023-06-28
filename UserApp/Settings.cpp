@@ -157,7 +157,7 @@ bool Settings::load( const std::string& pwd )
             std::cerr << filePath << std::endl;
             QMessageBox msgBox;
             msgBox.setText( QString::fromStdString( "Your config data is corrupted" ) );
-            msgBox.setInformativeText( QString::fromStdString( filePath ) );
+            msgBox.setInformativeText( QString::fromStdString( filePath.string() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
             exit(1);
@@ -198,7 +198,7 @@ void Settings::save()
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + getSettingsFolder().string()));
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
@@ -255,7 +255,7 @@ void Settings::save()
     catch( const std::exception& ex )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + std::string(getSettingsFolder() / "config") ) );
+        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + (getSettingsFolder() / "config").string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
@@ -354,7 +354,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     dnInfo.setFileName(newName);
                 }
 
-                dnInfo.getFileName() = destPath.filename();
+                dnInfo.getFileName() = destPath.filename().string();
 
                 if ( --counter == 0 )
                 {

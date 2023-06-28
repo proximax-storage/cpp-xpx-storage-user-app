@@ -170,11 +170,11 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
                                                             size_t /*downloaded*/,
                                                             size_t /*fileSize*/,
                                                             const std::string& /*errorText*/) {
-        qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
+        qDebug() << LOG_SOURCE << "fstree received: " << fsTreeSaveFolder.string();
         sirius::drive::FsTree fsTree;
         try
         {
-            fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+            fsTree.deserialize( (fsTreeSaveFolder / FS_TREE_FILE_NAME).string() );
         } catch (const std::runtime_error& ex )
         {
             qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
@@ -186,7 +186,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicators);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder.string(), "", {}, replicators);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,

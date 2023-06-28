@@ -199,7 +199,7 @@ void AddStreamAnnouncementDialog::accept()
     if ( ec )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
+        msgBox.setText( QString::fromStdString( "Cannot create folder: " + getSettingsFolder().string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
@@ -228,7 +228,7 @@ void AddStreamAnnouncementDialog::accept()
     }
     catch (...) {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot write file: " + std::string(streamFolder / STREAM_INFO_FILE_NAME ) ) );
+        msgBox.setText( QString::fromStdString( "Cannot write file: " + streamFolder.string() + "/" + STREAM_INFO_FILE_NAME ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
@@ -240,7 +240,7 @@ void AddStreamAnnouncementDialog::accept()
     //
     sirius::drive::ActionList actionList;
     auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / mUniqueFolderName;
-    actionList.push_back( sirius::drive::Action::upload( streamFolder / STREAM_INFO_FILE_NAME, destFolder / STREAM_INFO_FILE_NAME ) );
+    actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder.string() + "/" + STREAM_INFO_FILE_NAME ) );
 
     //
     // Start modification

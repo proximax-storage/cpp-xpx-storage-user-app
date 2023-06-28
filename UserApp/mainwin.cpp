@@ -26,7 +26,7 @@
 #include "ReplicatorOnBoardingDialog.h"
 #include "ReplicatorOffBoardingDialog.h"
 #include "ReplicatorInfoDialog.h"
-#include "OnChainClient.h"
+//#include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
 #include "EditDialog.h"
@@ -247,7 +247,7 @@ void MainWin::init()
                                 outdatedDrives.push_back(drive);
                             } else if (isFsTreeExists && drive->getRootHash() == remoteRootHash) {
                                 sirius::drive::FsTree fsTree;
-                                fsTree.deserialize(fsTreeSaveFolder / FS_TREE_FILE_NAME);
+                                fsTree.deserialize((fsTreeSaveFolder / FS_TREE_FILE_NAME).string());
                                 drive->setFsTree(fsTree);
                             }
                         }

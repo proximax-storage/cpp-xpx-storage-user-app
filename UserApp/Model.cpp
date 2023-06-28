@@ -9,10 +9,14 @@
 
 #include <boost/algorithm/string.hpp>
 
-#if ! __MINGW32__
+#if !(__MINGW32__) && !(_MSC_VER)
     #include <unistd.h>
     #include <sys/types.h>
     #include <pwd.h>
+#elif _MSC_VER
+    #include <io.h>
+    #include <sys/types.h>
+    #include <windows.h>
 #endif
 
 Model::Model(Settings* settings, QObject* parent)
@@ -31,7 +35,7 @@ bool Model::isZeroHash( const std::array<uint8_t,32>& hash )
 
 fs::path Model::homeFolder()
 {
-#if __MINGW32__
+#if __MINGW32__ || _MSC_VER
     //todo: not tested
     return getenv("HOMEPATH");
 #else
@@ -368,7 +372,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             Drive newDrive;
             newDrive.setKey(remoteDrive.data.multisig);
             newDrive.setName(remoteDrive.data.multisig);
-            newDrive.setLocalFolder(homeFolder()/newDrive.getKey());
+            newDrive.setLocalFolder((homeFolder()/newDrive.getKey()).string());
             newDrive.setSize(remoteDrive.data.size);
             newDrive.setReplicatorsCount(remoteDrive.data.replicatorCount);
             addDrive(newDrive);

@@ -41,7 +41,7 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 }
                 else
                 {
-                    hash = sirius::drive::calculateInfoHash( path / entryName, sirius::Key(*driveKey) ).array();
+                    hash = sirius::drive::calculateInfoHash( (path / entryName).string(), sirius::Key(*driveKey) ).array();
                 }
 
                 std::error_code errorCode(errno, std::generic_category());
@@ -128,7 +128,7 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             }
             else
             {
-                hash = sirius::drive::calculateInfoHash( fsPath / entryName, sirius::Key(driveKey) ).array();
+                hash = sirius::drive::calculateInfoHash( (fsPath / entryName).string(), sirius::Key(driveKey) ).array();
             }
 
             std::error_code errorCode(errno, std::generic_category());
@@ -190,7 +190,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     removedItems.push_back( LocalDriveItem{ false, name, getFile(fsIt->second).size(), {}, {}, {}, ldi_removed } );
 
                     // remove remote file
-                    m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                    m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
 
                     // add local folder
                     addFolderWithChilds( localChild, childPath, fsChildPath );
@@ -211,12 +211,12 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     removedItems.push_back( std::move(removedFolder) );
 
                     // remove fs folder
-                    m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                    m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
 
                     // add local file
                     if ( localChild.m_size > 0 )
                     {
-                        m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                        m_diffActionList.push_back( sirius::drive::Action::upload( childPath.string(), fsChildPath.string() ) );
                         localChild.m_ldiStatus = ldi_added;
                     }
                 }
@@ -229,11 +229,11 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                         // add (upload) local file
                         if ( localChild.m_size == 0 )
                         {
-                            m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                            m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
                         }
                         else
                         {
-                            m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                            m_diffActionList.push_back( sirius::drive::Action::upload( childPath.string(), fsChildPath.string() ) );
                         }
 
                         localChild.m_ldiStatus = ldi_changed;
@@ -257,7 +257,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 // add (upload) local file
                 if ( localChild.m_size > 0 )
                 {
-                    m_diffActionList.push_back( sirius::drive::Action::upload( childPath, fsChildPath ) );
+                    m_diffActionList.push_back( sirius::drive::Action::upload( childPath.string(), fsChildPath.string() ) );
                     localChild.m_ldiStatus = ldi_added;
                 }
             }
@@ -287,7 +287,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 removedItems.push_back( std::move(removedFolder) );
 
                 // remove fs folder
-                m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
 
             }
             else
@@ -300,7 +300,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 removedItems.push_back( LocalDriveItem{ false,name,getFile(fsChild).size(),{},{},{},ldi_removed} );
 
                 // remove remote file
-                m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath ) );
+                m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
             }
         }
     }
@@ -358,7 +358,7 @@ void Diff::addFolderWithChilds( LocalDriveItem& localFolder,
         {
             if ( item.m_size > 0 )
             {
-                m_diffActionList.push_back( sirius::drive::Action::upload( localFolderPath / name, path /name ) );
+                m_diffActionList.push_back( sirius::drive::Action::upload( (localFolderPath / name).string(), (path /name).string() ) );
                 item.m_ldiStatus = ldi_added;
             }
         }

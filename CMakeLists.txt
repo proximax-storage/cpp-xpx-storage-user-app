@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 project(cpp-xpx-storage-user-app LANGUAGES CXX)
 
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
@@ -10,7 +14,16 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
+endif ()
+
+if (MSVC)
+    add_definitions(-D_BOOST_LOG_DLL)
+    add_definitions(-D_BOOST_ALL_DYN_LINK)
+    add_definitions(-D_BOOST_USE_WINAPI_VERSION=0x0A00)
+    add_definitions(-D_WIN32_WINNT=0x0A00)
+endif ()
 
 option(XPX_STORAGE_SDK_BUILD_EMULATOR "Build XPX-STORAGE SDK emulator." OFF)
 
@@ -30,10 +43,6 @@ add_definitions(-DSIRIUS_DRIVE_MULTI)
 #            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
 #    endif()
 #endif()
-
-if (WIN32)
-    set(CMAKE_PREFIX_PATH $ENV{QT_PATH})
-endif()
 
 if (APPLE)
     #set(CMAKE_PREFIX_PATH "~/Qt/6.2.4/macos")
