@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     cmake \
     pkg-config \
     python3-pip \
+    python3-dev \
     gnutls-bin \
     libgtest-dev \
     libgcrypt20-dev \
@@ -68,24 +69,32 @@ ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 
 ENV BUILD_DIR /usr/sirius
-ENV DESTDIR /storage-tool
 
 # FROM sirius-so-app:1 AS BUILDER
 
 WORKDIR $BUILD_DIR
 COPY . /app-src
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE /app-src \
-   && make -j$(nproc)\
+RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON /app-src \
+   && cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)\
    && make install
 
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
-RUN cp  /app-src/tool.desktop $BUILD_DIR/UserApp/
+
+RUN echo -e "[Desktop Entry]\n\
+Type=Application\n\
+Name=Storaget Tool - ProximaX\n\
+Icon=Storage\n\
+Comment=storage\n\
+Exec=StorageClientApp\n\
+Categories=Network;\n\
+X-AppImage-Version=" > $BUILD_DIR/UserApp/tool.desktop
 RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1 -bundle-non-qt-libs
 
+ENV DESTDIR /storage-tool
 WORKDIR $DESTDIR
 RUN cp $BUILD_DIR/UserApp/StorageClientApp $DESTDIR
 RUN cp -r $BUILD_DIR/UserApp/resources $DESTDIR
-# RUN cp -r $BUILD_DIR/translations $DESTDIR
+RUN cp -r $BUILD_DIR/translations $DESTDIR
 RUN cp -r $BUILD_DIR/lib $DESTDIR
 RUN cp -r $BUILD_DIR/plugins $DESTDIR
 

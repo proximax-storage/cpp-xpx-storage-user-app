@@ -1,0 +1,7 @@
+# Docker Ignore
+*.md
+.git
+.cache
+cmake-build-*
+build*
+_build*
