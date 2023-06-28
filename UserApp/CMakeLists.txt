@@ -193,7 +193,7 @@ if (WIN32)
             BOOST_EXCEPTION_DISABLE
             )
 else()
-    target_link_libraries(StorageClientApp ${Boost_LIBRARIES} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::StateMachine torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::StateMachine torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
 endif()
 
 set_target_properties(StorageClientApp PROPERTIES
