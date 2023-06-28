@@ -1,6 +1,7 @@
 FROM debian:bullseye AS BUILDER
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    libfuse2 \
     curl \
     build-essential \
     cmake \
@@ -40,6 +41,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxcb-xinerama0 \
     libxcb1 \
     libxkbcommon-dev \
+    libxkbcommon-x11-0 \
+    libxcb-cursor-dev \
     libxcb-xkb-dev \
     libfontconfig \
     cereal
@@ -64,8 +67,8 @@ ENV QT_PLUGIN_PATH /opt/qt/${QT}/gcc_64/plugins/
 ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 
-ENV BUILD_DIR /app-build
-ENV DEST_DIR /sirius
+ENV BUILD_DIR /usr/sirius
+ENV DEST_DIR /storage
 
 # FROM sirius-so-app:1 AS BUILDER
 
@@ -75,7 +78,7 @@ RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKA
    && make -j$(nproc)\
    && make install
 
-ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:/sirius/bin:/sirius/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
+ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 RUN cp  /app-src/tool.desktop $BUILD_DIR/UserApp/
 RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1
 
