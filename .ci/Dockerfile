@@ -68,7 +68,7 @@ ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 
 ENV BUILD_DIR /usr/sirius
-ENV DEST_DIR /storage
+ENV DESTDIR /storage-tool
 
 # FROM sirius-so-app:1 AS BUILDER
 
@@ -80,18 +80,18 @@ RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKA
 
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 RUN cp  /app-src/tool.desktop $BUILD_DIR/UserApp/
-RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1 -bundle-non-qt-libs
 
-WORKDIR $DEST_DIR
-RUN cp $BUILD_DIR/UserApp/StorageClientApp $DEST_DIR
-RUN cp -r $BUILD_DIR/UserApp/resources $DEST_DIR
-RUN cp -r $BUILD_DIR/translations $DEST_DIR
-RUN cp -r $BUILD_DIR/lib $DEST_DIR
-RUN cp -r $BUILD_DIR/plugins $DEST_DIR
+WORKDIR $DESTDIR
+RUN cp $BUILD_DIR/UserApp/StorageClientApp $DESTDIR
+RUN cp -r $BUILD_DIR/UserApp/resources $DESTDIR
+# RUN cp -r $BUILD_DIR/translations $DESTDIR
+RUN cp -r $BUILD_DIR/lib $DESTDIR
+RUN cp -r $BUILD_DIR/plugins $DESTDIR
 
-RUN cp $BUILD_DIR/bin/*.so $DEST_DIR/lib/
-RUN cp $BUILD_DIR/cpp-xpx-chain-sdk/*.so $DEST_DIR/lib
-RUN chmod a+x $DEST_DIR/StorageClientApp
+RUN cp $BUILD_DIR/bin/*.so $DESTDIR/lib/
+RUN cp $BUILD_DIR/cpp-xpx-chain-sdk/*.so $DESTDIR/lib
+RUN chmod a+x $DESTDIR/StorageClientApp
 
 
 # FROM debian:bullseye-slim
