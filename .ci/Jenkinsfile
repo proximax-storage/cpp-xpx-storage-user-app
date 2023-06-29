@@ -21,19 +21,18 @@ pipeline {
                     def buildImage = docker.image("${BUILD_IMAGE}")
                     buildImage.inside(){
                         sh """                    
-                        rm -rf _build \
-                            && mkdir _build \
-                            && cd _build \
-                            && cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE .. \
-                            && make -j$(nproc)\
-                            && make install
-                        export BUILD_DIR=$PWD
-                        export LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
-                        cp ../tool.desktop $BUILD_DIR/UserApp/
-                        RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1 -bundle-non-qt-libs
-                    """
+                            rm -rf _build \
+                                && mkdir _build \
+                                && cd _build \
+                                && cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE .. \
+                                && make -j$(nproc)\
+                                && make install
+                            export BUILD_DIR=$PWD
+                            export LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
+                            cp ../tool.desktop $BUILD_DIR/UserApp/
+                            RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1 -bundle-non-qt-libs
+                        """
                     }
-                    
                 }
             }
             post {
