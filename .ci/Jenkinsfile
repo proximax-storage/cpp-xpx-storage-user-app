@@ -19,7 +19,7 @@ pipeline {
                 echo 'build inside a docker'                
                 script {
                     def buildImage = docker.image("${BUILD_IMAGE}")
-                    buildImage.inside(){
+                    buildImage.inside() {
                         sh """                    
                             rm -rf _build \
                                 && mkdir _build \
