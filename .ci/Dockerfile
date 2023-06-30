@@ -1,7 +1,6 @@
-FROM debian:bullseye AS BUILDER
+FROM --platform=linux/amd64 debian:bullseye AS BUILDER
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    libfuse2 \
     curl \
     build-essential \
     cmake \
@@ -52,8 +51,8 @@ RUN pip install conan
 RUN pip install aqtinstall
 
 WORKDIR /linuxdeployqt
-RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage
-RUN chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
+RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage && \
+    chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
 
 ARG QT=6.5.0
 ARG QT_MODULES="qtscxml "
@@ -74,27 +73,19 @@ ENV BUILD_DIR /usr/sirius
 
 WORKDIR $BUILD_DIR
 COPY . /app-src
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON /app-src \
-   && cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)\
-   && make install
+RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE /app-src && \
+    cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)
 
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 
-RUN echo -e "[Desktop Entry]\n\
-Type=Application\n\
-Name=Storaget Tool - ProximaX\n\
-Icon=Storage\n\
-Comment=storage\n\
-Exec=StorageClientApp\n\
-Categories=Network;\n\
-X-AppImage-Version=" > $BUILD_DIR/UserApp/tool.desktop
-RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1 -bundle-non-qt-libs
+RUN cp /app-src/tool.desktop $BUILD_DIR/UserApp/
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run -bundle-non-qt-libs $BUILD_DIR/UserApp/tool.desktop -verbose=3
 
 ENV DESTDIR /storage-tool
 WORKDIR $DESTDIR
 RUN cp $BUILD_DIR/UserApp/StorageClientApp $DESTDIR
 RUN cp -r $BUILD_DIR/UserApp/resources $DESTDIR
-RUN cp -r $BUILD_DIR/translations $DESTDIR
+#RUN cp -r $BUILD_DIR/translations $DESTDIR
 RUN cp -r $BUILD_DIR/lib $DESTDIR
 RUN cp -r $BUILD_DIR/plugins $DESTDIR
 
