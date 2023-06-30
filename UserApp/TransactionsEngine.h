@@ -7,6 +7,7 @@
 #include <utils/HexFormatter.h>
 #include <drive/ActionList.h>
 #include "ContractDeploymentData.h"
+#include "ContractManualCallData.h"
 
 class TransactionsEngine : public QObject
 {
@@ -44,6 +45,9 @@ class TransactionsEngine : public QObject
         void deployContract( const std::array<uint8_t, 32>& driveId,
                              const ContractDeploymentData& data,
                              const std::vector<xpx_chain_sdk::Address>& replicators );
+
+        void runManualCall( const ContractManualCallData& manualCallData,
+                            const std::vector<xpx_chain_sdk::Address>& replicators );
 
     signals:
         void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
@@ -85,6 +89,9 @@ class TransactionsEngine : public QObject
         void deployContractApprovalConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
         void deployContractApprovalFailed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
 
+        void manualCallInitiated(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+        void manualCallConfirmed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+        void manualCallFailed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
@@ -128,6 +135,9 @@ class TransactionsEngine : public QObject
         void sendContractDeployment( const std::array<uint8_t, 32>& driveId,
                                      const ContractDeploymentData& data,
                                      const std::vector<xpx_chain_sdk::Address>& replicators );
+
+        void sendManualCall( const ContractManualCallData& data,
+                             const std::vector<xpx_chain_sdk::Address>& replicators );
 
     private:
         struct ModificationEntity

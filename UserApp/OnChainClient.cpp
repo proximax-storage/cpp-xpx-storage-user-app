@@ -358,6 +358,16 @@ void OnChainClient::initConnects() {
         emit deployContractTransactionApprovalFailed(driveId, contractId);
     });
 
+    connect( mpTransactionsEngine, &TransactionsEngine::manualCallConfirmed, this,
+             [this]( std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId ) {
+                 emit manualCallTransactionConfirmed( contractId, callId );
+             } );
+
+    connect( mpTransactionsEngine, &TransactionsEngine::manualCallFailed, this,
+             [this]( std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId ) {
+                 emit manualCallTransactionFailed( contractId, callId );
+             } );
+
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 const QString driveKey = rawHashToHex(driveId);
@@ -505,4 +515,8 @@ void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, con
 
         mpTransactionsEngine->deployContract(driveKey, data, addresses);
     });
+}
+
+void OnChainClient::runContract(const ContractManualCallData& data ) {
+    mpTransactionsEngine->runManualCall(data, {});
 }

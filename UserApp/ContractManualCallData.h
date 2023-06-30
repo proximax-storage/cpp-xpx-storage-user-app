@@ -1,33 +1,22 @@
 #pragma once
 
-#include <QRegularExpression>
 #include "ServicePayment.h"
+#include <vector>
 
-struct ContractDeploymentData {
-    std::string m_assignee;
+struct ContractManualCallData {
+    std::string m_contractKey;
     std::string m_file;
     std::string m_function;
     std::string m_parameters;
     int m_executionCallPayment = 0;
     int m_downloadCallPayment = 0;
-    std::string m_automaticExecutionFileName;
-    std::string m_automaticExecutionFunctionName;
-    int m_automaticExecutionCallPayment = 0;
-    int m_automaticDownloadCallPayment = 0;
-    int m_automaticExecutionsNumber = 0;
     std::vector <ServicePayment> m_servicePayments;
-
-    bool m_deploymentAllowed = true;
 
     bool isValid() {
         const uint maxRowSize = 4096;
 
-        if (!m_deploymentAllowed) {
-            return false;
-        }
-
         QRegularExpression keyTemplate( QRegularExpression::anchoredPattern( QLatin1String( R"([a-zA-Z0-9]{64})" )));
-        if ( !keyTemplate.match( QString::fromStdString( m_assignee )).hasMatch()) {
+        if ( !keyTemplate.match( QString::fromStdString( m_contractKey )).hasMatch()) {
             return false;
         }
         if ( m_file.empty() || m_file.size() > maxRowSize ) {
@@ -37,12 +26,6 @@ struct ContractDeploymentData {
             return false;
         }
         if ( m_parameters.size() > maxRowSize ) {
-            return false;
-        }
-        if ( m_automaticExecutionFileName.size() > maxRowSize ) {
-            return false;
-        }
-        if ( m_automaticExecutionFunctionName.size() > maxRowSize ) {
             return false;
         }
 

@@ -68,6 +68,7 @@ void MainWin::init() {
 //    ui->m_contractMosaicTable->setCellWidget(0, 0, );
 //    ui->m_contractParameters->setValidator()
     ui->m_contractMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
+    ui->m_contractCallMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
     if ( Model::homeFolder() != "/Users/alex" ) {
         ALEX_LOCAL_TEST = false;
     }
@@ -825,11 +826,82 @@ void MainWin::init() {
                           ui->m_contractDeployBtn->setDisabled( !pContractDrive || !pContractDrive->isValid());
                       } );
 
+    QObject::connect( ui->m_contractCallKey, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        m_model->driveContractModel().getContractManualCallData().m_contractKey = text.toStdString();
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    QObject::connect( ui->m_contractCallFile, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        m_model->driveContractModel().getContractManualCallData().m_file = text.toStdString();
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    QObject::connect( ui->m_contractCallFunction, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        m_model->driveContractModel().getContractManualCallData().m_function = text.toStdString();
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    QObject::connect( ui->m_contractCallParameters, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        m_model->driveContractModel().getContractManualCallData().m_parameters = text.toStdString();
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    connect( ui->m_contractCallExecutionPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        m_model->driveContractModel().getContractManualCallData().m_executionCallPayment = value;
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    connect( ui->m_contractCallDownloadPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        m_model->driveContractModel().getContractManualCallData().m_downloadCallPayment = value;
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    connect( ui->m_contractCallAddMosaic, &QPushButton::released, this, [this] {
+        ui->m_contractCallMosaicTable->insertRow( ui->m_contractMosaicTable->rowCount());
+        m_model->driveContractModel().getContractManualCallData().m_servicePayments.emplace_back();
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    connect( ui->m_contractCallRemoveMosaic, &QPushButton::released, this, [this] {
+        int selectedRow = ui->m_contractCallMosaicTable->currentRow();
+        ui->m_contractCallMosaicTable->setCurrentIndex( QModelIndex());
+        ui->m_contractCallMosaicTable->removeRow( selectedRow );
+        auto& payments = m_model->driveContractModel().getContractManualCallData().m_servicePayments;
+        payments.erase(payments.begin() + selectedRow);
+        ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+    } );
+
+    connect( ui->m_contractCallMosaicTable->selectionModel(),
+             &QItemSelectionModel::selectionChanged,
+             this,
+             [this]( const QItemSelection& selected, const QItemSelection& deselected ) {
+                 ui->m_contractCallRemoveMosaic->setDisabled( selected.indexes().empty());
+             } );
+
+    QObject::connect( ui->m_contractCallMosaicTable, &QTableWidget::itemChanged, this,
+                      [this]( QTableWidgetItem* item ) {
+                          auto& payments = m_model->driveContractModel().getContractManualCallData().m_servicePayments;
+                          if ( item->column() == 0 ) {
+                              payments.at(
+                                      item->row()).m_mosaicId = item->text().toStdString();
+                          } else {
+                              payments.at(
+                                      item->row()).m_amount = item->text().toStdString();
+                          }
+                          ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
+                      } );
+
+    connect( ui->m_contractDeployBtn, &QPushButton::released, this, &MainWin::onDeployContract, Qt::QueuedConnection );
+
+    connect( ui->m_contractCallRun, &QPushButton::released, this, &MainWin::onRunContract, Qt::QueuedConnection );
 
     QSizePolicy sp_retain = ui->m_deploymentParameters->sizePolicy();
     sp_retain.setRetainSizeWhenHidden( true );
     ui->m_deploymentParameters->setSizePolicy( sp_retain );
-//    emit ui->m_contractDriveCBox->currentIndexChanged(-1);
+
+
+    emit ui->m_contractDriveCBox->currentIndexChanged(-1);
+    ui->m_contractCallRun->setDisabled(true);
 //    connect( &m_model->driveContractModel(), &DriveContractModel::driveContractRemoved, this,
 //             [this]( const std::string& driveKey )
 //             {
@@ -1184,8 +1256,6 @@ void MainWin::setupDownloadsTable() {
             }
         }
     } );
-
-    connect( ui->m_contractDeployBtn, &QPushButton::released, this, &MainWin::onDeployContract, Qt::QueuedConnection );
 }
 
 bool MainWin::requestPrivateKey() {
@@ -2944,6 +3014,18 @@ void MainWin::onDeployContract() {
 
     m_onChainClient->deployContract(rawHashFromHex(QString::fromStdString(contractDriveIt->first)),
                                     contractDriveIt->second);
+}
+
+void MainWin::onRunContract() {
+    m_onChainClient->runContract(m_model->driveContractModel().getContractManualCallData());
+    ui->m_contractCallKey->clear();
+    ui->m_contractCallFile->clear();
+    ui->m_contractCallFunction->clear();
+    ui->m_contractCallParameters->clear();
+    ui->m_contractCallExecutionPayment->setValue(0);
+    ui->m_contractCallDownloadPayment->setValue(0);
+    ui->m_contractCallMosaicTable->setRowCount(0);
+    m_model->driveContractModel().getContractManualCallData() = ContractManualCallData{};
 }
 
 //void MainWin::validateContractDrive() {
