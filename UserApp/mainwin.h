@@ -129,10 +129,8 @@ private:
 
     void initStreaming();
     void updateStreamerTable( Drive& );
-    void readStreamingAnnotations( std::vector<StreamInfo>&, Drive& );
-    void onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
-                                              const std::array<uint8_t,32>& fsTreeHash,
-                                              const sirius::drive::FsTree& );
+    void readStreamingAnnotations( const Drive& );
+    void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
     void startViewingStream();

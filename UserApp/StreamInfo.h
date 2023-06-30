@@ -13,19 +13,19 @@
 
 struct StreamInfo
 {
-    enum StreamingStatus { ss_creating, ss_created, ss_registring, ss_started, ss_finished };
+    enum StreamingStatus { ss_regestring, ss_created, ss_deleting, ss_running, ss_finished };
     
     uint8_t                 m_version = 1;
     std::string             m_driveKey;
     uint64_t                m_streamIndex = -1; // unique index of stream on this drive
     std::string             m_title;
     std::string             m_annotation;
-    uint64_t                m_secsSinceEpoch;   // start time
-    std::string             m_streamFolder;
+    uint64_t                m_secsSinceEpoch = 0;   // start time
+    std::string             m_uniqueFolderName;
     std::string             m_streamTx;         // streamId for started stream
-    int                     m_streamingStatus = ss_creating;
+    int                     m_streamingStatus = ss_regestring;
 
-    StreamInfo() {}
+    StreamInfo() : m_streamingStatus(ss_deleting) {}
     StreamInfo( const std::string&  driveKey,
                 const std::string&  title,
                 const std::string&  annotation,
@@ -36,7 +36,7 @@ struct StreamInfo
         ,m_title(title)
         ,m_annotation(annotation)
         ,m_secsSinceEpoch(secsSinceEpoch)
-        ,m_streamFolder(streamFolder)
+        ,m_uniqueFolderName(streamFolder)
     {
     }
 
@@ -49,7 +49,7 @@ struct StreamInfo
             m_title,
             m_annotation,
             m_secsSinceEpoch,
-            m_streamFolder,
+            m_uniqueFolderName,
             m_streamTx,
             m_streamingStatus
            );

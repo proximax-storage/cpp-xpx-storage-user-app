@@ -214,7 +214,6 @@ void AddStreamAnnouncementDialog::accept()
                             "",
                             ui->m_dateTime->dateTime().toSecsSinceEpoch(),
                             mUniqueFolderName );
-    m_model->addStreamerAnnouncement( streamInfo );
     
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
@@ -245,7 +244,6 @@ void AddStreamAnnouncementDialog::accept()
     //
     // Start modification
     //
-
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
     mp_onChainClient->applyDataModification(driveKeyHex, actionList);
     drive->updateState(registering);

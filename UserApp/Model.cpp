@@ -629,35 +629,28 @@ sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
     return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
-void Model::calcDiff()
+void Model::calcDiff( Drive& drive )
 {
-    auto drive = currentDrive();
-    if ( !drive )
-    {
-        qDebug() << LOG_SOURCE << "currentDrivePtr() == nullptr";
-        return;
-    }
-
     std::array<uint8_t,32> driveKey{};
-    sirius::utils::ParseHexStringIntoContainer( drive->getKey().c_str(), 64, driveKey );
+    sirius::utils::ParseHexStringIntoContainer( drive.getKey().c_str(), 64, driveKey );
 
-    qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->getLocalFolder();
-    if ( ! isFolderExists(drive->getLocalFolder()) )
+    qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive.getLocalFolder();
+    if ( ! isFolderExists(drive.getLocalFolder()) )
     {
-        drive->setLocalFolderExists(false);
-        drive->setActionsList({});
+        drive.setLocalFolderExists(false);
+        drive.setActionsList({});
     }
     else
     {
-        drive->setLocalFolderExists(true);
+        drive.setLocalFolderExists(true);
 
         auto localDrive = std::make_shared<LocalDriveItem>();
-        Diff::calcLocalDriveInfoR( *localDrive, drive->getLocalFolder(), true, &driveKey );
+        Diff::calcLocalDriveInfoR( *localDrive, drive.getLocalFolder(), true, &driveKey );
         sirius::drive::ActionList actionList;
-        Diff diff( *localDrive, drive->getLocalFolder(), drive->getFsTree(), actionList);
+        Diff diff( *localDrive, drive.getLocalFolder(), drive.getFsTree(), actionList);
 
-        drive->setActionsList(actionList);
-        drive->setLocalDriveItem(std::move(localDrive));
+        drive.setActionsList(actionList);
+        drive.setLocalDriveItem(std::move(localDrive));
     }
 }
 
@@ -679,32 +672,6 @@ void Model::onDriveStateChanged(const Drive& drive) {
 void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )
 {
     gStorageEngine->removeTorrentSync( infoHash );
-}
-
-void Model::approveLastStreamerAnnouncement()
-{
-    auto& streams = m_settings->config().m_streams;
-    streams.push_back( m_settings->config().m_approvingStream.value() );
-    streams.back().m_streamIndex = m_settings->config().m_lastUniqueStreamIndex;
-    m_settings->config().m_lastUniqueStreamIndex++;
-    std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
-        return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
-    });
-    
-    m_settings->save();
-}
-
-void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
-{
-    assert( ! m_settings->config().m_approvingStream );
-    m_settings->config().m_approvingStream = streamInfo;
-}
-
-void Model::deleteStreamerAnnouncement( int index )
-{
-    auto& streams = m_settings->config().m_streams;
-    streams.erase( streams.begin() + index );
-    m_settings->save();
 }
 
 const std::vector<StreamInfo>& Model::streamerAnnouncements() const

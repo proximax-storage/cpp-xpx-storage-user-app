@@ -154,7 +154,7 @@ class Model : public QObject
 
         void removeFromDownloads(int rowIndex);
 
-        void calcDiff();
+        static void calcDiff(  Drive& drive );
 
         //
         // StorageEngine
@@ -180,9 +180,6 @@ class Model : public QObject
         //
         // Streaming
         //
-        void                            addStreamerAnnouncement( const StreamInfo& streamInfo );
-        void                            approveLastStreamerAnnouncement();
-        void                            deleteStreamerAnnouncement( int index );
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
         std::vector<StreamInfo>&        streamerAnnouncements();
 

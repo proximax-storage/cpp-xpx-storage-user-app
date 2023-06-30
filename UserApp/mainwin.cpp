@@ -524,10 +524,6 @@ void MainWin::init()
         updateViewerProgressPanel( index );
         updateStreamerProgressPanel( index );
 
-        if ( index != 1 && index != 4 ) {
-            m_modifyProgressPanel->setVisible( false );
-        }
-
         // Downloads tab
         if (index == 0) {
             if (m_model->getDownloadChannels().empty()) {
@@ -551,13 +547,18 @@ void MainWin::init()
             }
         }
 
-        auto drive = m_model->currentDrive();
+        //auto drive = m_model->currentDrive();
+        auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
         if (index == 1 && !m_model->getDrives().empty() && drive) {
             onDriveStateChanged(drive->getKey(), drive->getState());
         }
-        if ( index == 4 && ui->m_streamingTabView->currentIndex() == 2 ) {
+        else if ( index == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
             auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
             onDriveStateChanged( drive->getKey(), drive->getState() );
+        }
+        else
+        {
+            m_modifyProgressPanel->setVisible( false );
         }
     }, Qt::QueuedConnection );
 
@@ -1222,14 +1223,19 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 m_modifyProgressPanel->setVisible(true);
                 lockDrive();
             }
-            if ( ui->tabWidget->currentIndex() == 1 && ui->m_streamingTabView->currentIndex() == 4 ) {
-                if ( boost::iequals( drive->getKey(), ui->m_streamDriveCBox->currentText().toStdString() ) )
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
                 {
                     m_modifyProgressPanel->setRegistering();
                     m_modifyProgressPanel->setVisible( true );
-                    lockDrive();
                 }
             }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
+
             break;
         }
         case approved:
@@ -1251,6 +1257,30 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                     m_modificationStatusTimer->stop();
                 }
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setApproved();
+                    m_modifyProgressPanel->setVisible(true);
+
+                    updateDiffView();
+
+                    QString message;
+                    message.append("Your modification was applied. Drive: ");
+                    message.append(drive->getName().c_str());
+                    addNotification(message);
+                    loadBalance();
+
+                    if (m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->stop();
+                    }
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
 
             break;
         }
@@ -1270,6 +1300,27 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 loadBalance();
                 unlockDrive();
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setFailed();
+                    m_modifyProgressPanel->setVisible(true);
+
+                    const QString message = "Your modification was declined.";
+                    addNotification(message);
+
+                    if (m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->stop();
+                    }
+
+                    loadBalance();
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
 
             break;
         }
@@ -1280,6 +1331,18 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 m_modifyProgressPanel->setVisible(true);
 
                 lockDrive();
+            }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setCanceling();
+                    m_modifyProgressPanel->setVisible( true );
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
@@ -1297,6 +1360,24 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 loadBalance();
                 unlockDrive();
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setCanceled();
+                    m_modifyProgressPanel->setVisible( true );
+                    if (m_modificationStatusTimer->isActive()) {
+
+                        m_modificationStatusTimer->stop();
+                    }
+
+                    loadBalance();
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
 
             break;
         }
@@ -1311,7 +1392,23 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                     m_modificationStatusTimer->start(1000);
                 }
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setUploading();
+                    m_modifyProgressPanel->setVisible(true);
 
+                    if (!m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->start(1000);
+                    }
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
+            
             break;
         }
         case creating:
@@ -2361,9 +2458,6 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
     qDebug()  << "MainWin::onFsTreeReceived. Drive key: " << driveKey.c_str();
     fsTree.dbgPrint();
 
-    // inform stream annotations about possible changes
-    onFsTreeReceivedForStreamAnnotaions( driveKey, fsTreeHash, fsTree );
-
     auto drive = m_model->findDrive( driveKey );
     if (drive) {
         qDebug() << "MainWin::onFsTreeReceived. FsTree downloaded and apply for drive: " << driveKey;
@@ -2375,6 +2469,9 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
             updateDriveView();
             updateDiffView();
         }
+
+        // inform stream annotations about possible changes
+        onFsTreeReceivedForStreamAnnotations( *drive );
     }
 
     m_model->applyFsTreeForChannels(driveKey, fsTree, fsTreeHash);
@@ -2556,7 +2653,10 @@ void MainWin::callbackResolver(const QUuid& id, const QVariant& data) {
 void MainWin::calculateDiffAsync(const std::function<void(int, std::string)>& callback) {
     auto taskCalcDiff = [this]() {
         try {
-            m_model->calcDiff();
+            if ( auto* drive = m_model->currentDrive(); drive != nullptr )
+            {
+                Model::calcDiff( *drive );
+            }
             return QVariant::fromValue(0);
         } catch (std::exception& e) {
             return QVariant::fromValue(std::string(e.what()));

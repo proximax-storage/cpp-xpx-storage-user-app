@@ -37,21 +37,37 @@ void MainWin::initStreaming()
     {
         updateViewerProgressPanel( ui->tabWidget->currentIndex() );
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
+        
+        if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+            onDriveStateChanged( drive->getKey(), drive->getState() );
+        }
+        else
+        {
+            m_modifyProgressPanel->setVisible( false );
+        }
     });
     
+    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
+    header->setSectionResizeMode(0,QHeaderView::Stretch);
+    header->setSectionResizeMode(1,QHeaderView::Stretch);
+    header->setSectionResizeMode(2,QHeaderView::Stretch);
+
+    
+    // m_streamDriveCBox
     connect( ui->m_streamDriveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, [this](int index)
     {
         if ( index >= 0 )
         {
-            auto driveMap = m_model->getDrives();
-            auto it = std::next( driveMap.begin(), index );
-            if ( it == driveMap.end() )
+            const auto driveKey = ui->m_streamDriveCBox->currentData().toString();
+            Drive* drive = m_model->findDriveByNameOrPublicKey( driveKey.toStdString() );
+            if ( drive == nullptr )
             {
                 qWarning() << LOG_SOURCE << "bad drive index";
                 return;
             }
             
-            updateStreamerTable( it->second );
+            updateStreamerTable( *drive );
         }
     }, Qt::QueuedConnection );
 
@@ -88,11 +104,6 @@ void MainWin::initStreaming()
         
         AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, driveKey, this);
         auto rc = dialog.exec();
-//todo++        if ( rc )
-//        {
-//            auto streamFolderName = dialog.streamFolderName();
-//            updateStreamerTable();
-//        }
     }, Qt::QueuedConnection);
 
     // m_delStreamAnnouncementBtn
@@ -100,23 +111,47 @@ void MainWin::initStreaming()
         auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
         if ( rowList.count() > 0 )
         {
+            StreamInfo streamInfo;
+            
             int rowIndex = rowList.constFirst().row();
-            std::string streamTitle;
             try {
-                streamTitle = m_model->streamerAnnouncements().at(rowIndex).m_title;
+                streamInfo = m_model->streamerAnnouncements().at(rowIndex);
             } catch (...) {
                 return;
             }
         
             QMessageBox msgBox;
-            const QString message = QString::fromStdString("'" + streamTitle + "' will be removed.");
+            const QString message = QString::fromStdString("'" + streamInfo.m_title + "' will be removed.");
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
 
             if ( reply == QMessageBox::Ok )
             {
-                m_model->deleteStreamerAnnouncement( rowIndex );
+                std::string driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
+                auto* drive = m_model->findDriveByNameOrPublicKey( driveKey );
+
+                if ( drive != nullptr )
+                {
+                    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo.m_uniqueFolderName;
+                    std::error_code ec;
+                    fs::remove_all( streamFolder, ec );
+                    qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
+
+                    if ( !ec )
+                    {
+                        sirius::drive::ActionList actionList;
+                        auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo.m_uniqueFolderName;
+                        actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
+
+                        //
+                        // Start modification
+                        //
+                        auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
+                        drive->updateState(registering);
+                    }
+                }
             }
         }
     }, Qt::QueuedConnection);
@@ -225,10 +260,14 @@ void MainWin::initStreaming()
     updateViewerCBox();
 }
 
-void MainWin::readStreamingAnnotations( std::vector<StreamInfo>& streamInfoVector, Drive&  driveInfo )
+void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 {
+    bool todoShouldBeSync = false;
+    std::vector<StreamInfo>& streamInfoVector = m_model->streamerAnnouncements();
+    
     streamInfoVector.clear();
     
+    // read from disc (.videos/*/info)
     {
         auto path = fs::path( driveInfo.getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME;
         
@@ -258,21 +297,70 @@ void MainWin::readStreamingAnnotations( std::vector<StreamInfo>& streamInfoVecto
             }
         }
     }
+    
+    // read from FsTree
+    {
+        auto fsTree = driveInfo.getFsTree();
+        auto* folder = fsTree.getFolderPtr( STREAM_ROOT_FOLDER_NAME );
+        if ( folder != nullptr )
+        {
+            const auto& streamFolders = folder->childs();
+            for( const auto& [key,child] : streamFolders )
+            {
+                if ( sirius::drive::isFolder(child) )
+                {
+                    const auto& streamFolder = sirius::drive::getFolder( child );
+                    auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [&streamFolder] (const StreamInfo& streamInfo) {
+                        return streamFolder.name() == streamInfo.m_uniqueFolderName;
+                    });
+                    if ( it != streamInfoVector.end() )
+                    {
+                        it->m_streamingStatus = StreamInfo::ss_created;
+                    }
+                    else
+                    {
+                        todoShouldBeSync = true;
+                    }
+                }
+            }
+        }
+    }
+    
     std::sort( streamInfoVector.begin(), streamInfoVector.end(),
         [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
     {
         return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
     });
+
+    auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [] (const StreamInfo& streamInfo) {
+        return streamInfo.m_streamingStatus == StreamInfo::ss_regestring;
+    });
+
+    todoShouldBeSync = (it != streamInfoVector.end());
+}
+
+void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
+{
+    auto* currentDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+    if ( currentDrive != nullptr && boost::iequals( currentDrive->getKey(), drive.getKey() ) )
+    {
+        updateStreamerTable( *currentDrive );
+    }
 }
 
 void MainWin::updateStreamerTable( Drive& driveInfo )
 {
-    readStreamingAnnotations( m_model->streamerAnnouncements(), driveInfo );
+    readStreamingAnnotations( driveInfo );
     
-    ui->m_streamAnnouncementTable->clearContents();
+//    ui->m_streamAnnouncementTable->clearContents();
 
     qDebug() << "announcements: " << m_model->streamerAnnouncements().size();
 
+    while( ui->m_streamAnnouncementTable->rowCount() > 0 )
+    {
+        ui->m_streamAnnouncementTable->removeRow(0);
+    }
+    
     for( const auto& streamInfo: m_model->streamerAnnouncements() )
     {
         if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
@@ -289,32 +377,20 @@ void MainWin::updateStreamerTable( Drive& driveInfo )
         }
         {
             QTableWidgetItem* item = new QTableWidgetItem();
-            if ( streamInfo.m_streamingStatus != StreamInfo::ss_creating )
-            {
-                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (creating...)") );
-            }
-            else if ( streamInfo.m_streamingStatus != StreamInfo::ss_registring )
-            {
-                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (registring...)") );
-            }
-            else if ( streamInfo.m_streamingStatus != StreamInfo::ss_started )
-            {
-                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (running...)") );
-            }
-            else
-            {
+//            else if ( streamInfo.m_streamingStatus == StreamInfo::ss_running )
+//            {
+//                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (running...)") );
+//            }
+//            else
+//            {
                 item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
-            }
+//            }
             ui->m_streamAnnouncementTable->setItem( rowIndex, 1, item );
         }
         {
-            ui->m_streamAnnouncementTable->setItem( rowIndex, 2, new QTableWidgetItem( QString::fromStdString( streamInfo.m_streamFolder ) ) );
+            ui->m_streamAnnouncementTable->setItem( rowIndex, 2, new QTableWidgetItem( QString::fromStdString( streamInfo.m_uniqueFolderName ) ) );
         }
     }
-    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
-    header->setSectionResizeMode(0,QHeaderView::Stretch);
-    header->setSectionResizeMode(1,QHeaderView::Stretch);
-    header->setSectionResizeMode(2,QHeaderView::Stretch);
 }
 
 void MainWin::updateViewerCBox()
@@ -489,13 +565,6 @@ void MainWin::cancelStreaming()
 {
     m_model->m_streamerStatus = ss_no_streaming;
     m_startStreamingProgressPanel->setVisible(false);
-}
-
-void MainWin::onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
-                                          const std::array<uint8_t,32>& fsTreeHash,
-                                          const sirius::drive::FsTree& )
-{
-    
 }
 
 void MainWin::dbg()
