@@ -3,6 +3,7 @@
 #include <QTextStream>
 #include <QMutex>
 #include <QCoreApplication>
+#include <QDir>
 #include <iostream>
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
@@ -84,8 +85,7 @@ std::filesystem::path getSettingsFolder()
 {
     std::filesystem::path path;
 #ifdef _WIN32
-    qDebug() << LOG_SOURCE << "!NOT IMPLEMNTED! FOR WIN32: settingsPath()";
-    exit(1);
+    path = QDir::currentPath().toStdString() + "/.XpxSiriusStorageClient";
 #else
     const char* homePath = getenv("HOME");
     path = std::string(homePath) + "/.XpxSiriusStorageClient";
@@ -98,7 +98,7 @@ std::filesystem::path getSettingsFolder()
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(path) ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + path.string() ) );
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();

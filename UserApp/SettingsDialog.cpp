@@ -219,7 +219,7 @@ void SettingsDialog::updateAccountFields()
     ui->m_replicatorBootAddrField->setText( QString::fromStdString( mpSettingsDraft->m_replicatorBootstrap ));
     ui->m_portField->setValidator( new QIntValidator(1025, 65535, this) );
     ui->m_portField->setText( QString::fromStdString( mpSettingsDraft->m_udpPort ));
-    ui->m_dnFolderField->setText( QString::fromStdString( mpSettingsDraft->downloadFolder() ));
+    ui->m_dnFolderField->setText( QString::fromStdString( mpSettingsDraft->downloadFolder().string() ));
 }
 
 void SettingsDialog::accept()

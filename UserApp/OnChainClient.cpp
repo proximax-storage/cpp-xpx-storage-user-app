@@ -157,13 +157,13 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-            emit internalError(message.c_str());
+            emit internalError(message.c_str(), false);
             return;
         }
 
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
-            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
             emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
             return;
         }
@@ -253,7 +253,7 @@ StorageEngine* OnChainClient::getStorageEngine()
 
 void OnChainClient::initConnects() {
     connect(mpTransactionsEngine, &TransactionsEngine::internalError, this, [this](auto errorText) {
-        emit internalError(errorText);
+        emit internalError(errorText, false);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
@@ -406,11 +406,17 @@ void OnChainClient::init(const std::string& address,
     config.TransactionFeeMultiplier = feeMultiplier;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
+    mpChainClient->notifications()->connect([this](auto message, auto code) {
+        const QString error = QString::fromStdString("Network error: " + message + ". Code: " + std::to_string(code));
+        qCritical () << "OnChainClient::init. " << error;
+        emit internalError(error, true);
+    });
+
     mpBlockchainEngine = new BlockchainEngine(mpChainClient, this);
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
     mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << LOG_SOURCE << __FILE__ << "message: " << message.c_str() << " code: " << code.c_str();
+            qWarning() << "OnChainClient::init. getNetworkInfo. Message: " << message.c_str() << " code: " << code.c_str();
             emit initializedFailed(message.c_str());
             return;
         }
@@ -433,7 +439,7 @@ void OnChainClient::init(const std::string& address,
 
         mpBlockchainEngine->getBlockByHeight(1, [this, &config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
-                qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
+                qWarning() << "OnChainClient::init. getBlockByHeight. Message: " << message.c_str() << " code: " << code.c_str();
                 emit initializedFailed(message.c_str());
                 return;
             }
@@ -495,13 +501,13 @@ void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, con
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-            emit internalError(message.c_str());
+            emit internalError(message.c_str(), false);
             return;
         }
 
         if (drive.data.replicators.empty()) {
             qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
-            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
             return;
         }
 

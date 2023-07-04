@@ -9,10 +9,14 @@
 
 #include <boost/algorithm/string.hpp>
 
-#if ! __MINGW32__
+#if !(__MINGW32__) && !(_MSC_VER)
     #include <unistd.h>
     #include <sys/types.h>
     #include <pwd.h>
+#elif _MSC_VER
+    #include <io.h>
+    #include <sys/types.h>
+    #include <windows.h>
 #endif
 
 Model::Model(Settings* settings, QObject* parent)
@@ -31,7 +35,7 @@ bool Model::isZeroHash( const std::array<uint8_t,32>& hash )
 
 fs::path Model::homeFolder()
 {
-#if __MINGW32__
+#if __MINGW32__ || _MSC_VER
     //todo: not tested
     return getenv("HOMEPATH");
 #else
@@ -368,7 +372,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             Drive newDrive;
             newDrive.setKey(remoteDrive.data.multisig);
             newDrive.setName(remoteDrive.data.multisig);
-            newDrive.setLocalFolder(homeFolder()/newDrive.getKey());
+            newDrive.setLocalFolder((homeFolder()/newDrive.getKey()).string());
             newDrive.setSize(remoteDrive.data.size);
             newDrive.setReplicatorsCount(remoteDrive.data.replicatorCount);
             addDrive(newDrive);
@@ -385,16 +389,49 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             drive.updateState(creating);
             drive.updateState(no_modifications);
         }
-// TODO: continue uploading after tools is started
-//        if ( ! remoteDrive.data.activeDataModifications.empty() )
-//        {
-//            qWarning () << LOG_SOURCE << "drive modification status: is_registring: " << it->getName();
-//            auto& lastModification = remoteDrive.data.activeDataModifications.back();
-//            it->setModificationHash(Model::hexStringToHash( lastModification.dataModification.id ));
-//            //TODO load torrent and other data to session to continue, check cancel modifications also
-//            // add transaction from no_modifications to loading (start/end session and continue uploading)
-//            it->updateState(uploading);
-//        }
+
+        Drive& currentDrive = drives[QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString()];
+        if ( ! remoteDrive.data.activeDataModifications.empty() ) {
+            auto lastModificationIndex = remoteDrive.data.activeDataModifications.size();
+            auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
+            currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
+
+            const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + "/modify_drive_data";
+            bool isDirExists = QDir(pathToDriveData.c_str()).exists();
+            if (isDirExists) {
+                std::map<QString, QFileInfo> filesData;
+                QFileInfoList torrentsList;
+                QDirIterator it(pathToDriveData.c_str(), QDirIterator::Subdirectories);
+
+                QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9.torrent]{72})")));
+                while (it.hasNext()) {
+                    QString currentFileName = it.next();
+                    QFileInfo file(currentFileName);
+
+                    if (file.isDir()) {
+                        continue;
+                    }
+
+                    if (nameTemplate.match(file.fileName()).hasMatch()) {
+                        torrentsList.append(file);
+                    } else {
+                        filesData.insert_or_assign(file.fileName() + ".torrent", file);
+                    }
+                }
+
+                for (const auto& t : torrentsList) {
+                    if (filesData.contains(t.fileName())) {
+                        emit addTorrentFileToStorageSession(t.fileName().toStdString(),
+                                                            pathToDriveData,
+                                                            rawHashFromHex(currentDrive.getKey().c_str()),
+                                                            currentDrive.getModificationHash());
+                    }
+                }
+            }
+
+            currentDrive.updateState(registering);
+            currentDrive.updateState(uploading);
+        }
     }
 
     for (auto& d : drives)
@@ -592,35 +629,28 @@ sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
     return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
-void Model::calcDiff()
+void Model::calcDiff( Drive& drive )
 {
-    auto drive = currentDrive();
-    if ( !drive )
-    {
-        qDebug() << LOG_SOURCE << "currentDrivePtr() == nullptr";
-        return;
-    }
-
     std::array<uint8_t,32> driveKey{};
-    sirius::utils::ParseHexStringIntoContainer( drive->getKey().c_str(), 64, driveKey );
+    sirius::utils::ParseHexStringIntoContainer( drive.getKey().c_str(), 64, driveKey );
 
-    qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive->getLocalFolder();
-    if ( ! isFolderExists(drive->getLocalFolder()) )
+    qDebug() << LOG_SOURCE << "calcDiff: localDriveFolder: " << drive.getLocalFolder();
+    if ( ! isFolderExists(drive.getLocalFolder()) )
     {
-        drive->setLocalFolderExists(false);
-        drive->setActionsList({});
+        drive.setLocalFolderExists(false);
+        drive.setActionsList({});
     }
     else
     {
-        drive->setLocalFolderExists(true);
+        drive.setLocalFolderExists(true);
 
         auto localDrive = std::make_shared<LocalDriveItem>();
-        Diff::calcLocalDriveInfoR( *localDrive, drive->getLocalFolder(), true, &driveKey );
+        Diff::calcLocalDriveInfoR( *localDrive, drive.getLocalFolder(), true, &driveKey );
         sirius::drive::ActionList actionList;
-        Diff diff( *localDrive, drive->getLocalFolder(), drive->getFsTree(), actionList);
+        Diff diff( *localDrive, drive.getLocalFolder(), drive.getFsTree(), actionList);
 
-        drive->setActionsList(actionList);
-        drive->setLocalDriveItem(std::move(localDrive));
+        drive.setActionsList(actionList);
+        drive.setLocalDriveItem(std::move(localDrive));
     }
 }
 
@@ -644,33 +674,12 @@ void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )
     gStorageEngine->removeTorrentSync( infoHash );
 }
 
-void Model::approveLastStreamerAnnouncement()
-{
-    auto& streams = m_settings->config().m_streams;
-    streams.push_back( m_settings->config().m_approvingStream.value() );
-    streams.back().m_streamIndex = m_settings->config().m_lastUniqueStreamIndex;
-    m_settings->config().m_lastUniqueStreamIndex++;
-    std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
-        return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
-    });
-    
-    m_settings->save();
-}
-
-void Model::addStreamerAnnouncement( const StreamInfo& streamInfo )
-{
-    assert( m_settings->config().m_approvingStream );
-    m_settings->config().m_approvingStream = streamInfo;
-}
-
-void Model::deleteStreamerAnnouncement( int index )
-{
-    auto& streams = m_settings->config().m_streams;
-    streams.erase( streams.begin() + index );
-    m_settings->save();
-}
-
 const std::vector<StreamInfo>& Model::streamerAnnouncements() const
+{
+    return m_settings->config().m_streams;
+}
+
+std::vector<StreamInfo>& Model::streamerAnnouncements()
 {
     return m_settings->config().m_streams;
 }

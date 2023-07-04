@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include "Worker.h"
+#include "OnChainClient.h"
 #include "types.h"
 #include "drive/FlatDrive.h"
 
@@ -22,11 +23,13 @@ class DownloadsTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
-class OnChainClient;
+//class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;
 class ContractDeploymentData;
+
+struct StreamInfo;
 
 namespace sirius { namespace drive
 {
@@ -126,7 +129,9 @@ private:
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
 
     void initStreaming();
-    void updateStreamerTable();
+    void updateStreamerTable( Drive& );
+    void readStreamingAnnotations( const Drive& );
+    void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
     void startViewingStream();
@@ -168,7 +173,7 @@ private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
-    void onInternalError(const QString& errorText);
+    void onInternalError(const QString& errorText, bool isExit);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
     void onDriveStateChanged(const std::string& driveKey, int state);

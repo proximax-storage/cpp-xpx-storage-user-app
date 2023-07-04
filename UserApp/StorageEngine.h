@@ -73,6 +73,12 @@ public:
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
 
+private:
+    void addTorrentFileToSession(const std::string &torrentFilename,
+                                 const std::string &folderWhereFileIsLocated,
+                                 const std::array<uint8_t, 32>& driveKey,
+                                 const std::array<uint8_t, 32>& modifyTx);
+
 signals:
     void fsTreeReceived(const std::string& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
 

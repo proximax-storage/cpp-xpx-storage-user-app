@@ -26,7 +26,7 @@
 #include "ReplicatorOnBoardingDialog.h"
 #include "ReplicatorOffBoardingDialog.h"
 #include "ReplicatorInfoDialog.h"
-#include "OnChainClient.h"
+//#include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
 #include "EditDialog.h"
@@ -52,59 +52,61 @@
 
 #include <boost/algorithm/string.hpp>
 
-MainWin::MainWin( QWidget* parent )
-        : QMainWindow( parent )
-        , ui( new Ui::MainWin )
-        , m_settings( new Settings( this ))
-        , m_model( new Model( m_settings, this ))
-        , m_XPX_MOSAIC_ID( 0 )
-        , mpWorker( new Worker )
-        , mpThread( new QThread ) {
-    ui->setupUi( this );
+MainWin::MainWin(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWin)
+    , m_settings(new Settings(this))
+    , m_model(new Model(m_settings, this))
+    , m_XPX_MOSAIC_ID(0)
+    , mpWorker(new Worker)
+    , mpThread(new QThread)
+{
+    ui->setupUi(this);
 }
 
-void MainWin::init() {
-    auto* mosaicSpinBox = new QSpinBox();
-//    ui->m_contractMosaicTable->setCellWidget(0, 0, );
-//    ui->m_contractParameters->setValidator()
-    ui->m_contractMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
-    ui->m_contractCallMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
-    if ( Model::homeFolder() != "/Users/alex" ) {
+void MainWin::init()
+{
+    if ( Model::homeFolder() != "/Users/alex" )
+    {
         ALEX_LOCAL_TEST = false;
     }
 
-    if ( Model::homeFolder() != "/home/cempl" ) {
+    if ( Model::homeFolder() != "/home/cempl" )
+    {
         VICTOR_LOCAL_TEST = false;
     }
 
-    if ( !m_model->loadSettings()) {
-        if ( Model::homeFolder() == "/Users/alex" ) {
+    if ( ! m_model->loadSettings() )
+    {
+        if ( Model::homeFolder() == "/Users/alex" )
+        {
             m_model->initForTests();
-        } else if ( !requestPrivateKey()) {
+        }
+        else if ( ! requestPrivateKey() )
+        {
             m_mustExit = true;
         }
     }
 
-    if ( m_mustExit ) {
+    if ( m_mustExit )
+    {
         return;
     }
 
-    if ( Model::homeFolder() == "/Users/alex" ) {
-        if ( m_model->getAccountName() == "alex_local_test" ) {
-            m_model->setBootstrapReplicator( "192.168.2.101:5001" );
-            m_model->setCurrentAccountIndex( 2 );
-        } else {
-            m_model->setBootstrapReplicator( "15.206.164.53:7904" );
-        }
+    if ( Model::homeFolder() == "/Users/alex" )
+    {
+//            m_model->setBootstrapReplicator("15.206.164.53:7904");
+            m_model->setBootstrapReplicator("13.250.14.143:7904");
     }
 
-    if ( !fs::exists( getFsTreesFolder())) {
+    if ( !fs::exists( getFsTreesFolder() ) )
+    {
         try {
-            fs::create_directories( getFsTreesFolder());
-        } catch ( const std::runtime_error& err ) {
-            QMessageBox msgBox( this );
-            msgBox.setText( QString::fromStdString( "Cannot create directory to store fsTree!" ));
-            msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what());
+            fs::create_directories( getFsTreesFolder() );
+        } catch( const std::runtime_error& err ) {
+            QMessageBox msgBox(this);
+            msgBox.setText( QString::fromStdString( "Cannot create directory to store fsTree!") );
+            msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
             msgBox.setStandardButtons( QMessageBox::Ok );
             msgBox.exec();
         }
@@ -112,365 +114,330 @@ void MainWin::init() {
 
     initWorker();
 
-    m_model->startStorageEngine( [this] {
+    m_model->startStorageEngine( [this]
+    {
 //         QMessageBox msgBox(this);
 //         msgBox.setText( QString::fromStdString( "Address already in use") );
 //         msgBox.setInformativeText( QString::fromStdString( "Port: " + gSettings.m_udpPort ) );
 //         msgBox.setStandardButtons( QMessageBox::Ok );
 //         msgBox.exec();
 
-        qWarning() << "MainWin::init. Address already in use: udoPort: "
-                   << m_model->getUdpPort();
-        exit( 1 );
-    } );
+        qWarning() << "MainWin::init. Address already in use: udoPort: " << m_model->getUdpPort();
+        exit(1);
+    });
 
     setupIcons();
     setupNotifications();
-    setGeometry( m_model->getWindowGeometry());
+    setGeometry(m_model->getWindowGeometry());
 
-    connect( ui->m_settingsButton, &QPushButton::released, this, [this] {
+    connect( ui->m_settingsButton, &QPushButton::released, this, [this]
+    {
         SettingsDialog settingsDialog( m_settings, this );
         settingsDialog.exec();
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
     const std::string privateKey = m_model->getClientPrivateKey();
     qDebug() << "MainWin::init. Private key: " << privateKey;
 
-    m_onChainClient = new OnChainClient( gStorageEngine.get(), privateKey, m_model->getGatewayIp(),
-                                         m_model->getGatewayPort(), m_model->getFeeMultiplier(), this );
-    m_modificationsWatcher = new QFileSystemWatcher( this );
+    m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier(), this);
 
-    connect( m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this,
-             &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection );
-    connect( ui->m_addChannel, &QPushButton::released, this, [this]() {
-        AddDownloadChannelDialog dialog( m_onChainClient, m_model, this );
-        connect( &dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel );
+    m_modificationsWatcher = new QFileSystemWatcher(this);
+
+    connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
+    connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
+        AddDownloadChannelDialog dialog(m_onChainClient, m_model, this);
+        connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
         dialog.exec();
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,
-             [this]( OnChainClient::ChannelsType type,
-                     const std::vector <xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages ) {
-                 qDebug() << LOG_SOURCE << "downloadChannelsLoaded pages amount: " << channelsPages.size();
+    connect(m_onChainClient, &OnChainClient::downloadChannelsLoaded, this,
+            [this](OnChainClient::ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages)
+    {
+        qDebug() << LOG_SOURCE << "downloadChannelsLoaded pages amount: " << channelsPages.size();
 
-                 ui->m_channels->clear();
-                 if ( type == OnChainClient::ChannelsType::MyOwn ) {
-                     // load sponsored channels
-                     m_onChainClient->loadDownloadChannels( {} );
-                     m_model->onMyOwnChannelsLoaded( channelsPages );
-                 } else if ( type == OnChainClient::ChannelsType::Sponsored ) {
-                     m_model->onSponsoredChannelsLoaded( channelsPages );
+        ui->m_channels->clear();
+        if (type == OnChainClient::ChannelsType::MyOwn) {
+            // load sponsored channels
+            m_onChainClient->loadDownloadChannels({});
+            m_model->onMyOwnChannelsLoaded(channelsPages);
+        } else if (type == OnChainClient::ChannelsType::Sponsored) {
+            m_model->onSponsoredChannelsLoaded(channelsPages);
 
-                     for ( const auto&[key, drive] : m_model->getDrives()) {
-                         m_model->applyFsTreeForChannels( key, drive.getFsTree(), drive.getRootHash());
-                     }
+            for (const auto& [key, drive] : m_model->getDrives()) {
+                m_model->applyFsTreeForChannels(key, drive.getFsTree(), drive.getRootHash());
+            }
 
-                     for ( const auto&[key, channel] : m_model->getDownloadChannels()) {
-                         addEntityToUi( ui->m_channels, channel.getName(), key );
-                     }
+            for (const auto& [key, channel] : m_model->getDownloadChannels())
+            {
+                addEntityToUi(ui->m_channels, channel.getName(), key);
+            }
 
-                     m_model->setDownloadChannelsLoaded( true );
+            m_model->setDownloadChannelsLoaded(true);
 
-                     if ( m_model->getDownloadChannels().empty()) {
-                         lockChannel( "" );
-                     } else {
-                         unlockChannel( "" );
-                     }
+            if (m_model->getDownloadChannels().empty()) {
+                lockChannel("");
+            } else {
+                unlockChannel("");
+            }
 
-                     for ( auto& downloadInfo: m_model->downloads()) {
-                         if ( !downloadInfo.isCompleted()) {
-                             if ( m_model->findChannel( downloadInfo.getDownloadChannelKey()) == nullptr ) {
-                                 downloadInfo.setChannelOutdated( true );
-                             }
-                         }
-                     }
+            for( auto& downloadInfo: m_model->downloads() )
+            {
+                if ( ! downloadInfo.isCompleted() )
+                {
+                    if ( m_model->findChannel( downloadInfo.getDownloadChannelKey() ) == nullptr )
+                    {
+                        downloadInfo.setChannelOutdated(true);
+                    }
+                }
+            }
 
-                     auto channel = m_model->currentDownloadChannel();
-                     if ( channel ) {
-                         m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath());
-                         ui->m_path->setText(
-                                 "Path: " + QString::fromStdString( m_channelFsTreeTableModel->currentPathString()));
-                     } else {
-                         if ( m_model->getDownloadChannels().empty()) {
-                             m_channelFsTreeTableModel->setFsTree( {}, {} );
-                         } else {
-                             m_model->setCurrentDownloadChannelKey( m_model->getDownloadChannels().begin()->first );
-                             m_channelFsTreeTableModel->setFsTree(
-                                     m_model->getDownloadChannels().begin()->second.getFsTree(),
-                                     m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
-                             ui->m_path->setText( "Path: " + QString::fromStdString(
-                                     m_channelFsTreeTableModel->currentPathString()));
-                         }
-                     }
+            auto channel = m_model->currentDownloadChannel();
+            if (channel) {
+                m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
+                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+            } else {
+                if (m_model->getDownloadChannels().empty()) {
+                    m_channelFsTreeTableModel->setFsTree( {}, {} );
+                } else {
+                    m_model->setCurrentDownloadChannelKey(m_model->getDownloadChannels().begin()->first);
+                    m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(), m_model->getDownloadChannels().begin()->second.getLastOpenedPath() );
+                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+                }
+            }
 
-                     connect( ui->m_channels, QOverload<int>::of( &QComboBox::currentIndexChanged ), this,
-                              &MainWin::onCurrentChannelChanged, Qt::QueuedConnection );
-                 }
-             }, Qt::QueuedConnection );
+            connect( ui->m_channels, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentChannelChanged, Qt::QueuedConnection);
+        }
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::drivesLoaded, this,
-             [this]( const std::vector <xpx_chain_sdk::drives_page::DrivesPage>& drivesPages ) {
-                 qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
+    connect(m_onChainClient, &OnChainClient::drivesLoaded, this, [this](const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages)
+    {
+        qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
 
-                 connect( m_model, &Model::driveStateChanged, this,
-                          [this, drivesPages]( const std::string& driveKey, int state ) {
-                              if ( drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0 ) {
-                                  disconnect( m_model );
-                                  emit drivesInitialized();
-                              } else if ( state == no_modifications ) {
-                                  m_model->setLoadedDrivesCount( m_model->getLoadedDrivesCount() + 1 );
-                                  if ( m_model->getLoadedDrivesCount() == drivesPages[0].pagination.totalEntries ) {
-                                      std::vector < Drive * > outdatedDrives;
-                                      for ( const auto& page : drivesPages ) {
-                                          for ( const auto& remoteDrive : page.data.drives ) {
-                                              auto drive = m_model->findDrive( remoteDrive.data.multisig );
-                                              if ( !drive ) {
-                                                  qWarning()
-                                                          << "Drive not found (invalid pointer to drive). Drive initialization failed!";
-                                                  continue;
-                                              }
+        connect(m_model, &Model::driveStateChanged, this, [this, drivesPages] (const std::string& driveKey, int state) {
+            if (drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0) {
+                disconnect(m_model);
+                emit drivesInitialized();
+            } else if (state == no_modifications) {
+                m_model->setLoadedDrivesCount(m_model->getLoadedDrivesCount() + 1);
+                if (m_model->getLoadedDrivesCount() == drivesPages[0].pagination.totalEntries) {
+                    std::vector<Drive*> outdatedDrives;
+                    for (const auto& page : drivesPages) {
+                        for (const auto& remoteDrive : page.data.drives) {
+                            auto drive = m_model->findDrive(remoteDrive.data.multisig);
+                            if (!drive) {
+                                qWarning () << "Drive not found (invalid pointer to drive). Drive initialization failed!";
+                                continue;
+                            }
 
-                                              if ( remoteDrive.data.replicatorCount == 0 ) {
-                                                  qWarning() << "Replicators list for the following drive is empty: "
-                                                             << drive->getKey() << " Initialized failed!";
-                                                  continue;
-                                              }
+                            if (remoteDrive.data.replicatorCount == 0) {
+                                qWarning () << "Replicators list for the following drive is empty: " << drive->getKey() << " Initialized failed!";
+                                continue;
+                            }
 
-                                              const auto rootHashUpperCase = QString::fromStdString(
-                                                      sirius::drive::toString(
-                                                              drive->getRootHash())).toUpper().toStdString();
-                                              auto fsTreeSaveFolder = getFsTreesFolder() / rootHashUpperCase;
-                                              bool isFsTreeExists = fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+                            const auto rootHashUpperCase = QString::fromStdString(sirius::drive::toString(drive->getRootHash())).toUpper().toStdString();
+                            auto fsTreeSaveFolder = getFsTreesFolder()/rootHashUpperCase;
+                            bool isFsTreeExists = fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME );
 
-                                              const auto remoteRootHash = rawHashFromHex(
-                                                      remoteDrive.data.rootHash.c_str());
-                                              if ( !isFsTreeExists && drive->getRootHash() == remoteRootHash &&
-                                                   Model::isZeroHash( remoteRootHash )) {
-                                                  drive->setFsTree( {} );
-                                              } else if ( drive->getRootHash() != remoteRootHash || !isFsTreeExists ) {
-                                                  drive->setRootHash( remoteRootHash );
-                                                  outdatedDrives.push_back( drive );
-                                              } else if ( isFsTreeExists && drive->getRootHash() == remoteRootHash ) {
-                                                  sirius::drive::FsTree fsTree;
-                                                  fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
-                                                  drive->setFsTree( fsTree );
-                                              }
-                                          }
-                                      }
+                            const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
+                            if (!isFsTreeExists && drive->getRootHash() == remoteRootHash && Model::isZeroHash(remoteRootHash)) {
+                                drive->setFsTree({});
+                            }
+                            else if (drive->getRootHash() != remoteRootHash || !isFsTreeExists) {
+                                drive->setRootHash(remoteRootHash);
+                                outdatedDrives.push_back(drive);
+                            } else if (isFsTreeExists && drive->getRootHash() == remoteRootHash) {
+                                sirius::drive::FsTree fsTree;
+                                fsTree.deserialize((fsTreeSaveFolder / FS_TREE_FILE_NAME).string());
+                                drive->setFsTree(fsTree);
+                            }
+                        }
+                    }
 
-                                      if ( outdatedDrives.empty()) {
-                                          disconnect( m_model );
-                                          emit drivesInitialized();
-                                      } else {
-                                          connect( m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived,
-                                                   this,
-                                                   [this, counter = (int) outdatedDrives.size()]( auto driveKey,
-                                                                                                  auto fsTreeHash,
-                                                                                                  auto fsTree ) {
-                                                       m_model->setOutdatedDriveNumber(
-                                                               m_model->getOutdatedDriveNumber() + 1 );
-                                                       onFsTreeReceived( driveKey, fsTreeHash, fsTree );
-                                                       if ( counter == m_model->getOutdatedDriveNumber()) {
-                                                           disconnect( m_model );
-                                                           disconnect( m_onChainClient->getStorageEngine());
-                                                           m_model->saveSettings();
-                                                           emit drivesInitialized();
-                                                       }
-                                                   }, Qt::QueuedConnection );
-                                      }
+                    if (outdatedDrives.empty()) {
+                        disconnect(m_model);
+                        emit drivesInitialized();
+                    } else {
+                        connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this,
+                        [this, counter = (int)outdatedDrives.size()] (auto driveKey, auto fsTreeHash, auto fsTree)
+                        {
+                            m_model->setOutdatedDriveNumber(m_model->getOutdatedDriveNumber() + 1);
+                            onFsTreeReceived(driveKey, fsTreeHash, fsTree);
+                            if (counter == m_model->getOutdatedDriveNumber()) {
+                                disconnect(m_model);
+                                disconnect(m_onChainClient->getStorageEngine());
+                                m_model->saveSettings();
+                                emit drivesInitialized();
+                            }
+                        }, Qt::QueuedConnection);
+                    }
 
-                                      for ( auto outdatedDrive : outdatedDrives ) {
-                                          const auto fileStructureCDI = rawHashToHex(
-                                                  outdatedDrive->getRootHash()).toStdString();
-                                          onDownloadFsTreeDirect( outdatedDrive->getKey(), fileStructureCDI );
-                                      }
-                                  }
-                              }
-                          }, Qt::QueuedConnection );
+                    for (auto outdatedDrive : outdatedDrives) {
+                        const auto fileStructureCDI = rawHashToHex(outdatedDrive->getRootHash()).toStdString();
+                        onDownloadFsTreeDirect(outdatedDrive->getKey(), fileStructureCDI);
+                    }
+                }
+            }
+        }, Qt::QueuedConnection);
 
-                 // add drives created on another devices
-                 m_model->onDrivesLoaded( drivesPages );
-                 m_model->setDrivesLoaded( true );
+        // add drives created on another devices
+        m_model->onDrivesLoaded(drivesPages);
+        m_model->setDrivesLoaded(true);
 
-                 if ( drivesPages[0].pagination.totalEntries == 0 ) {
-                     m_model->getDrives().clear();
-                     m_model->saveSettings();
-                     emit drivesInitialized();
-                 }
+        if (drivesPages[0].pagination.totalEntries == 0) {
+            m_model->getDrives().clear();
+            m_model->saveSettings();
+            emit drivesInitialized();
+        }
 
-                 connect( m_onChainClient, &OnChainClient::downloadFsTreeDirect, this, &MainWin::onDownloadFsTreeDirect,
-                          Qt::QueuedConnection );
+        connect( m_onChainClient, &OnChainClient::downloadFsTreeDirect, this, &MainWin::onDownloadFsTreeDirect, Qt::QueuedConnection);
 
-                 // load my own channels
-                 xpx_chain_sdk::DownloadChannelsPageOptions options;
-                 options.consumerKey = m_model->getClientPublicKey();
-                 m_onChainClient->loadDownloadChannels( options );
-             }, Qt::QueuedConnection );
+        // load my own channels
+        xpx_chain_sdk::DownloadChannelsPageOptions options;
+        options.consumerKey = m_model->getClientPublicKey();
+        m_onChainClient->loadDownloadChannels(options);
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this,
-             [this]( auto alias, auto channelKey, auto driveKey ) {
-                 onChannelCreationConfirmed( alias, sirius::drive::toString( channelKey ),
-                                             sirius::drive::toString( driveKey ));
-             }, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
+        onChannelCreationConfirmed( alias, sirius::drive::toString( channelKey ), sirius::drive::toString(driveKey) );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this,
-             [this]( auto& channelKey, auto& errorText ) {
-                 onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString());
-             }, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
+           onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
+    }, Qt::QueuedConnection);
 
-    connect( this, &MainWin::drivesInitialized, this, [this]() {
+    connect(this, &MainWin::drivesInitialized, this, [this]() {
         ui->m_driveCBox->clear();
-        for ( const auto&[key, drive] : m_model->getDrives()) {
-            addEntityToUi( ui->m_driveCBox, drive.getName(), drive.getKey());
-            if ( boost::iequals( key, m_model->currentDriveKey())) {
-                ui->m_drivePath->setText( "Path: " + QString::fromStdString( drive.getLocalFolder()));
-                onDriveStateChanged( drive.getKey(), drive.getState());
+        ui->m_streamDriveCBox->clear();
+        for (const auto& [key, drive] : m_model->getDrives()) {
+            addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
+            if (boost::iequals(key, m_model->currentDriveKey()) ) {
+                ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+                onDriveStateChanged(drive.getKey(), drive.getState());
             }
         }
 
-        if ( !m_model->getDrives().empty() &&
-             (!m_model->getDrives().contains( m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
+        if (!m_model->getDrives().empty() && (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
             const auto driveKey = ui->m_driveCBox->currentData().toString().toStdString();
-            m_model->setCurrentDriveKey( driveKey );
-            setCurrentDriveOnUi( driveKey );
+            m_model->setCurrentDriveKey(driveKey);
+            setCurrentDriveOnUi(driveKey);
             const auto drive = m_model->getDrives()[driveKey];
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString( drive.getLocalFolder()));
-            onDriveStateChanged( drive.getKey(), drive.getState());
-        } else if ( !m_model->getDrives().empty()) {
-            setCurrentDriveOnUi( m_model->currentDriveKey());
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+            onDriveStateChanged(drive.getKey(), drive.getState());
+        } else if (!m_model->getDrives().empty()) {
+            setCurrentDriveOnUi(m_model->currentDriveKey());
         }
 
         addLocalModificationsWatcher();
 
-        connect( m_model, &Model::driveStateChanged, this, &MainWin::onDriveStateChanged, Qt::QueuedConnection );
-        connect( ui->m_driveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this,
-                 &MainWin::onCurrentDriveChanged, Qt::QueuedConnection );
-        connect( m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived,
-                 Qt::QueuedConnection );
+        connect(m_model, &Model::driveStateChanged, this, &MainWin::onDriveStateChanged, Qt::QueuedConnection);
+        connect(ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
+        connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
 
-        lockMainButtons( false );
+        lockMainButtons(false);
         unlockDrive();
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this,
-             &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::downloadChannelCloseTransactionFailed, this,
-             &MainWin::onDownloadChannelCloseFailed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::downloadPaymentTransactionConfirmed, this,
-             &MainWin::onDownloadPaymentConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::downloadPaymentTransactionFailed, this, &MainWin::onDownloadPaymentFailed,
-             Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::storagePaymentTransactionConfirmed, this,
-             &MainWin::onStoragePaymentConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::storagePaymentTransactionFailed, this, &MainWin::onStoragePaymentFailed,
-             Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::cancelModificationTransactionConfirmed, this,
-             &MainWin::onCancelModificationTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this,
-             &MainWin::onCancelModificationTransactionFailed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionConfirmed, this,
-             &MainWin::onReplicatorOnBoardingTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionFailed, this,
-             &MainWin::onReplicatorOnBoardingTransactionFailed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionConfirmed, this,
-             &MainWin::onReplicatorOffBoardingTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionFailed, this,
-             &MainWin::onReplicatorOffBoardingTransactionFailed, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionFailed, this, &MainWin::onDownloadChannelCloseFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionConfirmed, this, &MainWin::onDownloadPaymentConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionFailed, this, &MainWin::onDownloadPaymentFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::storagePaymentTransactionConfirmed, this, &MainWin::onStoragePaymentConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::storagePaymentTransactionFailed, this, &MainWin::onStoragePaymentFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::cancelModificationTransactionConfirmed, this, &MainWin::onCancelModificationTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this, &MainWin::onCancelModificationTransactionFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionConfirmed, this, &MainWin::onReplicatorOnBoardingTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionFailed, this, &MainWin::onReplicatorOnBoardingTransactionFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionConfirmed, this, &MainWin::onReplicatorOffBoardingTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionFailed, this, &MainWin::onReplicatorOffBoardingTransactionFailed, Qt::QueuedConnection);
 
-    connect( ui->m_closeChannel, &QPushButton::released, this, [this]() {
+    connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
         auto channel = m_model->currentDownloadChannel();
-        if ( !channel ) {
-            qWarning() << LOG_SOURCE << "Bad current download channel. Channels count: "
-                       << m_model->getDownloadChannels().size();
+        if (!channel) {
+            qWarning() << LOG_SOURCE << "Bad current download channel. Channels count: " << m_model->getDownloadChannels().size();
             return;
         }
 
-        CloseChannelDialog dialog( m_onChainClient, channel->getKey().c_str(), channel->getName().c_str(), this );
+        CloseChannelDialog dialog(m_onChainClient, channel->getKey().c_str(), channel->getName().c_str(), this);
         auto rc = dialog.exec();
-        if ( rc == QMessageBox::Ok ) {
-            channel->setDeleting( true );
-            updateDownloadChannelStatusOnUi( *channel );
-            lockChannel( channel->getKey());
+        if ( rc==QMessageBox::Ok )
+        {
+            channel->setDeleting(true);
+            updateDownloadChannelStatusOnUi(*channel);
+            lockChannel(channel->getKey());
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_addDrive, &QPushButton::released, this, [this]() {
-        AddDriveDialog dialog( m_onChainClient, m_model, this );
+    connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
+        AddDriveDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_closeDrive, &QPushButton::released, this, [this]() {
+    connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
         auto drive = m_model->currentDrive();
-        if ( !drive ) {
+        if (!drive) {
             qWarning() << LOG_SOURCE << "bad drive";
             return;
         }
 
-        CloseDriveDialog dialog( m_onChainClient, drive, this );
+        CloseDriveDialog dialog(m_onChainClient, drive, this);
         dialog.exec();
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this]( auto driveKey ) {
-        onDriveCreationConfirmed( sirius::drive::toString( driveKey ));
-    }, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto driveKey) {
+        onDriveCreationConfirmed( sirius::drive::toString( driveKey ) );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::prepareDriveTransactionFailed, this,
-             [this]( auto driveKey, auto errorText ) {
-                 onDriveCreationFailed( sirius::drive::toString( driveKey ), errorText.toStdString());
-             }, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::prepareDriveTransactionFailed, this, [this](auto driveKey, auto errorText) {
+        onDriveCreationFailed( sirius::drive::toString( driveKey ), errorText.toStdString() );
+    }, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, &MainWin::onDriveCloseConfirmed,
-             Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::closeDriveTransactionFailed, this, &MainWin::onDriveCloseFailed,
-             Qt::QueuedConnection );
-    connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, &MainWin::onDriveCloseConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::closeDriveTransactionFailed, this, &MainWin::onDriveCloseFailed, Qt::QueuedConnection);
+    connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection);
 
-    connect( m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this]( auto networkName ) {
+    connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName) {
         qDebug() << "network layer initialized successfully";
 
-        getMosaicIdByName( m_model->getClientPublicKey().c_str(), "xpx", [this]( auto id ) {
+        getMosaicIdByName(m_model->getClientPublicKey().c_str(), "xpx", [this](auto id) {
             m_XPX_MOSAIC_ID = id;
             loadBalance();
-        } );
+        });
 
-        ui->m_networkName->setText( networkName );
+        ui->m_networkName->setText(networkName);
 
         xpx_chain_sdk::DrivesPageOptions options;
         options.owner = m_model->getClientPublicKey();
-        m_onChainClient->loadDrives( options );
+        m_onChainClient->loadDrives(options);
 
-        if ( m_model->getDownloadChannels().empty()) {
-            lockChannel( "" );
+        if (m_model->getDownloadChannels().empty()) {
+            lockChannel("");
         } else {
-            unlockChannel( "" );
+            unlockChannel("");
         }
 
-        if ( m_model->getDrives().empty()) {
+        if (m_model->getDrives().empty()) {
             lockDrive();
         } else {
             unlockDrive();
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_onBoardReplicator, &QPushButton::released, this, [this]() {
-        ReplicatorOnBoardingDialog dialog( m_onChainClient, m_model, this );
+    connect(ui->m_onBoardReplicator, &QPushButton::released, this, [this](){
+        ReplicatorOnBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
-    } );
+    });
 
-    connect( ui->m_offBoardReplicator, &QPushButton::released, this, [this]() {
-        ReplicatorOffBoardingDialog dialog( m_onChainClient, m_model, this );
+    connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
+        ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.open();
-    } );
+    });
 
-    connect( m_onChainClient, &OnChainClient::internalError, this, &MainWin::onInternalError, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this,
-             &MainWin::onDataModificationTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this,
-             &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this,
-             &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this,
-             &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection );
+    connect(m_onChainClient, &OnChainClient::internalError, this, &MainWin::onInternalError, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, &MainWin::onDataModificationTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
     connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
              &MainWin::onDeployContractTransactionConfirmed, Qt::QueuedConnection );
     connect( m_onChainClient, &OnChainClient::deployContractTransactionFailed, this,
@@ -479,129 +446,135 @@ void MainWin::init() {
              &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
     connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
              &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
-    connect( ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::newNotification, this, [this]( auto notification ) {
-        showNotification( notification );
-        addNotification( notification );
-    }, Qt::QueuedConnection );
+    connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::newNotification, this, [this](auto notification) {
+        showNotification(notification);
+        addNotification(notification);
+    }, Qt::QueuedConnection);
 
     setupDownloadsTab();
     setupDrivesTab();
     setupMyReplicatorTab();
 
     // Start update-timer for downloads
-    m_downloadUpdateTimer = new QTimer( this );
-    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this] {
+    m_downloadUpdateTimer = new QTimer(this);
+    connect( m_downloadUpdateTimer, &QTimer::timeout, this, [this]
+    {
         auto selectedIndexes = ui->m_downloadsTableView->selectionModel()->selectedRows();
 
         m_downloadsTableModel->updateProgress();
 
-        if ( !selectedIndexes.empty()) {
-            ui->m_downloadsTableView->selectRow( selectedIndexes.begin()->row());
+        if ( ! selectedIndexes.empty() )
+        {
+            ui->m_downloadsTableView->selectRow( selectedIndexes.begin()->row() );
         }
-        ui->m_removeDownloadBtn->setEnabled( !selectedIndexes.empty());
+        ui->m_removeDownloadBtn->setEnabled( ! selectedIndexes.empty() );
 
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    m_downloadUpdateTimer->start( 500 ); // 2 times per second
+    m_downloadUpdateTimer->start(500); // 2 times per second
 
-    m_modificationStatusTimer = new QTimer( this );
+    m_modificationStatusTimer = new QTimer(this);
     connect( m_modificationStatusTimer, &QTimer::timeout, this, [this] {
         auto drive = m_model->currentDrive();
-        if ( drive && isCurrentDrive( drive ) && drive->getState() == DriveState::uploading ) {
-            auto drivePubKey = rawHashFromHex( drive->getKey().c_str());
-            auto modificationId = m_onChainClient->transactionsEngine()->getLatestModificationId( drivePubKey );
-            for ( const auto& replicator : drive->getReplicators()) {
-                m_model->requestModificationStatus( rawHashToHex( replicator.array()).toStdString(), drive->getKey(),
-                                                    rawHashToHex( modificationId ).toStdString());
+        if (drive && isCurrentDrive(drive) && drive->getState() == DriveState::uploading) {
+            auto drivePubKey = rawHashFromHex(drive->getKey().c_str());
+            auto modificationId = m_onChainClient->transactionsEngine()->getLatestModificationId(drivePubKey);
+            for (const auto& replicator : drive->getReplicators()) {
+                m_model->requestModificationStatus(rawHashToHex(replicator.array()).toStdString(), drive->getKey(), rawHashToHex(modificationId).toStdString());
             }
         } else {
-            if ( m_modificationStatusTimer->isActive()) {
+            if (m_modificationStatusTimer->isActive()) {
                 m_modificationStatusTimer->stop();
             }
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    lockMainButtons( true );
+    lockMainButtons(true);
     lockDrive();
-    lockChannel( "" );
+    lockChannel("");
 
-    auto modifyPanelCallback = [this]() {
+    auto modifyPanelCallback = [this](){
         cancelModification();
     };
 
     m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
-    m_modifyProgressPanel->setVisible( false );
+    m_modifyProgressPanel->setVisible(false);
 
-    connect( this, &MainWin::updateUploadedDataAmount, this, [this]( auto amount ) {
-        if ( m_modifyProgressPanel->isVisible()) {
-            m_modifyProgressPanel->updateUploadedDataAmount( amount );
+    connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){
+        if (m_modifyProgressPanel->isVisible()) {
+            m_modifyProgressPanel->updateUploadedDataAmount(amount);
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( this, &MainWin::modificationFinishedByReplicators, this, [this]() {
-        if ( m_modificationStatusTimer->isActive()) {
+    connect(this, &MainWin::modificationFinishedByReplicators, this, [this]() {
+        if (m_modificationStatusTimer->isActive()) {
             m_modificationStatusTimer->stop();
         }
 
-        if ( m_modifyProgressPanel->isVisible()) {
+        if (m_modifyProgressPanel->isVisible()) {
             m_modifyProgressPanel->setApproving();
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this] { cancelViewingStream(); } );
-    m_startViewingProgressPanel->setVisible( false );
+    m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
+    m_startViewingProgressPanel->setVisible(false);
 
-    m_startStreamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this] { cancelStreaming(); } );
-    m_startStreamingProgressPanel->setVisible( false );
+    m_startStreamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); });
+    m_startStreamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
     ui->tabWidget->setTabVisible( 4, false );
 #endif
-    connect( ui->tabWidget, &QTabWidget::currentChanged, this, [this]( int index ) {
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
 
         updateViewerProgressPanel( index );
         updateStreamerProgressPanel( index );
 
-        if ( index != 1 ) {
-            m_modifyProgressPanel->setVisible( false );
-        }
-
         // Downloads tab
-        if ( index == 0 ) {
-            if ( m_model->getDownloadChannels().empty()) {
-                lockChannel( "" );
+        if (index == 0) {
+            if (m_model->getDownloadChannels().empty()) {
+                lockChannel("");
             } else {
                 auto channel = m_model->currentDownloadChannel();
-                if ( channel ) {
-                    lockChannel( channel->getKey());
+                if (channel) {
+                    lockChannel(channel->getKey());
                 } else {
-                    unlockChannel( "" );
+                    unlockChannel("");
                 }
             }
         }
 
         // Drives tab
-        if ( index == 1 ) {
-            if ( m_model->getDrives().empty()) {
+        if (index == 1) {
+            if (m_model->getDrives().empty()) {
                 lockDrive();
             } else {
                 unlockDrive();
             }
         }
 
-        auto drive = m_model->currentDrive();
-        if ( index == 1 && !m_model->getDrives().empty() && drive ) {
-            onDriveStateChanged( drive->getKey(), drive->getState());
+        //auto drive = m_model->currentDrive();
+        auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
+        if (index == 1 && !m_model->getDrives().empty() && drive) {
+            onDriveStateChanged(drive->getKey(), drive->getState());
+        }
+        else if ( index == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+            onDriveStateChanged( drive->getKey(), drive->getState() );
+        }
+        else
+        {
+            m_modifyProgressPanel->setVisible( false );
         }
     }, Qt::QueuedConnection );
 
-    connect( m_settings, &Settings::downloadError, this, [this]( auto message ) {
-        addNotification( message );
-        showNotification( message );
-    }, Qt::QueuedConnection );
+    connect(m_settings, &Settings::downloadError, this, [this](auto message){
+        addNotification(message);
+        showNotification(message);
+    }, Qt::QueuedConnection);
 
-    if ( m_settings->m_isDriveStructureAsTree ) {
+    if (m_settings->m_isDriveStructureAsTree) {
         ui->m_driveFsTableView->hide();
         ui->m_diffTableView->hide();
     } else {
@@ -610,13 +583,12 @@ void MainWin::init() {
     }
 
     m_model->setModificationStatusResponseHandler(
-            [this]( auto replicatorKey, auto modificationHash, auto msg, auto currentTask, bool isQueued,
-                    bool isFinished, auto error ) {
-                dataModificationsStatusHandler( replicatorKey, modificationHash, msg, currentTask, isQueued, isFinished,
-                                                error );
+            [this](auto replicatorKey, auto modificationHash,auto msg, auto currentTask, bool isQueued, bool isFinished, auto error){
+        dataModificationsStatusHandler(replicatorKey, modificationHash, msg, currentTask, isQueued, isFinished, error);
             } );
 
-//    ui->m_contractExecutionCallPayment->setInputMask(QString::fromStdString());
+    ui->m_contractMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
+    ui->m_contractCallMosaicTable->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeMode::Stretch );
 
     connect( &m_model->driveContractModel(), &DriveContractModel::driveContractAdded, this,
              [this]( const std::string& driveKey ) {
@@ -809,7 +781,7 @@ void MainWin::init() {
              this,
              [this]( const QItemSelection& selected, const QItemSelection& deselected ) {
                  ui->m_removeMosaic->setDisabled( selected.indexes().empty());
-             } );
+    });
 
     QObject::connect( ui->m_contractMosaicTable, &QTableWidget::itemChanged, this,
                       [this]( QTableWidgetItem* item ) {
@@ -916,55 +888,60 @@ void MainWin::init() {
     initStreaming();
 }
 
-MainWin::~MainWin() {
+MainWin::~MainWin()
+{
     m_model->endStorageEngine();
     delete ui;
 }
 
-void MainWin::cancelModification() {
+void MainWin::cancelModification()
+{
     auto drive = m_model->currentDrive();
-    if ( !drive ) {
+    if (!drive) {
         qWarning() << "MainWin::cancelModification. Unknown drive";
         return;
     }
 
-    CancelModificationDialog dialog( m_onChainClient, drive->getKey().c_str(), drive->getName().c_str(), this );
-    if ( dialog.exec() == QMessageBox::Ok ) {
-        drive->updateState( canceling );
+    CancelModificationDialog dialog(m_onChainClient, drive->getKey().c_str(), drive->getName().c_str(), this);
+    if ( dialog.exec() == QMessageBox::Ok )
+    {
+        drive->updateState(canceling);
     }
 }
 
 void MainWin::setupIcons() {
-    qDebug() << getResource( "./resources/icons/settings.png" );
-    QIcon settingsButtonIcon( getResource( "./resources/icons/settings.png" ));
-    ui->m_settingsButton->setFixedSize( settingsButtonIcon.availableSizes().first());
-    ui->m_settingsButton->setText( "" );
-    ui->m_settingsButton->setIcon( settingsButtonIcon );
-    ui->m_settingsButton->setStyleSheet( "background: transparent; border: 0px;" );
-    ui->m_settingsButton->setIconSize( QSize( 18, 18 ));
+    qDebug() << getResource("./resources/icons/settings.png");
+    QIcon settingsButtonIcon(getResource("./resources/icons/settings.png"));
+    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+    ui->m_settingsButton->setText("");
+    ui->m_settingsButton->setIcon(settingsButtonIcon);
+    ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
+    ui->m_settingsButton->setIconSize(QSize(18, 18));
 
-    QIcon notificationsButtonIcon( getResource( "./resources/icons/notification.png" ));
-    ui->m_notificationsButton->setFixedSize( notificationsButtonIcon.availableSizes().first());
-    ui->m_notificationsButton->setText( "" );
-    ui->m_notificationsButton->setIcon( notificationsButtonIcon );
-    ui->m_notificationsButton->setStyleSheet( "background: transparent; border: 0px;" );
-    ui->m_notificationsButton->setIconSize( QSize( 18, 18 ));
+    QIcon notificationsButtonIcon(getResource("./resources/icons/notification.png"));
+    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+    ui->m_notificationsButton->setText("");
+    ui->m_notificationsButton->setIcon(notificationsButtonIcon);
+    ui->m_notificationsButton->setStyleSheet("background: transparent; border: 0px;");
+    ui->m_notificationsButton->setIconSize(QSize(18, 18));
 
-    QPixmap networkIcon( getResource( "./resources/icons/network.png" ));
-    ui->m_networkLabel->setPixmap( networkIcon );
-    ui->m_networkLabel->setStyleSheet( "padding: 5px 5px 5px 5px;" );
-    ui->m_networkLabel->setAlignment( Qt::AlignLeft );
-    ui->m_networkName->setAlignment( Qt::AlignLeft );
-    ui->m_networkName->setStyleSheet( "padding-top: 5px; padding-bottom: 5px;" );
-    ui->m_balance->setStyleSheet( "padding-top: 5px; padding-bottom: 5px;" );
-    ui->m_balanceValue->setStyleSheet( "padding-top: 5px; padding-bottom: 5px;" );
-    ui->label_5->setStyleSheet( "padding-top: 5px; padding-bottom: 5px;" );
+    QPixmap networkIcon(getResource("./resources/icons/network.png"));
+    ui->m_networkLabel->setPixmap(networkIcon);
+    ui->m_networkLabel->setStyleSheet("padding: 5px 5px 5px 5px;");
+    ui->m_networkLabel->setAlignment(Qt::AlignLeft);
+    ui->m_networkName->setAlignment(Qt::AlignLeft);
+    ui->m_networkName->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->m_balance->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->m_balanceValue->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+    ui->label_5->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
 
-    ui->m_balance->setText( "Balance:" );
+    ui->m_balance->setText("Balance:");
 }
 
-void MainWin::setupDownloadsTab() {
-    if ( ALEX_LOCAL_TEST ) {
+void MainWin::setupDownloadsTab()
+{
+    if ( ALEX_LOCAL_TEST )
+    {
         m_model->stestInitChannels();
     }
 
@@ -973,42 +950,49 @@ void MainWin::setupDownloadsTab() {
 
     ui->m_channels->addItem( "Loading..." );
 
-    connect( ui->m_downloadBtn, &QPushButton::released, this, &MainWin::onDownloadBtn, Qt::QueuedConnection );
+    connect( ui->m_downloadBtn, &QPushButton::released, this, &MainWin::onDownloadBtn, Qt::QueuedConnection);
 
-    auto menu = new PopupMenu( ui->m_moreChannelsBtn, this );
-    auto renameAction = new QAction( "Rename", this );
-    menu->addAction( renameAction );
-    connect( renameAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr ) {
+    auto menu = new PopupMenu(ui->m_moreChannelsBtn, this);
+    auto renameAction = new QAction("Rename", this);
+    menu->addAction(renameAction);
+    connect( renameAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
+        {
             std::string channelName = channelInfo->getName();
             std::string channelKey = channelInfo->getKey();
 
             EditDialog dialog( "Rename channel", "Channel name:", channelName, EditDialog::DownloadChannel, m_model );
-            if ( dialog.exec() == QDialog::Accepted ) {
+            if ( dialog.exec() == QDialog::Accepted )
+            {
                 qDebug() << "channelName: " << channelName.c_str();
-                if ( auto* channelInfo = m_model->findChannel( channelKey ); channelInfo != nullptr ) {
+                if ( auto* channelInfo = m_model->findChannel(channelKey); channelInfo != nullptr )
+                {
                     qDebug() << "channelName renamed: " << channelName.c_str();
 
-                    channelInfo->setName( channelName );
+                    channelInfo->setName(channelName);
                     m_model->saveSettings();
-                    updateEntityNameOnUi( ui->m_channels, channelName, channelInfo->getKey());
+                    updateEntityNameOnUi(ui->m_channels, channelName, channelInfo->getKey());
                 }
             }
             qDebug() << "channelName?: " << channelName;
         }
-    } );
+    });
 
-    auto topUpAction = new QAction( "Top-up", this );
-    menu->addAction( topUpAction );
-    connect( topUpAction, &QAction::triggered, this, [this]( bool ) {
-        DownloadPaymentDialog dialog( m_onChainClient, m_model, this );
+    auto topUpAction = new QAction("Top-up", this);
+    menu->addAction(topUpAction);
+    connect( topUpAction, &QAction::triggered, this, [this](bool)
+    {
+        DownloadPaymentDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
-    } );
+    });
 
-    auto copyChannelKeyAction = new QAction( "Copy channel key", this );
-    menu->addAction( copyChannelKeyAction );
-    connect( copyChannelKeyAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr ) {
+    auto copyChannelKeyAction = new QAction("Copy channel key", this);
+    menu->addAction(copyChannelKeyAction);
+    connect( copyChannelKeyAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* channelInfo = m_model->currentDownloadChannel(); channelInfo != nullptr )
+        {
             std::string channelKey = channelInfo->getKey();
 
             QClipboard* clipboard = QApplication::clipboard();
@@ -1017,179 +1001,196 @@ void MainWin::setupDownloadsTab() {
                 return;
             }
 
-            clipboard->setText( QString::fromStdString( channelKey ), QClipboard::Clipboard );
-            if ( clipboard->supportsSelection()) {
-                clipboard->setText( QString::fromStdString( channelKey ), QClipboard::Selection );
+            clipboard->setText( QString::fromStdString(channelKey), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(channelKey), QClipboard::Selection );
             }
         }
-    } );
+    });
 
-    auto channelInfoAction = new QAction( "Channel info", this );
-    menu->addAction( channelInfoAction );
-    connect( channelInfoAction, &QAction::triggered, this, [this]( bool ) {
+    auto channelInfoAction = new QAction("Channel info", this);
+    menu->addAction(channelInfoAction);
+    connect( channelInfoAction, &QAction::triggered, this, [this](bool)
+    {
         auto channel = m_model->currentDownloadChannel();
-        if ( !channel ) {
+        if (!channel) {
             qWarning() << "Channel info action. Unknown download channel (Invalid pointer to channel)";
             return;
         }
 
-        m_onChainClient->getBlockchainEngine()->getDownloadChannelById( channel->getKey(), [this, channel]
-                ( auto remoteChannel, auto isSuccess, auto message, auto code ) {
-            if ( !isSuccess ) {
+        m_onChainClient->getBlockchainEngine()->getDownloadChannelById(channel->getKey(),[this, channel]
+            (auto remoteChannel, auto isSuccess, auto message, auto code ){
+            if (!isSuccess) {
                 qWarning() << "Channel info action. Error: " << message.c_str() << " : " << code.c_str();
                 return;
             }
 
-            ChannelInfoDialog dialog( this );
-            dialog.setName( channel->getName().c_str());
-            dialog.setId( channel->getKey().c_str());
-            dialog.setDriveId( channel->getDriveKey().c_str());
-            dialog.setReplicators( remoteChannel.data.shardReplicators );
-            dialog.setKeys( remoteChannel.data.listOfPublicKeys );
-            dialog.setPrepaid( remoteChannel.data.downloadSizeMegabytes );
+            ChannelInfoDialog dialog(this);
+            dialog.setName(channel->getName().c_str());
+            dialog.setId(channel->getKey().c_str());
+            dialog.setDriveId(channel->getDriveKey().c_str());
+            dialog.setReplicators(remoteChannel.data.shardReplicators);
+            dialog.setKeys(remoteChannel.data.listOfPublicKeys);
+            dialog.setPrepaid(remoteChannel.data.downloadSizeMegabytes);
             dialog.init();
             dialog.exec();
-        } );
-    } );
+        });
+    });
 
-    ui->m_moreChannelsBtn->setMenu( menu );
+    ui->m_moreChannelsBtn->setMenu(menu);
 }
 
-void MainWin::setupChannelFsTable() {
-    connect( ui->m_channelFsTableView, &QTableView::doubleClicked, this, [this]( const QModelIndex& index ) {
-        if ( !index.isValid()) {
+void MainWin::setupChannelFsTable()
+{
+    connect( ui->m_channelFsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
+    {
+        if (!index.isValid()) {
             return;
         }
 
-        int toBeSelectedRow = m_channelFsTreeTableModel->onDoubleClick( index.row());
+        int toBeSelectedRow = m_channelFsTreeTableModel->onDoubleClick( index.row() );
         ui->m_channelFsTableView->selectRow( toBeSelectedRow );
-        ui->m_path->setText( "Path: " + QString::fromStdString( m_channelFsTreeTableModel->currentPathString()));
-        if ( auto* channelPtr = m_model->currentDownloadChannel(); channelPtr != nullptr ) {
-            channelPtr->setLastOpenedPath( m_channelFsTreeTableModel->currentPath());
+        ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+        if ( auto* channelPtr = m_model->currentDownloadChannel(); channelPtr != nullptr )
+        {
+            channelPtr->setLastOpenedPath(m_channelFsTreeTableModel->currentPath());
             qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << channelPtr->getLastOpenedPath();
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_channelFsTableView, &QTableView::pressed, this, [this]( const QModelIndex& index ) {
-        if ( index.isValid()) {
-            selectChannelFsItem( index.row());
+    connect( ui->m_channelFsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
+    {
+        if (index.isValid()) {
+            selectChannelFsItem( index.row() );
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_channelFsTableView, &QTableView::clicked, this, [this]( const QModelIndex& index ) {
-        if ( index.isValid()) {
-            selectChannelFsItem( index.row());
+    connect( ui->m_channelFsTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
+    {
+        if (index.isValid()) {
+            selectChannelFsItem( index.row() );
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
     m_channelFsTreeTableModel = new FsTreeTableModel( m_model, true );
 
     ui->m_channelFsTableView->setModel( m_channelFsTreeTableModel );
-    ui->m_channelFsTableView->setColumnWidth( 0, 300 );
-    ui->m_channelFsTableView->horizontalHeader()->setStretchLastSection( true );
+    ui->m_channelFsTableView->setColumnWidth(0,300);
+    ui->m_channelFsTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_channelFsTableView->horizontalHeader()->hide();
     ui->m_channelFsTableView->setGridStyle( Qt::NoPen );
     ui->m_channelFsTableView->update();
-    ui->m_path->setText( "Path: " + QString::fromStdString( m_channelFsTreeTableModel->currentPathString()));
+    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
 }
 
-void MainWin::selectChannelFsItem( int index ) {
-    if ( index < 0 && index >= m_channelFsTreeTableModel->m_rows.size()) {
+void MainWin::selectChannelFsItem( int index )
+{
+    if ( index < 0 && index >= m_channelFsTreeTableModel->m_rows.size() )
+    {
         return;
     }
 
     ui->m_channelFsTableView->selectRow( index );
 }
 
-void MainWin::setupDriveFsTable() {
-    connect( ui->m_driveFsTableView, &QTableView::doubleClicked, this, [this]( const QModelIndex& index ) {
-        if ( !index.isValid()) {
+void MainWin::setupDriveFsTable()
+{
+    connect( ui->m_driveFsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
+    {
+        if (!index.isValid()) {
             return;
         }
 
-        int toBeSelectedRow = m_driveTableModel->onDoubleClick( index.row());
+        int toBeSelectedRow = m_driveTableModel->onDoubleClick(index.row() );
         ui->m_driveFsTableView->selectRow( toBeSelectedRow );
-        if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr ) {
-            drivePtr->setLastOpenedPath( m_driveTableModel->currentPath());
+        if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr )
+        {
+            drivePtr->setLastOpenedPath(m_driveTableModel->currentPath());
             qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << drivePtr->getLastOpenedPath();
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_driveFsTableView, &QTableView::pressed, this, [this]( const QModelIndex& index ) {
-        if ( index.isValid()) {
-            selectDriveFsItem( index.row());
+    connect( ui->m_driveFsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
+    {
+        if (index.isValid()) {
+            selectDriveFsItem( index.row() );
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    connect( ui->m_driveFsTableView, &QTableView::clicked, this, [this]( const QModelIndex& index ) {
-        if ( index.isValid()) {
-            selectDriveFsItem( index.row());
+    connect( ui->m_driveFsTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
+    {
+        if (index.isValid()) {
+            selectDriveFsItem( index.row() );
         }
-    }, Qt::QueuedConnection );
+    }, Qt::QueuedConnection);
 
-    m_driveTableModel = new FsTreeTableModel( m_model, false );
+    m_driveTableModel = new FsTreeTableModel(m_model, false );
 
-    ui->m_driveFsTableView->setModel( m_driveTableModel );
+    ui->m_driveFsTableView->setModel(m_driveTableModel );
     ui->m_driveFsTableView->horizontalHeader()->hide();
-    ui->m_driveFsTableView->setColumnWidth( 0, 300 );
-    ui->m_driveFsTableView->horizontalHeader()->setStretchLastSection( true );
+    ui->m_driveFsTableView->setColumnWidth(0,300);
+    ui->m_driveFsTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_driveFsTableView->setGridStyle( Qt::NoPen );
-    ui->m_driveFsTableView->horizontalHeader()->setDefaultAlignment( Qt::AlignLeft );
+    ui->m_driveFsTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
 
-    m_diffTreeModel = new DriveTreeModel( m_model, true, this );
+    m_diffTreeModel = new DriveTreeModel(m_model, true, this);
     ui->m_diffTreeView->setModel( m_diffTreeModel );
-    ui->m_diffTreeView->setTreePosition( 1 );
-    ui->m_diffTreeView->setColumnHidden( 0, true );
-    ui->m_diffTreeView->header()->resizeSection( 1, 300 );
-    ui->m_diffTreeView->header()->resizeSection( 2, 30 );
-    ui->m_diffTreeView->header()->setDefaultAlignment( Qt::AlignLeft );
-    ui->m_diffTreeView->setHeaderHidden( true );
+    ui->m_diffTreeView->setTreePosition(1);
+    ui->m_diffTreeView->setColumnHidden(0,true);
+    ui->m_diffTreeView->header()->resizeSection(1, 300);
+    ui->m_diffTreeView->header()->resizeSection(2, 30);
+    ui->m_diffTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_diffTreeView->setHeaderHidden(true);
     ui->m_diffTreeView->show();
     ui->m_diffTreeView->expandAll();
 
 }
 
-void MainWin::selectDriveFsItem( int index ) {
-    if ( index < 0 && index >= m_driveTableModel->m_rows.size()) {
+void MainWin::selectDriveFsItem( int index )
+{
+    if ( index < 0 && index >= m_driveTableModel->m_rows.size() )
+    {
         return;
     }
 
     ui->m_driveFsTableView->selectRow( index );
 
-    if ( !m_driveTableModel->m_rows.empty()) {
-        ui->m_downloadBtn->setEnabled( !m_driveTableModel->m_rows[index].m_isFolder );
+    if (!m_driveTableModel->m_rows.empty()) {
+        ui->m_downloadBtn->setEnabled( ! m_driveTableModel->m_rows[index].m_isFolder );
     }
 }
 
-void MainWin::onDownloadBtn() {
+void MainWin::onDownloadBtn()
+{
     auto channel = m_model->currentDownloadChannel();
-    if ( !channel ) {
-        qWarning() << "MainWin::onDownloadBtn. Download channel not found! (Invalid pointer)";
+    if (!channel) {
+        qWarning () << "MainWin::onDownloadBtn. Download channel not found! (Invalid pointer)";
         return;
     }
 
-    if ( m_channelFsTreeTableModel->getSelectedRows().empty()) {
+    if (m_channelFsTreeTableModel->getSelectedRows().empty()) {
         qInfo() << "MainWin::onDownload. Select at least one row";
         return;
     }
 
     auto updateReplicatorsCallback = [this, channel]() {
-        for ( const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows()) {
-            QDir().mkpath( QString::fromStdString( m_model->getDownloadFolder().string() + selectedRow.m_path ));
+        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
+        {
+            QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
 
-            auto ltHandle = m_model->downloadFile( channel->getKey(), selectedRow.m_hash );
+            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
             m_downloadsTableModel->beginResetModel();
 
             DownloadInfo downloadInfo;
-            downloadInfo.setHash( selectedRow.m_hash );
-            downloadInfo.setDownloadChannelKey( channel->getKey());
-            downloadInfo.setFileName( selectedRow.m_name );
-            downloadInfo.setSaveFolder( m_model->getDownloadFolder().string() + selectedRow.m_path );
-            downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string());
-            downloadInfo.setChannelOutdated( false );
-            downloadInfo.setCompleted( false );
-            downloadInfo.setProgress( 0 );
-            downloadInfo.setHandle( ltHandle );
+            downloadInfo.setHash(selectedRow.m_hash);
+            downloadInfo.setDownloadChannelKey(channel->getKey());
+            downloadInfo.setFileName(selectedRow.m_name);
+            downloadInfo.setSaveFolder(m_model->getDownloadFolder().string() + selectedRow.m_path);
+            downloadInfo.setDownloadFolder(m_model->getDownloadFolder().string());
+            downloadInfo.setChannelOutdated(false);
+            downloadInfo.setCompleted(false);
+            downloadInfo.setProgress(0);
+            downloadInfo.setHandle(ltHandle);
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
             m_downloadsTableModel->endResetModel();
@@ -1197,73 +1198,81 @@ void MainWin::onDownloadBtn() {
         }
     };
 
-    updateReplicatorsForChannel( channel->getKey(), updateReplicatorsCallback );
+    updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
 
-void MainWin::setupDownloadsTable() {
-    m_downloadsTableModel = new DownloadsTableModel( m_model, this );
+void MainWin::setupDownloadsTable()
+{
+    m_downloadsTableModel = new DownloadsTableModel(m_model, this);
 
     ui->m_downloadsTableView->setModel( m_downloadsTableModel );
-    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection( true );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_downloadsTableView->horizontalHeader()->hide();
     ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
     ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
-    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection( false );
-    ui->m_downloadsTableView->setColumnWidth( 1, 60 );
-    ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
+    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
+    ui->m_downloadsTableView->setColumnWidth(1, 60);
+    ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     ui->m_removeDownloadBtn->setEnabled( false );
 
-    connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this]( const QModelIndex& index ) {
-        ui->m_downloadsTableView->selectRow( index.row());
-    } );
+    connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
+    {
+        ui->m_downloadsTableView->selectRow( index.row() );
+    });
 
-    connect( ui->m_downloadsTableView, &QTableView::pressed, this, [this]( const QModelIndex& index ) {
-        ui->m_downloadsTableView->selectRow( index.row());
-    } );
+    connect( ui->m_downloadsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
+    {
+        ui->m_downloadsTableView->selectRow( index.row() );
+    });
 
-    connect( ui->m_downloadsTableView, &QTableView::clicked, this, [this]( const QModelIndex& index ) {
-        ui->m_downloadsTableView->selectRow( index.row());
-    } );
+    connect( ui->m_downloadsTableView, &QTableView::clicked, this, [this] (const QModelIndex &index)
+    {
+        ui->m_downloadsTableView->selectRow( index.row() );
+    });
 
-    connect( ui->m_removeDownloadBtn, &QPushButton::released, this, [this]() {
-        qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: "
-                 << ui->m_downloadsTableView->selectionModel()->selectedRows();
+    connect( ui->m_removeDownloadBtn, &QPushButton::released, this, [this] ()
+    {
+        qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
 
         auto rows = ui->m_downloadsTableView->selectionModel()->selectedRows();
-        if ( rows.empty()) {
+        if ( rows.empty() )
+        {
             return;
         }
 
         int rowIndex = rows.begin()->row();
         auto& downloads = m_model->downloads();
 
-        if ( !rows.empty() && rowIndex >= 0 && rowIndex < downloads.size()) {
+        if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
+        {
             DownloadInfo dnInfo = downloads[rowIndex];
 
             QMessageBox msgBox;
-            const QString message = QString::fromStdString(
-                    "Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?" );
-            msgBox.setText( message );
+            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
+            msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
 
-            if ( reply == QMessageBox::Ok ) {
+            if ( reply == QMessageBox::Ok )
+            {
                 m_model->removeFromDownloads( rowIndex );
-                addNotification( message );
+                addNotification(message);
                 m_model->saveSettings();
             }
         }
-    } );
+    });
 }
 
-bool MainWin::requestPrivateKey() {
+bool MainWin::requestPrivateKey()
+{
     {
         PrivKeyDialog pKeyDialog( m_settings, this );
         pKeyDialog.exec();
 
-        if ( pKeyDialog.result() != QDialog::Accepted ) {
+        if ( pKeyDialog.result() != QDialog::Accepted )
+        {
             qDebug() << "MainWin::requestPrivateKey. Not accepted!";
             return false;
         }
@@ -1274,353 +1283,442 @@ bool MainWin::requestPrivateKey() {
     SettingsDialog settingsDialog( m_settings, this, true );
     settingsDialog.exec();
 
-    if ( settingsDialog.result() != QDialog::Accepted ) {
+    if ( settingsDialog.result() != QDialog::Accepted )
+    {
         return false;
     }
 
     QRect basicGeometry;
-    basicGeometry.setWidth( 1000 );
-    basicGeometry.setHeight( 700 );
-    m_model->setWindowGeometry( basicGeometry );
+    basicGeometry.setWidth(1000);
+    basicGeometry.setHeight(700);
+    m_model->setWindowGeometry(basicGeometry);
 
     return true;
 }
 
-void MainWin::checkDriveForUpdates( Drive* drive, const std::function<void( bool )>& callback ) {
-    if ( !drive ) {
+void MainWin::checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback)
+{
+    if (!drive) {
         qWarning() << "MainWin::checkDriveForUpdates. Invalid pointer to drive";
-        callback( false );
+        callback(false);
         return;
     }
 
-    if ( drive->getState() == DriveState::creating || drive->getState() == DriveState::deleting ) {
-        qInfo() << "MainWin::checkDriveForUpdates. Drive in unacceptable state:"
-                << getPrettyDriveState( drive->getState());
-        callback( false );
+    if (drive->getState() == DriveState::creating || drive->getState() == DriveState::deleting) {
+        qInfo() << "MainWin::checkDriveForUpdates. Drive in unacceptable state:" << getPrettyDriveState(drive->getState());
+        callback(false);
         return;
     }
 
-    qDebug() << "MainWin::checkDriveForUpdates. Drive key: " << drive->getKey();
+    qDebug () << "MainWin::checkDriveForUpdates. Drive key: " << drive->getKey();
 
     m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(),
-                                                          [this, drive, callback]( auto remoteDrive, auto isSuccess,
-                                                                                   auto message, auto code ) {
-                                                              bool result = false;
-                                                              if ( !isSuccess ) {
-                                                                  qWarning()
-                                                                          << "MainWin::checkDriveForUpdates:: callback(false): "
-                                                                          << message.c_str() << " : " << code.c_str();
-                                                                  callback( result );
-                                                                  return;
-                                                              }
+    [this, drive, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
+        bool result = false;
+        if (!isSuccess) {
+            qWarning() << "MainWin::checkDriveForUpdates:: callback(false): " << message.c_str() << " : " << code.c_str();
+            callback(result);
+            return;
+        }
 
-                                                              drive->setReplicators( remoteDrive.data.replicators );
-                                                              m_onChainClient->getStorageEngine()->addReplicators(
-                                                                      drive->getReplicators());
+        drive->setReplicators(remoteDrive.data.replicators);
+        m_onChainClient->getStorageEngine()->addReplicators(drive->getReplicators());
 
-                                                              const auto remoteRootHash = rawHashFromHex(
-                                                                      remoteDrive.data.rootHash.c_str());
-                                                              if ( remoteRootHash != drive->getRootHash()) {
-                                                                  drive->setRootHash( remoteRootHash );
-                                                                  result = true;
-                                                              }
+        const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
+        if (remoteRootHash != drive->getRootHash()) {
+            drive->setRootHash(remoteRootHash);
+            result = true;
+        }
 
-                                                              callback( result );
-                                                          } );
+        callback(result);
+    });
 }
 
-void MainWin::checkDriveForUpdates( DownloadChannel* channel, const std::function<void( bool )>& callback ) {
-    if ( !channel ) {
+void MainWin::checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback)
+{
+    if (!channel) {
         qWarning() << "MainWin::checkDriveForUpdates. Invalid pointer to channel";
-        callback( false );
+        callback(false);
         return;
     }
 
-    if ( channel->isCreating()) {
+    if (channel->isCreating()) {
         qInfo() << "MainWin::checkDriveForUpdates. Download channel is creating:" << channel->getKey();
-        callback( false );
+        callback(false);
         return;
     }
 
-    qDebug() << "MainWin::checkDriveForUpdates. Channel key: " << channel->getKey();
+    qDebug () << "MainWin::checkDriveForUpdates. Channel key: " << channel->getKey();
 
     m_onChainClient->getBlockchainEngine()->getDriveById( channel->getDriveKey(),
-                                                          [this, channel, callback]( auto remoteDrive, auto isSuccess,
-                                                                                     auto message, auto code ) {
-                                                              bool result = false;
-                                                              if ( !isSuccess ) {
-                                                                  qWarning()
-                                                                          << "MainWin::checkDriveForUpdates:: callback(false): "
-                                                                          << message.c_str() << " : " << code.c_str();
-                                                                  callback( result );
-                                                                  return;
-                                                              }
+    [this, channel, callback] (auto remoteDrive, auto isSuccess, auto message, auto code ) {
+        bool result = false;
+        if (!isSuccess) {
+            qWarning() << "MainWin::checkDriveForUpdates:: callback(false): " << message.c_str() << " : " << code.c_str();
+            callback(result);
+            return;
+        }
 
-                                                              qDebug() << "MainWin::checkDriveForUpdates. driveKey: "
-                                                                       << channel->getDriveKey();
-                                                              qDebug()
-                                                                      << "MainWin::checkDriveForUpdates. remoteRootHash: "
-                                                                      << remoteDrive.data.rootHash;
+        qDebug () << "MainWin::checkDriveForUpdates. driveKey: " << channel->getDriveKey();
+        qDebug () << "MainWin::checkDriveForUpdates. remoteRootHash: " << remoteDrive.data.rootHash;
 
-                                                              const auto remoteRootHash = rawHashFromHex(
-                                                                      remoteDrive.data.rootHash.c_str());
-                                                              auto drive = m_model->findDrive( channel->getDriveKey());
-                                                              if ( drive ) {
-                                                                  drive->setReplicators( remoteDrive.data.replicators );
-                                                                  m_onChainClient->getStorageEngine()->addReplicators(
-                                                                          drive->getReplicators());
+        const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
+        auto drive = m_model->findDrive(channel->getDriveKey());
+        if (drive) {
+            drive->setReplicators(remoteDrive.data.replicators);
+            m_onChainClient->getStorageEngine()->addReplicators(drive->getReplicators());
 
-                                                                  if ( remoteRootHash == drive->getRootHash() &&
-                                                                       remoteRootHash == channel->getFsTreeHash()) {
-                                                                      m_model->applyFsTreeForChannels( drive->getKey(),
-                                                                                                       drive->getFsTree(),
-                                                                                                       remoteRootHash );
-                                                                  } else if ( remoteRootHash == drive->getRootHash() &&
-                                                                              remoteRootHash !=
-                                                                              channel->getFsTreeHash()) {
-                                                                      channel->setFsTreeHash( remoteRootHash );
-                                                                      m_model->applyFsTreeForChannels( drive->getKey(),
-                                                                                                       drive->getFsTree(),
-                                                                                                       remoteRootHash );
-                                                                  } else if ( remoteRootHash != drive->getRootHash() &&
-                                                                              remoteRootHash ==
-                                                                              channel->getFsTreeHash()) {
-                                                                      result = true;
-                                                                  } else if ( remoteRootHash != drive->getRootHash() &&
-                                                                              remoteRootHash !=
-                                                                              channel->getFsTreeHash()) {
-                                                                      channel->setFsTreeHash( remoteRootHash );
-                                                                      result = true;
-                                                                  } else {
-                                                                      qWarning()
-                                                                              << "MainWin::checkDriveForUpdates. Unresolved case for update!";
-                                                                  }
-                                                              } else {
-                                                                  if ( remoteRootHash != channel->getFsTreeHash()) {
-                                                                      channel->setFsTreeHash( remoteRootHash );
-                                                                      result = true;
-                                                                  }
-                                                              }
+            if (remoteRootHash == drive->getRootHash() && remoteRootHash == channel->getFsTreeHash()) {
+                m_model->applyFsTreeForChannels(drive->getKey(), drive->getFsTree(), remoteRootHash);
+            } else if (remoteRootHash == drive->getRootHash() && remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                m_model->applyFsTreeForChannels(drive->getKey(), drive->getFsTree(), remoteRootHash);
+            } else if (remoteRootHash != drive->getRootHash() && remoteRootHash == channel->getFsTreeHash()) {
+                result = true;
+            } else if (remoteRootHash != drive->getRootHash() && remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                result = true;
+            } else {
+                qWarning () << "MainWin::checkDriveForUpdates. Unresolved case for update!";
+            }
+        } else {
+            if (remoteRootHash != channel->getFsTreeHash()) {
+                channel->setFsTreeHash(remoteRootHash);
+                result = true;
+            }
+        }
 
-                                                              callback( result );
-                                                          } );
+        callback(result);
+    });
 }
 
-void MainWin::updateReplicatorsForChannel( const std::string& channelId, const std::function<void()>& callback ) {
-    auto channel = m_model->findChannel( channelId );
-    if ( !channel ) {
+void MainWin::updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback)
+{
+    auto channel = m_model->findChannel(channelId);
+    if (!channel) {
         qWarning() << "MainWin::updateReplicatorsForChannel. Invalid pointer to channel: " << channelId;
         callback();
         return;
     }
 
-    if ( channel->isCreating()) {
+    if (channel->isCreating()) {
         qInfo() << "MainWin::updateReplicatorsForChannel. Download channel is creating:" << channel->getKey();
         callback();
         return;
     }
 
-    qDebug() << "MainWin::updateReplicatorsForChannel. Channel key: " << channelId;
+    qDebug () << "MainWin::updateReplicatorsForChannel. Channel key: " << channelId;
 
     m_onChainClient->getBlockchainEngine()->getDownloadChannelById( channelId,
-                                                                    [this, channel, callback]( auto remoteChannel,
-                                                                                               auto isSuccess,
-                                                                                               auto message,
-                                                                                               auto code ) {
-                                                                        bool result = false;
-                                                                        if ( !isSuccess ) {
-                                                                            qWarning()
-                                                                                    << "MainWin::updateReplicatorsForChannel::callback(): "
-                                                                                    << message.c_str() << " : "
-                                                                                    << code.c_str();
-                                                                            callback();
-                                                                            return;
-                                                                        }
+    [this, channel, callback] (auto remoteChannel, auto isSuccess, auto message, auto code ) {
+        bool result = false;
+        if (!isSuccess) {
+            qWarning() << "MainWin::updateReplicatorsForChannel::callback(): " << message.c_str() << " : " << code.c_str();
+            callback();
+            return;
+        }
 
-                                                                        channel->setReplicators(
-                                                                                remoteChannel.data.shardReplicators );
-                                                                        m_onChainClient->getStorageEngine()->addReplicators(
-                                                                                channel->getReplicators());
+        channel->setReplicators(remoteChannel.data.shardReplicators);
+        m_onChainClient->getStorageEngine()->addReplicators(channel->getReplicators());
 
-                                                                        callback();
-                                                                    } );
+        callback();
+    });
 }
 
-void MainWin::onInternalError( const QString& errorText ) {
-    showNotification( errorText );
-    addNotification( errorText );
+void MainWin::onInternalError(const QString& errorText, bool isExit)
+{
+    showNotification(errorText);
+    addNotification(errorText);
+
+    if (isExit) {
+        QApplication::exit(3);
+    }
 }
 
-void MainWin::setDownloadChannelOnUi( const std::string& channelId ) {
-    auto channel = m_model->findChannel( channelId );
-    if ( !channel ) {
+void MainWin::setDownloadChannelOnUi(const std::string& channelId)
+{
+    auto channel = m_model->findChannel(channelId);
+    if (!channel) {
         qWarning() << "MainWin::setDownloadChannelOnUi. Unknown channel: " << channelId;
-        if ( ui->m_channels->count() > 0 ) {
-            ui->m_channels->setCurrentIndex( 0 );
-            m_model->setCurrentDownloadChannelKey( ui->m_channels->currentData().toString().toStdString());
+        if (ui->m_channels->count() > 0) {
+            ui->m_channels->setCurrentIndex(0);
+            m_model->setCurrentDownloadChannelKey( ui->m_channels->currentData().toString().toStdString() );
         }
 
         return;
     }
 
     const auto currentChannelKey = ui->m_channels->currentData().toString();
-    if ( !boost::iequals( channelId, currentChannelKey.toStdString())) {
-        const int index = ui->m_channels->findData( QVariant::fromValue( QString::fromStdString( channelId )),
-                                                    Qt::UserRole, Qt::MatchFixedString );
-        if ( index != -1 ) {
-            ui->m_channels->setCurrentIndex( index );
+    if ( ! boost::iequals(channelId, currentChannelKey.toStdString())) {
+        const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channelId)), Qt::UserRole, Qt::MatchFixedString);
+        if (index != -1) {
+            ui->m_channels->setCurrentIndex(index);
         } else {
             qWarning() << "MainWin::setDownloadChannelOnUi. Channel not found in UI: " << channelId;
         }
     }
 }
 
-void MainWin::setCurrentDriveOnUi( const std::string& driveKey ) {
-    auto drive = m_model->findDrive( driveKey );
-    if ( !drive ) {
+void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
+{
+    auto drive = m_model->findDrive(driveKey);
+    if (!drive) {
         qWarning() << "MainWin::setCurrentDriveOnUi. Unknown drive: " << driveKey;
-        if ( ui->m_driveCBox->count() > 0 ) {
-            ui->m_driveCBox->setCurrentIndex( 0 );
-            m_model->setCurrentDriveKey( ui->m_driveCBox->currentData().toString().toStdString());
+        if (ui->m_driveCBox->count() > 0) {
+            ui->m_driveCBox->setCurrentIndex(0);
+            m_model->setCurrentDriveKey( ui->m_driveCBox->currentData().toString().toStdString() );
         }
 
         return;
     }
 
     const auto currentDriveKey = ui->m_driveCBox->currentData().toString();
-    if ( !boost::iequals( driveKey, currentDriveKey.toStdString())) {
-        const int index = ui->m_driveCBox->findData( QVariant::fromValue( QString::fromStdString( driveKey )),
-                                                     Qt::UserRole, Qt::MatchFixedString );
-        if ( index != -1 ) {
-            ui->m_driveCBox->setCurrentIndex( index );
+    if ( ! boost::iequals(driveKey, currentDriveKey.toStdString())) {
+        const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(driveKey)), Qt::UserRole, Qt::MatchFixedString);
+        if (index != -1) {
+            ui->m_driveCBox->setCurrentIndex(index);
         } else {
             qWarning() << "MainWin::setCurrentDriveOnUi. Drive not found in UI: " << driveKey;
         }
     }
 }
 
-void MainWin::onDriveStateChanged( const std::string& driveKey, int state ) {
-    auto drive = m_model->findDrive( driveKey );
-    if ( !drive ) {
+void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
+{
+    auto drive = m_model->findDrive(driveKey);
+    if (!drive) {
         qWarning() << "MainWin::onDriveStateChanged. Drive not found!";
         return;
     }
 
-    qInfo() << "MainWin::onDriveStateChanged. Drive key: " << drive->getKey() << " state: "
-            << getPrettyDriveState( state );
+    qInfo() << "MainWin::onDriveStateChanged. Drive key: " << drive->getKey() << " state: " << getPrettyDriveState(state);
 
-    switch ( state ) {
-        case no_modifications: {
-            m_modifyProgressPanel->setVisible( false );
-            updateDriveStatusOnUi( *drive );
+    switch(state)
+    {
+        case no_modifications:
+        {
+            m_modifyProgressPanel->setVisible(false);
+            updateDriveStatusOnUi(*drive);
 
-            if ( isCurrentDrive( drive )) {
-                calculateDiffAsync( [this]( auto, auto ) {
+            if (isCurrentDrive(drive)) {
+                calculateDiffAsync([this](auto, auto){
                     updateDiffView();
-                } );
+                });
 
                 updateDriveView();
                 unlockDrive();
             }
 
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1)  {
                 unlockDrive();
                 loadBalance();
             }
 
             break;
         }
-        case registering: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+        case registering:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setRegistering();
-                m_modifyProgressPanel->setVisible( true );
+                m_modifyProgressPanel->setVisible(true);
                 lockDrive();
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setRegistering();
+                    m_modifyProgressPanel->setVisible( true );
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
+
             break;
         }
-        case approved: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+        case approved:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setApproved();
-                m_modifyProgressPanel->setVisible( true );
+                m_modifyProgressPanel->setVisible(true);
 
                 updateDiffView();
 
                 QString message;
-                message.append( "Your modification was applied. Drive: " );
-                message.append( drive->getName().c_str());
-                addNotification( message );
+                message.append("Your modification was applied. Drive: ");
+                message.append(drive->getName().c_str());
+                addNotification(message);
                 loadBalance();
                 unlockDrive();
 
-                if ( m_modificationStatusTimer->isActive()) {
+                if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
+            }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setApproved();
+                    m_modifyProgressPanel->setVisible(true);
+
+                    updateDiffView();
+
+                    QString message;
+                    message.append("Your modification was applied. Drive: ");
+                    message.append(drive->getName().c_str());
+                    addNotification(message);
+                    loadBalance();
+
+                    if (m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->stop();
+                    }
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
         }
-        case failed: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+        case failed:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setFailed();
-                m_modifyProgressPanel->setVisible( true );
+                m_modifyProgressPanel->setVisible(true);
 
                 const QString message = "Your modification was declined.";
-                addNotification( message );
+                addNotification(message);
 
-                if ( m_modificationStatusTimer->isActive()) {
+                if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
 
                 loadBalance();
                 unlockDrive();
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setFailed();
+                    m_modifyProgressPanel->setVisible(true);
+
+                    const QString message = "Your modification was declined.";
+                    addNotification(message);
+
+                    if (m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->stop();
+                    }
+
+                    loadBalance();
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
 
             break;
         }
-        case canceling: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+        case canceling:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setCanceling();
-                m_modifyProgressPanel->setVisible( true );
+                m_modifyProgressPanel->setVisible(true);
 
                 lockDrive();
+            }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setCanceling();
+                    m_modifyProgressPanel->setVisible( true );
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
         }
-        case canceled: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
+        case canceled:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
                 m_modifyProgressPanel->setCanceled();
-                m_modifyProgressPanel->setVisible( true );
+                m_modifyProgressPanel->setVisible(true);
 
-                if ( m_modificationStatusTimer->isActive()) {
+                if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
 
                 loadBalance();
                 unlockDrive();
             }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setCanceled();
+                    m_modifyProgressPanel->setVisible( true );
+                    if (m_modificationStatusTimer->isActive()) {
 
-            break;
-        }
-        case uploading: {
-            if ( isCurrentDrive( drive ) && ui->tabWidget->currentIndex() == 1 ) {
-                m_modifyProgressPanel->setUploading();
-                m_modifyProgressPanel->setVisible( true );
-                lockDrive();
+                        m_modificationStatusTimer->stop();
+                    }
 
-                if ( !m_modificationStatusTimer->isActive()) {
-                    m_modificationStatusTimer->start( 1000 );
+                    loadBalance();
                 }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
         }
-        case creating: {
-            addEntityToUi( ui->m_driveCBox, drive->getName(), drive->getKey());
-            setCurrentDriveOnUi( drive->getKey());
-            updateDriveStatusOnUi( *drive );
+        case uploading:
+        {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
+                m_modifyProgressPanel->setUploading();
+                m_modifyProgressPanel->setVisible(true);
+                lockDrive();
 
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString( drive->getLocalFolder()));
+                if (!m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->start(1000);
+                }
+            }
+            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                {
+                    m_modifyProgressPanel->setUploading();
+                    m_modifyProgressPanel->setVisible(true);
+
+                    if (!m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->start(1000);
+                    }
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+            }
+
+            break;
+        }
+        case creating:
+        {
+            addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
+            addEntityToUi(ui->m_streamDriveCBox, drive->getName(), drive->getKey());
+            setCurrentDriveOnUi(drive->getKey());
+            updateDriveStatusOnUi(*drive);
+
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
             lockDrive();
 
             updateDriveView();
@@ -1628,583 +1726,589 @@ void MainWin::onDriveStateChanged( const std::string& driveKey, int state ) {
 
             break;
         }
-        case unconfirmed: {
-            removeEntityFromUi( ui->m_driveCBox, driveKey );
-            m_model->removeDrive( driveKey );
+        case unconfirmed:
+        {
+            removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
+            m_model->removeDrive(driveKey);
 
-            m_model->applyForChannels( driveKey, [this]( auto& channel ) {
-                removeEntityFromUi( ui->m_channels, channel.getKey());
-            } );
+            m_model->applyForChannels(driveKey, [this](auto& channel) {
+                removeEntityFromUi(ui->m_channels, channel.getKey());
+            });
 
-            if ( m_modificationStatusTimer->isActive()) {
+            if (m_modificationStatusTimer->isActive()) {
                 m_modificationStatusTimer->stop();
             }
 
-            m_model->removeChannelsByDriveKey( driveKey );
+            m_model->removeChannelsByDriveKey(driveKey);
             break;
         }
-        case deleting: {
+        case deleting:
+        {
             lockDrive();
-            updateDriveStatusOnUi( *drive );
+            updateDriveStatusOnUi(*drive);
 
-            m_model->markChannelsForDelete( drive->getKey(), true );
+            m_model->markChannelsForDelete(drive->getKey(), true);
             auto channel = m_model->currentDownloadChannel();
-            if ( channel ) {
-                lockChannel( channel->getKey());
-                updateDownloadChannelStatusOnUi( *channel );
+            if (channel) {
+                lockChannel(channel->getKey());
+                updateDownloadChannelStatusOnUi(*channel);
             }
 
             break;
         }
-        case deleted: {
-            m_modificationsWatcher->removePath( drive->getLocalFolder().c_str());
+        case deleted:
+        {
+            m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
 
             std::string driveName = drive->getName();
 
-            removeEntityFromUi( ui->m_driveCBox, driveKey );
+            removeEntityFromUi(ui->m_driveCBox, driveKey);
+            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
 
-            m_model->removeDrive( driveKey );
-            m_model->applyForChannels( driveKey, [this]( auto& channel ) {
-                removeEntityFromUi( ui->m_channels, channel.getKey());
-            } );
+            m_model->removeDrive(driveKey);
+            m_model->applyForChannels(driveKey, [this](auto& channel) {
+                removeEntityFromUi(ui->m_channels, channel.getKey());
+            });
 
-            m_model->removeChannelsByDriveKey( driveKey );
-            if ( m_model->getDownloadChannels().empty()) {
-                m_channelFsTreeTableModel->setFsTree( {}, {} );
-                ui->m_path->setText( "Path:" );
+            m_model->removeChannelsByDriveKey(driveKey);
+            if (m_model->getDownloadChannels().empty()) {
+                m_channelFsTreeTableModel->setFsTree({}, {});
+                ui->m_path->setText( "Path:");
             } else {
-                m_channelFsTreeTableModel->setFsTree( m_model->getDownloadChannels().begin()->second.getFsTree(),
-                                                      m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
+                m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(),
+                                                     m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
 
-                ui->m_path->setText(
-                        "Path: " + QString::fromStdString( m_channelFsTreeTableModel->currentPathString()));
+                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
             }
 
-            if ( isCurrentDrive( drive )) {
+            if (isCurrentDrive(drive)) {
                 updateDriveView();
                 updateDiffView();
 
-                if ( m_modificationStatusTimer->isActive()) {
+                if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
             }
 
-            const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed)." );
-            showNotification( message );
-            addNotification( message );
+            const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
+            showNotification(message);
+            addNotification(message);
 
             loadBalance();
 
-            if ( m_model->getDrives().empty()) {
+            if (m_model->getDrives().empty()) {
                 lockDrive();
 
-                if ( m_settings->m_isDriveStructureAsTree ) {
-                    m_driveTreeModel->updateModel( false );
-                    ui->m_driveTreeView->expand( m_driveTreeModel->index( 0, 0 ));
-                    m_diffTreeModel->updateModel( false );
+                if (m_settings->m_isDriveStructureAsTree) {
+                    m_driveTreeModel->updateModel(false);
+                    ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
+                    m_diffTreeModel->updateModel(false);
                 } else {
-                    m_driveTableModel->setFsTree( {}, {} );
+                    m_driveTableModel->setFsTree({}, {} );
                     m_diffTableModel->updateModel();
                 }
             }
 
             break;
         }
-        default: {
-            qWarning() << "Unknown drive state: " << getPrettyDriveState( state );
+        default:
+        {
+            qWarning() << "Unknown drive state: " << getPrettyDriveState(state);
             break;
         }
     }
 }
 
-void MainWin::addChannel( const std::string& channelName,
-                          const std::string& channelKey,
-                          const std::string& driveKey,
-                          const std::vector <std::string>& allowedPublicKeys ) {
+void MainWin::addChannel( const std::string&              channelName,
+                          const std::string&              channelKey,
+                          const std::string&              driveKey,
+                          const std::vector<std::string>& allowedPublicKeys )
+{
     DownloadChannel newChannel;
-    newChannel.setName( channelName );
-    newChannel.setKey( channelKey );
-    newChannel.setDriveKey( driveKey );
-    newChannel.setAllowedPublicKeys( allowedPublicKeys );
-    newChannel.setCreating( true );
-    newChannel.setDeleting( false );
-    newChannel.setCreatingTimePoint( std::chrono::steady_clock::now());
-    m_model->addDownloadChannel( newChannel );
-    m_model->setCurrentDownloadChannelKey( channelKey );
+    newChannel.setName(channelName);
+    newChannel.setKey(channelKey);
+    newChannel.setDriveKey(driveKey);
+    newChannel.setAllowedPublicKeys(allowedPublicKeys);
+    newChannel.setCreating(true);
+    newChannel.setDeleting(false);
+    newChannel.setCreatingTimePoint(std::chrono::steady_clock::now());
+    m_model->addDownloadChannel(newChannel);
+    m_model->setCurrentDownloadChannelKey(channelKey);
 
-    auto drive = m_model->findDrive( driveKey );
-    if ( drive ) {
-        m_model->applyFsTreeForChannels( driveKey, drive->getFsTree(), drive->getRootHash());
+    auto drive = m_model->findDrive(driveKey);
+    if (drive) {
+        m_model->applyFsTreeForChannels(driveKey, drive->getFsTree(), drive->getRootHash());
     }
 
-    addEntityToUi( ui->m_channels, channelName, channelKey );
-    updateDownloadChannelStatusOnUi( *m_model->findChannel( channelKey ));
-    setDownloadChannelOnUi( channelKey );
-    lockChannel( channelKey );
+    addEntityToUi(ui->m_channels, channelName, channelKey);
+    updateDownloadChannelStatusOnUi(*m_model->findChannel(channelKey));
+    setDownloadChannelOnUi(channelKey);
+    lockChannel(channelKey);
 }
 
-void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey,
-                                          const std::string& driveKey ) {
-    qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey
-             << " drive key: " << driveKey;
+void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
+{
+    qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey << " drive key: " << driveKey;
     auto channel = m_model->findChannel( channelKey );
-    if ( channel ) {
-        channel->setCreating( false );
+    if ( channel )
+    {
+        channel->setCreating(false);
         m_model->saveSettings();
 
-        updateDownloadChannelStatusOnUi( *channel );
-        updateDownloadChannelData( channel );
+        updateDownloadChannelStatusOnUi(*channel);
+        updateDownloadChannelData(channel);
 
-        const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully." );
-        showNotification( message );
-        addNotification( message );
+        const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
+        showNotification(message);
+        addNotification(message);
 
-        unlockChannel( channelKey );
-    } else {
+        unlockChannel(channelKey);
+    } else
+    {
         qWarning() << "MainWin::onChannelCreationConfirmed. Unknown channel " << channelKey;
     }
 }
 
-void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText ) {
+void MainWin::onChannelCreationFailed( const std::string& channelKey, const std::string& errorText )
+{
     qDebug() << "MainWin::onChannelCreationFailed: key:" << channelKey << " error: " << errorText;
 
     auto channel = m_model->findChannel( channelKey );
-    if ( channel ) {
-        const QString message = QString::fromStdString(
-                "Channel creation failed (" + channel->getName() + ")\n It will be removed." );
-        showNotification( message, errorText.c_str());
-        addNotification( message );
-        unlockChannel( channelKey );
-        removeEntityFromUi( ui->m_channels, channelKey );
-        m_model->removeChannel( channelKey );
+    if (channel) {
+        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\n It will be removed.");
+        showNotification(message, errorText.c_str());
+        addNotification(message);
+        unlockChannel(channelKey);
+        removeEntityFromUi(ui->m_channels, channelKey);
+        m_model->removeChannel(channelKey);
     } else {
         qWarning() << "MainWin::onChannelCreationFailed. Unknown channel: " << channelKey;
     }
 }
 
-void MainWin::onDriveCreationConfirmed( const std::string& driveKey ) {
+void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
+{
     qDebug() << "MainWin::onDriveCreationConfirmed: key:" << driveKey;
     auto drive = m_model->findDrive( driveKey );
-    if ( drive ) {
-        m_modificationsWatcher->addPath( drive->getLocalFolder().c_str());
-        drive->updateState( no_modifications );
+    if ( drive )
+    {
+        m_modificationsWatcher->addPath(drive->getLocalFolder().c_str());
+        drive->updateState(no_modifications);
         m_model->saveSettings();
 
-        const QString message = QString::fromStdString( "Drive '" + drive->getName() + "' created successfully." );
-        showNotification( message );
-        addNotification( message );
+        const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
+        showNotification(message);
+        addNotification(message);
     } else {
         qWarning() << "MainWin::onDriveCreationConfirmed. Unknown drive: " << driveKey;
     }
 }
 
-void MainWin::onDriveCreationFailed( const std::string& driveKey, const std::string& errorText ) {
+void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::string& errorText)
+{
     qDebug() << "MainWin::onDriveCreationFailed: key:" << driveKey << " error: " << errorText;
 
-    auto drive = m_model->findDrive( driveKey );
-    if ( drive ) {
-        const QString message = QString::fromStdString(
-                "Drive creation failed (" + drive->getName() + ")\n It will be removed." );
-        showNotification( message, errorText.c_str());
-        addNotification( message );
-        drive->updateState( unconfirmed );
+    auto drive = m_model->findDrive(driveKey);
+    if (drive) {
+        const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")\n It will be removed.");
+        showNotification(message, errorText.c_str());
+        addNotification(message);
+        drive->updateState(unconfirmed);
     } else {
         qWarning() << "MainWin::onDriveCreationFailed. Unknown drive: " << driveKey;
     }
 }
 
-void MainWin::onDriveCloseConfirmed( const std::array<uint8_t, 32>& driveKey ) {
-    const auto driveKeyHex = sirius::drive::toString( driveKey );
+void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
+    const auto driveKeyHex = sirius::drive::toString(driveKey);
 
     qDebug() << "MainWin::onDriveCloseConfirmed: key:" << driveKeyHex;
 
-    auto drive = m_model->findDrive( driveKeyHex );
-    if ( drive ) {
-        drive->updateState( deleted );
+    auto drive = m_model->findDrive(driveKeyHex);
+    if (drive) {
+        drive->updateState(deleted);
     } else {
         qWarning() << "MainWin::onDriveCloseConfirmed. Unknown drive: " << driveKeyHex;
     }
 }
 
-void MainWin::onDriveCloseFailed( const std::array<uint8_t, 32>& driveKey, const QString& errorText ) {
-    const auto driveId = rawHashToHex( driveKey ).toStdString();
+void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const QString& errorText) {
+    const auto driveId = rawHashToHex(driveKey).toStdString();
 
     qDebug() << "MainWin::onDriveCloseFailed: key:" << driveId;
 
     std::string alias = driveId;
-    auto drive = m_model->findDrive( alias );
-    if ( drive ) {
+    auto drive = m_model->findDrive(alias);
+    if (drive) {
         alias = drive->getName();
-        drive->updateState( no_modifications );
+        drive->updateState(no_modifications);
     } else {
-        qWarning() << "MainWin::onDriveCloseFailed. Unknown drive: " << driveId << " error: " << errorText;
+        qWarning () << "MainWin::onDriveCloseFailed. Unknown drive: " << driveId << " error: " << errorText;
     }
 
     QString message = "The drive '";
-    message.append( alias.c_str());
-    message.append( "' was not close by reason: " );
-    message.append( errorText );
-    showNotification( message );
-    addNotification( message );
-    m_model->markChannelsForDelete( driveId, false );
+    message.append(alias.c_str());
+    message.append("' was not close by reason: ");
+    message.append(errorText);
+    showNotification(message);
+    addNotification(message);
+    m_model->markChannelsForDelete(driveId, false);
 }
 
-void MainWin::onApplyChanges() {
+void MainWin::onApplyChanges()
+{
     auto drive = m_model->currentDrive();
-    if ( !drive ) {
+    if (!drive) {
         qWarning() << "MainWin::onApplyChanges. Unknown drive (Invalid pointer to current drive)";
         return;
     }
 
     auto actionList = drive->getActionsList();
-    if ( actionList.empty()) {
+    if ( actionList.empty() )
+    {
         qWarning() << LOG_SOURCE << "no actions to apply";
         const QString message = "There is no difference.";
-        showNotification( message );
-        addNotification( message );
+        showNotification(message);
+        addNotification(message);
         return;
     }
 
-    auto driveKeyHex = rawHashFromHex( drive->getKey().c_str());
-    m_onChainClient->applyDataModification( driveKeyHex, actionList );
-    drive->updateState( registering );
+    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+    m_onChainClient->applyDataModification(driveKeyHex, actionList);
+    drive->updateState(registering);
 }
 
-void MainWin::onRefresh() {
+void MainWin::onRefresh()
+{
     auto channel = m_model->currentDownloadChannel();
-    if ( !channel ) {
-        qWarning() << "MainWin::onRefresh. Invalid pointer to channel!";
+    if (!channel) {
+        qWarning () << "MainWin::onRefresh. Invalid pointer to channel!";
         return;
     }
 
-    if ( channel->isDownloadingFsTree()) {
-        qWarning() << "MainWin::onRefresh. FsTree downloading still in progress. Channel key: " << channel->getKey();
+    if (channel->isDownloadingFsTree()) {
+        qWarning () << "MainWin::onRefresh. FsTree downloading still in progress. Channel key: " << channel->getKey();
         return;
     }
 
-    updateDownloadChannelData( channel );
+    updateDownloadChannelData(channel);
 }
 
-void MainWin::onDownloadChannelCloseConfirmed( const std::array<uint8_t, 32>& channelId ) {
+void MainWin::onDownloadChannelCloseConfirmed(const std::array<uint8_t, 32> &channelId) {
     std::string channelName;
-    const auto channelKey = sirius::drive::toString( channelId );
+    const auto channelKey = sirius::drive::toString(channelId);
     auto channel = m_model->findChannel( channelKey );
-    if ( channel ) {
+    if (channel)
+    {
         channelName = channel->getName();
-        const QString message = QString::fromStdString( "Channel '" + channelName + "' closed (removed)." );
-        showNotification( message );
-        addNotification( message );
+        const QString message = QString::fromStdString( "Channel '" + channelName + "' closed (removed).");
+        showNotification(message);
+        addNotification(message);
     }
 
-    removeEntityFromUi( ui->m_channels, channelKey );
-    unlockChannel( "" );
+    removeEntityFromUi(ui->m_channels, channelKey);
+    unlockChannel("");
 
     loadBalance();
-    m_model->removeChannel( sirius::drive::toString( channelId ));
+    m_model->removeChannel( sirius::drive::toString(channelId) );
 
-    if ( m_model->getDownloadChannels().empty()) {
+    if (m_model->getDownloadChannels().empty()) {
         m_channelFsTreeTableModel->setFsTree( {}, {} );
-        ui->m_path->setText( "Path:" );
+        ui->m_path->setText( "Path:");
     }
 }
 
-void MainWin::onDownloadChannelCloseFailed( const std::array<uint8_t, 32>& channelId, const QString& errorText ) {
-    const auto channelKey = rawHashToHex( channelId ).toStdString();
+void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
+    const auto channelKey = rawHashToHex(channelId).toStdString();
     std::string alias = channelKey;
-    auto channel = m_model->findChannel( alias );
-    if ( channel ) {
+    auto channel = m_model->findChannel(alias);
+    if (channel) {
         alias = channel->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad channel (alias not found): " << alias;
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
     QString message = "The channel '";
-    message.append( alias.c_str());
-    message.append( "' was not close by reason: " );
-    message.append( errorText );
-    showNotification( message );
-    addNotification( message );
-    unlockChannel( channelKey );
+    message.append(alias.c_str());
+    message.append("' was not close by reason: ");
+    message.append(errorText);
+    showNotification(message);
+    addNotification(message);
+    unlockChannel(channelKey);
 }
 
-void MainWin::onDownloadPaymentConfirmed( const std::array<uint8_t, 32>& channelId ) {
-    std::string alias = rawHashToHex( channelId ).toStdString();
-    auto channel = m_model->findChannel( alias );
-    if ( channel ) {
+void MainWin::onDownloadPaymentConfirmed(const std::array<uint8_t, 32> &channelId) {
+    std::string alias = rawHashToHex(channelId).toStdString();
+    auto channel = m_model->findChannel(alias);
+    if (channel) {
         alias = channel->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad channel (alias not found): " << alias;
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString(
-            "Your payment for the following channel was successful: '" + alias + "'" );
-    showNotification( message );
-    addNotification( message );
+    const QString message = QString::fromStdString( "Your payment for the following channel was successful: '" + alias + "'");
+    showNotification(message);
+    addNotification(message);
     loadBalance();
 }
 
-void MainWin::onDownloadPaymentFailed( const std::array<uint8_t, 32>& channelId, const QString& errorText ) {
-    std::string alias = rawHashToHex( channelId ).toStdString();
-    auto channel = m_model->findChannel( alias );
-    if ( channel ) {
+void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, const QString &errorText) {
+    std::string alias = rawHashToHex(channelId).toStdString();
+    auto channel = m_model->findChannel(alias);
+    if (channel) {
         alias = channel->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad channel (alias not found): " << alias;
+        qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString(
-            "Your payment for the following channel was UNSUCCESSFUL: '" + alias + "'" );
-    showNotification( message );
-    addNotification( message );
+    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "'");
+    showNotification(message);
+    addNotification(message);
 }
 
-void MainWin::onStoragePaymentConfirmed( const std::array<uint8_t, 32>& driveKey ) {
-    std::string alias = rawHashToHex( driveKey ).toStdString();
-    auto drive = m_model->findDrive( alias );
-    if ( drive ) {
+void MainWin::onStoragePaymentConfirmed(const std::array<uint8_t, 32> &driveKey) {
+    std::string alias = rawHashToHex(driveKey).toStdString();
+    auto drive = m_model->findDrive(alias);
+    if (drive) {
         alias = drive->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad drive (alias not found): " << alias;
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString(
-            "Your payment for the following drive was successful: '" + alias + "'" );
-    showNotification( message );
-    addNotification( message );
+    const QString message = QString::fromStdString( "Your payment for the following drive was successful: '" + alias  + "'");
+    showNotification(message);
+    addNotification(message);
     loadBalance();
 }
 
-void MainWin::onStoragePaymentFailed( const std::array<uint8_t, 32>& driveKey, const QString& errorText ) {
-    std::string alias = rawHashToHex( driveKey ).toStdString();
-    auto drive = m_model->findDrive( alias );
-    if ( drive ) {
+void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString &errorText) {
+    std::string alias = rawHashToHex(driveKey).toStdString();
+    auto drive = m_model->findDrive(alias);
+    if (drive) {
         alias = drive->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad drive (alias not found): " << alias;
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString(
-            "Your payment for the following drive was UNSUCCESSFUL: '" + alias + "'" );
-    showNotification( message );
-    addNotification( message );
+    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "'");
+    showNotification(message);
+    addNotification(message);
 }
 
-void MainWin::onDataModificationTransactionConfirmed( const std::array<uint8_t, 32>& driveKey,
-                                                      const std::array<uint8_t, 32>& modificationId ) {
-    qDebug() << "MainWin::onDataModificationTransactionConfirmed. Your last modification was registered: '" +
-                rawHashToHex( modificationId );
-    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( uploading );
-    } else {
-        qDebug()
-                << "MainWin::onDataModificationTransactionConfirmed. Your last modification was NOT registered: !!! drive not found";
+void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
+    qDebug () << "MainWin::onDataModificationTransactionConfirmed. Your last modification was registered: '" + rawHashToHex(modificationId);
+    if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
+    {
+        drive->updateState(uploading);
+    }
+    else
+    {
+        qDebug () << "MainWin::onDataModificationTransactionConfirmed. Your last modification was NOT registered: !!! drive not found";
     }
 
     loadBalance();
 }
 
-void MainWin::onDataModificationTransactionFailed( const std::array<uint8_t, 32>& driveKey,
-                                                   const std::array<uint8_t, 32>& modificationId ) {
-    qDebug() << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" +
-                rawHashToHex( modificationId );
-    if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( failed );
+void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
+    qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
+    if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
+    {
+        drive->updateState(failed);
     }
 }
 
-void MainWin::onDataModificationApprovalTransactionConfirmed( const std::array<uint8_t, 32>& driveId,
-                                                              const std::string& fileStructureCdi ) {
-    std::string driveAlias = rawHashToHex( driveId ).toStdString();
-    auto drive = m_model->findDrive( driveAlias );
-    if ( drive ) {
-        drive->updateState( approved );
+void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32> &driveId,
+                                                             const std::string &fileStructureCdi) {
+    std::string driveAlias = rawHashToHex(driveId).toStdString();
+    auto drive = m_model->findDrive(driveAlias);
+    if (drive) {
+        drive->updateState(approved);
         driveAlias = drive->getName();
     } else {
-        qWarning() << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
-    qDebug() << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
-                              QString::fromStdString( driveAlias ) + " CDI: " +
-                              QString::fromStdString( fileStructureCdi );
+    qDebug () << LOG_SOURCE << "Your modification was APPLIED. Drive: " +
+                 QString::fromStdString(driveAlias) + " CDI: " +
+                 QString::fromStdString(fileStructureCdi);
 }
 
-void MainWin::onDataModificationApprovalTransactionFailed( const std::array<uint8_t, 32>& driveId,
-                                                           const std::string& fileStructureCdi, uint8_t code ) {
-    std::string driveAlias = rawHashToHex( driveId ).toStdString();
-    auto drive = m_model->findDrive( driveAlias );
-    if ( drive ) {
+void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32> &driveId, const std::string &fileStructureCdi, uint8_t code) {
+    std::string driveAlias = rawHashToHex(driveId).toStdString();
+    auto drive = m_model->findDrive(driveAlias);
+    if (drive) {
         driveAlias = drive->getName();
-        drive->updateState( failed );
+        drive->updateState(failed);
     } else {
-        qWarning() << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
+        qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
     QString message;
-    message.append( "Your modifications was DECLINED. Drive: " );
-    message.append( driveAlias.c_str());
-    showNotification( message );
-    addNotification( message );
+    message.append("Your modifications was DECLINED. Drive: ");
+    message.append(driveAlias.c_str());
+    showNotification(message);
+	addNotification(message);
 }
 
-void MainWin::onCancelModificationTransactionConfirmed( const std::array<uint8_t, 32>& driveId,
-                                                        const QString& modificationId ) {
-    std::string driveRawId = rawHashToHex( driveId ).toStdString();
-    auto drive = m_model->findDrive( driveRawId );
-    if ( drive ) {
-        drive->updateState( canceled );
+void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
+    std::string driveRawId = rawHashToHex(driveId).toStdString();
+    auto drive = m_model->findDrive(driveRawId);
+    if (drive) {
+        drive->updateState(canceled);
     } else {
-        qWarning() << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
+        qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
     }
 }
 
-void
-MainWin::onCancelModificationTransactionFailed( const std::array<uint8_t, 32>& driveId,
-                                                const QString& modificationId ) {
-    std::string driveRawId = rawHashToHex( driveId ).toStdString();
-    auto drive = m_model->findDrive( driveRawId );
-    if ( drive ) {
-        drive->updateState( failed );
+void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
+    std::string driveRawId = rawHashToHex(driveId).toStdString();
+    auto drive = m_model->findDrive(driveRawId);
+    if (drive) {
+        drive->updateState(failed);
     } else {
-        qWarning() << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
+        qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
     }
 }
 
-void MainWin::onReplicatorOnBoardingTransactionConfirmed( const QString& replicatorPublicKey ) {
-    qInfo() << "MainWin::onReplicatorOnBoardingTransactionConfirmed" << replicatorPublicKey;
+void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOnBoardingTransactionConfirmed" << replicatorPublicKey;
 
-    m_onChainClient->getBlockchainEngine()->getReplicatorById( replicatorPublicKey.toStdString(),
-                                                               [this]( auto replicator, auto isSuccess, auto message,
-                                                                       auto code ) {
-                                                                   if ( !isSuccess ) {
-                                                                       qWarning()
-                                                                               << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: "
-                                                                               << message.c_str() << " : "
-                                                                               << code.c_str();
-                                                                       return;
-                                                                   }
+    m_onChainClient->getBlockchainEngine()->getReplicatorById(replicatorPublicKey.toStdString(), [this] (auto replicator, auto isSuccess, auto message, auto code ) {
+        if (!isSuccess) {
+            qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
+            return;
+        }
 
-                                                                   m_myReplicatorsModel->setupModelData( {replicator},
-                                                                                                         m_model );
-                                                               } );
+        m_myReplicatorsModel->setupModelData({ replicator }, m_model);
+    });
 
     QString message;
-    message.append( "Replicator onboarded successful: " );
-    message.append( replicatorPublicKey );
-    showNotification( message );
-    addNotification( message );
+    message.append("Replicator onboarded successful: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
 }
 
-void MainWin::onReplicatorOnBoardingTransactionFailed( const QString& replicatorPublicKey,
-                                                       const QString& replicatorPrivateKey ) {
-    qInfo() << "MainWin::onReplicatorOnBoardingTransactionFailed" << replicatorPublicKey;
+void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey) {
+    qInfo () << "MainWin::onReplicatorOnBoardingTransactionFailed" << replicatorPublicKey;
 
-    m_model->removeMyReplicator( replicatorPrivateKey.toStdString());
+    m_model->removeMyReplicator(replicatorPrivateKey.toStdString());
     m_model->saveSettings();
 
     QString message;
-    message.append( "Replicator onboarded FAILED: " );
-    message.append( replicatorPublicKey );
-    showNotification( message );
-    addNotification( message );
+    message.append("Replicator onboarded FAILED: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
 }
 
-void MainWin::onReplicatorOffBoardingTransactionConfirmed( const QString& replicatorPublicKey ) {
-    qInfo() << "MainWin::onReplicatorOffBoardingTransactionConfirmed" << replicatorPublicKey;
+void MainWin::onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOffBoardingTransactionConfirmed" << replicatorPublicKey;
 
     QString message;
-    message.append( "Replicator off-boarded successful: " );
-    message.append( replicatorPublicKey );
-    showNotification( message );
-    addNotification( message );
+    message.append("Replicator off-boarded successful: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
 }
 
-void MainWin::onReplicatorOffBoardingTransactionFailed( const QString& replicatorPublicKey ) {
-    qInfo() << "MainWin::onReplicatorOffBoardingTransactionFailed" << replicatorPublicKey;
+void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey) {
+    qInfo () << "MainWin::onReplicatorOffBoardingTransactionFailed" << replicatorPublicKey;
 
     QString message;
-    message.append( "Replicator off-boarded FAILED: " );
-    message.append( replicatorPublicKey );
-    showNotification( message );
-    addNotification( message );
+    message.append("Replicator off-boarded FAILED: ");
+    message.append(replicatorPublicKey);
+    showNotification(message);
+    addNotification(message);
 }
 
 void MainWin::loadBalance() {
     auto publicKey = m_model->getClientPublicKey();
     m_onChainClient->getBlockchainEngine()->getAccountInfo(
-            publicKey, [this]( xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code ) {
-                if ( !isSuccess ) {
-                    qWarning() << "loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
-                    return;
-                }
+            publicKey, [this](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << "MainWin::loadBalance. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            return;
+        }
 
-                auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [this]( auto mosaic ) {
-                    return mosaic.id == m_XPX_MOSAIC_ID;
-                } );
+        auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [this]( auto mosaic )
+        {
+            return mosaic.id == m_XPX_MOSAIC_ID;
+        });
 
-                const uint64_t balance = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
-                ui->m_balanceValue->setText( QString::number( balance ));
-            } );
+        const uint64_t balance = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
+        ui->m_balanceValue->setText(QString::number(balance));
+    });
 }
 
-void MainWin::onCurrentChannelChanged( int index ) {
-    if ( index < 0 ) {
-        qWarning() << "MainWin::onCurrentChannelChanged: invalid index!";
+void MainWin::onCurrentChannelChanged( int index )
+{
+    if (index < 0) {
+        qWarning () << "MainWin::onCurrentChannelChanged: invalid index!";
         return;
     }
 
     const auto channelKey = ui->m_channels->currentData().toString();
-    m_model->setCurrentDownloadChannelKey( channelKey.toStdString());
+    m_model->setCurrentDownloadChannelKey(channelKey.toStdString());
 
     auto channel = m_model->currentDownloadChannel();
-    if ( !channel ) {
+    if ( !channel )
+    {
         qWarning() << "MainWin::onCurrentChannelChanged. Download channel not found!";
         m_channelFsTreeTableModel->setFsTree( {}, {} );
         return;
     }
 
-    updateDownloadChannelData( channel );
-    lockChannel( channel->getKey());
-    unlockChannel( channel->getKey());
+    updateDownloadChannelData(channel);
+    lockChannel(channel->getKey());
+    unlockChannel(channel->getKey());
 }
 
-void MainWin::onDriveLocalDirectoryChanged( const QString& path ) {
+void MainWin::onDriveLocalDirectoryChanged(const QString& path) {
     auto drive = m_model->currentDrive();
-    if ( drive && drive->getLocalFolder() == path.toStdString()) {
-        calculateDiffAsync( [this]( auto, auto ) {
+    if (drive && drive->getLocalFolder() == path.toStdString()) {
+        calculateDiffAsync([this](auto, auto){
             updateDiffView();
-        } );
+        });
     }
 }
 
-void MainWin::onCurrentDriveChanged( int index ) {
-    if ( index >= 0 ) {
+void MainWin::onCurrentDriveChanged( int index )
+{
+    if (index >= 0) {
         const auto driveKey = ui->m_driveCBox->currentData().toString();
-        m_model->setCurrentDriveKey( driveKey.toStdString());
+        m_model->setCurrentDriveKey( driveKey.toStdString() );
 
         auto drive = m_model->currentDrive();
-        if ( drive ) {
-            onDriveStateChanged( drive->getKey(), drive->getState());
+        if (drive) {
+            onDriveStateChanged(drive->getKey(), drive->getState());
             updateDriveView();
             updateDiffView();
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString( drive->getLocalFolder()));
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
         } else {
             qWarning() << "MainWin::onCurrentDriveChanged. Drive not found (Invalid pointer to drive)";
-            m_driveTableModel->setFsTree( {}, {} );
+            m_driveTableModel->setFsTree({}, {} );
         }
     }
 }
 
-void MainWin::setupDrivesTab() {
+void MainWin::setupDrivesTab()
+{
     ui->m_driveCBox->addItem( "Loading..." );
+    ui->m_streamDriveCBox->addItem( "Loading..." );
     setupDriveFsTable();
-    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this] {
+    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
+    {
         qDebug() << LOG_SOURCE << "openLocalFolderBtn";
 
         auto driveInfo = m_model->currentDrive();
-        if ( driveInfo ) {
+        if ( driveInfo )
+        {
             qDebug() << LOG_SOURCE << "driveInfo->m_localDriveFolder: " << driveInfo->getLocalFolder().c_str();
             std::error_code ec;
-            if ( !fs::exists( driveInfo->getLocalFolder(), ec )) {
+            if ( ! fs::exists(driveInfo->getLocalFolder(), ec) )
+            {
                 fs::create_directories( driveInfo->getLocalFolder(), ec );
             }
 //            QDesktopServices::openUrl( QString::fromStdString( "file://" + driveInfo->m_localDriveFolder));
@@ -2213,7 +2317,7 @@ void MainWin::setupDrivesTab() {
             QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
 #else
             qDebug() << "TRY OPEN " << driveInfo->getLocalFolder();
-            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder())));
+            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
             //QProcess::startDetached("xdg-open " + QString::fromStdString( driveInfo->m_localDriveFolder ));
             //system("/usr/bin/xdg-open file:///home/cempl");
 //            qDebug() << "TRY OPEN";
@@ -2222,117 +2326,132 @@ void MainWin::setupDrivesTab() {
 //            qDebug() << "TRY OPEN " << std::strerror(errno);
 #endif
         }
-    } );
+    });
 
-    connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this] {
+    connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
+    {
         auto drive = m_model->currentDrive();
-        if ( !drive ) {
-            qWarning() << "MainWin::m_calcDiffBtn::released. Invalid pointer to drive!";
+        if (!drive) {
+            qWarning () << "MainWin::m_calcDiffBtn::released. Invalid pointer to drive!";
             return;
         }
 
-        auto callback = [this, drive]( bool isOutdated ) {
-            if ( isOutdated ) {
-                const auto rootHash = rawHashToHex( drive->getRootHash()).toStdString();
-                onDownloadFsTreeDirect( drive->getKey(), rootHash );
+        auto callback = [this, drive](bool isOutdated) {
+            if (isOutdated) {
+                const auto rootHash = rawHashToHex(drive->getRootHash()).toStdString();
+                onDownloadFsTreeDirect(drive->getKey(), rootHash);
             } else {
-                if ( isCurrentDrive( drive )) {
-                    calculateDiffAsync( [this]( auto, auto ) {
+                if (isCurrentDrive(drive)) {
+                    calculateDiffAsync([this](auto, auto){
                         updateDiffView();
-                    } );
+                    });
                 } else {
-                    calculateDiffAsync( {} );
+                    calculateDiffAsync({});
                 }
             }
         };
 
-        checkDriveForUpdates( drive, callback );
-    }, Qt::QueuedConnection );
+        checkDriveForUpdates(drive, callback);
+    }, Qt::QueuedConnection);
 
-    if ( ALEX_LOCAL_TEST ) {
+    if ( ALEX_LOCAL_TEST )
+    {
         m_model->stestInitDrives();
     }
 
-    m_driveTreeModel = new DriveTreeModel( m_model, false, this );
+    m_driveTreeModel = new DriveTreeModel(m_model, false, this);
     ui->m_driveTreeView->setModel( m_driveTreeModel );
-    ui->m_driveTreeView->setTreePosition( 1 );
-    ui->m_driveTreeView->setColumnHidden( 0, true );
-    ui->m_driveTreeView->header()->resizeSection( 1, 300 );
-    ui->m_driveTreeView->header()->resizeSection( 2, 30 );
-    ui->m_driveTreeView->header()->setDefaultAlignment( Qt::AlignLeft );
-    ui->m_driveTreeView->setHeaderHidden( true );
+    ui->m_driveTreeView->setTreePosition(1);
+    ui->m_driveTreeView->setColumnHidden(0,true);
+    ui->m_driveTreeView->header()->resizeSection(1, 300);
+    ui->m_driveTreeView->header()->resizeSection(2, 30);
+    ui->m_driveTreeView->header()->setDefaultAlignment(Qt::AlignLeft);
+    ui->m_driveTreeView->setHeaderHidden(true);
     ui->m_driveTreeView->show();
     ui->m_driveTreeView->expandAll();
 
-    m_diffTableModel = new DiffTableModel( m_model );
+    m_diffTableModel = new DiffTableModel(m_model);
 
     ui->m_diffTableView->setModel( m_diffTableModel );
     ui->m_diffTableView->horizontalHeader()->hide();
-    ui->m_diffTableView->horizontalHeader()->setStretchLastSection( true );
-    ui->m_diffTableView->horizontalHeader()->setDefaultAlignment( Qt::AlignLeft );
+    ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
+    ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
 
 
-    auto menu = new PopupMenu( ui->m_moreDrivesBtn, this );
-    auto renameAction = new QAction( "Rename", this );
-    menu->addAction( renameAction );
-    connect( renameAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr ) {
+    auto menu = new PopupMenu(ui->m_moreDrivesBtn, this);
+    auto renameAction = new QAction("Rename", this);
+    menu->addAction(renameAction);
+    connect( renameAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
+        {
             std::string driveName = driveInfo->getName();
             std::string driveKey = driveInfo->getKey();
 
             EditDialog dialog( "Rename drive", "Drive name:", driveName, EditDialog::Drive, m_model );
-            if ( dialog.exec() == QDialog::Accepted ) {
-                if ( auto* driveInfo = m_model->findDrive( driveKey ); driveInfo != nullptr ) {
-                    driveInfo->setName( driveName );
+            if ( dialog.exec() == QDialog::Accepted )
+            {
+                if ( auto* driveInfo = m_model->findDrive(driveKey); driveInfo != nullptr )
+                {
+                    driveInfo->setName(driveName);
                     m_model->saveSettings();
-                    updateEntityNameOnUi( ui->m_driveCBox, driveInfo->getName(), driveInfo->getKey());
+                    updateEntityNameOnUi(ui->m_driveCBox, driveInfo->getName(), driveInfo->getKey());
                 }
             }
         }
-    } );
+    });
 
-    auto changeFolderAction = new QAction( "Change local folder", this );
-    menu->addAction( changeFolderAction );
-    connect( changeFolderAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr ) {
+    auto changeFolderAction = new QAction("Change local folder", this);
+    menu->addAction(changeFolderAction);
+    connect( changeFolderAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
+        {
             std::string driveName = driveInfo->getName();
             std::string driveKey = driveInfo->getKey();
 
-            QFlags <QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
-#ifdef Q_OS_LINUX
+            QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+    #ifdef Q_OS_LINUX
             options |= QFileDialog::DontUseNativeDialog;
-#endif
-            const QString path = QFileDialog::getExistingDirectory( this, tr( "Choose directory" ), "/", options );
-            if ( path.trimmed().isEmpty()) {
-                qWarning() << LOG_SOURCE << "bad path";
+    #endif
+            const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+            if ( path.trimmed().isEmpty() )
+            {
+                qWarning () << LOG_SOURCE  << "bad path";
                 return;
-            } else {
-                if ( auto driveInfo = m_model->findDrive( driveKey ); driveInfo ) {
-                    if ( path.toStdString() != driveInfo->getLocalFolder()) {
-                        m_modificationsWatcher->removePath( driveInfo->getLocalFolder().c_str());
-                        m_modificationsWatcher->addPath( path.toStdString().c_str());
-                        driveInfo->setLocalFolder( path.toStdString());
-                        driveInfo->setLocalFolderExists( true );
-                        onDriveStateChanged( driveInfo->getKey(), driveInfo->getState());
+            }
+            else
+            {
+                if ( auto driveInfo = m_model->findDrive(driveKey); driveInfo )
+                {
+                    if (path.toStdString() != driveInfo->getLocalFolder()) {
+                        m_modificationsWatcher->removePath(driveInfo->getLocalFolder().c_str());
+                        m_modificationsWatcher->addPath(path.toStdString().c_str());
+                        driveInfo->setLocalFolder(path.toStdString());
+                        driveInfo->setLocalFolderExists(true);
+                        onDriveStateChanged(driveInfo->getKey(), driveInfo->getState());
                         m_model->saveSettings();
-                        ui->m_drivePath->setText( "Path: " + QString::fromStdString( driveInfo->getLocalFolder()));
+                        ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
                     }
                 }
             }
         }
-    } );
+    });
 
-    auto topUpAction = new QAction( "Top-up", this );
-    menu->addAction( topUpAction );
-    connect( topUpAction, &QAction::triggered, this, [this]( bool ) {
-        StoragePaymentDialog dialog( m_onChainClient, m_model, this );
+    auto topUpAction = new QAction("Top-up", this);
+    menu->addAction(topUpAction);
+    connect( topUpAction, &QAction::triggered, this, [this](bool)
+    {
+        StoragePaymentDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
-    } );
+    });
 
-    auto copyDriveKeyAction = new QAction( "Copy drive key", this );
-    menu->addAction( copyDriveKeyAction );
-    connect( copyDriveKeyAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr ) {
+    auto copyDriveKeyAction = new QAction("Copy drive key", this);
+    menu->addAction(copyDriveKeyAction);
+    connect( copyDriveKeyAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
+        {
             std::string driveKey = driveInfo->getKey();
 
             QClipboard* clipboard = QApplication::clipboard();
@@ -2341,373 +2460,338 @@ void MainWin::setupDrivesTab() {
                 return;
             }
 
-            clipboard->setText( QString::fromStdString( driveKey ), QClipboard::Clipboard );
-            if ( clipboard->supportsSelection()) {
-                clipboard->setText( QString::fromStdString( driveKey ), QClipboard::Selection );
+            clipboard->setText( QString::fromStdString(driveKey), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(driveKey), QClipboard::Selection );
             }
         }
-    } );
+    });
 
-    auto driveInfoAction = new QAction( "Drive info", this );
-    menu->addAction( driveInfoAction );
-    connect( driveInfoAction, &QAction::triggered, this, [this]( bool ) {
-        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr ) {
-            DriveInfoDialog dialog( *driveInfo, this );
+    auto driveInfoAction = new QAction("Drive info", this);
+    menu->addAction(driveInfoAction);
+    connect( driveInfoAction, &QAction::triggered, this, [this](bool)
+    {
+        if ( auto* driveInfo = m_model->currentDrive(); driveInfo != nullptr )
+        {
+            DriveInfoDialog dialog( *driveInfo, this);
             dialog.exec();
         }
-    } );
+    });
 
-    ui->m_moreDrivesBtn->setMenu( menu );
+    ui->m_moreDrivesBtn->setMenu(menu);
 }
 
 void MainWin::setupMyReplicatorTab() {
-    m_myReplicatorsModel = new ReplicatorTreeModel( this );
-    ui->myReplicators->setModel( m_myReplicatorsModel );
-    ui->myReplicators->header()->setSectionResizeMode( QHeaderView::ResizeToContents );
+    m_myReplicatorsModel = new ReplicatorTreeModel(this);
+    ui->myReplicators->setModel(m_myReplicatorsModel);
+    ui->myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    for ( const auto& r : m_settings->config().m_myReplicators ) {
-        m_onChainClient->getBlockchainEngine()->getReplicatorById( r.second.getPublicKey(),
-                                                                   [this, r]( auto replicator, auto isSuccess,
-                                                                              auto message, auto code ) {
-                                                                       if ( !isSuccess ) {
-                                                                           qWarning()
-                                                                                   << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: "
-                                                                                   << message.c_str() << " : "
-                                                                                   << code.c_str();
-                                                                           m_model->removeMyReplicator( r.first );
-                                                                           return;
-                                                                       }
+    for (const auto& r : m_settings->config().m_myReplicators) {
+        m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this, r] (auto replicator, auto isSuccess, auto message, auto code ) {
+            if (!isSuccess) {
+                qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
+                m_model->removeMyReplicator(r.first);
+                return;
+            }
 
-                                                                       m_myReplicatorsModel->setupModelData(
-                                                                               {replicator}, m_model );
-                                                                   } );
+            m_myReplicatorsModel->setupModelData({ replicator }, m_model);
+        });
     }
 
-    connect( this, &MainWin::refreshMyReplicatorsTable, this, [this]() {
-        m_myReplicatorsModel->setupModelData( m_model->getMyReplicators());
-    }, Qt::QueuedConnection );
+    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this](){
+        m_myReplicatorsModel->setupModelData(m_model->getMyReplicators());
+    }, Qt::QueuedConnection);
 
-    connect( ui->myReplicators, &QTreeView::doubleClicked, this, [this]( QModelIndex index ) {
-        if ( !index.isValid()) {
+    connect(ui->myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
+        if (!index.isValid()) {
             return;
         }
 
         auto item = static_cast<ReplicatorTreeItem*>(index.internalPointer());
-        if ( !item ) {
+        if (!item) {
             qWarning() << "MainWin::setupMyReplicatorTab. Invalid item";
             return;
         }
 
-        auto dialog = new ReplicatorInfoDialog( item->getPublicKey().toStdString(), m_model, this );
+        auto dialog = new ReplicatorInfoDialog(item->getPublicKey().toStdString(), m_model, this);
         dialog->open();
 
-        m_onChainClient->getBlockchainEngine()->getReplicatorById( item->getPublicKey().toStdString(),
-                                                                   [this, dialog]( auto r, auto isSuccess, auto m,
-                                                                                   auto c ) {
-                                                                       if ( !isSuccess ) {
-                                                                           qWarning()
-                                                                                   << "ReplicatorInfoDialog::ReplicatorInfoDialog. Error: "
-                                                                                   << m << " : Code: " << c;
-                                                                           return;
-                                                                       }
+        m_onChainClient->getBlockchainEngine()->getReplicatorById(item->getPublicKey().toStdString() ,[this, dialog] (auto r, auto isSuccess, auto m, auto c) {
+            if (!isSuccess) {
+                qWarning() << "ReplicatorInfoDialog::ReplicatorInfoDialog. Error: " << m << " : Code: " << c;
+                return;
+            }
 
-                                                                       if ( dialog && dialog->isVisible()) {
-                                                                           dialog->updateChannelsAmount(
-                                                                                   r.data.downloadChannels.size());
-                                                                       }
+            if (dialog && dialog->isVisible()) {
+                dialog->updateChannelsAmount(r.data.downloadChannels.size());
+            }
 
-                                                                       if ( dialog && dialog->isVisible()) {
-                                                                           dialog->updateDrivesAmount(
-                                                                                   r.data.drivesInfo.size());
-                                                                       }
+            if (dialog && dialog->isVisible()) {
+                dialog->updateDrivesAmount(r.data.drivesInfo.size());
+            }
 
-                                                                       getMosaicIdByName( r.data.key.c_str(), "so",
-                                                                                          [this, r, dialog]( auto id ) {
-                                                                                              m_onChainClient->getBlockchainEngine()->getAccountInfo(
-                                                                                                      r.data.key,
-                                                                                                      [this, r, id, dialog](
-                                                                                                              xpx_chain_sdk::AccountInfo info,
-                                                                                                              auto isSuccess,
-                                                                                                              auto message,
-                                                                                                              auto code ) {
-                                                                                                          if ( !isSuccess ) {
-                                                                                                              qWarning()
-                                                                                                                      << "loadBalance. ReplicatorInfoDialog: "
-                                                                                                                      << message.c_str()
-                                                                                                                      << " : "
-                                                                                                                      << code.c_str();
-                                                                                                              return;
-                                                                                                          }
+            getMosaicIdByName(r.data.key.c_str(), "so", [this, r, dialog](auto id) {
+                m_onChainClient->getBlockchainEngine()->getAccountInfo(
+                        r.data.key, [this, r, id, dialog](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+                            if (!isSuccess) {
+                                qWarning() << "loadBalance. ReplicatorInfoDialog: " << message.c_str() << " : " << code.c_str();
+                                return;
+                            }
 
-                                                                                                          auto mosaicIterator = std::find_if(
-                                                                                                                  info.mosaics.begin(),
-                                                                                                                  info.mosaics.end(),
-                                                                                                                  [id]( auto mosaic ) {
-                                                                                                                      return mosaic.id ==
-                                                                                                                             id;
-                                                                                                                  } );
+                            auto mosaicIterator = std::find_if( info.mosaics.begin(), info.mosaics.end(), [id]( auto mosaic )
+                            {
+                                return mosaic.id == id;
+                            });
 
-                                                                                                          const uint64_t freeSpace =
-                                                                                                                  mosaicIterator ==
-                                                                                                                  info.mosaics.end()
-                                                                                                                  ? 0
-                                                                                                                  : mosaicIterator->amount;
-                                                                                                          if ( dialog &&
-                                                                                                               dialog->isVisible()) {
-                                                                                                              dialog->updateFreeSpace(
-                                                                                                                      freeSpace );
-                                                                                                          }
+                            const uint64_t freeSpace = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
+                            if (dialog && dialog->isVisible()) {
+                                dialog->updateFreeSpace(freeSpace);
+                            }
 
-                                                                                                          // Can be called few times
-                                                                                                          m_onChainClient->calculateUsedSpaceOfReplicator(
-                                                                                                                  r.data.key.c_str(),
-                                                                                                                  [dialog](
-                                                                                                                          auto index,
-                                                                                                                          auto usedSpace ) {
-                                                                                                                      if ( dialog &&
-                                                                                                                           dialog->isVisible()) {
-                                                                                                                          dialog->updateTotalSpace(
-                                                                                                                                  index,
-                                                                                                                                  usedSpace );
-                                                                                                                      }
-                                                                                                                  } );
-                                                                                                      } );
-                                                                                          } );
-                                                                   } );
-    } );
+                            // Can be called few times
+                            m_onChainClient->calculateUsedSpaceOfReplicator(r.data.key.c_str(), [dialog](auto index, auto usedSpace){
+                                if (dialog && dialog->isVisible()) {
+                                    dialog->updateTotalSpace(index, usedSpace);
+                                }
+                            });
+                        });
+            });
+        });
+    });
 }
 
 void MainWin::setupNotifications() {
-    m_notificationsWidget = new QListWidget( this );
-    m_notificationsWidget->setAttribute( Qt::WA_QuitOnClose );
-    m_notificationsWidget->setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint );
-    m_notificationsWidget->setWindowModality( Qt::NonModal );
-    m_notificationsWidget->setMaximumHeight( 500 );
-    m_notificationsWidget->setStyleSheet(
-            "padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;" );
+    m_notificationsWidget = new QListWidget(this);
+    m_notificationsWidget->setAttribute(Qt::WA_QuitOnClose);
+    m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+    m_notificationsWidget->setWindowModality(Qt::NonModal);
+    m_notificationsWidget->setMaximumHeight(500);
+    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
 
-    connect( ui->m_notificationsButton, &QPushButton::released, this, [this]() {
-        if ( m_notificationsWidget->count() < 1 ) {
-            QToolTip::showText( QCursor::pos(), tr( "Empty!" ), nullptr, {}, 3000 );
+    connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
+        if (m_notificationsWidget->count() < 1) {
+            QToolTip::showText(QCursor::pos(), tr("Empty!"), nullptr, {}, 3000);
             return;
         }
 
-        if ( m_notificationsWidget->isVisible()) {
+        if (m_notificationsWidget->isVisible()) {
             m_notificationsWidget->hide();
         } else {
-            auto width = m_notificationsWidget->sizeHintForColumn( 0 ) + m_notificationsWidget->frameWidth() * 2;
-            m_notificationsWidget->setFixedWidth( width );
+            auto width = m_notificationsWidget->sizeHintForColumn(0) + m_notificationsWidget->frameWidth() * 2;
+            m_notificationsWidget->setFixedWidth(width);
             m_notificationsWidget->show();
-            QPoint point = ui->m_notificationsButton->mapToGlobal( QPoint());
-            m_notificationsWidget->move(
-                    QPoint( point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(),
-                            point.y() + ui->m_notificationsButton->height()));
+            QPoint point = ui->m_notificationsButton->mapToGlobal(QPoint());
+            m_notificationsWidget->move(QPoint(point.x() - m_notificationsWidget->width() + ui->m_notificationsButton->width(), point.y() + ui->m_notificationsButton->height()));
         }
-    } );
+    });
 }
 
-void MainWin::showNotification( const QString& message, const QString& error ) {
+void MainWin::showNotification(const QString &message, const QString& error) {
     QMessageBox msgBox;
-    msgBox.setWindowTitle( "Notification" );
-    msgBox.setText( message );
+    msgBox.setWindowTitle("Notification");
+    msgBox.setText(message);
 
-    if ( !error.isEmpty()) {
-        msgBox.setInformativeText( error );
+    if (!error.isEmpty()) {
+        msgBox.setInformativeText(error);
     }
 
     msgBox.setStandardButtons( QMessageBox::Ok );
     msgBox.exec();
 }
 
-void MainWin::addNotification( const QString& message ) {
+void MainWin::addNotification(const QString& message)
+{
     // No memory leaks, m_notificationsWidget will take ownerships after insert
-    auto item = new QListWidgetItem( tr( message.toStdString().c_str()));
-    m_notificationsWidget->insertItem( 0, item );
+    auto item = new QListWidgetItem(tr(message.toStdString().c_str()));
+    m_notificationsWidget->insertItem(0, item);
 }
 
-void MainWin::updateEntityNameOnUi( QComboBox* box, const std::string& name, const std::string& key ) {
-    const int index = box->findData( QVariant::fromValue( QString::fromStdString( key )), Qt::UserRole,
-                                     Qt::MatchFixedString );
-    if ( index != -1 ) {
-        box->setItemText( index, QString::fromStdString( name ));
+void MainWin::updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key)
+{
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
+    if (index != -1) {
+        box->setItemText(index, QString::fromStdString(name));
     } else {
-        qWarning() << "MainWin::updateEntityNameOnUi. Unknown entity. Name: " << name << " Key: " << key;
+        qWarning () << "MainWin::updateEntityNameOnUi. Unknown entity. Name: " << name << " Key: " << key;
     }
 }
 
-void MainWin::updateDownloadChannelStatusOnUi( const DownloadChannel& channel ) {
-    const int index = ui->m_channels->findData( QVariant::fromValue( QString::fromStdString( channel.getKey())),
-                                                Qt::UserRole, Qt::MatchFixedString );
-    if ( index != -1 ) {
+void MainWin::updateDownloadChannelStatusOnUi(const DownloadChannel& channel)
+{
+    const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channel.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    if (index != -1) {
         updateCreateChannelStatusForVieweing( channel );
-        if ( channel.isCreating()) {
-            ui->m_channels->setItemText( index, QString::fromStdString( channel.getName() + "(creating...)" ));
-        } else if ( channel.isDeleting()) {
-            ui->m_channels->setItemText( index, QString::fromStdString( channel.getName() + "(...deleting)" ));
+        if (channel.isCreating()) {
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(creating...)"));
+        } else if (channel.isDeleting()) {
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(...deleting)"));
         } else {
-            ui->m_channels->setItemText( index, QString::fromStdString( channel.getName()));
+            ui->m_channels->setItemText(index, QString::fromStdString(channel.getName()));
         }
     }
 }
 
-void MainWin::updateDriveStatusOnUi( const Drive& drive ) {
-    const int index = ui->m_driveCBox->findData( QVariant::fromValue( QString::fromStdString( drive.getKey())),
-                                                 Qt::UserRole, Qt::MatchFixedString );
-    if ( index != -1 ) {
+void MainWin::updateDriveStatusOnUi(const Drive& drive)
+{
+    const int index = ui->m_driveCBox->findData(QVariant::fromValue(QString::fromStdString(drive.getKey())), Qt::UserRole, Qt::MatchFixedString);
+    if (index != -1) {
         if ( drive.getState() == creating ) {
-            ui->m_driveCBox->setItemText( index, QString::fromStdString( drive.getName() + "(creating...)" ));
-        } else if ( drive.getState() == deleting ) {
-            ui->m_driveCBox->setItemText( index, QString::fromStdString( drive.getName() + "(...deleting)" ));
-        } else if ( drive.getState() == no_modifications ) {
-            ui->m_driveCBox->setItemText( index, QString::fromStdString( drive.getName()));
+            ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(creating...)"));
+        } else if (drive.getState() == deleting) {
+            ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName() + "(...deleting)"));
+        } else if (drive.getState() == no_modifications) {
+            ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+            ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
         }
     }
 }
 
-void MainWin::addEntityToUi( QComboBox* box, const std::string& name, const std::string& key ) {
-    const int index = box->findData( QVariant::fromValue( QString::fromStdString( key )), Qt::UserRole,
-                                     Qt::MatchFixedString );
-    if ( index == -1 ) {
-        box->addItem( QString::fromStdString( name ), QString::fromStdString( key ));
-        box->model()->sort( 0 );
+void MainWin::addEntityToUi(QComboBox* box, const std::string& name, const std::string& key)
+{
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
+    if (index == -1) {
+        box->addItem(QString::fromStdString(name), QString::fromStdString(key));
+        box->model()->sort(0);
     }
 }
 
-void MainWin::removeEntityFromUi( QComboBox* box, const std::string& key ) {
-    const int index = box->findData( QVariant::fromValue( QString::fromStdString( key )), Qt::UserRole,
-                                     Qt::MatchFixedString );
-    if ( index != -1 ) {
-        box->removeItem( index );
+void MainWin::removeEntityFromUi(QComboBox* box, const std::string& key)
+{
+    const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
+    if (index != -1) {
+        box->removeItem(index);
     }
 }
 
-void MainWin::lockChannel( const std::string& channelId ) {
-    auto channel = m_model->findChannel( channelId );
-    if ((channel && (channel->isCreating() || channel->isDeleting())) || channelId.empty()) {
-        ui->m_closeChannel->setDisabled( true );
-        ui->m_moreChannelsBtn->setDisabled( true );
-        ui->m_channelFsTableView->setDisabled( true );
-        ui->m_refresh->setDisabled( true );
-        ui->m_downloadBtn->setDisabled( true );
+void MainWin::lockChannel(const std::string &channelId) {
+    auto channel = m_model->findChannel(channelId);
+    if ((channel && (channel->isCreating() || channel->isDeleting())) || channelId.empty())
+    {
+        ui->m_closeChannel->setDisabled(true);
+        ui->m_moreChannelsBtn->setDisabled(true);
+        ui->m_channelFsTableView->setDisabled(true);
+        ui->m_refresh->setDisabled(true);
+        ui->m_downloadBtn->setDisabled(true);
     }
 }
 
-void MainWin::unlockChannel( const std::string& channelId ) {
-    auto channel = m_model->findChannel( channelId );
-    if (((channel && !channel->isCreating() && !channel->isDeleting()) || (m_model->getDownloadChannels().empty())) ||
-        channelId.empty()) {
-        ui->m_closeChannel->setEnabled( true );
-        ui->m_moreChannelsBtn->setEnabled( true );
-        ui->m_channelFsTableView->setEnabled( true );
-        ui->m_refresh->setEnabled( true );
-        ui->m_downloadBtn->setEnabled( true );
+void MainWin::unlockChannel(const std::string &channelId) {
+    auto channel = m_model->findChannel(channelId);
+    if (((channel && !channel->isCreating() && !channel->isDeleting()) || (m_model->getDownloadChannels().empty())) || channelId.empty()) {
+        ui->m_closeChannel->setEnabled(true);
+        ui->m_moreChannelsBtn->setEnabled(true);
+        ui->m_channelFsTableView->setEnabled(true);
+        ui->m_refresh->setEnabled(true);
+        ui->m_downloadBtn->setEnabled(true);
     }
 }
 
 void MainWin::lockDrive() {
-    ui->m_closeDrive->setDisabled( true );
-    ui->m_moreDrivesBtn->setDisabled( true );
-    ui->m_driveTreeView->setDisabled( true );
-    ui->m_driveFsTableView->setDisabled( true );
-    ui->m_openLocalFolderBtn->setDisabled( true );
-    ui->m_applyChangesBtn->setDisabled( true );
-    ui->m_diffTableView->setDisabled( true );
-    ui->m_calcDiffBtn->setDisabled( true );
+    ui->m_closeDrive->setDisabled(true);
+    ui->m_moreDrivesBtn->setDisabled(true);
+    ui->m_driveTreeView->setDisabled(true);
+    ui->m_driveFsTableView->setDisabled(true);
+    ui->m_openLocalFolderBtn->setDisabled(true);
+    ui->m_applyChangesBtn->setDisabled(true);
+    ui->m_diffTableView->setDisabled(true);
+    ui->m_calcDiffBtn->setDisabled(true);
 }
 
 void MainWin::unlockDrive() {
-    ui->m_closeDrive->setEnabled( true );
-    ui->m_moreDrivesBtn->setEnabled( true );
-    ui->m_driveTreeView->setEnabled( true );
-    ui->m_driveFsTableView->setEnabled( true );
-    ui->m_openLocalFolderBtn->setEnabled( true );
-    ui->m_applyChangesBtn->setEnabled( true );
-    ui->m_diffTableView->setEnabled( true );
-    ui->m_calcDiffBtn->setEnabled( true );
+    ui->m_closeDrive->setEnabled(true);
+    ui->m_moreDrivesBtn->setEnabled(true);
+    ui->m_driveTreeView->setEnabled(true);
+    ui->m_driveFsTableView->setEnabled(true);
+    ui->m_openLocalFolderBtn->setEnabled(true);
+    ui->m_applyChangesBtn->setEnabled(true);
+    ui->m_diffTableView->setEnabled(true);
+    ui->m_calcDiffBtn->setEnabled(true);
 }
 
-void MainWin::onDownloadFsTreeDirect( const std::string& driveId, const std::string& fileStructureCdi ) {
-    qDebug() << "MainWin::onDownloadFsTreeDirect. Drive key: " << driveId << " fileStructureCdi: " << fileStructureCdi;
-    auto drive = m_model->findDrive( driveId );
-    if ( !drive ) {
+void MainWin::onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi)
+{
+    qDebug()  << "MainWin::onDownloadFsTreeDirect. Drive key: " << driveId << " fileStructureCdi: " << fileStructureCdi;
+    auto drive = m_model->findDrive(driveId);
+    if (!drive) {
         qWarning() << "MainWin::onDownloadFsTreeDirect. Unknown drive (Invalid pointer to drive): " << driveId;
         return;
     }
 
-    if ( drive->isDownloadingFsTree()) {
+    if (drive->isDownloadingFsTree()) {
         qWarning() << "MainWin::onDownloadFsTreeDirect. FsTree downloading still in progress: " << driveId;
         return;
     }
 
-    drive->setDownloadingFsTree( true );
+    drive->setDownloadingFsTree(true);
     const auto channelId = "0000000000000000000000000000000000000000000000000000000000000000";
-    m_onChainClient->getStorageEngine()->downloadFsTree( driveId, channelId, rawHashFromHex( fileStructureCdi.c_str()));
+    m_onChainClient->getStorageEngine()->downloadFsTree(driveId, channelId, rawHashFromHex(fileStructureCdi.c_str()));
 }
 
-void MainWin::downloadFsTreeByChannel( const std::string& channelId, const std::string& fileStructureCdi ) {
-    qDebug() << "MainWin::downloadFsTreeByChannel. Channel key: " << channelId << " fileStructureCdi: "
-             << fileStructureCdi;
-    auto channel = m_model->findChannel( channelId );
-    if ( !channel ) {
+void MainWin::downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi)
+{
+    qDebug()  << "MainWin::downloadFsTreeByChannel. Channel key: " << channelId << " fileStructureCdi: " << fileStructureCdi;
+    auto channel = m_model->findChannel(channelId);
+    if (!channel) {
         qWarning() << "MainWin::downloadFsTreeByChannel. Unknown channel (Invalid pointer to channel): " << channelId;
         return;
     }
 
-    if ( channel->isDownloadingFsTree()) {
-        qWarning()
-                << "MainWin::downloadFsTreeByChannel. FsTree downloading still in progress(for channel). Channel key: "
-                << channel->getKey();
+    if (channel->isDownloadingFsTree()) {
+        qWarning() << "MainWin::downloadFsTreeByChannel. FsTree downloading still in progress(for channel). Channel key: " << channel->getKey();
         return;
     }
 
-    auto drive = m_model->findDrive( channel->getDriveKey());
-    if ( drive ) {
-        qInfo() << "MainWin::downloadFsTreeByChannel. Drive found, download fsTree direct. Drive key: "
-                << drive->getKey();
-        onDownloadFsTreeDirect( drive->getKey(), fileStructureCdi );
+    auto drive = m_model->findDrive(channel->getDriveKey());
+    if (drive) {
+        qInfo() << "MainWin::downloadFsTreeByChannel. Drive found, download fsTree direct. Drive key: " << drive->getKey();
+        onDownloadFsTreeDirect(drive->getKey(), fileStructureCdi);
     } else {
-        channel->setDownloadingFsTree( true );
-        m_onChainClient->getStorageEngine()->downloadFsTree( channel->getDriveKey(), channelId,
-                                                             rawHashFromHex( fileStructureCdi.c_str()));
+        channel->setDownloadingFsTree(true);
+        m_onChainClient->getStorageEngine()->downloadFsTree(channel->getDriveKey(), channelId, rawHashFromHex(fileStructureCdi.c_str()));
     }
 }
 
-void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t, 32>& fsTreeHash,
-                                const sirius::drive::FsTree& fsTree ) {
-    qDebug() << "MainWin::onFsTreeReceived. Drive key: " << driveKey.c_str();
+void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& fsTree )
+{
+    qDebug()  << "MainWin::onFsTreeReceived. Drive key: " << driveKey.c_str();
     fsTree.dbgPrint();
 
     auto drive = m_model->findDrive( driveKey );
-    if ( drive ) {
+    if (drive) {
         qDebug() << "MainWin::onFsTreeReceived. FsTree downloaded and apply for drive: " << driveKey;
-        drive->setDownloadingFsTree( false );
-        drive->setRootHash( fsTreeHash );
-        drive->setFsTree( fsTree );
+        drive->setDownloadingFsTree(false);
+        drive->setRootHash(fsTreeHash);
+        drive->setFsTree(fsTree);
 
-        if ( isCurrentDrive( drive )) {
+        if (isCurrentDrive(drive)) {
             updateDriveView();
             updateDiffView();
         }
+
+        // inform stream annotations about possible changes
+        onFsTreeReceivedForStreamAnnotations( *drive );
     }
 
-    m_model->applyFsTreeForChannels( driveKey, fsTree, fsTreeHash );
-    if ( auto channel = m_model->currentDownloadChannel(); channel &&
-                                                           boost::iequals( channel->getDriveKey(), driveKey )) {
-        m_channelFsTreeTableModel->setFsTree( fsTree, channel->getLastOpenedPath());
+    m_model->applyFsTreeForChannels(driveKey, fsTree, fsTreeHash);
+    if ( auto channel = m_model->currentDownloadChannel(); channel && boost::iequals( channel->getDriveKey(), driveKey ) )
+    {
+        m_channelFsTreeTableModel->setFsTree( fsTree, channel->getLastOpenedPath() );
     }
 
     m_model->saveSettings();
 }
 
-void MainWin::lockMainButtons( bool state ) {
-    ui->m_refresh->setDisabled( state );
-    ui->m_addChannel->setDisabled( state );
-    ui->m_addDrive->setDisabled( state );
+void MainWin::lockMainButtons(bool state) {
+    ui->m_refresh->setDisabled(state);
+    ui->m_addChannel->setDisabled(state);
+    ui->m_addDrive->setDisabled(state);
 }
 
-void MainWin::closeEvent( QCloseEvent* event ) {
-    if ( event ) {
-        m_model->setWindowGeometry( frameGeometry());
+void MainWin::closeEvent(QCloseEvent *event) {
+    if (event) {
+        m_model->setWindowGeometry(frameGeometry());
         m_model->saveSettings();;
         event->accept();
     }
@@ -2715,247 +2799,208 @@ void MainWin::closeEvent( QCloseEvent* event ) {
 
 void MainWin::addLocalModificationsWatcher() {
     auto drives = m_model->getDrives();
-    for ( const auto&[key, drive] : drives ) {
-        m_modificationsWatcher->addPath( drive.getLocalFolder().c_str());
+    for (const auto& [key, drive] : drives) {
+        m_modificationsWatcher->addPath(drive.getLocalFolder().c_str());
     }
 }
 
-bool MainWin::isCurrentDrive( Drive* drive ) {
+bool MainWin::isCurrentDrive(Drive* drive)
+{
     auto currentDrive = m_model->currentDrive();
-    if ( drive && currentDrive ) {
-        return boost::iequals( drive->getKey(), currentDrive->getKey());
+    if (drive && currentDrive) {
+        return boost::iequals(drive->getKey(), currentDrive->getKey());
     }
 
     return false;
 }
 
-bool MainWin::isCurrentDownloadChannel( DownloadChannel* channel ) {
+bool MainWin::isCurrentDownloadChannel(DownloadChannel* channel)
+{
     auto currentChannel = m_model->currentDownloadChannel();
-    if ( channel && currentChannel ) {
-        return boost::iequals( channel->getKey(), currentChannel->getKey());
+    if (channel && currentChannel) {
+        return boost::iequals(channel->getKey(), currentChannel->getKey());
     }
 
     return false;
 }
 
 void MainWin::updateDiffView() {
-    if ( m_settings->m_isDriveStructureAsTree ) {
-        m_diffTreeModel->updateModel( false );
-        ui->m_diffTreeView->expand( m_diffTreeModel->index( 0, 0 ));
+    if (m_settings->m_isDriveStructureAsTree) {
+        m_diffTreeModel->updateModel(false);
+        ui->m_diffTreeView->expand(m_diffTreeModel->index(0, 0));
     } else {
         m_diffTableModel->updateModel();
     }
 }
 
 void MainWin::updateDriveView() {
-    if ( m_settings->m_isDriveStructureAsTree ) {
-        m_driveTreeModel->updateModel( false );
-        ui->m_driveTreeView->expand( m_driveTreeModel->index( 0, 0 ));
+    if (m_settings->m_isDriveStructureAsTree) {
+        m_driveTreeModel->updateModel(false);
+        ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
     } else {
         auto drive = m_model->currentDrive();
-        if ( drive ) {
-            m_driveTableModel->setFsTree( drive->getFsTree(), {drive->getLocalFolder()} );
-        } else if ( m_model->getDrives().empty()) {
-            m_driveTableModel->setFsTree( {}, {} );
+        if (drive) {
+            m_driveTableModel->setFsTree(drive->getFsTree(), { drive->getLocalFolder() } );
+        } else if(m_model->getDrives().empty()) {
+            m_driveTableModel->setFsTree({}, {} );
         } else {
             qWarning() << "MainWin::updateDriveView: invalid drive";
         }
     }
 }
 
-void MainWin::updateDownloadChannelData( DownloadChannel* channel ) {
-    if ( !channel ) {
-        qWarning() << "MainWin::updateDownloadChannelData. Invalid download channel!";
+void MainWin::updateDownloadChannelData(DownloadChannel* channel) {
+    if (!channel) {
+        qWarning () << "MainWin::updateDownloadChannelData. Invalid download channel!";
         return;
     }
 
     auto updateReplicatorsCallback = [this, channel]() {
-        auto driveUpdatesCallback = [this, channel]( bool isOutdated ) {
-            if ( isOutdated ) {
-                const auto rootHash = rawHashToHex( channel->getFsTreeHash()).toStdString();
-                downloadFsTreeByChannel( channel->getKey(), rootHash );
+        auto driveUpdatesCallback = [this, channel](bool isOutdated) {
+            if (isOutdated) {
+                const auto rootHash = rawHashToHex(channel->getFsTreeHash()).toStdString();
+                downloadFsTreeByChannel(channel->getKey(), rootHash);
             } else {
-                if ( isCurrentDownloadChannel( channel )) {
-                    m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath());
-                    ui->m_path->setText(
-                            "Path: " + QString::fromStdString( m_channelFsTreeTableModel->currentPathString()));
+                if (isCurrentDownloadChannel(channel)) {
+                    m_channelFsTreeTableModel->setFsTree( channel->getFsTree(), channel->getLastOpenedPath() );
+                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
                 }
             }
 
             loadBalance();
         };
 
-        checkDriveForUpdates( channel, driveUpdatesCallback );
+        checkDriveForUpdates(channel, driveUpdatesCallback);
         loadBalance();
     };
 
-    updateReplicatorsForChannel( channel->getKey(), updateReplicatorsCallback );
+    updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
 
-void MainWin::getMosaicIdByName( const QString& accountPublicKey, const QString& mosaicName,
+void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t mosaicId)> callback) {
+    m_onChainClient->getBlockchainEngine()->getAccountInfo(
+            accountPublicKey.toStdString(), [this, mosaicName, callback](xpx_chain_sdk::AccountInfo info, auto isSuccess, auto message, auto code) {
+        if (!isSuccess) {
+            qWarning() << "MainWin::getMosaicIdByName. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
+            const QString clientPublicKey = QString::fromStdString(message);
+            if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive)) {
+                onInternalError("Current account not found, try to use another account or switch to other API Gateway!", false);
+            } else {
+                onInternalError(message.c_str(), false);
+            }
 
-std::function<
-void(uint64_t
-mosaicId)> callback) {
-m_onChainClient->getBlockchainEngine()->
-getAccountInfo(
-        accountPublicKey
-.
+            return;
+        }
 
-toStdString(),
+        std::vector<xpx_chain_sdk::MosaicId> mosaicIds;
+        for (const xpx_chain_sdk::Mosaic& mosaic : info.mosaics) {
+            mosaicIds.push_back(mosaic.id);
+        }
 
-[this, mosaicName, callback](
-xpx_chain_sdk::AccountInfo info,
-auto isSuccess,
-auto message,
-auto code
-) {
-if (!isSuccess) {
-qWarning()
+        m_onChainClient->getBlockchainEngine()->getMosaicsNames(
+                mosaicIds, [mosaicName, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
+            if (!isSuccess) {
+                qWarning() << "MainWin::getMosaicIdByName. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
+                return;
+            }
 
-<< "loadBalance. GetAccountInfo: " << message.
+            uint64_t id = 0;
+            bool isMosaicFound = false;
+            for (const auto& rawInfo : mosaicDescriptors.names) {
+                for (const auto& name : rawInfo.names) {
+                    QString currentName(name.c_str());
+                    if (currentName.contains(mosaicName, Qt::CaseInsensitive)) {
+                        id = rawInfo.mosaicId;
+                        isMosaicFound = true;
+                        break;
+                    }
+                }
 
-c_str()
+                if (isMosaicFound) {
+                    break;
+                }
+            }
 
-<< " : " << code.
-
-c_str();
-
-return;
-}
-
-std::vector <xpx_chain_sdk::MosaicId> mosaicIds;
-for (
-const xpx_chain_sdk::Mosaic& mosaic
-: info.mosaics) {
-mosaicIds.
-push_back(mosaic
-.id);
-}
-
-m_onChainClient->getBlockchainEngine()->
-getMosaicsNames(
-        mosaicIds,
-[mosaicName, info, callback](
-xpx_chain_sdk::MosaicNames mosaicDescriptors,
-auto isSuccess,
-auto message,
-auto code
-) {
-if (!isSuccess) {
-qWarning()
-
-<< "loadBalance. GetMosaicsNames: " << message.
-
-c_str()
-
-<< " : " << code.
-
-c_str();
-
-return;
-}
-
-uint64_t id = 0;
-bool isMosaicFound = false;
-for (
-const auto& rawInfo
-: mosaicDescriptors.names) {
-for (
-const auto& name
-: rawInfo.names) {
-QString currentName( name.c_str());
-if (currentName.
-contains(mosaicName, Qt::CaseInsensitive
-)) {
-id = rawInfo.mosaicId;
-isMosaicFound = true;
-break;
-}
-}
-
-if (isMosaicFound) {
-break;
-}
-}
-
-callback(id);
-});
-});
+            callback(id);
+        });
+    });
 }
 
 void MainWin::initWorker() {
-    mpWorker->moveToThread( mpThread );
-    connect( mpThread, &QThread::started, mpWorker, [w = mpWorker]() { w->init( 0, false ); }, Qt::QueuedConnection );
-    connect( mpWorker, &Worker::done, this, &MainWin::callbackResolver, Qt::QueuedConnection );
-    connect( mpThread, &QThread::finished, mpThread, &QThread::deleteLater );
-    connect( mpThread, &QThread::finished, mpWorker, &Worker::deleteLater );
-    connect( this, &MainWin::addResolver, this, &MainWin::onAddResolver, Qt::QueuedConnection );
-    connect( this, &MainWin::removeResolver, this, &MainWin::onRemoveResolver, Qt::QueuedConnection );
-    connect( this, &MainWin::runProcess, mpWorker, &Worker::process, Qt::QueuedConnection );
+    mpWorker->moveToThread(mpThread);
+    connect(mpThread, &QThread::started, mpWorker, [w = mpWorker]() { w->init(0, false); }, Qt::QueuedConnection);
+    connect(mpWorker, &Worker::done, this, &MainWin::callbackResolver, Qt::QueuedConnection);
+    connect(mpThread, &QThread::finished, mpThread, &QThread::deleteLater);
+    connect(mpThread, &QThread::finished, mpWorker, &Worker::deleteLater);
+    connect(this, &MainWin::addResolver, this, &MainWin::onAddResolver, Qt::QueuedConnection);
+    connect(this, &MainWin::removeResolver, this, &MainWin::onRemoveResolver, Qt::QueuedConnection);
+    connect(this, &MainWin::runProcess, mpWorker, &Worker::process, Qt::QueuedConnection);
     mpThread->start();
 }
 
-void MainWin::onAddResolver( const QUuid& id, const std::function<void( QVariant )>& resolver ) {
-    mResolvers.emplace( id, resolver );
+void MainWin::onAddResolver(const QUuid &id, const std::function<void(QVariant)>& resolver) {
+    mResolvers.emplace(id, resolver);
 }
 
-void MainWin::onRemoveResolver( const QUuid& id ) {
-    mResolvers.erase( id );
+void MainWin::onRemoveResolver(const QUuid &id) {
+    mResolvers.erase(id);
 }
 
-void MainWin::callbackResolver( const QUuid& id, const QVariant& data ) {
-    mResolvers[id]( data );
+void MainWin::callbackResolver(const QUuid& id, const QVariant& data) {
+    mResolvers[id](data);
 }
 
-void MainWin::calculateDiffAsync( const std::function<void( int, std::string )>& callback ) {
+void MainWin::calculateDiffAsync(const std::function<void(int, std::string)>& callback) {
     auto taskCalcDiff = [this]() {
         try {
-            m_model->calcDiff();
-            return QVariant::fromValue( 0 );
-        } catch ( std::exception& e ) {
-            return QVariant::fromValue( std::string( e.what()));
+            if ( auto* drive = m_model->currentDrive(); drive != nullptr )
+            {
+                Model::calcDiff( *drive );
+            }
+            return QVariant::fromValue(0);
+        } catch (std::exception& e) {
+            return QVariant::fromValue(std::string(e.what()));
         }
     };
 
     const QUuid id = QUuid::createUuid();
-    auto resolver = [this, id, callback]( QVariant data ) {
-        emit removeResolver( id );
-        if ( callback ) {
-            typeResolver<int>( data, callback );
+    auto resolver = [this, id, callback] (QVariant data) {
+        emit removeResolver(id);
+        if (callback) {
+            typeResolver<int>(data, callback);
         }
     };
 
-    emit addResolver( id, resolver );
-    emit runProcess( id, taskCalcDiff );
+    emit addResolver(id, resolver);
+    emit runProcess(id, taskCalcDiff);
 }
 
-void MainWin::dataModificationsStatusHandler( const sirius::drive::ReplicatorKey& replicatorKey,
-                                              const sirius::Hash256& modificationHash,
-                                              const sirius::drive::ModifyTrafficInfo& msg,
-                                              lt::string_view,
-                                              bool isModificationQueued,
-                                              bool isModificationFinished,
-                                              const std::string& error ) {
-    if ( error == "not found" || isModificationQueued ) {
+void MainWin::dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
+                                             const sirius::Hash256 &modificationHash,
+                                             const sirius::drive::ModifyTrafficInfo &msg,
+                                             lt::string_view,
+                                             bool isModificationQueued,
+                                             bool isModificationFinished,
+                                             const std::string &error) {
+    if (error == "not found" || isModificationQueued) {
         return;
     }
 
-    if ( !error.empty()) {
+    if (!error.empty()) {
         qInfo() << "MainWin::dataModificationsStatusHandler. Error: " << error;
         return;
     }
 
     uint64_t receivedSize = 0;
-    for ( const auto& replicatorInfo : msg.m_modifyTrafficMap ) {
+    for (const auto& replicatorInfo : msg.m_modifyTrafficMap) {
         receivedSize += replicatorInfo.second.m_receivedSize;
     }
 
-    if ( receivedSize > 0 ) {
-        emit updateUploadedDataAmount( receivedSize );
+    if (receivedSize > 0) {
+        emit updateUploadedDataAmount(receivedSize);
     }
 
-    if ( isModificationFinished ) {
+    if (isModificationFinished) {
         emit modificationFinishedByReplicators();
     }
 }

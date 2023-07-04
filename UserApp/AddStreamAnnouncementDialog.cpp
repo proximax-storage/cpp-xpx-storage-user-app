@@ -13,11 +13,13 @@
 
 AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChainClient,
                                                           Model*         model,
+                                                          std::string    driveKey,
                                                           QWidget*       parent ) :
     QDialog( parent ),
     ui( new Ui::AddStreamAnnouncementDialog() ),
     mp_onChainClient(onChainClient),
-    mpModel(model)
+    m_model(model),
+    mDriveKey(driveKey)
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
@@ -26,27 +28,6 @@ AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChain
     ui->m_errorText->setText("");
 
     ui->m_dateTime->setDateTime( QDateTime::currentDateTime().addSecs(180) );
-
-    // Drive
-    std::vector<std::string> drivesKeys;
-    drivesKeys.reserve(mpModel->getDrives().size());
-    ui->selectDriveBox->addItem("Select from my drives");
-    for ( const auto& [key, drive] : mpModel->getDrives()) {
-        drivesKeys.push_back(key);
-        ui->selectDriveBox->addItem(drive.getName().c_str());
-    }
-
-    ui->selectDriveBox->setCurrentIndex(0);
-
-    connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
-    {
-        if (index == 0) {
-            mCurrentDriveKey.clear();
-        } else if (index >= 1) {
-            mCurrentDriveKey = drivesKeys[--index];
-        }
-        validate();
-    }, Qt::QueuedConnection);
 
     // Title
     connect(ui->m_title, &QLineEdit::textChanged, this, [this](auto text){
@@ -112,17 +93,9 @@ AddStreamAnnouncementDialog::~AddStreamAnnouncementDialog()
 
 void AddStreamAnnouncementDialog::validate()
 {
-    if ( mCurrentDriveKey.empty() )
+    if ( mDriveKey.empty() )
     {
         ui->m_errorText->setText("Drive not assigned");
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        return;
-    }
-
-    auto* drive = mpModel->findDrive( mCurrentDriveKey );
-    if ( drive == nullptr )
-    {
-        ui->m_errorText->setText("Drive not found");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         return;
     }
@@ -183,14 +156,14 @@ void AddStreamAnnouncementDialog::validate()
 
 void AddStreamAnnouncementDialog::accept()
 {
-    auto* drive = mpModel->findDrive( mCurrentDriveKey );
+    auto* drive = m_model->findDrive( mDriveKey );
     if ( drive == nullptr )
     {
         qWarning() << "drive == nullptr";
         return;
     }
 
-    if ( drive->getState() == no_modifications )
+    if ( drive->getState() != no_modifications )
     {
         QMessageBox msgBox;
         const QString message = QString::fromStdString("Last drive operation is not completed.");
@@ -200,6 +173,9 @@ void AddStreamAnnouncementDialog::accept()
         return;
     }
     
+    //
+    // Calculate unique stream folder
+    //
     std::random_device   dev;
     std::seed_seq        seed({dev(), dev(), dev(), dev()});
     std::mt19937         rng(seed);
@@ -211,36 +187,67 @@ void AddStreamAnnouncementDialog::accept()
         return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
     });
 
-    mStreamFolder = sirius::drive::toString( buffer ).substr( 0, 20 );
+    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 20 );
         
-    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / mStreamFolder;
+    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / mUniqueFolderName;
     
+    //
+    // Try to create stream folder
+    //
     std::error_code ec;
     fs::create_directories( streamFolder, ec );
     if ( ec )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
+        msgBox.setText( QString::fromStdString( "Cannot create folder: " + getSettingsFolder().string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         return;
     }
 
+    //
+    // save stream annotaion on disk
+    //
     StreamInfo  streamInfo( drive->getKey(),
                             ui->m_title->text().toStdString(),
+                            "",
                             ui->m_dateTime->dateTime().toSecsSinceEpoch(),
-                            mStreamFolder );
-    mpModel->addStreamerAnnouncement( streamInfo );
+                            mUniqueFolderName );
     
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
     archive( streamInfo );
 
-    std::ofstream fStream( streamFolder / "streamInfo", std::ios::binary );
-    fStream << os.str();
-    fStream.close();
+    try
+    {
+        std::ofstream fStream( streamFolder / STREAM_INFO_FILE_NAME, std::ios::binary );
+        fStream << os.str();
+        fStream.close();
+    }
+    catch (...) {
+        QMessageBox msgBox;
+        msgBox.setText( QString::fromStdString( "Cannot write file: " + streamFolder.string() + "/" + STREAM_INFO_FILE_NAME ) );
+        msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.exec();
+        return;
+    }
 
+    //
+    // Create action list
+    //
+    sirius::drive::ActionList actionList;
+    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / mUniqueFolderName;
+    actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder.string() + "/" + STREAM_INFO_FILE_NAME ) );
+
+    //
+    // Start modification
+    //
+    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+    mp_onChainClient->applyDataModification(driveKeyHex, actionList);
+    drive->updateState(registering);
+    
     QDialog::accept();
 }
 

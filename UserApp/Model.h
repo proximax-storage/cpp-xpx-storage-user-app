@@ -154,7 +154,7 @@ class Model : public QObject
 
         void removeFromDownloads(int rowIndex);
 
-        void calcDiff();
+        static void calcDiff(  Drive& drive );
 
         //
         // StorageEngine
@@ -180,10 +180,8 @@ class Model : public QObject
         //
         // Streaming
         //
-        void                            addStreamerAnnouncement( const StreamInfo& streamInfo );
-        void                            approveLastStreamerAnnouncement();
-        void                            deleteStreamerAnnouncement( int index );
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
+        std::vector<StreamInfo>&        streamerAnnouncements();
 
         //
         // Viewing
@@ -204,6 +202,11 @@ class Model : public QObject
         void stestInitDrives();
 
     signals:
+        void addTorrentFileToStorageSession(const std::string &torrentFilename,
+                                            const std::string &folderWhereFileIsLocated,
+                                            const std::array<uint8_t, 32>& driveKey,
+                                            const std::array<uint8_t, 32>& modifyTx);
+
         void driveStateChanged(const std::string& driveKey, int state);
 
     private:

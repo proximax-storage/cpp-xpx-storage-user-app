@@ -67,7 +67,8 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
     {
         endpoint_list bootstraps;
         std::vector<std::string> addressAndPort;
-        boost::split( addressAndPort, mp_model->getBootstrapReplicator(), [](char c){ return c==':'; } );
+        std::string bootstrapReplicatorEndpoint = mp_model->getBootstrapReplicator();
+        boost::split( addressAndPort, bootstrapReplicatorEndpoint, [](char c){ return c==':'; } );
         bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
                                (uint16_t)atoi(addressAndPort[1].c_str()) );
 
@@ -115,6 +116,8 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
     {
         mp_model->onDownloadCompleted( handle );
     });
+
+    connect(mp_model, &Model::addTorrentFileToStorageSession, this, &StorageEngine::addTorrentFileToSession, Qt::QueuedConnection);
 }
 
 void StorageEngine::downloadFsTree( const std::string&                      driveId,
@@ -167,11 +170,11 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
                                                             size_t /*downloaded*/,
                                                             size_t /*fileSize*/,
                                                             const std::string& /*errorText*/) {
-        qDebug() << LOG_SOURCE << "fstree received: " << std::string(fsTreeSaveFolder);
+        qDebug() << LOG_SOURCE << "fstree received: " << fsTreeSaveFolder.string();
         sirius::drive::FsTree fsTree;
         try
         {
-            fsTree.deserialize( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+            fsTree.deserialize( (fsTreeSaveFolder / FS_TREE_FILE_NAME).string() );
         } catch (const std::runtime_error& ex )
         {
             qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
@@ -183,7 +186,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicators);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder.string(), "", {}, replicators);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
@@ -246,6 +249,25 @@ void StorageEngine::removeTorrentSync( sirius::drive::InfoHash infoHash )
 
 void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHash )
 {
+}
+
+void StorageEngine::addTorrentFileToSession(const std::string &torrentFilename,
+                                            const std::string &folderWhereFileIsLocated,
+                                            const std::array<uint8_t, 32>& driveKey,
+                                            const std::array<uint8_t, 32> &modifyTx)
+{
+    qDebug() << "StorageEngine::addTorrentFileToSession. torrentFilename: " << torrentFilename;
+    qDebug() << "StorageEngine::addTorrentFileToSession. folderWhereFileIsLocated: " << folderWhereFileIsLocated;
+    qDebug() << "StorageEngine::addTorrentFileToSession. driveKey: " << rawHashToHex(driveKey);
+    qDebug() << "StorageEngine::addTorrentFileToSession. modifyTx: " << rawHashToHex(modifyTx);
+
+    auto drive = mp_model->findDrive(rawHashToHex(driveKey).toStdString());
+    if (!drive) {
+        qWarning () << "StorageEngine::addTorrentFileToSession. Drive not found!";
+        return;
+    }
+
+    m_session->addTorrentFileToSession(torrentFilename, folderWhereFileIsLocated, driveKey, modifyTx, drive->getReplicators());
 }
 
 void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          driveKey,

@@ -15,7 +15,8 @@
 #include "drive/Utils.h"
 #include "DriveContractModel.h"
 
-#define STREAM_ROOT_FOLDER_NAME ".Streams"
+#define STREAM_ROOT_FOLDER_NAME ".videos"
+#define STREAM_INFO_FILE_NAME   "info"
 
 class Account : public QObject
 {

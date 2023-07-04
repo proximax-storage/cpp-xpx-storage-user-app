@@ -59,28 +59,28 @@ Settings &Settings::operator=(const Settings &s) {
 
 void Settings::initForTests()
 {
-    if ( Model::homeFolder() == "/Users/alex" )
+    if ( m_accounts.empty() && Model::homeFolder() == "/Users/alex" )
     {
         m_restBootstrap       = "54.151.169.225:3000";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_genkins", "fd59b9e34bc07f59f5a05f9bd550e6186d483a264269554fd163f53298dfcbe4" );
+        config().initAccount( "test_staging_A04", "A04F01F652364657087FB254DFA69460E7137247854373E49D3E590F96D14994" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test", "4DC8F4C8C84ED4A829E79A685A98E4A0BB97A3C6DA9C49FA83CA133676993D08" );
+        config().initAccount( "test_staging_C62", "C62F0F5E3A2A00BDBEABDF5DD45B9DCC01A210A09CF1D442B711B6C0F45B53E8" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "alex_local_test", "0000000000010203040501020304050102030405010203040501020304050102" );
+        config().initAccount( "test_staging_B89", "92CFFA0FA7B67DE5C7C3CB13893169F7784CF3DB51F30A88C0A68E30C917BAAF" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         if ( ! ALEX_LOCAL_TEST )
         {
-            setCurrentAccountIndex( 1 );
+            setCurrentAccountIndex( 2 );
         }
     }
 }
@@ -162,22 +162,23 @@ bool Settings::load( const std::string& pwd )
             std::cerr << filePath << std::endl;
             QMessageBox msgBox;
             msgBox.setText( QString::fromStdString( "Your config data is corrupted" ) );
-            msgBox.setInformativeText( QString::fromStdString( filePath ) );
+            msgBox.setInformativeText( QString::fromStdString( filePath.string() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
             exit(1);
         }
 
-        qDebug() << "Settings::load. New session of storage tool started.";
+        qDebug() << "/*****************************************************************************************/.";
+        qDebug() << "Settings::load. New session has been started.";
 
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );
-            qDebug() << LOG_SOURCE << "account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
+            qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
-        qDebug() << LOG_SOURCE << "currentAccountKeyStr: " << config().m_publicKeyStr.c_str();
-        qDebug() << LOG_SOURCE << "currentAccountIndex: " << m_currentAccountIndex;
+        qDebug() << "Settings::load. Current account public key: " << config().m_publicKeyStr.c_str();
+        qDebug() << "/*****************************************************************************************/.";
     }
     catch( std::runtime_error& err )
     {
@@ -202,7 +203,7 @@ void Settings::save()
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(getSettingsFolder()) ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + getSettingsFolder().string()));
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
@@ -259,14 +260,14 @@ void Settings::save()
     catch( const std::exception& ex )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + std::string(getSettingsFolder() / "config") ) );
+        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + (getSettingsFolder() / "config").string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
         exit(1);
     }
 
-    qDebug() << LOG_SOURCE << "Settings saved";
+    qDebug() << "Settings::save. Settings saved";
 }
 
 bool Settings::loaded() const
@@ -358,7 +359,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     dnInfo.setFileName(newName);
                 }
 
-                dnInfo.getFileName() = destPath.filename();
+                dnInfo.getFileName() = destPath.filename().string();
 
                 if ( --counter == 0 )
                 {
@@ -397,7 +398,7 @@ void Settings::removeFromDownloads( int index )
 
     if ( index < 0 || index >= downloads.size() )
     {
-        qDebug() << LOG_SOURCE << "removeFromDownloads: invalid index: " << index << "; downloads.size()=" << downloads.size();
+        qDebug() << "Settings::removeFromDownloads. Invalid index: " << index << "; downloads.size()=" << downloads.size();
         return;
     }
 
@@ -413,7 +414,7 @@ void Settings::removeFromDownloads( int index )
         }
     }
 
-    qDebug() << LOG_SOURCE << "hashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
+    qDebug() << "Settings::removeFromDownloads. HashCounter: " << hashCounter << " dnInfo.isCompleted()=" << dnInfo.isCompleted();
 
     if ( hashCounter == 1 )
     {
@@ -425,12 +426,12 @@ void Settings::removeFromDownloads( int index )
     if ( dnInfo.isCompleted() )
     {
         fs::remove( downloadFolder() / dnInfo.getFileName(), ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << "Settings::removeFromDownloads. Remove(1): " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
     }
     else if ( hashCounter == 1 )
     {
         fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash()), ec );
-        qDebug() << LOG_SOURCE << "remove: " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
+        qDebug() << "Settings::removeFromDownloads. Remove(2): " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );
