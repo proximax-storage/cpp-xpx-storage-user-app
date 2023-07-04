@@ -438,6 +438,14 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionFailed, this,
+             &MainWin::onDeployContractTransactionFailed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
+             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::newNotification, this, [this](auto notification) {
         showNotification(notification);
@@ -516,7 +524,6 @@ void MainWin::init()
     m_startStreamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
-    ui->tabWidget->setTabVisible( 3, false );
     ui->tabWidget->setTabVisible( 4, false );
 #endif
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
@@ -578,7 +585,228 @@ void MainWin::init()
     m_model->setModificationStatusResponseHandler(
             [this](auto replicatorKey, auto modificationHash,auto msg, auto currentTask, bool isQueued, bool isFinished, auto error){
         dataModificationsStatusHandler(replicatorKey, modificationHash, msg, currentTask, isQueued, isFinished, error);
+            } );
+
+//    ui->m_contractExecutionCallPayment->setInputMask(QString::fromStdString());
+
+    connect( &m_model->driveContractModel(), &DriveContractModel::driveContractAdded, this,
+             [this]( const std::string& driveKey ) {
+                 const auto& drives = m_model->getDrives();
+                 auto driveIt = drives.find( driveKey );
+                 if ( driveIt == drives.end()) {
+                     qWarning() << LOG_SOURCE << "added unknown contract drive " << driveKey;
+                     return;
+                 }
+                 ui->m_contractDriveCBox->addItem(
+                         QString::fromStdString( driveIt->second.getName()), QString::fromStdString( driveKey ));
+             }, Qt::QueuedConnection );
+
+    connect( ui->m_contractDriveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, [this]( int index ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( !pContractDrive ) {
+            ui->m_deploymentParameters->hide();
+            return;
+        }
+        ui->m_contractAssignee->setText( QString::fromStdString( pContractDrive->m_assignee ));
+        ui->m_contractFile->setText( QString::fromStdString( pContractDrive->m_file ));
+        ui->m_contractFunction->setText( QString::fromStdString( pContractDrive->m_function ));
+        ui->m_contractParameters->setText( QString::fromStdString( pContractDrive->m_parameters ));
+        ui->m_contractExecutionCallPayment->setValue( pContractDrive->m_executionCallPayment );
+        ui->m_contractDownloadCallPayment->setValue( pContractDrive->m_downloadCallPayment );
+        ui->m_contractAutomaticExecutionsNumber->setValue( pContractDrive->m_automaticExecutionsNumber );
+        ui->m_contractAutomaticExecutionFileName->setText(
+                QString::fromStdString( pContractDrive->m_automaticExecutionFileName ));
+        ui->m_contractAutomaticExecutionFunctionName->setText(
+                QString::fromStdString( pContractDrive->m_automaticExecutionFunctionName ));
+        ui->m_contractAutomaticExecutionCallPayment->setValue( pContractDrive->m_automaticExecutionCallPayment );
+        ui->m_contractAutomaticDownloadCallPayment->setValue( pContractDrive->m_automaticDownloadCallPayment );
+
+        ui->m_contractMosaicTable->setRowCount( 0 );
+
+        for ( const auto&[mosaicId, amount]: pContractDrive->m_servicePayments ) {
+            ui->m_contractMosaicTable->blockSignals( true );
+
+            int row = ui->m_contractMosaicTable->rowCount();
+            ui->m_contractMosaicTable->insertRow( row );
+
+            auto* mosaicItem = new QTableWidgetItem;
+            mosaicItem->setText( QString::fromStdString( mosaicId ));
+            ui->m_contractMosaicTable->setItem( row, 0, mosaicItem );
+
+            auto* amountItem = new QTableWidgetItem;
+            amountItem->setText( QString::fromStdString( amount ));
+            ui->m_contractMosaicTable->setItem( row, 1, amountItem );
+
+            ui->m_contractMosaicTable->blockSignals( false );
+        }
+
+        ui->m_deploymentParameters->show();
+
+        ui->m_contractDeployBtn->setDisabled( !pContractDrive->isValid());
+
+    }, Qt::QueuedConnection );
+
+    connect( ui->m_contractAssignee, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_assignee = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractFile, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_file = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractFunction, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_function = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractParameters, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_parameters = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractExecutionCallPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_executionCallPayment = value;
+        }
+    } );
+
+    connect( ui->m_contractDownloadCallPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_downloadCallPayment = value;
+        }
+    } );
+
+    connect( ui->m_contractExecutionCallPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_executionCallPayment = value;
+        }
+    } );
+
+    connect( ui->m_contractAutomaticExecutionFileName, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_automaticExecutionFileName = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractAutomaticExecutionFunctionName, &QLineEdit::textChanged, this, [this]( const auto& text ) {
+        bool valid = true;
+        if ( auto* pContractDrive = contractDeploymentData(); pContractDrive ) {
+            pContractDrive->m_automaticExecutionFunctionName = text.toStdString();
+            valid = pContractDrive->isValid();
+        } else {
+            valid = false;
+        }
+        ui->m_contractDeployBtn->setDisabled( !valid );
+    } );
+
+    connect( ui->m_contractAutomaticExecutionCallPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_automaticExecutionCallPayment = value;
+        }
+    } );
+
+    connect( ui->m_contractAutomaticDownloadCallPayment, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_automaticDownloadCallPayment = value;
+        }
+    } );
+
+    connect( ui->m_contractAutomaticExecutionsNumber, &QSpinBox::valueChanged, this, [this]( int value ) {
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_automaticExecutionsNumber = value;
+        }
+    } );
+
+    connect( ui->m_addMosaic, &QPushButton::released, this, [this] {
+        ui->m_contractMosaicTable->insertRow( ui->m_contractMosaicTable->rowCount());
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_servicePayments.emplace_back();
+        }
+        ui->m_contractDeployBtn->setDisabled( !pContractDrive || !pContractDrive->isValid());
+    } );
+
+    connect( ui->m_removeMosaic, &QPushButton::released, this, [this] {
+        int selectedRow = ui->m_contractMosaicTable->currentRow();
+        ui->m_contractMosaicTable->setCurrentIndex( QModelIndex());
+        ui->m_contractMosaicTable->removeRow( selectedRow );
+        auto* pContractDrive = contractDeploymentData();
+        if ( pContractDrive ) {
+            pContractDrive->m_servicePayments.erase( pContractDrive->m_servicePayments.begin() + selectedRow );
+        }
+
+        ui->m_contractDeployBtn->setDisabled( !pContractDrive || !pContractDrive->isValid());
+    } );
+
+    connect( ui->m_contractMosaicTable->selectionModel(),
+             &QItemSelectionModel::selectionChanged,
+             this,
+             [this]( const QItemSelection& selected, const QItemSelection& deselected ) {
+                 ui->m_removeMosaic->setDisabled( selected.indexes().empty());
     });
+
+    QObject::connect( ui->m_contractMosaicTable, &QTableWidget::itemChanged, this,
+                      [this]( QTableWidgetItem* item ) {
+                          auto* pContractDrive = contractDeploymentData();
+                          if ( pContractDrive ) {
+                              if ( item->column() == 0 ) {
+                                  pContractDrive->m_servicePayments.at(
+                                          item->row()).m_mosaicId = item->text().toStdString();
+                              } else {
+                                  pContractDrive->m_servicePayments.at(
+                                          item->row()).m_amount = item->text().toStdString();
+                              }
+                          }
+                          ui->m_contractDeployBtn->setDisabled( !pContractDrive || !pContractDrive->isValid());
+                      } );
+
+
+    QSizePolicy sp_retain = ui->m_deploymentParameters->sizePolicy();
+    sp_retain.setRetainSizeWhenHidden( true );
+    ui->m_deploymentParameters->setSizePolicy( sp_retain );
+//    emit ui->m_contractDriveCBox->currentIndexChanged(-1);
+//    connect( &m_model->driveContractModel(), &DriveContractModel::driveContractRemoved, this,
+//             [this]( const std::string& driveKey )
+//             {
+//        ui->m_contractDriveCBox->addItem( QString::fromStdString( driveKey ));
+//             } );
 
     // TODO temporary hide
     // Replicators tab: contributed, used
@@ -963,6 +1191,8 @@ void MainWin::setupDownloadsTable()
             }
         }
     });
+
+    connect( ui->m_contractDeployBtn, &QPushButton::released, this, &MainWin::onDeployContract, Qt::QueuedConnection );
 }
 
 bool MainWin::requestPrivateKey()
