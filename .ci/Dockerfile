@@ -45,9 +45,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libxcb-cursor-dev \
     libxcb-xkb-dev \
     libfontconfig \
-    cereal
+    cereal \
+    ninja-build \
+    patchelf
 
-RUN pip install conan
 RUN pip install aqtinstall
 
 WORKDIR /linuxdeployqt
@@ -73,43 +74,37 @@ ENV BUILD_DIR /usr/sirius
 
 WORKDIR $BUILD_DIR
 COPY . /app-src
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DSIRIUS_DRIVE_MULTI=ON -DQT_DEBUG_FIND_PACKAGE=ON -DCMAKE_FIND_DEBUG_MODE=TRUE /app-src && \
+
+RUN cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug /app-src && \
     cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)
 
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 
 RUN cp /app-src/tool.desktop $BUILD_DIR/UserApp/
-RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run -bundle-non-qt-libs $BUILD_DIR/UserApp/tool.desktop -verbose=3
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1
 
 ENV DESTDIR /storage-tool
 WORKDIR $DESTDIR
 RUN cp $BUILD_DIR/UserApp/StorageClientApp $DESTDIR
 RUN cp -r $BUILD_DIR/UserApp/resources $DESTDIR
-#RUN cp -r $BUILD_DIR/translations $DESTDIR
 RUN cp -r $BUILD_DIR/lib $DESTDIR
 RUN cp -r $BUILD_DIR/plugins $DESTDIR
+RUN cp -a $BUILD_DIR/bin/boost/. $DESTDIR/lib/
+RUN cp -r $BUILD_DIR/bin/. $DESTDIR/lib/
+RUN cp -a $BUILD_DIR/cpp-xpx-chain-sdk/. $DESTDIR/lib/
+RUN rm -r $DESTDIR/lib/boost
+RUN rm -r $DESTDIR/lib/CMakeFiles
+RUN rm -r $DESTDIR/lib/xpxchaincpp_autogen
+RUN cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
+RUN cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
+RUN cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.74.0 \$DESTDIR/lib/
 
-RUN cp $BUILD_DIR/bin/*.so $DESTDIR/lib/
-RUN cp $BUILD_DIR/cpp-xpx-chain-sdk/*.so $DESTDIR/lib
 RUN chmod a+x $DESTDIR/StorageClientApp
+RUN patchelf --force-rpath --set-rpath ./lib $DESTDIR/StorageClientApp
 
 
-# FROM debian:bullseye-slim
+FROM debian:bullseye-slim
 
-# WORKDIR /sirius
-# COPY --from=BUILDER /sirius/UserApp/StorageClientApp /sirius
-# COPY --from=BUILDER /deps /
-# COPY --from=BUILDER /opt/qt /opt/qt
+WORKDIR /storage-tool
+COPY --from=BUILDER /storage-tool .
 
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#     xauth \
-#     '^libxcb.*-dev' \
-#     libx11-xcb-dev \
-#     libglu1-mesa-dev \
-#     libxrender-dev \
-#     libxi-dev \
-#     libxkbcommon-dev \
-#     libxkbcommon-x11-dev \
-#     libfontconfig
-
-# ENV PATH /opt/qt/${QT}/gcc_64/bin:$PATH
