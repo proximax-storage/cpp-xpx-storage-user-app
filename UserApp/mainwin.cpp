@@ -477,7 +477,10 @@ void MainWin::init()
     m_modificationStatusTimer = new QTimer(this);
     connect( m_modificationStatusTimer, &QTimer::timeout, this, [this] {
         auto drive = m_model->currentDrive();
-        if (drive && isCurrentDrive(drive) && drive->getState() == DriveState::uploading) {
+        if (drive && isCurrentDrive(drive)
+            && drive->getState() == DriveState::uploading
+            && m_onChainClient->transactionsEngine()->isModificationsPresent(rawHashFromHex(drive->getKey().c_str())))
+        {
             auto drivePubKey = rawHashFromHex(drive->getKey().c_str());
             auto modificationId = m_onChainClient->transactionsEngine()->getLatestModificationId(drivePubKey);
             for (const auto& replicator : drive->getReplicators()) {

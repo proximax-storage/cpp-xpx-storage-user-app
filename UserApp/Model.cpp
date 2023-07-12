@@ -391,7 +391,9 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         }
 
         Drive& currentDrive = drives[QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString()];
-        if ( ! remoteDrive.data.activeDataModifications.empty() ) {
+        if ( ! remoteDrive.data.activeDataModifications.empty() &&
+             ! remoteDrive.data.activeDataModifications[remoteDrive.data.activeDataModifications.size() - 1].dataModification.isStream) {
+
             auto lastModificationIndex = remoteDrive.data.activeDataModifications.size();
             auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));

@@ -455,6 +455,10 @@ std::array<uint8_t, 32> TransactionsEngine::getLatestModificationId(const std::a
     return mDataModifications[driveId][mDataModifications[driveId].size() - 1].id;
 }
 
+bool TransactionsEngine::isModificationsPresent(const std::array<uint8_t, 32> &driveId) {
+    return !mDataModifications[driveId].empty();
+}
+
 void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId,
                                           const std::array<uint8_t, 32>& infoHash,
                                           const sirius::drive::ActionList& actions,

@@ -177,7 +177,7 @@ bool Settings::load( const std::string& pwd )
             qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
-        qDebug() << "Settings::load. Current account public key: " << config().m_publicKeyStr.c_str();
+        qDebug() << "Settings::load. Current account public key: " << QString::fromStdString(config().m_publicKeyStr).toUpper();
         qDebug() << "/*****************************************************************************************/.";
     }
     catch( std::runtime_error& err )

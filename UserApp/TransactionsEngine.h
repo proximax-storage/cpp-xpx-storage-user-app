@@ -41,6 +41,7 @@ class TransactionsEngine : public QObject
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
         std::array<uint8_t, 32> getLatestModificationId(const std::array<uint8_t, 32> &driveId);
+        bool isModificationsPresent(const std::array<uint8_t, 32> &driveId);
 
         void deployContract( const std::array<uint8_t, 32>& driveId,
                              const ContractDeploymentData& data,
