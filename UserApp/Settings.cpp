@@ -73,9 +73,14 @@ void Settings::initForTests()
         config().initAccount( "test_staging_C62", "C62F0F5E3A2A00BDBEABDF5DD45B9DCC01A210A09CF1D442B711B6C0F45B53E8" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
+        m_accounts.emplace_back();
+        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
+        config().initAccount( "test_staging_B89", "92CFFA0FA7B67DE5C7C3CB13893169F7784CF3DB51F30A88C0A68E30C917BAAF" );
+        config().m_downloadFolder = "/Users/alex/000-Downloads";
+
         if ( ! ALEX_LOCAL_TEST )
         {
-            setCurrentAccountIndex( 1 );
+            setCurrentAccountIndex( 2 );
         }
     }
 }

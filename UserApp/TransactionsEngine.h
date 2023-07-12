@@ -7,6 +7,7 @@
 #include <utils/HexFormatter.h>
 #include <drive/ActionList.h>
 #include "ContractDeploymentData.h"
+#include "ContractManualCallData.h"
 
 class TransactionsEngine : public QObject
 {
@@ -44,6 +45,23 @@ class TransactionsEngine : public QObject
         void deployContract( const std::array<uint8_t, 32>& driveId,
                              const ContractDeploymentData& data,
                              const std::vector<xpx_chain_sdk::Address>& replicators );
+
+        void runManualCall( const ContractManualCallData& manualCallData,
+                            const std::vector<xpx_chain_sdk::Address>& replicators );
+
+        std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
+                                const std::string& folderName,
+                                uint64_t expectedUploadSizeMegabytes,
+                                uint64_t feedbackFeeAmount);
+
+        void streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
+                          const std::array<uint8_t, 32>& streamId,
+                          uint64_t actualUploadSizeMegabytes,
+                          const std::array<uint8_t, 32>& streamStructureCdi);
+
+        void streamPayment(const std::array<uint8_t, 32>& rawDrivePubKey,
+                           const std::array<uint8_t, 32>& streamId,
+                           uint64_t additionalUploadSizeMegabytes);
 
     signals:
         void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
@@ -85,6 +103,16 @@ class TransactionsEngine : public QObject
         void deployContractApprovalConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
         void deployContractApprovalFailed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
 
+        void manualCallInitiated(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+        void manualCallConfirmed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+        void manualCallFailed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+
+        void streamStartConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamStartFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
+        void streamFinishConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamFinishFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
+        void streamPaymentConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamPaymentFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 
     private:
         void subscribeOnReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
@@ -128,6 +156,9 @@ class TransactionsEngine : public QObject
         void sendContractDeployment( const std::array<uint8_t, 32>& driveId,
                                      const ContractDeploymentData& data,
                                      const std::vector<xpx_chain_sdk::Address>& replicators );
+
+        void sendManualCall( const ContractManualCallData& data,
+                             const std::vector<xpx_chain_sdk::Address>& replicators );
 
     private:
         struct ModificationEntity

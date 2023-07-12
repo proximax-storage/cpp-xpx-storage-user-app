@@ -358,6 +358,16 @@ void OnChainClient::initConnects() {
         emit deployContractTransactionApprovalFailed(driveId, contractId);
     });
 
+    connect( mpTransactionsEngine, &TransactionsEngine::manualCallConfirmed, this,
+             [this]( std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId ) {
+                 emit manualCallTransactionConfirmed( contractId, callId );
+             } );
+
+    connect( mpTransactionsEngine, &TransactionsEngine::manualCallFailed, this,
+             [this]( std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId ) {
+                 emit manualCallTransactionFailed( contractId, callId );
+             } );
+
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi) {
                 const QString driveKey = rawHashToHex(driveId);
@@ -373,6 +383,30 @@ void OnChainClient::initConnects() {
     connect(mpTransactionsEngine, &TransactionsEngine::removeTorrent, this, [this](auto torrentId) {
         mpStorageEngine->removeTorrentSync(torrentId);
     }, Qt::QueuedConnection);
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamStartConfirmed, this, [this](auto streamId) {
+        emit streamStartTransactionConfirmed(streamId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamStartFailed, this, [this](auto streamId, auto errorText) {
+        emit streamStartTransactionFailed(streamId, errorText);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishConfirmed, this, [this](auto streamId) {
+        emit streamFinishTransactionConfirmed(streamId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishFailed, this, [this](auto streamId, auto errorText) {
+        emit streamFinishTransactionFailed(streamId, errorText);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamPaymentConfirmed, this, [this](auto streamId) {
+        emit streamPaymentTransactionConfirmed(streamId);
+    });
+
+    connect(mpTransactionsEngine, &TransactionsEngine::streamPaymentFailed, this, [this](auto streamId, auto errorText) {
+        emit streamPaymentTransactionFailed(streamId, errorText);
+    });
 }
 
 void OnChainClient::initAccount(const std::string &privateKey) {
@@ -511,4 +545,28 @@ void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, con
 
         mpTransactionsEngine->deployContract(driveKey, data, addresses);
     });
+}
+
+void OnChainClient::runContract(const ContractManualCallData& data ) {
+    mpTransactionsEngine->runManualCall(data, {});
+}
+
+std::string OnChainClient::streamStart(const std::array<uint8_t, 32> &rawDrivePubKey,
+                                       const std::string &folderName,
+                                       uint64_t expectedUploadSizeMegabytes,
+                                       uint64_t feedbackFeeAmount) {
+    return mpTransactionsEngine->streamStart(rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount);
+}
+
+void OnChainClient::streamFinish(const std::array<uint8_t, 32> &rawDrivePubKey,
+                                 const std::array<uint8_t, 32> &streamId,
+                                 uint64_t actualUploadSizeMegabytes,
+                                 const std::array<uint8_t, 32> &streamStructureCdi) {
+    mpTransactionsEngine->streamFinish(rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi);
+}
+
+void OnChainClient::streamPayment(const std::array<uint8_t, 32> &rawDrivePubKey,
+                                  const std::array<uint8_t, 32> &streamId,
+                                  uint64_t additionalUploadSizeMegabytes) {
+    mpTransactionsEngine->streamPayment(rawDrivePubKey, streamId, additionalUploadSizeMegabytes);
 }

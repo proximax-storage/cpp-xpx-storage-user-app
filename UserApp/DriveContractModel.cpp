@@ -21,3 +21,7 @@ void DriveContractModel::onDriveStateChanged( const std::string& driveKey, int s
 std::map <std::string, ContractDeploymentData>& DriveContractModel::getContractDrives() {
     return m_drives;
 }
+
+ContractManualCallData& DriveContractModel::getContractManualCallData() {
+    return m_contractManualCallData;
+}

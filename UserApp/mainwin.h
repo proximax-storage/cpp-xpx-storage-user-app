@@ -121,6 +121,7 @@ private:
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
     void onDeployContract();
+    void onRunContract();
 
     void onDeployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
@@ -129,10 +130,8 @@ private:
 
     void initStreaming();
     void updateStreamerTable( Drive& );
-    void readStreamingAnnotations( std::vector<StreamInfo>&, Drive& );
-    void onFsTreeReceivedForStreamAnnotaions( const std::string& driveKey,
-                                              const std::array<uint8_t,32>& fsTreeHash,
-                                              const sirius::drive::FsTree& );
+    void readStreamingAnnotations( const Drive& );
+    void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
     void startViewingStream();

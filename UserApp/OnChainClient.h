@@ -56,6 +56,21 @@ class OnChainClient : public QObject
         void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback);
 
         void deployContract(const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data);
+        void runContract(const ContractManualCallData& data);
+
+        std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
+                                const std::string& folderName,
+                                uint64_t expectedUploadSizeMegabytes,
+                                uint64_t feedbackFeeAmount);
+
+        void streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
+                          const std::array<uint8_t, 32>& streamId,
+                          uint64_t actualUploadSizeMegabytes,
+                          const std::array<uint8_t, 32>& streamStructureCdi);
+
+        void streamPayment(const std::array<uint8_t, 32>& rawDrivePubKey,
+                           const std::array<uint8_t, 32>& streamId,
+                           uint64_t additionalUploadSizeMegabytes);
 
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
         StorageEngine* getStorageEngine();
@@ -93,6 +108,16 @@ class OnChainClient : public QObject
         void deployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
         void deployContractTransactionApprovalConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
         void deployContractTransactionApprovalFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+
+        void manualCallTransactionConfirmed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+        void manualCallTransactionFailed(std::array<uint8_t, 32> contractId, std::array<uint8_t, 32> callId);
+
+        void streamStartTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamStartTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
+        void streamFinishTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamFinishTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
+        void streamPaymentTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
+        void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 
         void newNotification(const QString& notification);
         void internalError(const QString& errorText, bool isExit);
