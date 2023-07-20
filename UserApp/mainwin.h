@@ -53,6 +53,8 @@ public:
                      const std::string&              driveKey,
                      const std::vector<std::string>& allowedPublicKeys );
 
+    void removeDrive( Drive* drive );
+
 signals:
     void drivesInitialized();
     void refreshMyReplicatorsTable();

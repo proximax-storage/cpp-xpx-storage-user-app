@@ -1861,6 +1861,62 @@ void MainWin::onDriveChanges(const std::string& driveKey, int state, bool itIsNe
     }
 }
 
+void MainWin::removeDrive( Drive* drive )
+{
+    m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
+
+    std::string driveName = drive->getName();
+
+    auto driveKey = drive->getKey();
+    
+    removeEntityFromUi(ui->m_driveCBox, driveKey);
+    removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
+
+    m_model->removeDrive(driveKey);
+    m_model->applyForChannels(driveKey, [this](auto& channel) {
+        removeEntityFromUi(ui->m_channels, channel.getKey());
+    });
+
+    m_model->removeChannelsByDriveKey(driveKey);
+    if (m_model->getDownloadChannels().empty()) {
+        m_channelFsTreeTableModel->setFsTree({}, {});
+        ui->m_path->setText( "Path:");
+    } else {
+        m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(),
+                                             m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
+
+        ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+    }
+
+    if (isCurrentDrive(drive)) {
+        updateDriveView();
+        updateDiffView();
+
+        if (m_modificationStatusTimer->isActive()) {
+            m_modificationStatusTimer->stop();
+        }
+    }
+
+    const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
+    showNotification(message);
+    addNotification(message);
+
+    loadBalance();
+
+    if (m_model->getDrives().empty()) {
+        lockDrive();
+
+        if (m_settings->m_isDriveStructureAsTree) {
+            m_driveTreeModel->updateModel(false);
+            ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
+            m_diffTreeModel->updateModel(false);
+        } else {
+            m_driveTableModel->setFsTree({}, {} );
+            m_diffTableModel->updateModel();
+        }
+    }
+}
+
 void MainWin::addChannel( const std::string&              channelName,
                           const std::string&              channelKey,
                           const std::string&              driveKey,

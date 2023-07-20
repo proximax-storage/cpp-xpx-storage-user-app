@@ -22,10 +22,9 @@ Drive::Drive(QObject* parent)
     , m_localDrive(std::make_shared<LocalDriveItem>())
     , m_actionList({})
     , m_currentModificationHash({ 0 })
-    , m_modificationEvents({})
-    , m_isInitialized(false)
+    , m_driveState(creating)
 {
-    initStateMachine(creating);
+    emit stateChanged(m_driveKey, m_driveState, true);
 }
 
 Drive::~Drive()
@@ -55,7 +54,6 @@ Drive::Drive(const Drive &drive) {
     m_actionList = drive.m_actionList;
     m_currentModificationHash = drive.m_currentModificationHash;
     m_driveState = drive.m_driveState;
-    initStateMachine(m_driveState);
 }
 
 Drive &Drive::operator=(const Drive& drive) {
@@ -86,7 +84,6 @@ Drive &Drive::operator=(const Drive& drive) {
     m_actionList = drive.m_actionList;
     m_currentModificationHash = drive.m_currentModificationHash;
     m_driveState = drive.m_driveState;
-    initStateMachine(m_driveState);
     return *this;
 }
 
@@ -212,252 +209,164 @@ void Drive::setReplicators(const std::vector<std::string>& replicators) {
     }
 }
 
-void Drive::updateState(DriveState state) {
-    if (!m_isInitialized) {
-        m_modificationEvents.push_back(new DriveModificationEvent(state));
-    } else {
-        mp_stateMachine->postEvent(new DriveModificationEvent(state));
-    }
-}
+void Drive::updateState(DriveState newState)
+{
+//    if ( m_driveState == newState )
+//    {
+//        return;
+//    }
 
-void Drive::initStateMachine(DriveState initialState) {
-    mp_stateMachine = new QStateMachine(this);
-    auto creatingState = new QState();
-    auto unConfirmedState = new QState();
-    auto deletingState = new QState();
-    auto deletedState = new QState();
-    auto noModificationsState = new QState();
-    auto registeringState = new QState();
-    auto uploadingState = new QState();
-    auto approvedState = new QState();
-    auto cancelingState = new QState();
-    auto canceledState = new QState();
-    auto failedState = new QState();
-
-    auto creatingToCreatingTransition = new DriveModificationTransition(creating);
-    creatingToCreatingTransition->setTargetState(creatingState);
-    creatingState->addTransition(creatingToCreatingTransition);
-
-    auto creatingToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    creatingToNoModificationsTransition->setTargetState(noModificationsState);
-    creatingState->addTransition(creatingToNoModificationsTransition);
-
-    auto creatingToUnConfirmedTransition = new DriveModificationTransition(unconfirmed);
-    creatingToUnConfirmedTransition->setTargetState(unConfirmedState);
-    creatingState->addTransition(creatingToUnConfirmedTransition);
-
-    auto noModificationsToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    noModificationsToNoModificationsTransition->setTargetState(noModificationsState);
-    noModificationsState->addTransition(noModificationsToNoModificationsTransition);
-
-    auto noModificationsToRegisteringTransition = new DriveModificationTransition(registering);
-    noModificationsToRegisteringTransition->setTargetState(registeringState);
-    noModificationsState->addTransition(noModificationsToRegisteringTransition);
-
-    auto noModificationsToDeletingTransition = new DriveModificationTransition(deleting);
-    noModificationsToDeletingTransition->setTargetState(deletingState);
-    noModificationsState->addTransition(noModificationsToDeletingTransition);
-
-    auto deletingToDeletedTransition = new DriveModificationTransition(deleted);
-    deletingToDeletedTransition->setTargetState(deletedState);
-    deletingState->addTransition(deletingToDeletedTransition);
-
-    auto deletingToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    deletingToNoModificationsTransition->setTargetState(noModificationsState);
-    deletingState->addTransition(deletingToNoModificationsTransition);
-
-    auto registeringToFailedTransition = new DriveModificationTransition(failed);
-    registeringToFailedTransition->setTargetState(failedState);
-    registeringState->addTransition(registeringToFailedTransition);
-
-    auto registeringToUploadingTransition = new DriveModificationTransition(uploading);
-    registeringToUploadingTransition->setTargetState(uploadingState);
-    registeringState->addTransition(registeringToUploadingTransition);
-
-    auto uploadingToCancelingTransition = new DriveModificationTransition(canceling);
-    uploadingToCancelingTransition->setTargetState(cancelingState);
-    uploadingState->addTransition(uploadingToCancelingTransition);
-
-    auto uploadingToApprovedTransition = new DriveModificationTransition(approved);
-    uploadingToApprovedTransition->setTargetState(approvedState);
-    uploadingState->addTransition(uploadingToApprovedTransition);
-
-    auto uploadingToFailedTransition = new DriveModificationTransition(failed);
-    uploadingToFailedTransition->setTargetState(failedState);
-    uploadingState->addTransition(uploadingToFailedTransition);
-
-    auto approvedToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    approvedToNoModificationsTransition->setTargetState(noModificationsState);
-    approvedState->addTransition(approvedToNoModificationsTransition);
-
-    auto cancelingToApprovedTransition = new DriveModificationTransition(approved);
-    cancelingToApprovedTransition->setTargetState(approvedState);
-    cancelingState->addTransition(cancelingToApprovedTransition);
-
-    auto cancelingToFailedTransition = new DriveModificationTransition(failed);
-    cancelingToFailedTransition->setTargetState(failedState);
-    cancelingState->addTransition(cancelingToFailedTransition);
-
-    auto cancelingToCanceledTransition = new DriveModificationTransition(canceled);
-    cancelingToCanceledTransition->setTargetState(canceledState);
-    cancelingState->addTransition(cancelingToCanceledTransition);
-
-    auto failedToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    failedToNoModificationsTransition->setTargetState(noModificationsState);
-    failedState->addTransition(failedToNoModificationsTransition);
-
-    auto canceledToNoModificationsTransition = new DriveModificationTransition(no_modifications);
-    canceledToNoModificationsTransition->setTargetState(noModificationsState);
-    canceledState->addTransition(canceledToNoModificationsTransition);
-
-    mp_stateMachine->addState(creatingState);
-    mp_stateMachine->addState(unConfirmedState);
-    mp_stateMachine->addState(deletingState);
-    mp_stateMachine->addState(deletedState);
-    mp_stateMachine->addState(noModificationsState);
-    mp_stateMachine->addState(registeringState);
-    mp_stateMachine->addState(uploadingState);
-    mp_stateMachine->addState(approvedState);
-    mp_stateMachine->addState(cancelingState);
-    mp_stateMachine->addState(canceledState);
-    mp_stateMachine->addState(failedState);
-
-    switch (initialState) {
-        case DriveState::no_modifications:
-        {
-            mp_stateMachine->setInitialState(noModificationsState);
-            break;
-        }
+    switch( m_driveState )
+    {
         case creating:
         {
-            mp_stateMachine->setInitialState(creatingState);
+            if ( newState == creating )
+            {
+                //m_driveState = unconfirmed;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == unconfirmed )
+            {
+                m_driveState = unconfirmed;
+                emit stateChanged(m_driveKey, m_driveState, true);
+                // emit -> MainWin::deleteDrive
+            }
+            if ( newState == no_modifications )
+            {
+                m_driveState = no_modifications;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case unconfirmed:
         {
-            mp_stateMachine->setInitialState(unConfirmedState);
+            qWarning() << "unconfirmed: Ignore newState" << (int)newState;
             break;
         }
         case deleting:
         {
-            mp_stateMachine->setInitialState(deletingState);
+            if ( newState == deleted )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+                // emit -> MainWin::deleteDrive
+            }
+            if ( newState == no_modifications )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case deleted:
         {
-            mp_stateMachine->setInitialState(deletedState);
+            qWarning() << "deleted: Ignore newState" << (int)newState;
+            break;
+        }
+        case no_modifications:
+        {
+            if ( newState == deleting )
+            {
+                //m_driveState = no_modifications;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == deleting )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == registering )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case registering:
         {
-            mp_stateMachine->setInitialState(registeringState);
+            if ( newState == failed )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == uploading )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case approved:
         {
-            mp_stateMachine->setInitialState(approvedState);
+            if ( newState == no_modifications )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case uploading:
         {
-            mp_stateMachine->setInitialState(uploadingState);
+            if ( newState == canceling )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == failed )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == approved )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case failed:
         {
-            mp_stateMachine->setInitialState(failedState);
+            if ( newState == no_modifications )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case canceling:
         {
-            mp_stateMachine->setInitialState(cancelingState);
+            if ( newState == canceled )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            if ( newState == failed )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
             break;
         }
         case canceled:
         {
-            mp_stateMachine->setInitialState(canceledState);
+            if ( newState == no_modifications )
+            {
+                m_driveState = newState;
+                emit stateChanged(m_driveKey, m_driveState, true);
+            }
+            break;
+        }
+        case contract_deploying:
+        {
+            break;
+        }
+        case contract_deployed:
+        {
+            break;
+        }
+        default:
+        {
             break;
         }
     }
-
-    connect(mp_stateMachine, &QStateMachine::started, this, [this, creatingState]() {
-        qDebug () << "state machine started for the drive:" << getName().c_str();
-        m_isInitialized = true;
-
-        // To avoid the call initial state before state machine started
-        connect(creatingState, &QState::entered, this, [this]() {
-            m_driveState = creating;
-            qDebug () << "m_driveState = creating; " << getName().c_str();
-            emit stateChanged(m_driveKey, m_driveState, true);
-        });
-
-        for (auto event : m_modificationEvents) {
-            mp_stateMachine->postEvent(event);
-        }
-
-        m_modificationEvents.clear();
-    });
-
-    m_driveState = initialState;
-    mp_stateMachine->start();
-
-    connect(unConfirmedState, &QState::entered, this, [this]() {
-        m_driveState = unconfirmed;
-        qDebug () << "m_driveState = unconfirmed; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(deletingState, &QState::entered, this, [this]() {
-        m_driveState = deleting;
-        qDebug () << "m_driveState = deleting; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(deletedState, &QState::entered, this, [this]() {
-        m_driveState = deleted;
-        qDebug () << "m_driveState = deleted; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(noModificationsState, &QState::entered, this, [this]() {
-        m_driveState = no_modifications;
-        qDebug () << "m_driveState = no_modifications; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(registeringState, &QState::entered, this, [this]() {
-        m_driveState = registering;
-        qDebug () << "m_driveState = is_registering; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(uploadingState, &QState::entered, this, [this]() {
-        m_driveState = uploading;
-        qDebug () << "m_driveState = uploadingState; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(approvedState, &QState::entered, this, [this]() {
-        m_driveState = approved;
-        qDebug () << "m_driveState = approvedState; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(cancelingState, &QState::entered, this, [this]() {
-        m_driveState = canceling;
-        qDebug () << "m_driveState = is_canceling; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(canceledState, &QState::entered, this, [this]() {
-        m_driveState = canceled;
-        qDebug () << "m_driveState = is_canceled; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
-
-    connect(failedState, &QState::entered, this, [this]() {
-        m_driveState = failed;
-        qDebug () << "m_driveState = is_failed; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState, true);
-    });
 }

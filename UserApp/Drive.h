@@ -2,7 +2,6 @@
 #define DRIVE_H
 
 #include <QObject>
-#include <QStateMachine>
 #include "drive/FsTree.h"
 #include "LocalDriveItem.h"
 #include "drive/ActionList.h"
@@ -103,9 +102,6 @@ class Drive : public QObject
 
     signals:
         void stateChanged(const std::string& driveKey, int state, bool itIsNewState );
-
-    private:
-        void initStateMachine(DriveState initialState);
 
     private:
         std::string m_driveKey;

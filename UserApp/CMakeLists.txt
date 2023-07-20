@@ -76,8 +76,8 @@ endif()
 
 add_definitions(-DSIRIUS_DRIVE_MULTI)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools StateMachine)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools StateMachine)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 
 set(PROJECT_ROOT_DIR ..)
 include_directories(${PROJECT_ROOT_DIR}/cpp-xpx-storage-sdk/include)
@@ -173,7 +173,6 @@ if (WIN32)
     target_link_libraries(StorageClientApp PRIVATE
             ${Boost_LIBRARIES}
             Qt${QT_VERSION_MAJOR}::Widgets
-            Qt${QT_VERSION_MAJOR}::StateMachine
             wsock32
             ws2_32
             torrent-sirius
@@ -193,7 +192,7 @@ if (WIN32)
             BOOST_EXCEPTION_DISABLE
             )
 else()
-    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::StateMachine torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
 endif()
 
 set_target_properties(StorageClientApp PROPERTIES
