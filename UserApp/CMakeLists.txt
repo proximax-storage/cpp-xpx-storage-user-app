@@ -128,8 +128,6 @@ set(PROJECT_SOURCES
         ReplicatorTreeModel.h         ReplicatorTreeModel.cpp
         ReplicatorOnBoardingDialog.h  ReplicatorOnBoardingDialog.cpp
         ReplicatorOffBoardingDialog.h ReplicatorOffBoardingDialog.cpp
-        DriveModificationEvent.h      DriveModificationEvent.cpp
-        DriveModificationTransition.h DriveModificationTransition.cpp
         Drive.h                       Drive.cpp
         DownloadChannel.h             DownloadChannel.cpp
         DownloadInfo.h                DownloadInfo.cpp

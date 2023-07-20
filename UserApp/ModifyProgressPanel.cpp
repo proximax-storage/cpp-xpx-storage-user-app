@@ -2,7 +2,6 @@
 #include "Model.h"
 #include "Utils.h"
 #include "ui_ModifyProgressPanel.h"
-#include "DriveModificationEvent.h"
 
 #include <QPushButton>
 

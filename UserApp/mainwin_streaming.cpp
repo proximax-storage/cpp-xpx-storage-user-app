@@ -25,6 +25,7 @@
 #include <QToolTip>
 #include <QFileDialog>
 #include <QProcess>
+#include <QClipboard>
 
 #include <boost/algorithm/string.hpp>
 

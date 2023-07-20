@@ -7,6 +7,9 @@
 #include "drive/ViewerSession.h"
 #include "Settings.h"
 
+#include <QFileInfoList>
+#include <QDirIterator>
+
 #include <boost/algorithm/string.hpp>
 
 #if !(__MINGW32__) && !(_MSC_VER)

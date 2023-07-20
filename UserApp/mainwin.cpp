@@ -26,22 +26,18 @@
 #include "ReplicatorOnBoardingDialog.h"
 #include "ReplicatorOffBoardingDialog.h"
 #include "ReplicatorInfoDialog.h"
-//#include "OnChainClient.h"
 #include "ModifyProgressPanel.h"
 #include "PopupMenu.h"
 #include "EditDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
-#include "DriveModificationEvent.h"
 #include "Drive.h"
 
-#include <cerrno>
 #include <qdebug.h>
 #include <QFileIconProvider>
 #include <QScreen>
 #include <QComboBox>
-#include <QProcess>
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <thread>

@@ -2,7 +2,6 @@
 
 #include <QObject>
 #include <QStringList>
-#include <QtStateMachine>
 #include <QCoreApplication>
 
 #include <vector>
@@ -17,7 +16,6 @@
 #include "drive/FlatDrive.h"
 #include "xpxchaincpp/model/storage/drives_page.h"
 #include "xpxchaincpp/model/storage/download_channels_page.h"
-#include "DriveModificationTransition.h"
 #include "Drive.h"
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
