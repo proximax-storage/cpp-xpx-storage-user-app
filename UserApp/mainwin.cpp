@@ -313,7 +313,7 @@ void MainWin::init()
             addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
                 ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-                onDriveStateChanged(drive.getKey(), drive.getState());
+                onDriveChanges(drive.getKey(), drive.getState(), false);
             }
         }
 
@@ -323,14 +323,14 @@ void MainWin::init()
             setCurrentDriveOnUi(driveKey);
             const auto drive = m_model->getDrives()[driveKey];
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-            onDriveStateChanged(drive.getKey(), drive.getState());
+            onDriveChanges(drive.getKey(), drive.getState(), false);
         } else if (!m_model->getDrives().empty()) {
             setCurrentDriveOnUi(m_model->currentDriveKey());
         }
 
         addLocalModificationsWatcher();
 
-        connect(m_model, &Model::driveStateChanged, this, &MainWin::onDriveStateChanged, Qt::QueuedConnection);
+        connect(m_model, &Model::driveStateChanged, this, &MainWin::onDriveChanges, Qt::QueuedConnection);
         connect(ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
         connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
 
@@ -505,9 +505,7 @@ void MainWin::init()
     m_modifyProgressPanel->setVisible(false);
 
     connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){
-        if (m_modifyProgressPanel->isVisible()) {
-            m_modifyProgressPanel->updateUploadedDataAmount(amount);
-        }
+        m_modifyProgressPanel->updateUploadedDataAmount(amount);
     }, Qt::QueuedConnection);
 
     connect(this, &MainWin::modificationFinishedByReplicators, this, [this]() {
@@ -515,16 +513,14 @@ void MainWin::init()
             m_modificationStatusTimer->stop();
         }
 
-        if (m_modifyProgressPanel->isVisible()) {
-            m_modifyProgressPanel->setApproving();
-        }
+        m_modifyProgressPanel->setApproving();
     }, Qt::QueuedConnection);
 
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_startStreamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); });
-    m_startStreamingProgressPanel->setVisible(false);
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); });
+    m_streamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
     ui->tabWidget->setTabVisible( 4, false );
@@ -560,15 +556,16 @@ void MainWin::init()
         //auto drive = m_model->currentDrive();
         auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
         if (index == 1 && !m_model->getDrives().empty() && drive) {
-            onDriveStateChanged(drive->getKey(), drive->getState());
+            onDriveChanges(drive->getKey(), drive->getState(),false);
         }
         else if ( index == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
             auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-            onDriveStateChanged( drive->getKey(), drive->getState() );
+            onDriveChanges( drive->getKey(), drive->getState(), false );
         }
         else
         {
-            m_modifyProgressPanel->setVisible( false );
+            m_modifyProgressPanel->setVisible(false);
+            m_streamingProgressPanel->setVisible(false);
         }
     }, Qt::QueuedConnection );
 
@@ -1486,7 +1483,7 @@ void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
     }
 }
 
-void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
+void MainWin::onDriveChanges(const std::string& driveKey, int state, bool itIsNewState)
 {
     auto drive = m_model->findDrive(driveKey);
     if (!drive) {
@@ -1495,12 +1492,78 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
     }
 
     qInfo() << "MainWin::onDriveStateChanged. Drive key: " << drive->getKey() << " state: " << getPrettyDriveState(state);
+    
+    // may be it is streaming drive
+    Drive* streamingDrive = nullptr;
+    if ( boost::iequals( driveKey, ui->m_streamDriveCBox->currentText().toStdString() ) )
+    {
+        streamingDrive = drive;
+    }
+    
+    // Update drive progress panels
+    switch(state)
+    {
+        case registering:
+        case approved:
+        case failed:
+        case canceling:
+        case canceled:
+        case uploading:
+        {
+            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
+                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) ) {
+
+                if ( !drive->isStreaming() )
+                {
+                    m_modifyProgressPanel->setVisible(true);
+                    m_streamingProgressPanel->setVisible(false);
+                    lockDrive();
+                }
+                else
+                {
+                    m_modifyProgressPanel->setVisible(false);
+                    m_streamingProgressPanel->setVisible(true);
+                }
+                
+                switch(state)
+                {
+                    case approved:
+                    case failed:
+                    case canceled:
+                        lockDrive();
+                    default:
+                        unlockDrive();
+                }
+            }
+            else
+            {
+                m_modifyProgressPanel->setVisible(false);
+                m_streamingProgressPanel->setVisible(false);
+            }
+
+            break;
+        }
+        case no_modifications:
+        case creating:
+        case unconfirmed:
+        case deleting:
+        case deleted:
+        default:
+        {
+            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
+                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) )
+            {
+                m_modifyProgressPanel->setVisible(false);
+                m_streamingProgressPanel->setVisible(false);
+                unlockDrive();
+            }
+        }
+    }
 
     switch(state)
     {
         case no_modifications:
         {
-            m_modifyProgressPanel->setVisible(false);
             updateDriveStatusOnUi(*drive);
 
             if (isCurrentDrive(drive)) {
@@ -1509,310 +1572,285 @@ void MainWin::onDriveStateChanged(const std::string& driveKey, int state)
                 });
 
                 updateDriveView();
-                unlockDrive();
             }
 
             if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1)  {
-                unlockDrive();
                 loadBalance();
             }
 
             break;
         }
+        // registering
         case registering:
         {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setRegistering();
-                m_modifyProgressPanel->setVisible(true);
-                lockDrive();
-            }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( !drive->isStreaming() )
                 {
                     m_modifyProgressPanel->setRegistering();
-                    m_modifyProgressPanel->setVisible( true );
+                }
+                else
+                {
+                    m_streamingProgressPanel->setRegistering();
                 }
             }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-            }
-
             break;
         }
+        // approved
         case approved:
         {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setApproved();
-                m_modifyProgressPanel->setVisible(true);
-
-                updateDiffView();
-
-                QString message;
-                message.append("Your modification was applied. Drive: ");
-                message.append(drive->getName().c_str());
-                addNotification(message);
-                loadBalance();
-                unlockDrive();
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+                {
+                    if ( !drive->isStreaming() )
+                    {
+                        m_modifyProgressPanel->setApproved();
+                    }
+                    else
+                    {
+                        m_streamingProgressPanel->setApproved();
+                    }
+                }
 
                 if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
-            }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+
+                loadBalance();
+
+                if ( itIsNewState )
                 {
-                    m_modifyProgressPanel->setApproved();
-                    m_modifyProgressPanel->setVisible(true);
-
-                    updateDiffView();
-
-                    QString message;
-                    message.append("Your modification was applied. Drive: ");
-                    message.append(drive->getName().c_str());
-                    addNotification(message);
-                    loadBalance();
-
-                    if (m_modificationStatusTimer->isActive()) {
-                        m_modificationStatusTimer->stop();
+                    if ( !drive->isStreaming() )
+                    {
+                        QString message;
+                        message.append("Your modification was applied. Drive: ");
+                        message.append(drive->getName().c_str());
+                        addNotification(message);
+                    }
+                    else
+                    {
+                        QString message;
+                        message.append("Your streaming was applied. Drive: ");
+                        message.append(drive->getName().c_str());
+                        addNotification(message);
                     }
                 }
-            }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
         }
+        // failed
         case failed:
         {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setFailed();
-                m_modifyProgressPanel->setVisible(true);
-
-                const QString message = "Your modification was declined.";
-                addNotification(message);
-
-                if (m_modificationStatusTimer->isActive()) {
-                    m_modificationStatusTimer->stop();
-                }
-
-                loadBalance();
-                unlockDrive();
-            }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( !drive->isStreaming() )
                 {
                     m_modifyProgressPanel->setFailed();
-                    m_modifyProgressPanel->setVisible(true);
-
-                    const QString message = "Your modification was declined.";
-                    addNotification(message);
-
-                    if (m_modificationStatusTimer->isActive()) {
-                        m_modificationStatusTimer->stop();
-                    }
-
-                    loadBalance();
                 }
-            }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-            }
-
-            break;
-        }
-        case canceling:
-        {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setCanceling();
-                m_modifyProgressPanel->setVisible(true);
-
-                lockDrive();
-            }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
+                else
                 {
-                    m_modifyProgressPanel->setCanceling();
-                    m_modifyProgressPanel->setVisible( true );
+                    m_streamingProgressPanel->setFailed();
                 }
-            }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-            }
 
-            break;
-        }
-        case canceled:
-        {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setCanceled();
-                m_modifyProgressPanel->setVisible(true);
+                loadBalance();
+
+                if ( itIsNewState )
+                {
+                    if ( !drive->isStreaming() )
+                    {
+                        m_modifyProgressPanel->setVisible(true);
+                        m_streamingProgressPanel->setVisible(false);
+
+                        const QString message = "Your modification was declined.";
+                        addNotification(message);
+                    }
+                    else
+                    {
+                        m_modifyProgressPanel->setVisible(false);
+                        m_streamingProgressPanel->setVisible(true);
+
+                        const QString message = "Your streaming was declined.";
+                        addNotification(message);
+                    }
+                }
 
                 if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
-
-                loadBalance();
-                unlockDrive();
-            }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
-                {
-                    m_modifyProgressPanel->setCanceled();
-                    m_modifyProgressPanel->setVisible( true );
-                    if (m_modificationStatusTimer->isActive()) {
-
-                        m_modificationStatusTimer->stop();
-                    }
-
-                    loadBalance();
-                }
-            }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
             }
 
             break;
         }
+        // canceling
+        case canceling:
+        {
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( !drive->isStreaming() )
+                {
+                    m_modifyProgressPanel->setCanceling();
+                }
+                else
+                {
+                    m_streamingProgressPanel->setCanceling();
+                }
+            }
+            break;
+        }
+        // canceled
+        case canceled:
+        {
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( !drive->isStreaming() )
+                {
+                    m_modifyProgressPanel->setCanceled();
+                }
+                else
+                {
+                    m_streamingProgressPanel->setCanceled();
+                }
+            }
+            break;
+        }
+        // uploading
         case uploading:
         {
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) {
-                m_modifyProgressPanel->setUploading();
-                m_modifyProgressPanel->setVisible(true);
-                lockDrive();
+            if ( isCurrentDrive(drive) || (streamingDrive != nullptr) )
+            {
+                if ( !drive->isStreaming() )
+                {
+                    m_modifyProgressPanel->setUploading();
+                }
+                else
+                {
+                    m_streamingProgressPanel->setUploading();
+                }
+
+                if (!m_modificationStatusTimer->isActive()) {
+                    m_modificationStatusTimer->start(1000);
+                }
 
                 if (!m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->start(1000);
                 }
             }
-            else if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-                auto* streamingDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-                if ( streamingDrive != nullptr && boost::iequals( drive->getKey(), streamingDrive->getKey() ) )
-                {
-                    m_modifyProgressPanel->setUploading();
-                    m_modifyProgressPanel->setVisible(true);
-
-                    if (!m_modificationStatusTimer->isActive()) {
-                        m_modificationStatusTimer->start(1000);
-                    }
-                }
-            }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-            }
-
             break;
         }
+        // creating
         case creating:
         {
-            addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
-            addEntityToUi(ui->m_streamDriveCBox, drive->getName(), drive->getKey());
-            setCurrentDriveOnUi(drive->getKey());
-            updateDriveStatusOnUi(*drive);
+            if ( itIsNewState )
+            {
+                addEntityToUi(ui->m_driveCBox, drive->getName(), drive->getKey());
+                addEntityToUi(ui->m_streamDriveCBox, drive->getName(), drive->getKey());
+                setCurrentDriveOnUi(drive->getKey());
+                updateDriveStatusOnUi(*drive);
 
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
-            lockDrive();
+                ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
+                lockDrive();
 
-            updateDriveView();
-            updateDiffView();
-
-            break;
-        }
-        case unconfirmed:
-        {
-            removeEntityFromUi(ui->m_driveCBox, driveKey);
-            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
-            m_model->removeDrive(driveKey);
-
-            m_model->applyForChannels(driveKey, [this](auto& channel) {
-                removeEntityFromUi(ui->m_channels, channel.getKey());
-            });
-
-            if (m_modificationStatusTimer->isActive()) {
-                m_modificationStatusTimer->stop();
-            }
-
-            m_model->removeChannelsByDriveKey(driveKey);
-            break;
-        }
-        case deleting:
-        {
-            lockDrive();
-            updateDriveStatusOnUi(*drive);
-
-            m_model->markChannelsForDelete(drive->getKey(), true);
-            auto channel = m_model->currentDownloadChannel();
-            if (channel) {
-                lockChannel(channel->getKey());
-                updateDownloadChannelStatusOnUi(*channel);
-            }
-
-            break;
-        }
-        case deleted:
-        {
-            m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
-
-            std::string driveName = drive->getName();
-
-            removeEntityFromUi(ui->m_driveCBox, driveKey);
-            removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
-
-            m_model->removeDrive(driveKey);
-            m_model->applyForChannels(driveKey, [this](auto& channel) {
-                removeEntityFromUi(ui->m_channels, channel.getKey());
-            });
-
-            m_model->removeChannelsByDriveKey(driveKey);
-            if (m_model->getDownloadChannels().empty()) {
-                m_channelFsTreeTableModel->setFsTree({}, {});
-                ui->m_path->setText( "Path:");
-            } else {
-                m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(),
-                                                     m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
-
-                ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
-            }
-
-            if (isCurrentDrive(drive)) {
                 updateDriveView();
                 updateDiffView();
+            }
+            break;
+        }
+        // unconfirmed
+        case unconfirmed:
+        {
+            if ( itIsNewState )
+            {
+            removeEntityFromUi(ui->m_driveCBox, driveKey);
+                removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
+                m_model->removeDrive(driveKey);
+
+                m_model->applyForChannels(driveKey, [this](auto& channel) {
+                    removeEntityFromUi(ui->m_channels, channel.getKey());
+                });
 
                 if (m_modificationStatusTimer->isActive()) {
                     m_modificationStatusTimer->stop();
                 }
+
+                m_model->removeChannelsByDriveKey(driveKey);
             }
-
-            const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
-            showNotification(message);
-            addNotification(message);
-
-            loadBalance();
-
-            if (m_model->getDrives().empty()) {
+            break;
+        }
+        // deleting
+        case deleting:
+        {
+            if ( itIsNewState )
+            {
                 lockDrive();
+                updateDriveStatusOnUi(*drive);
 
-                if (m_settings->m_isDriveStructureAsTree) {
-                    m_driveTreeModel->updateModel(false);
-                    ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
-                    m_diffTreeModel->updateModel(false);
-                } else {
-                    m_driveTableModel->setFsTree({}, {} );
-                    m_diffTableModel->updateModel();
+                m_model->markChannelsForDelete(drive->getKey(), true);
+                auto channel = m_model->currentDownloadChannel();
+                if (channel) {
+                    lockChannel(channel->getKey());
+                    updateDownloadChannelStatusOnUi(*channel);
                 }
             }
+            break;
+        }
+        // deleted
+        case deleted:
+        {
+            if ( itIsNewState )
+            {
+                m_modificationsWatcher->removePath(drive->getLocalFolder().c_str());
 
+                std::string driveName = drive->getName();
+
+                removeEntityFromUi(ui->m_driveCBox, driveKey);
+                removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
+
+                m_model->removeDrive(driveKey);
+                m_model->applyForChannels(driveKey, [this](auto& channel) {
+                    removeEntityFromUi(ui->m_channels, channel.getKey());
+                });
+
+                m_model->removeChannelsByDriveKey(driveKey);
+                if (m_model->getDownloadChannels().empty()) {
+                    m_channelFsTreeTableModel->setFsTree({}, {});
+                    ui->m_path->setText( "Path:");
+                } else {
+                    m_channelFsTreeTableModel->setFsTree(m_model->getDownloadChannels().begin()->second.getFsTree(),
+                                                         m_model->getDownloadChannels().begin()->second.getLastOpenedPath());
+
+                    ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+                }
+
+                if (isCurrentDrive(drive)) {
+                    updateDriveView();
+                    updateDiffView();
+
+                    if (m_modificationStatusTimer->isActive()) {
+                        m_modificationStatusTimer->stop();
+                    }
+                }
+
+                const QString message = QString::fromStdString( "Drive '" + driveName + "' closed (removed).");
+                showNotification(message);
+                addNotification(message);
+
+                loadBalance();
+
+                if (m_model->getDrives().empty()) {
+                    lockDrive();
+
+                    if (m_settings->m_isDriveStructureAsTree) {
+                        m_driveTreeModel->updateModel(false);
+                        ui->m_driveTreeView->expand(m_driveTreeModel->index(0, 0));
+                        m_diffTreeModel->updateModel(false);
+                    } else {
+                        m_driveTableModel->setFsTree({}, {} );
+                        m_diffTableModel->updateModel();
+                    }
+                }
+            }
             break;
         }
         default:
@@ -2103,6 +2141,7 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
     qDebug () << "MainWin::onDataModificationTransactionConfirmed. Your last modification was registered: '" + rawHashToHex(modificationId);
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
+        drive->setModificationHash( modificationId );
         drive->updateState(uploading);
     }
     else
@@ -2285,7 +2324,7 @@ void MainWin::onCurrentDriveChanged( int index )
 
         auto drive = m_model->currentDrive();
         if (drive) {
-            onDriveStateChanged(drive->getKey(), drive->getState());
+            onDriveChanges(drive->getKey(), drive->getState(), false);
             updateDriveView();
             updateDiffView();
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
@@ -2432,7 +2471,7 @@ void MainWin::setupDrivesTab()
                         m_modificationsWatcher->addPath(path.toStdString().c_str());
                         driveInfo->setLocalFolder(path.toStdString());
                         driveInfo->setLocalFolderExists(true);
-                        onDriveStateChanged(driveInfo->getKey(), driveInfo->getState());
+                        onDriveChanges(driveInfo->getKey(), driveInfo->getState(), false);
                         m_model->saveSettings();
                         ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
                     }

@@ -7,6 +7,7 @@
 #include <QListWidget>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QProcess>
 #include "Worker.h"
 #include "OnChainClient.h"
 #include "types.h"
@@ -103,6 +104,7 @@ private:
     void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
+    void onStartStreamingBtn();
     void loadBalance();
     void setupDrivesTab();
     void setupMyReplicatorTab();
@@ -145,6 +147,8 @@ private:
 
     void updateViewerProgressPanel( int tabIndex );
 
+    void startFfmpegStreamingProcess();
+
     void cancelStreaming();
     void updateStreamerProgressPanel( int tabIndex );
 
@@ -176,7 +180,7 @@ private slots:
     void onInternalError(const QString& errorText, bool isExit);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
-    void onDriveStateChanged(const std::string& driveKey, int state);
+    void onDriveChanges(const std::string& driveKey, int state, bool itIsNewState );
     void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
     void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);
@@ -228,7 +232,8 @@ private:
     uint64_t                m_XPX_MOSAIC_ID;
     
     ModifyProgressPanel*    m_startViewingProgressPanel;
-    ModifyProgressPanel*    m_startStreamingProgressPanel;
+    ModifyProgressPanel*    m_streamingProgressPanel;
+    QProcess*               m_ffmpegStreamingProcess;
 
     Worker*                 mpWorker;
     QThread*                mpThread;

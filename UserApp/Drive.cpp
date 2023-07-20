@@ -189,8 +189,9 @@ std::array<uint8_t, 32> Drive::getModificationHash() const {
     return m_currentModificationHash;
 }
 
-void Drive::setModificationHash(const std::array<uint8_t, 32>& modificationHash) {
+void Drive::setModificationHash(const std::array<uint8_t, 32>& modificationHash, bool isStreaming) {
     m_currentModificationHash = modificationHash;
+    m_isStreaming = isStreaming;
 }
 
 DriveState Drive::getState() const {
@@ -387,7 +388,7 @@ void Drive::initStateMachine(DriveState initialState) {
         connect(creatingState, &QState::entered, this, [this]() {
             m_driveState = creating;
             qDebug () << "m_driveState = creating; " << getName().c_str();
-            emit stateChanged(m_driveKey, m_driveState);
+            emit stateChanged(m_driveKey, m_driveState, true);
         });
 
         for (auto event : m_modificationEvents) {
@@ -403,60 +404,60 @@ void Drive::initStateMachine(DriveState initialState) {
     connect(unConfirmedState, &QState::entered, this, [this]() {
         m_driveState = unconfirmed;
         qDebug () << "m_driveState = unconfirmed; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(deletingState, &QState::entered, this, [this]() {
         m_driveState = deleting;
         qDebug () << "m_driveState = deleting; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(deletedState, &QState::entered, this, [this]() {
         m_driveState = deleted;
         qDebug () << "m_driveState = deleted; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(noModificationsState, &QState::entered, this, [this]() {
         m_driveState = no_modifications;
         qDebug () << "m_driveState = no_modifications; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(registeringState, &QState::entered, this, [this]() {
         m_driveState = registering;
         qDebug () << "m_driveState = is_registering; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(uploadingState, &QState::entered, this, [this]() {
         m_driveState = uploading;
         qDebug () << "m_driveState = uploadingState; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(approvedState, &QState::entered, this, [this]() {
         m_driveState = approved;
         qDebug () << "m_driveState = approvedState; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(cancelingState, &QState::entered, this, [this]() {
         m_driveState = canceling;
         qDebug () << "m_driveState = is_canceling; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(canceledState, &QState::entered, this, [this]() {
         m_driveState = canceled;
         qDebug () << "m_driveState = is_canceled; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 
     connect(failedState, &QState::entered, this, [this]() {
         m_driveState = failed;
         qDebug () << "m_driveState = is_failed; " << getName().c_str();
-        emit stateChanged(m_driveKey, m_driveState);
+        emit stateChanged(m_driveKey, m_driveState, true);
     });
 }

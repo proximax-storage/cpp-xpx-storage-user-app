@@ -664,9 +664,9 @@ std::array<uint8_t,32> Model::hexStringToHash( const std::string& str )
 }
 
 void Model::onDriveStateChanged(const Drive& drive) {
-    connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state)
+    connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state, bool itIsNewState )
     {
-        emit driveStateChanged(driveKey, state);
+        emit driveStateChanged(driveKey, state, itIsNewState);
         m_settings->config().m_driveContractModel.onDriveStateChanged(driveKey, state);
     });
 }

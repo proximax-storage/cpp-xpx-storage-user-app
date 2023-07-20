@@ -55,6 +55,9 @@ if (APPLE)
     set(BOOST_LIB_DIR "/usr/local/lib")
     set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
     set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
+    
+    # for -lcrypto (I do not know who uses it!)
+    link_directories(/usr/local/opt/openssl/lib)
 endif()
 
 find_package(Threads REQUIRED)

@@ -6,11 +6,12 @@
 
 #include <QPushButton>
 
-ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc )
+ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc, Mode mode )
     : QFrame(parent)
     , ui(new Ui::Frame)
     , mp_model(model)
     , m_cancelModificationFunc( cancelModificationFunc )
+    , m_mode(mode)
 {
     ui->setupUi(this);
 
@@ -24,7 +25,14 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
 
     ui->m_requestedSize->setText("0");
     ui->m_unitsType->setText("Bytes");
-    ui->m_title->setWindowTitle("Modification status");
+    if ( mode == drive_modification )
+    {
+        ui->m_title->setWindowTitle("Modification status");
+    }
+    else
+    {
+        ui->m_title->setWindowTitle("Streaming status");
+    }
     ui->m_title->setAlignment(Qt::AlignCenter);
     setGeometry( QRect( x, y, 255, 130) );
     setFrameShape( QFrame::StyledPanel );
@@ -35,16 +43,23 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
 
     connect( ui->m_cancel, &QPushButton::released, this, [this]
     {
-        auto drive = mp_model->currentDrive();
-        if (drive) {
-            if (ui->m_cancel->text() == "Cancel") {
-                m_cancelModificationFunc();
+        if ( m_mode == drive_modification )
+        {
+            auto drive = mp_model->currentDrive();
+            if (drive) {
+                if (ui->m_cancel->text() == "Cancel") {
+                    m_cancelModificationFunc();
+                } else {
+                    setVisible(false);
+                    drive->updateState(no_modifications);
+                }
             } else {
-                setVisible(false);
-                drive->updateState(no_modifications);
+                qWarning () << "ModifyProgressPanel::cancel: invalid drive";
             }
-        } else {
-            qWarning () << "ModifyProgressPanel::cancel: invalid drive";
+        }
+        else
+        {
+            //todo
         }
     });
 
@@ -61,7 +76,14 @@ ModifyProgressPanel::~ModifyProgressPanel()
 void ModifyProgressPanel::setRegistering()
 {
     ui->m_requestedSize->setText("0");
-    ui->m_statusLabel->setText( "Modification is registering ");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText( "Modification is registering ");
+    }
+    else
+    {
+        ui->m_statusLabel->setText( "Stream is registering ");
+    }
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(false);
@@ -72,21 +94,43 @@ void ModifyProgressPanel::setRegistering()
 
 void ModifyProgressPanel::setUploading()
 {
-    ui->m_statusLabel->setText( "Modification is uploading ");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText( "Modification is uploading ");
+    }
+    else
+    {
+        ui->m_statusLabel->setText( "Is streaming ...");
+        ui->m_cancel->setText("Finish streaming");
+    }
     ui->m_cancel->setEnabled(true);
     adjustSize();
 }
 
 void ModifyProgressPanel::setApproving()
 {
-    ui->m_statusLabel->setText( "Modification is completing ");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText( "Modification is completing ");
+    }
+    else
+    {
+        ui->m_statusLabel->setText( "Stream is ending...");
+    }
     ui->m_cancel->setEnabled(false);
     adjustSize();
 }
 
 void ModifyProgressPanel::setApproved()
 {
-    ui->m_statusLabel->setText("Modification is completed!");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText("Modification is completed!");
+    }
+    else
+    {
+        ui->m_statusLabel->setText("Stream is completed!");
+    }
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
@@ -97,7 +141,14 @@ void ModifyProgressPanel::setApproved()
 
 void ModifyProgressPanel::setFailed()
 {
-    ui->m_statusLabel->setText( "Modification is failed!");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText( "Modification is failed!");
+    }
+    else
+    {
+        ui->m_statusLabel->setText( "Stream is failed!");
+    }
     ui->m_cancel->setText("Close");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
@@ -108,7 +159,14 @@ void ModifyProgressPanel::setFailed()
 
 void ModifyProgressPanel::setCanceling()
 {
-    ui->m_statusLabel->setText( "Modification is canceling ");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText( "Modification is canceling ");
+    }
+    else
+    {
+        ui->m_statusLabel->setText( "Stream is canceling...");
+    }
     ui->m_cancel->setEnabled(false);
     ui->m_cancel->setText("Ok");
     adjustSize();
@@ -116,7 +174,14 @@ void ModifyProgressPanel::setCanceling()
 
 void ModifyProgressPanel::setCanceled()
 {
-    ui->m_statusLabel->setText("Modification is canceled!");
+    if ( m_mode == drive_modification )
+    {
+        ui->m_statusLabel->setText("Modification is canceled!");
+    }
+    else
+    {
+        ui->m_statusLabel->setText("Stream is canceled!");
+    }
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
