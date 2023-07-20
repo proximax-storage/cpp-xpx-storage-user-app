@@ -13,9 +13,11 @@ namespace Ui {
 
 class ModifyProgressPanel : public QFrame
 {
+    enum Mode { drive_modification, streaming };
+    
 public:
 
-    ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc );
+    ModifyProgressPanel( Model* model, int x, int y, QWidget* parent, const std::function<void()>& cancelModificationFunc, Mode mode = drive_modification );
     ~ModifyProgressPanel();
 
     void setRegistering();
@@ -33,6 +35,7 @@ public:
 
 private:
     std::function<void()> m_cancelModificationFunc;
+    Mode m_mode;
     Ui::Frame* ui;
     Model* mp_model;
     QMovie* m_loading;

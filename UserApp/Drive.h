@@ -2,7 +2,6 @@
 #define DRIVE_H
 
 #include <QObject>
-#include <QStateMachine>
 #include "drive/FsTree.h"
 #include "LocalDriveItem.h"
 #include "drive/ActionList.h"
@@ -76,7 +75,7 @@ class Drive : public QObject
         void setActionsList(const sirius::drive::ActionList& actions);
 
         std::array<uint8_t, 32> getModificationHash() const;
-        void setModificationHash(const std::array<uint8_t, 32>& modificationHash);
+        void setModificationHash(const std::array<uint8_t, 32>& modificationHash, bool isStreaming = false );
 
         DriveState getState() const;
 
@@ -85,6 +84,7 @@ class Drive : public QObject
     
         const sirius::drive::ReplicatorList& replicatorList() const { return m_replicatorList; }
 
+        bool isStreaming() const { return m_isStreaming; }
 
         void updateState(DriveState state);
 
@@ -101,10 +101,7 @@ class Drive : public QObject
         }
 
     signals:
-        void stateChanged(const std::string& driveKey, int state);
-
-    private:
-        void initStateMachine(DriveState initialState);
+        void stateChanged(const std::string& driveKey, int state, bool itIsNewState );
 
     private:
         std::string m_driveKey;
@@ -124,10 +121,11 @@ class Drive : public QObject
         std::shared_ptr<LocalDriveItem> m_localDrive;
         sirius::drive::ActionList m_actionList;
         std::array<uint8_t, 32> m_currentModificationHash;
+        bool m_isStreaming = false;
         DriveState m_driveState;
-        QStateMachine *mp_stateMachine;
-        std::vector<DriveModificationEvent*> m_modificationEvents;
-        bool m_isInitialized;
+//        QStateMachine *mp_stateMachine;
+//        std::vector<DriveModificationEvent*> m_modificationEvents;
+//        bool m_isInitialized;
 };
 
 
