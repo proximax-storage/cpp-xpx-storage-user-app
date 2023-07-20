@@ -4,7 +4,6 @@ project(cpp-xpx-storage-user-app LANGUAGES CXX)
 
 if(POLICY CMP0074)
     cmake_policy(SET CMP0074 NEW)
-    cmake_policy(SET CMP0111 NEW)
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
