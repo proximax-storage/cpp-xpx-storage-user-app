@@ -41,11 +41,14 @@ namespace sirius { namespace drive
 class MainWin : public QMainWindow
 {
     Q_OBJECT
+    static MainWin* m_instance;
 
 public:
     MainWin(QWidget *parent = nullptr);
     ~MainWin();
 
+    static MainWin* instance() { return m_instance; }
+    
     void init();
 
     void addChannel( const std::string&              channelName,
@@ -54,6 +57,8 @@ public:
                      const std::vector<std::string>& allowedPublicKeys );
 
     void removeDrive( Drive* drive );
+    
+    void onDriveStateChanged( Drive& );
 
 signals:
     void drivesInitialized();
@@ -63,6 +68,7 @@ signals:
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
     void updateUploadedDataAmount(const uint64_t receivedSize);
     void modificationFinishedByReplicators();
+    void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
 
 private:
     bool requestPrivateKey();
@@ -175,6 +181,8 @@ private:
     
     void dbg();
 
+    void updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState );
+
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
@@ -182,7 +190,6 @@ private slots:
     void onInternalError(const QString& errorText, bool isExit);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
-    void onDriveChanges(const std::string& driveKey, int state, bool itIsNewState );
     void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
     void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);

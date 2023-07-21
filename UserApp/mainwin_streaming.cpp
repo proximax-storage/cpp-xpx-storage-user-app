@@ -52,7 +52,7 @@ void MainWin::initStreaming()
         
         if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
             auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-            onDriveChanges( drive->getKey(), drive->getState(), false );
+            updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else
         {
@@ -162,7 +162,7 @@ void MainWin::initStreaming()
                         //
                         auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
                         m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                        drive->updateState(registering);
+                        drive->updateDriveState(registering);
                     }
                 }
             }
@@ -277,7 +277,7 @@ void MainWin::initStreaming()
         qDebug () << "MainWin::streamStartTransactionConfirmed: '" + rawHashToHex(tx);
         if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
         {
-            drive->updateState(uploading);
+            drive->updateDriveState(uploading);
         }
         else
         {
@@ -293,7 +293,7 @@ void MainWin::initStreaming()
         qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
         if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
         {
-            drive->updateState(failed);
+            drive->updateDriveState(failed);
         }
     }, Qt::QueuedConnection);
 
@@ -668,7 +668,7 @@ void MainWin::startFfmpegStreamingProcess()
                     //
                     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
                     m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                    drive->updateState(registering);
+                    drive->updateDriveState(registering);
                 }
             }
         }
@@ -714,7 +714,7 @@ void MainWin::onStartStreamingBtn()
             std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
             auto txHash = rawHashFromHex( txHashString.c_str() );
             drive->setModificationHash( txHash, true );
-            drive->updateState(registering);
+            drive->updateDriveState(registering);
         }
         catch (...) {
             return;

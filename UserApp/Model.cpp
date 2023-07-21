@@ -269,7 +269,6 @@ uint64_t Model::getOutdatedDriveNumber() const {
 
 void Model::addDrive(const Drive& drive) {
     m_settings->config().m_drives.insert({ drive.getKey(), drive });
-    onDriveStateChanged(m_settings->config().m_drives[drive.getKey()]);
 }
 
 void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages )
@@ -360,7 +359,6 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         if (drives.contains(remoteDrive.data.multisig)) {
             const auto driveKeyUpperCase = QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString();
             Drive& drive = drives[driveKeyUpperCase];
-            onDriveStateChanged(drive);
             drive.setReplicatorsCount(remoteDrive.data.replicatorCount);
 
             if ( !remoteDrive.data.replicators.empty() )
@@ -369,8 +367,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
                 gStorageEngine->addReplicators( drive.getReplicators() );
             }
 
-            drive.updateState(creating);
-            drive.updateState(no_modifications);
+            drive.updateDriveState(creating);
+            drive.updateDriveState(no_modifications);
         } else {
             Drive newDrive;
             newDrive.setKey(remoteDrive.data.multisig);
@@ -389,8 +387,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
                 gStorageEngine->addReplicators( drive.getReplicators() );
             }
 
-            drive.updateState(creating);
-            drive.updateState(no_modifications);
+            drive.updateDriveState(creating);
+            drive.updateDriveState(no_modifications);
         }
 
         Drive& currentDrive = drives[QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString()];
@@ -434,8 +432,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
                 }
             }
 
-            currentDrive.updateState(registering);
-            currentDrive.updateState(uploading);
+            currentDrive.updateDriveState(registering);
+            currentDrive.updateDriveState(uploading);
         }
     }
 
@@ -448,8 +446,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 
         if ( it == remoteDrives.end() )
         {
-            onDriveStateChanged(d.second);
-            d.second.updateState(unconfirmed);
+            d.second.updateDriveState(unconfirmed);
         }
     }
 
@@ -664,14 +661,6 @@ std::array<uint8_t,32> Model::hexStringToHash( const std::string& str )
     std::array<uint8_t,32> hash{};
     sirius::utils::ParseHexStringIntoContainer( str.c_str(), 64, hash );
     return hash;
-}
-
-void Model::onDriveStateChanged(const Drive& drive) {
-    connect(&drive, &Drive::stateChanged, this, [this](auto driveKey, auto state, bool itIsNewState )
-    {
-        emit driveStateChanged(driveKey, state, itIsNewState);
-        m_settings->config().m_driveContractModel.onDriveStateChanged(driveKey, state);
-    });
 }
 
 void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )

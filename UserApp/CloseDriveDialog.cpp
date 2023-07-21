@@ -29,7 +29,7 @@ CloseDriveDialog::~CloseDriveDialog()
 void CloseDriveDialog::accept()
 {
     mpOnChainClient->closeDrive(rawHashFromHex(mDrive->getKey().c_str()));
-    mDrive->updateState(deleting);
+    mDrive->updateDriveState(deleting);
     QDialog::accept();
 }
 

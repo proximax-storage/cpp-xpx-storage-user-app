@@ -48,6 +48,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+MainWin* MainWin::m_instance = nullptr;
+
 MainWin::MainWin(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWin)
@@ -58,6 +60,7 @@ MainWin::MainWin(QWidget *parent)
     , mpThread(new QThread)
 {
     ui->setupUi(this);
+    m_instance = this;
 }
 
 void MainWin::init()
@@ -209,7 +212,7 @@ void MainWin::init()
     {
         qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
 
-        connect(m_model, &Model::driveStateChanged, this, [this, drivesPages] (const std::string& driveKey, int state) {
+        connect(this, &MainWin::driveStateChangedSignal, this, [this, drivesPages] (const std::string& driveKey, int state) {
             if (drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0) {
                 disconnect(m_model);
                 emit drivesInitialized();
@@ -309,7 +312,7 @@ void MainWin::init()
             addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
             if (boost::iequals(key, m_model->currentDriveKey()) ) {
                 ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-                onDriveChanges(drive.getKey(), drive.getState(), false);
+                updateDriveWidgets(drive.getKey(), drive.getState(), false);
             }
         }
 
@@ -319,14 +322,19 @@ void MainWin::init()
             setCurrentDriveOnUi(driveKey);
             const auto drive = m_model->getDrives()[driveKey];
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-            onDriveChanges(drive.getKey(), drive.getState(), false);
+            updateDriveWidgets(drive.getKey(), drive.getState(), false);
         } else if (!m_model->getDrives().empty()) {
             setCurrentDriveOnUi(m_model->currentDriveKey());
         }
 
         addLocalModificationsWatcher();
 
-        connect(m_model, &Model::driveStateChanged, this, &MainWin::onDriveChanges, Qt::QueuedConnection);
+        connect(this, &MainWin::driveStateChangedSignal, this, [this](const std::string& driveKey, int state, bool itIsNewState )
+        {
+            m_settings->config().m_driveContractModel.onDriveStateChanged( driveKey, state );
+            MainWin::updateDriveWidgets( driveKey, state, itIsNewState);
+        }, Qt::QueuedConnection);
+
         connect(ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
         connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
 
@@ -552,11 +560,11 @@ void MainWin::init()
         //auto drive = m_model->currentDrive();
         auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
         if (index == 1 && !m_model->getDrives().empty() && drive) {
-            onDriveChanges(drive->getKey(), drive->getState(),false);
+            updateDriveWidgets(drive->getKey(), drive->getState(),false);
         }
         else if ( index == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
             auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
-            onDriveChanges( drive->getKey(), drive->getState(), false );
+            updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else
         {
@@ -901,7 +909,7 @@ void MainWin::cancelModification()
     CancelModificationDialog dialog(m_onChainClient, drive->getKey().c_str(), drive->getName().c_str(), this);
     if ( dialog.exec() == QMessageBox::Ok )
     {
-        drive->updateState(canceling);
+        drive->updateDriveState(canceling);
     }
 }
 
@@ -1479,7 +1487,7 @@ void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
     }
 }
 
-void MainWin::onDriveChanges(const std::string& driveKey, int state, bool itIsNewState)
+void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState)
 {
     auto drive = m_model->findDrive(driveKey);
     if (!drive) {
@@ -1913,6 +1921,11 @@ void MainWin::removeDrive( Drive* drive )
     }
 }
 
+void MainWin::onDriveStateChanged( Drive& drive )
+{
+    emit driveStateChangedSignal( drive.getKey(), drive.getState(), true );
+}
+
 void MainWin::addChannel( const std::string&              channelName,
                           const std::string&              channelKey,
                           const std::string&              driveKey,
@@ -1987,7 +2000,7 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
     if ( drive )
     {
         m_modificationsWatcher->addPath(drive->getLocalFolder().c_str());
-        drive->updateState(no_modifications);
+        drive->updateDriveState(no_modifications);
         m_model->saveSettings();
 
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
@@ -2007,7 +2020,7 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
         const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")\n It will be removed.");
         showNotification(message, errorText.c_str());
         addNotification(message);
-        drive->updateState(unconfirmed);
+        drive->updateDriveState(unconfirmed);
     } else {
         qWarning() << "MainWin::onDriveCreationFailed. Unknown drive: " << driveKey;
     }
@@ -2020,7 +2033,7 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
 
     auto drive = m_model->findDrive(driveKeyHex);
     if (drive) {
-        drive->updateState(deleted);
+        drive->updateDriveState(deleted);
     } else {
         qWarning() << "MainWin::onDriveCloseConfirmed. Unknown drive: " << driveKeyHex;
     }
@@ -2035,7 +2048,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     auto drive = m_model->findDrive(alias);
     if (drive) {
         alias = drive->getName();
-        drive->updateState(no_modifications);
+        drive->updateDriveState(no_modifications);
     } else {
         qWarning () << "MainWin::onDriveCloseFailed. Unknown drive: " << driveId << " error: " << errorText;
     }
@@ -2069,7 +2082,7 @@ void MainWin::onApplyChanges()
 
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
     m_onChainClient->applyDataModification(driveKeyHex, actionList);
-    drive->updateState(registering);
+    drive->updateDriveState(registering);
 }
 
 void MainWin::onRefresh()
@@ -2194,7 +2207,7 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->setModificationHash( modificationId );
-        drive->updateState(uploading);
+        drive->updateDriveState(uploading);
     }
     else
     {
@@ -2208,7 +2221,7 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
     qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
-        drive->updateState(failed);
+        drive->updateDriveState(failed);
     }
 }
 
@@ -2217,7 +2230,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     std::string driveAlias = rawHashToHex(driveId).toStdString();
     auto drive = m_model->findDrive(driveAlias);
     if (drive) {
-        drive->updateState(approved);
+        drive->updateDriveState(approved);
         driveAlias = drive->getName();
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
@@ -2233,7 +2246,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     auto drive = m_model->findDrive(driveAlias);
     if (drive) {
         driveAlias = drive->getName();
-        drive->updateState(failed);
+        drive->updateDriveState(failed);
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
@@ -2249,7 +2262,7 @@ void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t,
     std::string driveRawId = rawHashToHex(driveId).toStdString();
     auto drive = m_model->findDrive(driveRawId);
     if (drive) {
-        drive->updateState(canceled);
+        drive->updateDriveState(canceled);
     } else {
         qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
     }
@@ -2259,7 +2272,7 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     std::string driveRawId = rawHashToHex(driveId).toStdString();
     auto drive = m_model->findDrive(driveRawId);
     if (drive) {
-        drive->updateState(failed);
+        drive->updateDriveState(failed);
     } else {
         qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
     }
@@ -2376,7 +2389,7 @@ void MainWin::onCurrentDriveChanged( int index )
 
         auto drive = m_model->currentDrive();
         if (drive) {
-            onDriveChanges(drive->getKey(), drive->getState(), false);
+            updateDriveWidgets(drive->getKey(), drive->getState(), false);
             updateDriveView();
             updateDiffView();
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
@@ -2523,7 +2536,7 @@ void MainWin::setupDrivesTab()
                         m_modificationsWatcher->addPath(path.toStdString().c_str());
                         driveInfo->setLocalFolder(path.toStdString());
                         driveInfo->setLocalFolderExists(true);
-                        onDriveChanges(driveInfo->getKey(), driveInfo->getState(), false);
+                        updateDriveWidgets(driveInfo->getKey(), driveInfo->getState(), false);
                         m_model->saveSettings();
                         ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
                     }
@@ -3115,28 +3128,28 @@ ContractDeploymentData* MainWin::contractDeploymentData() {
 void
 MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( contract_deploying );
+        drive->updateDriveState( contract_deploying );
     }
 }
 
 void
 MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( no_modifications );
+        drive->updateDriveState( no_modifications );
     }
 }
 
 void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 32> driveKey,
                                                             std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( contract_deployed );
+        drive->updateDriveState( contract_deployed );
     }
 }
 
 void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32> driveKey,
                                                          std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
-        drive->updateState( no_modifications );
+        drive->updateDriveState( no_modifications );
     }
 }
 

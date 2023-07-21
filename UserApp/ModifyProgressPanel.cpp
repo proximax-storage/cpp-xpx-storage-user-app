@@ -50,7 +50,7 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
                     m_cancelModificationFunc();
                 } else {
                     setVisible(false);
-                    drive->updateState(no_modifications);
+                    drive->updateDriveState(no_modifications);
                 }
             } else {
                 qWarning () << "ModifyProgressPanel::cancel: invalid drive";

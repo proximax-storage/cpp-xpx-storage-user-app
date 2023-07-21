@@ -113,6 +113,7 @@ class Model : public QObject
         //
         // Drives
         //
+        
         void addDrive(const Drive& drive);
         void                     onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void                     onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
@@ -204,11 +205,6 @@ class Model : public QObject
                                             const std::string &folderWhereFileIsLocated,
                                             const std::array<uint8_t, 32>& driveKey,
                                             const std::array<uint8_t, 32>& modifyTx);
-
-        void driveStateChanged(const std::string& driveKey, int state, bool itIsNewState );
-
-    private:
-        void onDriveStateChanged(const Drive& drive);
 
     private:
         Settings* m_settings;

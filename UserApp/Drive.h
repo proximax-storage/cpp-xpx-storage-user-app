@@ -25,14 +25,12 @@ enum DriveState
 
 class DriveModificationEvent;
 
-class Drive : public QObject
+class Drive
 {
-    Q_OBJECT
-
     public:
-        explicit Drive(QObject* parent = nullptr);
-        Drive(const Drive& drive);
-        ~Drive() override;
+        explicit Drive();
+        Drive(const Drive& drive) = default;
+        ~Drive() = default;
 
     public:
         Drive& operator=(const Drive&);
@@ -86,7 +84,7 @@ class Drive : public QObject
 
         bool isStreaming() const { return m_isStreaming; }
 
-        void updateState(DriveState state);
+        void updateDriveState(DriveState state);
 
         template<class Archive>
         void serialize( Archive &ar )
@@ -99,9 +97,6 @@ class Drive : public QObject
                m_replicatorList,
                m_rootHash );
         }
-
-    signals:
-        void stateChanged(const std::string& driveKey, int state, bool itIsNewState );
 
     private:
         std::string m_driveKey;
@@ -123,9 +118,6 @@ class Drive : public QObject
         std::array<uint8_t, 32> m_currentModificationHash;
         bool m_isStreaming = false;
         DriveState m_driveState;
-//        QStateMachine *mp_stateMachine;
-//        std::vector<DriveModificationEvent*> m_modificationEvents;
-//        bool m_isInitialized;
 };
 
 

@@ -1,12 +1,11 @@
 #include "Drive.h"
-#include "Model.h"
+#include "mainwin.h"
 #include "utils/HexParser.h"
 #include "Utils.h"
 
 
-Drive::Drive(QObject* parent)
-    : QObject(parent)
-    , m_driveKey("")
+Drive::Drive()
+    : m_driveKey("")
     , m_name("")
     , m_localDriveFolder("")
     , m_localDriveFolderExists(false)
@@ -22,37 +21,34 @@ Drive::Drive(QObject* parent)
     , m_currentModificationHash({ 0 })
     , m_driveState(creating)
 {
-    emit stateChanged(m_driveKey, m_driveState, true);
+    MainWin::instance()->onDriveStateChanged( *this );
 }
 
-Drive::~Drive()
-{}
-
-Drive::Drive(const Drive &drive) {
-    m_driveKey = drive.m_driveKey;
-    m_name = drive.m_name;
-    m_localDriveFolder = drive.m_localDriveFolder;
-    m_localDriveFolderExists = drive.m_localDriveFolderExists;
-    m_size = drive.m_size;
-    m_replicatorNumber = drive.m_replicatorNumber;
-    m_lastOpenedPath = drive.m_lastOpenedPath;
-    m_rootHash = drive.m_rootHash;
-    m_fsTree = drive.m_fsTree;
-    m_downloadingFsTree = drive.m_downloadingFsTree;
-
-    m_localDrive = std::make_shared<LocalDriveItem>();
-    m_localDrive->m_isFolder = drive.m_localDrive->m_isFolder;
-    m_localDrive->m_name = drive.m_localDrive->m_name;
-    m_localDrive->m_size = drive.m_localDrive->m_size;
-    m_localDrive->m_fileHash = drive.m_localDrive->m_fileHash;
-    m_localDrive->m_childs = drive.m_localDrive->m_childs;
-    m_localDrive->m_modifyTime = drive.m_localDrive->m_modifyTime;
-    m_localDrive->m_ldiStatus = drive.m_localDrive->m_ldiStatus;
-
-    m_actionList = drive.m_actionList;
-    m_currentModificationHash = drive.m_currentModificationHash;
-    m_driveState = drive.m_driveState;
-}
+//Drive::Drive(const Drive &drive) {
+//    m_driveKey = drive.m_driveKey;
+//    m_name = drive.m_name;
+//    m_localDriveFolder = drive.m_localDriveFolder;
+//    m_localDriveFolderExists = drive.m_localDriveFolderExists;
+//    m_size = drive.m_size;
+//    m_replicatorNumber = drive.m_replicatorNumber;
+//    m_lastOpenedPath = drive.m_lastOpenedPath;
+//    m_rootHash = drive.m_rootHash;
+//    m_fsTree = drive.m_fsTree;
+//    m_downloadingFsTree = drive.m_downloadingFsTree;
+//
+//    m_localDrive = std::make_shared<LocalDriveItem>();
+//    m_localDrive->m_isFolder = drive.m_localDrive->m_isFolder;
+//    m_localDrive->m_name = drive.m_localDrive->m_name;
+//    m_localDrive->m_size = drive.m_localDrive->m_size;
+//    m_localDrive->m_fileHash = drive.m_localDrive->m_fileHash;
+//    m_localDrive->m_childs = drive.m_localDrive->m_childs;
+//    m_localDrive->m_modifyTime = drive.m_localDrive->m_modifyTime;
+//    m_localDrive->m_ldiStatus = drive.m_localDrive->m_ldiStatus;
+//
+//    m_actionList = drive.m_actionList;
+//    m_currentModificationHash = drive.m_currentModificationHash;
+//    m_driveState = drive.m_driveState;
+//}
 
 Drive &Drive::operator=(const Drive& drive) {
     if (this == &drive) {
@@ -207,7 +203,7 @@ void Drive::setReplicators(const std::vector<std::string>& replicators) {
     }
 }
 
-void Drive::updateState(DriveState newState)
+void Drive::updateDriveState(DriveState newState)
 {
 //    if ( m_driveState == newState )
 //    {
@@ -221,18 +217,18 @@ void Drive::updateState(DriveState newState)
             if ( newState == creating )
             {
                 //m_driveState = unconfirmed;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == unconfirmed )
             {
                 m_driveState = unconfirmed;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
                 // emit -> MainWin::deleteDrive
             }
             if ( newState == no_modifications )
             {
                 m_driveState = no_modifications;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -246,13 +242,13 @@ void Drive::updateState(DriveState newState)
             if ( newState == deleted )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
                 // emit -> MainWin::deleteDrive
             }
             if ( newState == no_modifications )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -266,17 +262,17 @@ void Drive::updateState(DriveState newState)
             if ( newState == deleting )
             {
                 //m_driveState = no_modifications;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == deleting )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == registering )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -285,12 +281,12 @@ void Drive::updateState(DriveState newState)
             if ( newState == failed )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == uploading )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -299,7 +295,7 @@ void Drive::updateState(DriveState newState)
             if ( newState == no_modifications )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -308,17 +304,17 @@ void Drive::updateState(DriveState newState)
             if ( newState == canceling )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == failed )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == approved )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -327,7 +323,7 @@ void Drive::updateState(DriveState newState)
             if ( newState == no_modifications )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -336,12 +332,12 @@ void Drive::updateState(DriveState newState)
             if ( newState == canceled )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             if ( newState == failed )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }
@@ -350,7 +346,7 @@ void Drive::updateState(DriveState newState)
             if ( newState == no_modifications )
             {
                 m_driveState = newState;
-                emit stateChanged(m_driveKey, m_driveState, true);
+                MainWin::instance()->onDriveStateChanged( *this );
             }
             break;
         }

@@ -167,7 +167,7 @@ void AddDriveDialog::accept()
     mp_model->saveSettings();
     auto currentDrive = mp_model->currentDrive();
     if (currentDrive) {
-        currentDrive->updateState(creating);
+        currentDrive->updateDriveState(creating);
     }
 
     QDialog::accept();
