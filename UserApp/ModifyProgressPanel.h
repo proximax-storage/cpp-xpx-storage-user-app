@@ -13,6 +13,7 @@ namespace Ui {
 
 class ModifyProgressPanel : public QFrame
 {
+public:
     enum Mode { drive_modification, streaming };
     
 public:

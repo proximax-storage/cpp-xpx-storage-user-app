@@ -138,6 +138,8 @@ private:
     void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
 
+    QString currentStreamingDriveKey() const;
+    Drive* currentStreamingDrive() const;
     void initStreaming();
     void updateStreamerTable( Drive& );
     void readStreamingAnnotations( const Drive& );

@@ -1,6 +1,7 @@
 #include "ModifyProgressPanel.h"
 #include "Model.h"
 #include "Utils.h"
+#include "mainwin.h"
 #include "ui_ModifyProgressPanel.h"
 
 #include <QPushButton>
@@ -58,7 +59,7 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
         }
         else
         {
-            //todo
+            m_cancelModificationFunc();
         }
     });
 

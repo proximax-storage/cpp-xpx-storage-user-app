@@ -523,7 +523,8 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); });
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); },
+                                                       ModifyProgressPanel::streaming );
     m_streamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
@@ -1499,7 +1500,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
     
     // may be it is streaming drive
     Drive* streamingDrive = nullptr;
-    if ( boost::iequals( driveKey, ui->m_streamDriveCBox->currentText().toStdString() ) )
+    if ( boost::iequals( driveKey, ui->m_streamDriveCBox->currentData().toString().toStdString() ) )
     {
         streamingDrive = drive;
     }

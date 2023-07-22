@@ -36,6 +36,21 @@
 // ./ffmpeg -f avfoundation -i ":0" test-output.aiff
 // ./ffmpeg -f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i "0:0" -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename "output_%03d.ts" output.m3u8
 
+QString MainWin::currentStreamingDriveKey() const
+{
+    return ui->m_streamDriveCBox->currentData().toString();
+}
+
+Drive* MainWin::currentStreamingDrive() const
+{
+    auto driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
+    Drive* drive = m_model->findDrive( driveKey );
+    if ( drive == nullptr && (ui->m_streamDriveCBox->count() == 0) )
+    {
+        qWarning() << LOG_SOURCE << "! internal error: bad drive key";
+    }
+}
+
 void MainWin::initStreaming()
 {
     //todo remove streamerAnnouncements from serializing
@@ -51,7 +66,7 @@ void MainWin::initStreaming()
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
         
         if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+            auto* drive = currentStreamingDrive();
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else
@@ -76,7 +91,6 @@ void MainWin::initStreaming()
             Drive* drive = m_model->findDriveByNameOrPublicKey( driveKey.toStdString() );
             if ( drive == nullptr )
             {
-                qWarning() << LOG_SOURCE << "bad drive index";
                 return;
             }
             
@@ -107,7 +121,7 @@ void MainWin::initStreaming()
 
     // m_addStreamAnnouncementBtn
     connect(ui->m_addStreamAnnouncementBtn, &QPushButton::released, this, [this] () {
-        std::string driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
+        std::string driveKey = currentStreamingDriveKey().toStdString();
 
         if ( m_model->findDrive(driveKey) == nullptr )
         {
@@ -141,8 +155,7 @@ void MainWin::initStreaming()
 
             if ( reply == QMessageBox::Ok )
             {
-                std::string driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
-                auto* drive = m_model->findDriveByNameOrPublicKey( driveKey );
+                auto* drive = currentStreamingDrive();
 
                 if ( drive != nullptr )
                 {
@@ -384,7 +397,7 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 
 void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
 {
-    auto* currentDrive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+    auto* currentDrive = currentStreamingDrive();
     if ( currentDrive != nullptr && boost::iequals( currentDrive->getKey(), drive.getKey() ) )
     {
         updateStreamerTable( *currentDrive );
@@ -640,15 +653,14 @@ void MainWin::startFfmpegStreamingProcess()
         }
     
         QMessageBox msgBox;
-        const QString message = QString::fromStdString("'" + streamInfo.m_title + "' will be removed.");
+        const QString message = QString::fromStdString("'" + streamInfo.m_title + "' will be started.");
         msgBox.setText(message);
         msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
         auto reply = msgBox.exec();
 
         if ( reply == QMessageBox::Ok )
         {
-            std::string driveKey = ui->m_streamDriveCBox->currentData().toString().toStdString();
-            auto* drive = m_model->findDriveByNameOrPublicKey( driveKey );
+            auto* drive = currentStreamingDrive();
 
             if ( drive != nullptr )
             {
@@ -697,24 +709,44 @@ void MainWin::onStartStreamingBtn()
         try {
             auto streamAnnouncements = m_model->streamerAnnouncements();
             StreamInfo& streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-            auto* drive = m_model->findDrive( streamInfo.m_driveKey );
+            
+            auto driveKey = currentStreamingDriveKey().toStdString();
+            
+            if ( ! boost::iequals( streamInfo.m_driveKey, driveKey ) )
+            {
+                qWarning() << LOG_SOURCE << "invalid streamInfo: invalid driveKey" << streamInfo.m_driveKey;
+
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "Invalid drive key" ) );
+                msgBox.setInformativeText( "Continue anyway" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+                if ( reply == QMessageBox::Cancel )
+                {
+                    return;
+                }
+            }
+
+            auto* drive = m_model->findDrive( driveKey );
             if ( drive == nullptr )
             {
-                qWarning() << LOG_SOURCE << "invalid streamInfo: invalid driveKey";
+                qWarning() << LOG_SOURCE << "! internal error: not found drive: " << driveKey;
                 return;
             }
 
-            auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+            auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
             
             uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
             auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo.m_uniqueFolderName / "stream_folder";
 
             //
-            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
-            auto txHash = rawHashFromHex( txHashString.c_str() );
+//            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
+//            auto txHash = rawHashFromHex( txHashString.c_str() );
+            auto txHash = rawHashFromHex( drive->getKey().c_str() );
             drive->setModificationHash( txHash, true );
-            drive->updateDriveState(registering);
+            drive->updateDriveState(uploading);
+//            drive->updateDriveState(registering);
         }
         catch (...) {
             return;
