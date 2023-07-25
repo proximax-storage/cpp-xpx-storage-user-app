@@ -61,7 +61,6 @@ public:
     void onDriveStateChanged( Drive& );
 
 signals:
-    void drivesInitialized();
     void refreshMyReplicatorsTable();
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
@@ -71,6 +70,7 @@ signals:
     void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
 
 private:
+    void drivesInitialized();
     bool requestPrivateKey();
     void cancelModification();
 

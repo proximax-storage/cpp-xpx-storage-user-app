@@ -213,12 +213,17 @@ void MainWin::init()
         qDebug() << LOG_SOURCE << "drivesLoaded pages amount: " << drivesPages.size();
 
         connect(this, &MainWin::driveStateChangedSignal, this, [this, drivesPages] (const std::string& driveKey, int state) {
-            if (drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0) {
-                disconnect(this,&MainWin::driveStateChangedSignal,0,0);
-                emit drivesInitialized();
-            } else if (state == no_modifications) {
+            if (drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0)
+            {
+                // no drives in Rest response
+                drivesInitialized();
+            }
+            else if (state == no_modifications)
+            {
                 m_model->setLoadedDrivesCount(m_model->getLoadedDrivesCount() + 1);
-                if (m_model->getLoadedDrivesCount() == drivesPages[0].pagination.totalEntries) {
+                if (m_model->getLoadedDrivesCount() == drivesPages[0].pagination.totalEntries)
+                {
+                    // Gather drives with old fsTree
                     std::vector<Drive*> outdatedDrives;
                     for (const auto& page : drivesPages) {
                         for (const auto& remoteDrive : page.data.drives) {
@@ -252,20 +257,21 @@ void MainWin::init()
                         }
                     }
 
-                    if (outdatedDrives.empty()) {
-                        disconnect(this,&MainWin::driveStateChangedSignal,0,0);
-                        emit drivesInitialized();
-                    } else {
+                    if (outdatedDrives.empty())
+                    {
+                        drivesInitialized();
+                    }
+                    else
+                    {
                         connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this,
                         [this, counter = (int)outdatedDrives.size()] (auto driveKey, auto fsTreeHash, auto fsTree)
                         {
                             m_model->setOutdatedDriveNumber(m_model->getOutdatedDriveNumber() + 1);
                             onFsTreeReceived(driveKey, fsTreeHash, fsTree);
                             if (counter == m_model->getOutdatedDriveNumber()) {
-                                disconnect(this,&MainWin::driveStateChangedSignal,0,0);
                                 disconnect(m_onChainClient->getStorageEngine(),&StorageEngine::fsTreeReceived,0,0);
                                 m_model->saveSettings();
-                                emit drivesInitialized();
+                                drivesInitialized();
                             }
                         }, Qt::QueuedConnection);
                     }
@@ -285,7 +291,7 @@ void MainWin::init()
         if (drivesPages[0].pagination.totalEntries == 0) {
             m_model->getDrives().clear();
             m_model->saveSettings();
-            emit drivesInitialized();
+            drivesInitialized();
         }
 
         connect( m_onChainClient, &OnChainClient::downloadFsTreeDirect, this, &MainWin::onDownloadFsTreeDirect, Qt::QueuedConnection);
@@ -302,44 +308,6 @@ void MainWin::init()
 
     connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
            onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
-    }, Qt::QueuedConnection);
-
-    connect(this, &MainWin::drivesInitialized, this, [this]() {
-        ui->m_driveCBox->clear();
-        ui->m_streamDriveCBox->clear();
-        for (const auto& [key, drive] : m_model->getDrives()) {
-            addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
-            addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
-            if (boost::iequals(key, m_model->currentDriveKey()) ) {
-                ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-                updateDriveWidgets(drive.getKey(), drive.getState(), false);
-            }
-        }
-
-        if (!m_model->getDrives().empty() && (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
-            const auto driveKey = ui->m_driveCBox->currentData().toString().toStdString();
-            m_model->setCurrentDriveKey(driveKey);
-            setCurrentDriveOnUi(driveKey);
-            const auto drive = m_model->getDrives()[driveKey];
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
-            updateDriveWidgets(drive.getKey(), drive.getState(), false);
-        } else if (!m_model->getDrives().empty()) {
-            setCurrentDriveOnUi(m_model->currentDriveKey());
-        }
-
-        addLocalModificationsWatcher();
-
-        connect(this, &MainWin::driveStateChangedSignal, this, [this](const std::string& driveKey, int state, bool itIsNewState )
-        {
-            m_settings->config().m_driveContractModel.onDriveStateChanged( driveKey, state );
-            MainWin::updateDriveWidgets( driveKey, state, itIsNewState);
-        }, Qt::QueuedConnection);
-
-        connect(ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
-        connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
-
-        lockMainButtons(false);
-        unlockDrive();
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection);
@@ -893,6 +861,48 @@ void MainWin::init()
 
     initStreaming();
 }
+
+void MainWin::drivesInitialized()
+{
+    disconnect(this,&MainWin::driveStateChangedSignal,0,0);
+
+    ui->m_driveCBox->clear();
+    ui->m_streamDriveCBox->clear();
+    for (const auto& [key, drive] : m_model->getDrives()) {
+        addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
+        addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
+        if (boost::iequals(key, m_model->currentDriveKey()) ) {
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+            updateDriveWidgets(drive.getKey(), drive.getState(), false);
+        }
+    }
+
+    if (!m_model->getDrives().empty() && (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
+        const auto driveKey = ui->m_driveCBox->currentData().toString().toStdString();
+        m_model->setCurrentDriveKey(driveKey);
+        setCurrentDriveOnUi(driveKey);
+        const auto drive = m_model->getDrives()[driveKey];
+        ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+        updateDriveWidgets(drive.getKey(), drive.getState(), false);
+    } else if (!m_model->getDrives().empty()) {
+        setCurrentDriveOnUi(m_model->currentDriveKey());
+    }
+
+    addLocalModificationsWatcher();
+
+    connect(this, &MainWin::driveStateChangedSignal, this, [this](const std::string& driveKey, int state, bool itIsNewState )
+    {
+        m_settings->config().m_driveContractModel.onDriveStateChanged( driveKey, state );
+        MainWin::updateDriveWidgets( driveKey, state, itIsNewState);
+    }, Qt::QueuedConnection);
+
+    connect(ui->m_driveCBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWin::onCurrentDriveChanged, Qt::QueuedConnection);
+    connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this, &MainWin::onFsTreeReceived, Qt::QueuedConnection);
+
+    lockMainButtons(false);
+    unlockDrive();
+}
+
 
 MainWin::~MainWin()
 {
