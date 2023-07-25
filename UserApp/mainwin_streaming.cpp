@@ -49,6 +49,7 @@ Drive* MainWin::currentStreamingDrive() const
     {
         qWarning() << LOG_SOURCE << "! internal error: bad drive key";
     }
+    return drive;
 }
 
 void MainWin::initStreaming()
@@ -617,9 +618,33 @@ void MainWin::cancelViewingStream()
     m_startViewingProgressPanel->setVisible( false );
 }
 
-void MainWin::cancelStreaming()
+void MainWin::cancelOrFinishStreaming()
 {
-    m_model->m_streamerStatus = ss_no_streaming;
+    Drive* drive = currentStreamingDrive();
+    if ( drive == nullptr )
+    {
+        qWarning() << LOG_SOURCE << "cancelOrFinishStreaming: drive == nullptr";
+    }
+
+//    switch ( drive->getState() ) {
+//        case registering:
+//            break;
+//
+//            creating,
+//            unconfirmed,
+//            deleting,
+//            deleted,
+//            no_modifications,
+//            registering,
+//            approved,
+//            uploading,
+//            failed,
+//            canceling,
+//            canceled,
+//
+//        default:
+//            break;
+//    }
     m_streamingProgressPanel->setVisible(false);
 }
 
@@ -745,6 +770,7 @@ void MainWin::onStartStreamingBtn()
 //            auto txHash = rawHashFromHex( txHashString.c_str() );
             auto txHash = rawHashFromHex( drive->getKey().c_str() );
             drive->setModificationHash( txHash, true );
+            drive->updateDriveState(registering);
             drive->updateDriveState(uploading);
 //            drive->updateDriveState(registering);
         }

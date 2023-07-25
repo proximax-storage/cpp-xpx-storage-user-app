@@ -214,6 +214,4 @@ class Model : public QObject
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;
         StreamInfo      m_currentStreamInfo;
-
-        StreamerStatus  m_streamerStatus = ss_no_streaming;
 };

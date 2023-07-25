@@ -214,7 +214,7 @@ void MainWin::init()
 
         connect(this, &MainWin::driveStateChangedSignal, this, [this, drivesPages] (const std::string& driveKey, int state) {
             if (drivesPages.empty() || drivesPages[0].pagination.totalEntries == 0) {
-                disconnect(m_model);
+                disconnect(this,&MainWin::driveStateChangedSignal,0,0);
                 emit drivesInitialized();
             } else if (state == no_modifications) {
                 m_model->setLoadedDrivesCount(m_model->getLoadedDrivesCount() + 1);
@@ -253,7 +253,7 @@ void MainWin::init()
                     }
 
                     if (outdatedDrives.empty()) {
-                        disconnect(m_model);
+                        disconnect(this,&MainWin::driveStateChangedSignal,0,0);
                         emit drivesInitialized();
                     } else {
                         connect(m_onChainClient->getStorageEngine(), &StorageEngine::fsTreeReceived, this,
@@ -262,8 +262,8 @@ void MainWin::init()
                             m_model->setOutdatedDriveNumber(m_model->getOutdatedDriveNumber() + 1);
                             onFsTreeReceived(driveKey, fsTreeHash, fsTree);
                             if (counter == m_model->getOutdatedDriveNumber()) {
-                                disconnect(m_model);
-                                disconnect(m_onChainClient->getStorageEngine());
+                                disconnect(this,&MainWin::driveStateChangedSignal,0,0);
+                                disconnect(m_onChainClient->getStorageEngine(),&StorageEngine::fsTreeReceived,0,0);
                                 m_model->saveSettings();
                                 emit drivesInitialized();
                             }
@@ -523,7 +523,7 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); },
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelOrFinishStreaming(); },
                                                        ModifyProgressPanel::streaming );
     m_streamingProgressPanel->setVisible(false);
 

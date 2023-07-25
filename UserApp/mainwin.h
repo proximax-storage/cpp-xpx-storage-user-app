@@ -159,7 +159,7 @@ private:
 
     void startFfmpegStreamingProcess();
 
-    void cancelStreaming();
+    void cancelOrFinishStreaming();
     void updateStreamerProgressPanel( int tabIndex );
 
     void initWorker();
