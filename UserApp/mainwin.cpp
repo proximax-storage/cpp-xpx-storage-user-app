@@ -563,8 +563,9 @@ void MainWin::init()
         if (index == 1 && !m_model->getDrives().empty() && drive) {
             updateDriveWidgets(drive->getKey(), drive->getState(),false);
         }
-        else if ( index == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-            auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_streamDriveCBox->currentText().toStdString() );
+        else if (auto drive = m_model->findDriveByNameOrPublicKey(ui->m_streamDriveCBox->currentText().toStdString());
+                 drive && index == 4 && ui->m_streamingTabView->currentIndex() == 1 )
+        {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else

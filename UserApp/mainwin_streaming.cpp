@@ -66,8 +66,7 @@ void MainWin::initStreaming()
         updateViewerProgressPanel( ui->tabWidget->currentIndex() );
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
         
-        if ( ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
-            auto* drive = currentStreamingDrive();
+        if (auto drive = currentStreamingDrive(); drive && ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else
