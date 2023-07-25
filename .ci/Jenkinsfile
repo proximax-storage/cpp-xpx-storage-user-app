@@ -1,0 +1,31 @@
+pipeline {
+    agent {
+        node {
+            label 'docker-c5-xlarge'
+        }
+    }
+
+    options {
+        timestamps()
+    }
+
+    stages {
+        stage ('Build') {
+            steps {
+                echo 'build inside a docker'                
+                script {
+                    docker.build("cpp-xpx-so-user-app","-f ./ci/Dockerfile .")
+                    archiveArtifacts "storage-tool.zip"
+                }
+            }
+        }
+    }
+    
+    post {
+        failure {
+            slackSend channel: '#devops',
+              color: 'bad',
+              message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+        }
+    }
+}
