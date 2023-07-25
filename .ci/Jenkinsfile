@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo 'build inside a docker'                
                 script {
-                    docker.build("cpp-xpx-so-user-app","-f ./ci/Dockerfile .")
+                    docker.build("cpp-xpx-so-user-app","-f ./.ci/Dockerfile .")
                     archiveArtifacts "storage-tool.zip"
                 }
             }
