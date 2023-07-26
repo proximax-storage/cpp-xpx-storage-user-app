@@ -9,12 +9,55 @@ pipeline {
         timestamps()
     }
 
+    environment {
+        DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
+        CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
+        BUILD_IMAGE = "cpp-xpx-so-dependencies-build-image:v1.0-ubuntu"
+    }
+
     stages {
         stage ('Build') {
             steps {
                 echo 'build inside a docker'                
                 script {
-                    docker.build("cpp-xpx-so-user-app","-f ./.ci/Dockerfile .")
+                    def buildImage = docker.image("${BUILD_IMAGE}")
+                    buildImage.inside("-u 0") {
+                        sh """
+                            echo 'Building'
+                            cd /
+                            rm -rf storage-tool
+                            cp . /app-src
+                            cd /app-src
+                            rm -rf _build_cross
+                            mkdir _build_cross
+                            cd _build_cross
+                            
+                            export BUILD_DIR=\$PWD
+                            export PATH=/home/windows/mxe/usr/bin:\$PATH
+
+                            x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
+                            x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j\$(nproc)
+                            
+                            cd /
+                            mkdir storage-tool
+                            export DESTDIR=\$PWD/storage-tool
+                            
+                            cp \$BUILD_DIR/UserApp/StorageClientApp.exe \$DESTDIR
+                            cp \$BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll \$DESTDIR
+                            cp -r \$BUILD_DIR/bin/* \$DESTDIR
+                            cp -r /app-src/resources \$DESTDIR
+                            cp -r /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/plugins \$DESTDIR
+                            cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll \$DESTDIR
+                            cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll \$DESTDIR
+                            cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Core.dll \$DESTDIR
+                            find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
+                            zip -r storage-tool.zip \$DESTDIR
+                        """
+                    }
+                }
+            }
+            post {
+                always {
                     archiveArtifacts "storage-tool.zip"
                 }
             }
