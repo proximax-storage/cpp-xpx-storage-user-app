@@ -187,7 +187,7 @@ void AddStreamAnnouncementDialog::accept()
         return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
     });
 
-    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 20 );
+    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 40 );
         
     auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / mUniqueFolderName;
     
