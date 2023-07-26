@@ -25,10 +25,6 @@ pipeline {
                         buildImage.inside("-u 0") {
                             sh """
                                 echo 'Building'
-                                cd /
-                                rm -rf storage-tool
-                                cp . /app-src
-                                cd /app-src
                                 rm -rf _build_cross
                                 mkdir _build_cross
                                 cd _build_cross
@@ -39,14 +35,14 @@ pipeline {
                                 x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
                                 x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j\$(nproc)
                                 
-                                cd /
+                                cd ..
                                 mkdir storage-tool
                                 export DESTDIR=\$PWD/storage-tool
                                 
                                 cp \$BUILD_DIR/UserApp/StorageClientApp.exe \$DESTDIR
                                 cp \$BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll \$DESTDIR
                                 cp -r \$BUILD_DIR/bin/* \$DESTDIR
-                                cp -r /app-src/resources \$DESTDIR
+                                cp -r \$PWD/resources \$DESTDIR
                                 cp -r /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/plugins \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll \$DESTDIR
