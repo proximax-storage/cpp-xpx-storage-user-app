@@ -12,61 +12,118 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        BUILD_IMAGE = "cpp-xpx-so-dependencies-build-image:v1.0-ubuntu"
+        BUILD_IMAGE_WINDOWS = "cpp-xpx-so-dependencies-build-image:v1.0-ubuntu"
+        BUILD_IMAGE_LINUX = "docker.io/shinnengw/cpp-xpx-so-dependencies-build-image:v1.0-bullseye"
     }
-
+    
     stages {
-        stage ('Build') {
-            steps {
-                echo 'build inside a docker'                
-                script {
-                    def buildImage = docker.image("${BUILD_IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside("-u 0") {
-                            sh """
-                                echo 'Building'
-                                rm -rf _build_cross
-                                mkdir _build_cross
-                                cd _build_cross
-                                
-                                export BUILD_DIR=\$PWD
-                                export PATH=/home/windows/mxe/usr/bin:\$PATH
+        stage('Build') {
+            parallel {
+                stage('Linux build') {
+                    steps {
+                        echo 'build inside a docker'                
+                        script {
+                            def buildImage = docker.image("${BUILD_IMAGE_LINUX}")
+                            buildImage.inside("-u 0") {
+                                sh """
+                                    echo 'Building'
+                                    sudo rm -rf _build 
+                                    mkdir _build 
+                                    cd _build
+                                    export BUILD_DIR=\$PWD
+                                    cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
+                                    cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
+                                    cd ..
 
-                                x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
-                                x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j\$(nproc)
-                                
-                                cd ..
-                                mkdir storage-tool
-                                export DESTDIR=\$PWD/storage-tool
-                                
-                                cp \$BUILD_DIR/UserApp/StorageClientApp.exe \$DESTDIR
-                                cp \$BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll \$DESTDIR
-                                cp -r \$BUILD_DIR/bin/* \$DESTDIR
-                                cp -r \$PWD/resources \$DESTDIR
-                                cp -r /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/plugins \$DESTDIR
-                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll \$DESTDIR
-                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll \$DESTDIR
-                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Core.dll \$DESTDIR
-                                find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
-                                zip -r storage-tool.zip \$DESTDIR
-                            """
+                                    export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+                                    cp tool.desktop \$BUILD_DIR/UserApp/
+                                    /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
+                                                                                                            
+                                    sudo rm -rf storage-tool
+                                    mkdir storage-tool
+                                    export DESTDIR=\$PWD/storage-tool
+                                    
+                                    cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
+                                    cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
+                                    cp -r \$BUILD_DIR/lib \$DESTDIR
+                                    cp -r \$BUILD_DIR/plugins \$DESTDIR
+                                    cp -a \$BUILD_DIR/bin/boost/. \$DESTDIR/lib/
+                                    cp -r \$BUILD_DIR/bin/. \$DESTDIR/lib/
+                                    cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
+                                    rm -r \$DESTDIR/lib/boost
+                                    rm -r \$DESTDIR/lib/CMakeFiles
+                                    rm -r \$DESTDIR/lib/xpxchaincpp_autogen
+                                    cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
+                                    cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
+                                    cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.74.0 \$DESTDIR/lib/
+
+                                    chmod a+x \$DESTDIR/StorageClientApp
+                                    patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
+                                    
+                                    tar -Jcvf linux-storage-tool.tar.xz \$DESTDIR
+                                """
+                            }
+                        }                        
+                    }
+                    post {
+                        always {
+                            archiveArtifacts "linux-storage-tool.tar.xz"
+                        }
+                    }
+                }
+                stage('Windows build') {
+                    steps {
+                        echo 'build inside a docker'                
+                        script {
+                            def buildImage = docker.image("${BUILD_IMAGE_WINDOWS}")
+                            docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                                buildImage.inside("-u 0") {
+                                    sh """
+                                        echo 'Building'
+                                        rm -rf _build_cross
+                                        mkdir _build_cross
+                                        cd _build_cross
+                                        
+                                        export BUILD_DIR=\$PWD
+                                        export PATH=/home/windows/mxe/usr/bin:\$PATH
+
+                                        x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
+                                        x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j\$(nproc)
+                                        
+                                        cd ..
+                                        mkdir storage-tool
+                                        export DESTDIR=\$PWD/storage-tool
+                                        
+                                        cp \$BUILD_DIR/UserApp/StorageClientApp.exe \$DESTDIR
+                                        cp \$BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll \$DESTDIR
+                                        cp -r \$BUILD_DIR/bin/* \$DESTDIR
+                                        cp -r \$PWD/resources \$DESTDIR
+                                        cp -r /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/plugins \$DESTDIR
+                                        cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll \$DESTDIR
+                                        cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll \$DESTDIR
+                                        cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Core.dll \$DESTDIR
+                                        find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
+                                        zip -r windows-storage-tool.zip \$DESTDIR
+                                    """
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts "windows-storage-tool.zip"
                         }
                     }
                 }
             }
-            post {
-                always {
-                    archiveArtifacts "storage-tool.zip"
-                }
-            }
         }
     }
-    
+
     post {
         failure {
             slackSend channel: '#devops',
-              color: 'bad',
-              message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+                color: 'bad',
+                message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
         }
     }
 }
