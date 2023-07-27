@@ -1058,6 +1058,14 @@ void MainWin::setupDownloadsTab()
     });
 
     ui->m_moreChannelsBtn->setMenu(menu);
+
+    connect( ui->m_openDownloadFolderBtn, &QPushButton::released, this, [this]
+    {
+#ifdef __APPLE__
+        QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( m_settings->downloadFolder().string() )));
+#else
+#endif
+    });
 }
 
 void MainWin::setupChannelFsTable()
@@ -2421,7 +2429,7 @@ void MainWin::setupDrivesTab()
     ui->m_driveCBox->addItem( "Loading..." );
     ui->m_streamDriveCBox->addItem( "Loading..." );
     setupDriveFsTable();
-    connect( ui->m_openLocalFolderBtn, &QPushButton::released, this, [this]
+    connect( ui->m_openDriveLocalFolderBtn, &QPushButton::released, this, [this]
     {
         qDebug() << LOG_SOURCE << "openLocalFolderBtn";
 
@@ -2816,7 +2824,7 @@ void MainWin::lockDrive() {
     ui->m_moreDrivesBtn->setDisabled(true);
     ui->m_driveTreeView->setDisabled(true);
     ui->m_driveFsTableView->setDisabled(true);
-    ui->m_openLocalFolderBtn->setDisabled(true);
+    ui->m_openDriveLocalFolderBtn->setDisabled(true);
     ui->m_applyChangesBtn->setDisabled(true);
     ui->m_diffTableView->setDisabled(true);
     ui->m_calcDiffBtn->setDisabled(true);
@@ -2827,7 +2835,7 @@ void MainWin::unlockDrive() {
     ui->m_moreDrivesBtn->setEnabled(true);
     ui->m_driveTreeView->setEnabled(true);
     ui->m_driveFsTableView->setEnabled(true);
-    ui->m_openLocalFolderBtn->setEnabled(true);
+    ui->m_openDriveLocalFolderBtn->setEnabled(true);
     ui->m_applyChangesBtn->setEnabled(true);
     ui->m_diffTableView->setEnabled(true);
     ui->m_calcDiffBtn->setEnabled(true);

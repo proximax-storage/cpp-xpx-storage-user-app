@@ -205,7 +205,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -448,7 +448,7 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
             <item>
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="m_openDownloadFolderBtn">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -615,7 +615,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="m_openLocalFolderBtn">
+           <widget class="QPushButton" name="m_openDriveLocalFolderBtn">
             <property name="minimumSize">
              <size>
               <width>0</width>
