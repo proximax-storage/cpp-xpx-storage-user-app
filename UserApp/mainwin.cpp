@@ -402,7 +402,7 @@ void MainWin::init()
 
     connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
         ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
-        dialog.open();
+        dialog.exec();
     });
 
     connect(m_onChainClient, &OnChainClient::internalError, this, &MainWin::onInternalError, Qt::QueuedConnection);
@@ -810,7 +810,11 @@ void MainWin::init()
 
     connect( ui->m_contractCallRemoveMosaic, &QPushButton::released, this, [this] {
         int selectedRow = ui->m_contractCallMosaicTable->currentRow();
-        ui->m_contractCallMosaicTable->setCurrentIndex( QModelIndex());
+        if (selectedRow < 0) {
+            return;
+        }
+
+        ui->m_contractCallMosaicTable->setCurrentIndex( QModelIndex() );
         ui->m_contractCallMosaicTable->removeRow( selectedRow );
         auto& payments = m_model->driveContractModel().getContractManualCallData().m_servicePayments;
         payments.erase(payments.begin() + selectedRow);
@@ -821,7 +825,7 @@ void MainWin::init()
              &QItemSelectionModel::selectionChanged,
              this,
              [this]( const QItemSelection& selected, const QItemSelection& deselected ) {
-                 ui->m_contractCallRemoveMosaic->setDisabled( selected.indexes().empty());
+                 ui->m_contractCallRemoveMosaic->setDisabled( selected.indexes().empty() );
              } );
 
     QObject::connect( ui->m_contractCallMosaicTable, &QTableWidget::itemChanged, this,
