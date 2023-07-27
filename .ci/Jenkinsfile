@@ -27,7 +27,7 @@ pipeline {
                             buildImage.inside("-u 0") {
                                 sh """
                                     echo 'Building'
-                                    sudo rm -rf _build 
+                                    rm -rf _build 
                                     mkdir _build 
                                     cd _build
                                     export BUILD_DIR=\$PWD
@@ -39,7 +39,7 @@ pipeline {
                                     cp tool.desktop \$BUILD_DIR/UserApp/
                                     /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
                                                                                                             
-                                    sudo rm -rf storage-tool
+                                    rm -rf storage-tool
                                     mkdir storage-tool
                                     export DESTDIR=\$PWD/storage-tool
                                     
@@ -64,11 +64,6 @@ pipeline {
                                 """
                             }
                         }                        
-                    }
-                    post {
-                        always {
-                            archiveArtifacts "linux-storage-tool.tar.xz"
-                        }
                     }
                 }
                 stage('Windows build') {
@@ -109,17 +104,15 @@ pipeline {
                             }
                         }
                     }
-                    post {
-                        always {
-                            archiveArtifacts "windows-storage-tool.zip"
-                        }
-                    }
                 }
             }
         }
     }
 
     post {
+        always {
+            archiveArtifacts 'linux-storage-tool.tar.xz, windows-storage-tool.zip'
+        }
         failure {
             slackSend channel: '#devops',
                 color: 'bad',
