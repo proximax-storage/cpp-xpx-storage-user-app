@@ -280,4 +280,18 @@ void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          
     m_session->requestStreamStatus( driveKey, replicatorList, streamStatusResponseHandler );
 #endif
 }
+                                                   
+std::optional<boost::asio::ip::tcp::endpoint> StorageEngine::getEndpoint( const sirius::Key& key )
+{
+    return m_session->getEndpoint( key );
+}
 
+void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
+                                    const sirius::Key&      driveKey,
+                                    const fs::path&         m3u8Playlist,
+                                    const fs::path&         chunksFolder,
+                                    const fs::path&         torrentsFolder,
+                                    const endpoint_list&    endPointList )
+{
+    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, endPointList );
+}

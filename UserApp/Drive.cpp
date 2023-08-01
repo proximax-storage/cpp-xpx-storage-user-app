@@ -364,3 +364,18 @@ void Drive::updateDriveState(DriveState newState)
         }
     }
 }
+
+endpoint_list Drive::getEndpointReplicatorList() const
+{
+    endpoint_list endPointList;
+    for( auto& replicatorKey : m_replicatorList )
+    {
+        auto endpoint = gStorageEngine->getEndpoint( replicatorKey );
+        if ( endpoint )
+        {
+            LOG( "addEndpoint: " << *endpoint );
+            endPointList.push_back( *endpoint );
+        }
+    }
+    return endPointList;
+}

@@ -6,6 +6,8 @@
 #include "LocalDriveItem.h"
 #include "drive/ActionList.h"
 
+using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
+
 enum DriveState
 {
     creating,
@@ -81,6 +83,8 @@ class Drive
         void setReplicators(const std::vector<std::string>& replicators);
     
         const sirius::drive::ReplicatorList& replicatorList() const { return m_replicatorList; }
+    
+        endpoint_list getEndpointReplicatorList() const;
 
         bool isStreaming() const { return m_isStreaming; }
 

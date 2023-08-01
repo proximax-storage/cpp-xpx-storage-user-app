@@ -205,7 +205,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -1399,7 +1399,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -1715,6 +1715,45 @@
                 </property>
                </spacer>
               </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_13">
+                <item>
+                 <widget class="QRadioButton" name="radioButton">
+                  <property name="text">
+                   <string>Use ffmpeg</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton_2">
+                  <property name="text">
+                   <string>Use OBS</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_19">
+                  <item>
+                   <widget class="QLabel" name="m_pathToObsLabel">
+                    <property name="text">
+                     <string>Path To OBS:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_4"/>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="pushButton_14">
+                    <property name="text">
+                     <string>Browse</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
              </layout>
             </item>
             <item>
@@ -1824,42 +1863,63 @@
                   </item>
                  </layout>
                 </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_13">
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
-                  <property name="text">
-                   <string>Use ffmpeg</string>
+                 <spacer name="verticalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
                   </property>
-                 </widget>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton_2">
-                  <property name="text">
-                   <string>Use OBS</string>
+                 <spacer name="verticalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
                   </property>
-                 </widget>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_19">
+                 <layout class="QHBoxLayout" name="horizontalLayout_24">
                   <item>
-                   <widget class="QLabel" name="m_pathToObsLabel">
+                   <widget class="QLabel" name="label_13">
                     <property name="text">
-                     <string>Path To OBS:</string>
+                     <string>Stream folder: </string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="lineEdit_4"/>
+                   <widget class="QLineEdit" name="m_streamFolder"/>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_14">
+                   <widget class="QPushButton" name="m_browseStreamFolderBtn">
                     <property name="text">
                      <string>Browse</string>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_14">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
                   </item>
                  </layout>
                 </item>

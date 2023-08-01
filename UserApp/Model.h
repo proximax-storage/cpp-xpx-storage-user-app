@@ -171,7 +171,8 @@ class Model : public QObject
         void                            setModificationStatusResponseHandler( ModificationStatusResponseHandler handler );
         void                            requestModificationStatus(  const std::string&      replicatorKey,
                                                                     const std::string&      driveKey,
-                                                                    const std::string&      modificationHash );
+                                                                    const std::string&      modificationHash,
+                                                                    std::optional<boost::asio::ip::tcp::endpoint> replicatorEndpoint = {} );
 
         // Super contract
         DriveContractModel&             driveContractModel();

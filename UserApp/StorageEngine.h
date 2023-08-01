@@ -5,17 +5,21 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <filesystem>
 #include "crypto/KeyPair.h"
 #include "drive/FsTree.h"
 #include "drive/ActionList.h"
+#include "types.h"
 
-#define USE_CLIENT_SESSION
+//#define USE_CLIENT_SESSION
 
 namespace sirius::drive {
     class ClientSession;
     class ViewerSession;
     struct DriveKey;
 }
+
+namespace fs = std::filesystem;
 
 using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
 
@@ -72,6 +76,15 @@ public:
               std::function<void()>           addressAlreadyInUseHandler );
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
+    
+    std::optional<boost::asio::ip::tcp::endpoint> getEndpoint( const sirius::Key& key );
+
+    void startStreaming( const sirius::Hash256&  streamId,
+                         const sirius::Key&      driveKey,
+                         const fs::path&         m3u8Playlist,
+                         const fs::path&         chunksFolder,
+                         const fs::path&         torrentsFolder,
+                         const endpoint_list&    endPointList );
 
 private:
     void addTorrentFileToSession(const std::string &torrentFilename,
