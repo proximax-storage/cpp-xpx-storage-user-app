@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Storaget Tool - ProximaX
+Icon=Storage
+Comment=storage
+Exec=StorageClientApp
+Categories=Network;
+X-AppImage-Version=
