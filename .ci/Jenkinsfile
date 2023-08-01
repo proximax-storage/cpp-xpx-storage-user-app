@@ -30,7 +30,7 @@ pipeline {
                                 mkdir _build 
                                 cd _build
                                 export BUILD_DIR=\$PWD
-                                cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
+                                cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
