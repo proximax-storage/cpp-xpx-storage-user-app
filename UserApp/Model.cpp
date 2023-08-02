@@ -743,7 +743,8 @@ DriveContractModel& Model::driveContractModel() {
 
 void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     driveKey,
-                                        const std::string&     modificationHash )
+                                        const std::string&     modificationHash,
+                                        std::optional<boost::asio::ip::tcp::endpoint> replicatorEndpoint )
 {
 //    if ( Model::homeFolder() == "/Users/alex" )
 //    {
@@ -758,7 +759,8 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
 //    {
         gStorageEngine->m_session->sendModificationStatusRequestToReplicator( hexStringToHash(replicatorKey),
                                                                               hexStringToHash(driveKey),
-                                                                              hexStringToHash(modificationHash) );
+                                                                              hexStringToHash(modificationHash),
+                                                                             replicatorEndpoint );
 //    }
 }
 

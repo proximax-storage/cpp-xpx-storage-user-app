@@ -733,7 +733,8 @@ void MainWin::onStartStreamingBtn()
         try {
             auto streamAnnouncements = m_model->streamerAnnouncements();
             StreamInfo& streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-            
+            qWarning() << LOG_SOURCE << "🔴 streamInfo: " << streamInfo.m_annotation;
+
             auto driveKey = currentStreamingDriveKey().toStdString();
             
             if ( ! boost::iequals( streamInfo.m_driveKey, driveKey ) )
@@ -758,20 +759,103 @@ void MainWin::onStartStreamingBtn()
                 return;
             }
 
+            // m3u8StreamFolder - for all streams
+            auto m3u8StreamFolder = ui->m_streamFolder->text().toStdString();
+            boost::trim(m3u8StreamFolder);
+            
+            if ( m3u8StreamFolder.empty() )
+            {
+                qCritical() << LOG_SOURCE << "! m3u8StreamFolder.empty()";
+
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "Invalid stream folder is not set" ) );
+                msgBox.setInformativeText( "Stream folder is not set" );
+                msgBox.setStandardButtons( QMessageBox::Ok );
+                msgBox.exec();
+                return;
+            }
+
+            std::error_code ec;
+            if ( ! fs::exists( m3u8StreamFolder, ec ) )
+            {
+                qDebug() << LOG_SOURCE << "Stream folder does not exist" << streamInfo.m_driveKey;
+
+                QMessageBox msgBox;
+                msgBox.setText( QString::fromStdString( "Stream folder does not exist" ) );
+                msgBox.setInformativeText( "Create folder ?" );
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                int reply = msgBox.exec();
+                if ( reply == QMessageBox::Cancel )
+                {
+                    return;
+                }
+                
+                fs::create_directories( m3u8StreamFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "! cannot create folder : " << m3u8StreamFolder << " error:" << ec.message();
+
+                    QMessageBox msgBox;
+                    msgBox.setText( QString::fromStdString( "Cannot create folder" ) );
+                    msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
+                    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                    msgBox.exec();
+                    return;
+                }
+            }
+
             auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
             
             uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
-            auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo.m_uniqueFolderName / "stream_folder";
+            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo.m_uniqueFolderName;
+            auto chuncksFolder = uniqueStreamFolder / "chunks";
+            auto torrentsFolder = uniqueStreamFolder / "torrents";
+            
+            if ( ! fs::exists( chuncksFolder, ec ) )
+            {
+                fs::create_directories( chuncksFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "! cannot create folder : " << chuncksFolder << " error:" << ec.message();
+                    return;
+                }
+            }
+            if ( ! fs::exists( torrentsFolder, ec ) )
+            {
+                fs::create_directories( torrentsFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "! cannot create folder : " << torrentsFolder << " error:" << ec.message();
+                    return;
+                }
+            }
 
+            fs::path m3u8Playlist = m3u8StreamFolder +"/obs-stream.m3u8";
+            sirius::Hash256 todoStreamHash;
+            sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
+
+            endpoint_list endPointList = drive->getEndpointReplicatorList();
+            if ( endPointList.empty() )
+            {
+                qWarning() << LOG_SOURCE << "todo ! endPointList.empty() !";
+                return;
+            }
+
+            gStorageEngine->startStreaming( todoStreamHash,
+                                           driveKeyHex, m3u8Playlist,
+                                           chuncksFolder,
+                                           torrentsFolder,
+                                           endPointList );
+            
             //
-//            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
-//            auto txHash = rawHashFromHex( txHashString.c_str() );
-            auto txHash = rawHashFromHex( drive->getKey().c_str() );
+            //std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
+            std::string txHashString = drive->getKey();
+            auto txHash = rawHashFromHex( txHashString.c_str() );
+            //auto txHash = rawHashFromHex( drive->getKey().c_str() );
             drive->setModificationHash( txHash, true );
             drive->updateDriveState(registering);
-            drive->updateDriveState(uploading);
-//            drive->updateDriveState(registering);
+//            drive->updateDriveState(uploading);
         }
         catch (...) {
             return;
