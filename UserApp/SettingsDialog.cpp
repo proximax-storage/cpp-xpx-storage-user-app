@@ -19,8 +19,6 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     mpSettingsDraft = new Settings(this);
     mpSettingsDraft = mpSettings;
 
-    qDebug() << "SettingsDialog::SettingsDialog. mpSettings->m_currentAccountIndex: " << mpSettings->m_currentAccountIndex << " " << mpSettingsDraft->m_currentAccountIndex;
-
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 

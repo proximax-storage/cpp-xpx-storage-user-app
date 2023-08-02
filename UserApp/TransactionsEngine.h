@@ -95,7 +95,7 @@ class TransactionsEngine : public QObject
         void replicatorOffBoardingFailed(const QString& replicatorPublicKey);
         void replicatorOnBoardingConfirmed(const QString& replicatorPublicKey);
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
-        void internalError(const QString& errorText);
+        void newError(const QString& errorText);
         void removeTorrent(const std::array<uint8_t, 32>& torrentId);
 
         void deployContractInitiated(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);

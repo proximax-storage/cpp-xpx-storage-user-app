@@ -76,8 +76,8 @@ class OnChainClient : public QObject
         StorageEngine* getStorageEngine();
 
     signals:
-        void initializedSuccessfully(const QString& networkName);
-        void initializedFailed(const QString& error);
+        void connectedToServer();
+        void networkInitialized(const QString& networkName);
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);
@@ -120,7 +120,7 @@ class OnChainClient : public QObject
         void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 
         void newNotification(const QString& notification);
-        void internalError(const QString& errorText, bool isExit);
+        void newError(int errorType, const QString& errorText);
 
     // internal signals
     signals:
@@ -136,6 +136,9 @@ class OnChainClient : public QObject
                   const std::string& privateKey);
         void loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
         void loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage);
+
+    private slots:
+        void onConnected(xpx_chain_sdk::Config& config, const std::string& privateKey);
 
     private:
         StorageEngine* mpStorageEngine;

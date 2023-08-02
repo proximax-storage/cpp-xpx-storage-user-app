@@ -129,12 +129,6 @@ void MainWin::init()
     setupNotifications();
     setGeometry(m_model->getWindowGeometry());
 
-    connect( ui->m_settingsButton, &QPushButton::released, this, [this]
-    {
-        SettingsDialog settingsDialog( m_settings, this );
-        settingsDialog.exec();
-    }, Qt::QueuedConnection);
-
     const std::string privateKey = m_model->getClientPrivateKey();
     qDebug() << "MainWin::init. Private key: " << privateKey;
 
@@ -142,6 +136,7 @@ void MainWin::init()
 
     m_modificationsWatcher = new QFileSystemWatcher(this);
 
+    connect( ui->m_settingsButton, &QPushButton::released, this, &MainWin::showSettingsDialog, Qt::QueuedConnection);
     connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
     connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
         AddDownloadChannelDialog dialog(m_onChainClient, m_model, this);
@@ -367,33 +362,7 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::closeDriveTransactionConfirmed, this, &MainWin::onDriveCloseConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::closeDriveTransactionFailed, this, &MainWin::onDriveCloseFailed, Qt::QueuedConnection);
     connect( ui->m_applyChangesBtn, &QPushButton::released, this, &MainWin::onApplyChanges, Qt::QueuedConnection);
-
-    connect(m_onChainClient, &OnChainClient::initializedSuccessfully, this, [this](auto networkName) {
-        qDebug() << "network layer initialized successfully";
-
-        getMosaicIdByName(m_model->getClientPublicKey().c_str(), "xpx", [this](auto id) {
-            m_XPX_MOSAIC_ID = id;
-            loadBalance();
-        });
-
-        ui->m_networkName->setText(networkName);
-
-        xpx_chain_sdk::DrivesPageOptions options;
-        options.owner = m_model->getClientPublicKey();
-        m_onChainClient->loadDrives(options);
-
-        if (m_model->getDownloadChannels().empty()) {
-            lockChannel("");
-        } else {
-            unlockChannel("");
-        }
-
-        if (m_model->getDrives().empty()) {
-            lockDrive();
-        } else {
-            unlockDrive();
-        }
-    }, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::networkInitialized, this, &MainWin::networkDataHandler, Qt::QueuedConnection);
 
     connect(ui->m_onBoardReplicator, &QPushButton::released, this, [this](){
         ReplicatorOnBoardingDialog dialog(m_onChainClient, m_model, this);
@@ -405,7 +374,7 @@ void MainWin::init()
         dialog.exec();
     });
 
-    connect(m_onChainClient, &OnChainClient::internalError, this, &MainWin::onInternalError, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::newError, this, &MainWin::onErrorsHandler, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, &MainWin::onDataModificationTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
@@ -519,7 +488,7 @@ void MainWin::init()
 
         // Drives tab
         if (index == 1) {
-            if (m_model->getDrives().empty()) {
+            if (m_model->getDrives().empty() || !m_model->isDrivesLoaded()) {
                 lockDrive();
             } else {
                 unlockDrive();
@@ -1453,13 +1422,36 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
     });
 }
 
-void MainWin::onInternalError(const QString& errorText, bool isExit)
+void MainWin::onErrorsHandler(int errorType, const QString& errorText)
 {
     showNotification(errorText);
     addNotification(errorText);
 
-    if (isExit) {
-        QApplication::exit(3);
+    switch (errorType)
+    {
+        case ErrorType::Network:
+        {
+            qWarning () << "MainWin::onErrorsHandler. Network error: " << errorText;
+            break;
+        }
+
+        case ErrorType::NetworkInit:
+        {
+            qWarning () << "MainWin::onErrorsHandler. NetworkInit error: " << errorText;
+            break;
+        }
+
+        case ErrorType::InvalidData:
+        {
+            qWarning () << "MainWin::onErrorsHandler. InvalidData error: " << errorText;
+            break;
+        }
+
+        case ErrorType::Critical:
+        {
+            qCritical () << "MainWin::onErrorsHandler. Critical error: " << errorText;
+            QApplication::exit(3);
+        }
     }
 }
 
@@ -2717,6 +2709,12 @@ void MainWin::setupNotifications() {
     });
 }
 
+void MainWin::showSettingsDialog()
+{
+    SettingsDialog settingsDialog( m_settings, this );
+    settingsDialog.exec();
+}
+
 void MainWin::showNotification(const QString &message, const QString& error) {
     QMessageBox msgBox;
     msgBox.setWindowTitle("Notification");
@@ -2841,6 +2839,40 @@ void MainWin::unlockDrive() {
     ui->m_calcDiffBtn->setEnabled(true);
 }
 
+void MainWin::networkDataHandler(const QString networkName)
+{
+    qDebug() << "MainWin::networkDataHandler. Network layer initialized successfully. Network name: " << networkName;
+    getMosaicIdByName(m_model->getClientPublicKey().c_str(), "xpx",[this](auto id)
+    {
+        m_XPX_MOSAIC_ID = id;
+        loadBalance();
+    });
+
+    ui->m_networkName->setText(networkName);
+
+    xpx_chain_sdk::DrivesPageOptions options;
+    options.owner = m_model->getClientPublicKey();
+    m_onChainClient->loadDrives(options);
+
+    if (m_model->getDownloadChannels().empty())
+    {
+        lockChannel("");
+    }
+    else
+    {
+        unlockChannel("");
+    }
+
+    if (m_model->getDrives().empty())
+    {
+        lockDrive();
+    }
+    else
+    {
+        unlockDrive();
+    }
+}
+
 void MainWin::onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi)
 {
     qDebug()  << "MainWin::onDownloadFsTreeDirect. Drive key: " << driveId << " fileStructureCdi: " << fileStructureCdi;
@@ -2923,7 +2955,7 @@ void MainWin::lockMainButtons(bool state) {
 void MainWin::closeEvent(QCloseEvent *event) {
     if (event) {
         m_model->setWindowGeometry(frameGeometry());
-        m_model->saveSettings();;
+        m_model->saveSettings();
         event->accept();
     }
 }
@@ -3014,23 +3046,28 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
         if (!isSuccess) {
             qWarning() << "MainWin::getMosaicIdByName. GetAccountInfo: " << message.c_str() << " : " << code.c_str();
             const QString clientPublicKey = QString::fromStdString(message);
-            if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive)) {
-                onInternalError("Current account not found, try to use another account or switch to other API Gateway!", false);
-            } else {
-                onInternalError(message.c_str(), false);
+            if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive))
+            {
+                onErrorsHandler(ErrorType::InvalidData, "Current account not found, try to use another account or switch to other API Gateway!");
+            }
+            else
+            {
+                onErrorsHandler(ErrorType::InvalidData, message.c_str());
             }
 
             return;
         }
 
         std::vector<xpx_chain_sdk::MosaicId> mosaicIds;
-        for (const xpx_chain_sdk::Mosaic& mosaic : info.mosaics) {
+        for (const xpx_chain_sdk::Mosaic& mosaic : info.mosaics)
+        {
             mosaicIds.push_back(mosaic.id);
         }
 
         m_onChainClient->getBlockchainEngine()->getMosaicsNames(
                 mosaicIds, [mosaicName, info, callback](xpx_chain_sdk::MosaicNames mosaicDescriptors, auto isSuccess, auto message, auto code) {
-            if (!isSuccess) {
+            if (!isSuccess)
+            {
                 qWarning() << "MainWin::getMosaicIdByName. GetMosaicsNames: " << message.c_str() << " : " << code.c_str();
                 return;
             }

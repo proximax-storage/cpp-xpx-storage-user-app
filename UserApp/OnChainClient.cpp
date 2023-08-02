@@ -62,7 +62,7 @@ void OnChainClient::loadDrives(const xpx_chain_sdk::DrivesPageOptions& options) 
         // 1 page
         emit drivesPageLoaded(id, drivesPage);
 
-        qDebug() << LOG_SOURCE << " drivesPageLoaded: " << " id: " << id << " pageNumber:" << drivesPage.pagination.pageNumber;
+        qDebug() <<"OnChainClient::loadDrives. Drives Page Loaded: " << " id: " << id << " page Number:" << drivesPage.pagination.pageNumber;
 
         for (uint64_t pageNumber = 2; pageNumber <= drivesPage.pagination.totalPages; pageNumber++) {
             xpx_chain_sdk::PaginationOrderingOptions paginationOptions;
@@ -77,7 +77,7 @@ void OnChainClient::loadDrives(const xpx_chain_sdk::DrivesPageOptions& options) 
 
                 emit drivesPageLoaded(id, drivesPage);
 
-                qDebug() << LOG_SOURCE << " drivesPageLoaded: " << " id: " << id << " pageNumber:" << drivesPage.pagination.pageNumber;
+                qDebug() << "OnChainClient::loadDrives. Drives Page Loaded: " << " id: " << id << " page Number:" << drivesPage.pagination.pageNumber;
             });
         }
     });
@@ -156,15 +156,14 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
                                      [this, driveId, actions]
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-            emit internalError(message.c_str(), false);
+            qWarning() << "OnChainClient::applyDataModification. Message: " << message.c_str() << " code: " << code.c_str();
+            emit newError(ErrorType::Network, message.c_str());
             return;
         }
 
         if (drive.data.replicators.empty()) {
-            qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
-            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
             emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            emit newError(ErrorType::InvalidData, "OnChainClient::applyDataModification. Empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
             return;
         }
 
@@ -252,8 +251,8 @@ StorageEngine* OnChainClient::getStorageEngine()
 }
 
 void OnChainClient::initConnects() {
-    connect(mpTransactionsEngine, &TransactionsEngine::internalError, this, [this](auto errorText) {
-        emit internalError(errorText, false);
+    connect(mpTransactionsEngine, &TransactionsEngine::newError, this, [this](auto errorText) {
+        emit newError(ErrorType::InvalidData, errorText);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
@@ -430,18 +429,74 @@ void OnChainClient::init(const std::string& address,
     config.TransactionFeeMultiplier = feeMultiplier;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
-    mpChainClient->notifications()->connect([this](auto message, auto code) {
-        const QString error = QString::fromStdString("Network error: " + message + ". Code: " + std::to_string(code));
-        qCritical () << "OnChainClient::init. " << error;
-        emit internalError(error, true);
-    });
-
     mpBlockchainEngine = new BlockchainEngine(mpChainClient, this);
+    connect(this, &OnChainClient::connectedToServer, this, [this, &config, privateKey](){ onConnected(config, privateKey); });
+
+    mpChainClient->notifications()->connect([this](auto message, auto code) {
+        if (code == 0)
+        {
+            // Separate thread.
+            emit connectedToServer();
+        }
+        else
+        {
+            const QString error = QString::fromStdString("Network error: " + message + ". Code: " + std::to_string(code));
+            qCritical () << "OnChainClient::init. " << error;
+            emit newError(ErrorType::NetworkInit, error);
+        }
+    });
+}
+
+void OnChainClient::loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
+    qDebug() << "OnChainClient::loadMyOwnChannels. id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
+    std::vector<xpx_chain_sdk::DownloadChannel> channels;
+    for (const auto& channel : channelsPage.data.channels) {
+        if (channel.data.finished) {
+            continue;
+        }
+
+        for (const auto& key : channel.data.listOfPublicKeys) {
+            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
+                channels.push_back(channel);
+                break;
+            }
+        }
+    }
+
+    channelsPage.data.channels = channels;
+    emit downloadChannelsPageLoaded(id, ChannelsType::MyOwn, channelsPage);
+}
+
+void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
+    qDebug() << "OnChainClient::loadSponsoredChannels. id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
+
+    std::vector<xpx_chain_sdk::DownloadChannel> channels;
+    for (const auto& channel : channelsPage.data.channels) {
+        bool isMyOwn = boost::iequals(channel.data.consumer, rawHashToHex(mpChainAccount->publicKey()).toStdString());
+        if (channel.data.finished || isMyOwn) {
+            continue;
+        }
+
+        for (const auto& key : channel.data.listOfPublicKeys) {
+            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
+                channels.push_back(channel);
+                break;
+            }
+        }
+    }
+
+    channelsPage.data.channels = channels;
+    emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
+}
+
+void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string& privateKey) {
+    qInfo () << "OnChainClient::init. Connected to server: " << config.nodeAddress << " : " << config.port;
+
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
     mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
             qWarning() << "OnChainClient::init. getNetworkInfo. Message: " << message.c_str() << " code: " << code.c_str();
-            emit initializedFailed(message.c_str());
+            emit newError(ErrorType::Network, message.c_str());
             return;
         }
 
@@ -464,7 +519,7 @@ void OnChainClient::init(const std::string& address,
         mpBlockchainEngine->getBlockByHeight(1, [this, &config, privateKey, info](auto block, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 qWarning() << "OnChainClient::init. getBlockByHeight. Message: " << message.c_str() << " code: " << code.c_str();
-                emit initializedFailed(message.c_str());
+                emit newError(ErrorType::Network, message.c_str());
                 return;
             }
 
@@ -472,51 +527,9 @@ void OnChainClient::init(const std::string& address,
             initAccount(privateKey);
             mpTransactionsEngine = new TransactionsEngine(mpChainClient, mpChainAccount, mpBlockchainEngine, this);
             initConnects();
-            emit initializedSuccessfully(info.name.c_str());
+            emit networkInitialized(info.name.c_str());
         });
     });
-}
-
-void OnChainClient::loadMyOwnChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
-    qDebug() << LOG_SOURCE << " loadMyOwnChannels: " << " id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
-    std::vector<xpx_chain_sdk::DownloadChannel> channels;
-    for (const auto& channel : channelsPage.data.channels) {
-        if (channel.data.finished) {
-            continue;
-        }
-
-        for (const auto& key : channel.data.listOfPublicKeys) {
-            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
-                channels.push_back(channel);
-                break;
-            }
-        }
-    }
-
-    channelsPage.data.channels = channels;
-    emit downloadChannelsPageLoaded(id, ChannelsType::MyOwn, channelsPage);
-}
-
-void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::download_channels_page::DownloadChannelsPage channelsPage) {
-    qDebug() << LOG_SOURCE << " loadSponsoredChannels: " << " id: " << id << " pageNumber:" << channelsPage.pagination.pageNumber;
-
-    std::vector<xpx_chain_sdk::DownloadChannel> channels;
-    for (const auto& channel : channelsPage.data.channels) {
-        bool isMyOwn = boost::iequals(channel.data.consumer, rawHashToHex(mpChainAccount->publicKey()).toStdString());
-        if (channel.data.finished || isMyOwn) {
-            continue;
-        }
-
-        for (const auto& key : channel.data.listOfPublicKeys) {
-            if (boost::iequals( key, rawHashToHex(mpChainAccount->publicKey()).toStdString())) {
-                channels.push_back(channel);
-                break;
-            }
-        }
-    }
-
-    channelsPage.data.channels = channels;
-    emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
 }
 
 void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data ) {
@@ -524,14 +537,13 @@ void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, con
                                      [this, driveKey, data]
                                      (auto drive, auto isSuccess, auto message, auto code) {
         if (!isSuccess) {
-            qWarning() << LOG_SOURCE << "message: " << message.c_str() << " code: " << code.c_str();
-            emit internalError(message.c_str(), false);
+            qWarning() << "OnChainClient::deployContract. Message: " << message.c_str() << " code: " << code.c_str();
+            emit newError(ErrorType::Network, message.c_str());
             return;
         }
 
         if (drive.data.replicators.empty()) {
-            qWarning() << LOG_SOURCE << "empty replicators list received for the drive: " << drive.data.multisig.c_str();
-            emit internalError("empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig), false);
+            emit newError(ErrorType::InvalidData, "OnChainClient::deployContract. Empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
             return;
         }
 

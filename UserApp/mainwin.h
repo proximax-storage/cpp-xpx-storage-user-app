@@ -24,7 +24,6 @@ class DownloadsTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
-//class OnChainClient;
 class ModifyProgressPanel;
 class Model;
 class Settings;
@@ -189,9 +188,10 @@ private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
-    void onInternalError(const QString& errorText, bool isExit);
+    void onErrorsHandler(int errorType, const QString& errorText);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
+    void showSettingsDialog();
     void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
     void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);
@@ -201,6 +201,7 @@ private slots:
     void unlockChannel(const std::string& channelId);
     void lockDrive();
     void unlockDrive();
+    void networkDataHandler(const QString networkName);
     void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
     void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);

@@ -410,17 +410,14 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
                                                const std::vector<xpx_chain_sdk::Address>& addresses,
                                                const std::vector<std::string>& replicators) {
     qInfo() << "TransactionsEngine::applyDataModification. Drive key: " << rawHashToHex(driveId);
-
     if (!isValidHash(driveId)) {
-        qWarning() << LOG_SOURCE << "bad driveId: empty!";
-        emit internalError("bad driveId: empty!");
+        emit newError("TransactionsEngine::applyDataModification. Bad driveId: empty!");
         return;
     }
 
     auto callback = [this, driveId, actions, addresses](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
-            qWarning() << LOG_SOURCE << "invalid info hash: " << rawHashToHex(infoHash);
-            emit internalError("invalid info hash: " + rawHashToHex(infoHash));
+            emit newError("TransactionsEngine::applyDataModification. Invalid info hash: " + rawHashToHex(infoHash));
             return;
         }
 
@@ -478,8 +475,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     const std::string pathToSandbox = getSettingsFolder().string() + "/" + driveKeyHex.toStdString() + mSandbox;
     const QString pathToActionList = findFile(actionListFileName, pathToSandbox.c_str());
     if (pathToActionList.isEmpty()) {
-        qCritical() << "TransactionsEngine::sendModification. actionList.bin not found: " << pathToActionList;
-        emit internalError("file actionList.bin not found: " + pathToActionList + " . Drive key: " + driveKeyHex);
+        emit newError("TransactionsEngine::sendModification. File actionList.bin not found: " + pathToActionList + " . Drive key: " + driveKeyHex);
         emit dataModificationFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         return;
     } else {
@@ -527,7 +523,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
     if (uploadSize == 0 || totalModifyDataSize == 0) {
-        emit internalError("Invalid size of upload data: 0. Modification canceled!");
+        emit newError("Invalid size of upload data: 0. Modification canceled!");
         qWarning() << "Invalid size of upload data: 0. Modification canceled! Drive key: " << driveKeyHex << " modificationId: " << hash.c_str();
         emit dataModificationFailed(driveId, modificationId);
         return;
