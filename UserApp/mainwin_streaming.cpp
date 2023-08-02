@@ -817,7 +817,7 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( chuncksFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "! cannot create folder : " << chuncksFolder << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "! cannot create folder : " << chuncksFolder.string() << " error:" << ec.message();
                     return;
                 }
             }
@@ -826,7 +826,7 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( torrentsFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "! cannot create folder : " << torrentsFolder << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "! cannot create folder : " << torrentsFolder.string() << " error:" << ec.message();
                     return;
                 }
             }
