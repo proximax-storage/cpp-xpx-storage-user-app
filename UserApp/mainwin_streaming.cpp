@@ -310,6 +310,26 @@ void MainWin::initStreaming()
         }
     }, Qt::QueuedConnection);
 
+    // m_streamFolder
+    ui->m_streamFolder->setText( QString::fromStdString( m_model->streamFolder() ) );
+    
+    connect( ui->m_streamFolder, &QLineEdit::textChanged, this, [this] (auto text)
+    {
+        m_model->streamFolder() = text.trimmed().toStdString();
+        m_model->saveSettings();
+    });
+
+    // m_browseStreamFolderBtn
+    connect( ui->m_browseStreamFolderBtn, &QPushButton::released, this, [this]()
+    {
+        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+#ifdef Q_OS_LINUX
+        options |= QFileDialog::DontUseNativeDialog;
+#endif
+        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose stream directory"), "/", options);
+        ui->m_streamFolder->setText(path.trimmed());
+    });
+
 //    void streamFinishTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
 //    void streamFinishTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 
@@ -647,7 +667,38 @@ void MainWin::cancelOrFinishStreaming()
     m_streamingProgressPanel->setVisible(false);
 }
 
-void MainWin::startFfmpegStreamingProcess()
+static void showErrorMessage( QString title, QString message )
+{
+    QMessageBox msgBox;
+    msgBox.setText( title );
+    msgBox.setInformativeText( message );
+    msgBox.setStandardButtons( QMessageBox::Ok );
+    msgBox.exec();
+}
+
+static fs::path ffmpegPath()
+{
+    auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
+    return fs::path(path);
+}
+
+
+static bool checkFfmpegInstalled()
+{
+#if defined _WIN32
+#elif defined __APPLE__
+    std::error_code ec;
+    auto path = ffmpegPath();
+    if ( ! fs::exists(path,ec) )
+    {
+        showErrorMessage( QString::fromStdString(path.string()), "ffmpeg is not installed" );
+        return false;
+    }
+#else
+#endif
+}
+
+void MainWin::startFfmpegStreamingProcess( std::string workingFolder )
 {
     delete m_ffmpegStreamingProcess;
     m_ffmpegStreamingProcess = new QProcess(this);
@@ -657,12 +708,55 @@ void MainWin::startFfmpegStreamingProcess()
 #if defined _WIN32
 #elif defined __APPLE__
     auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
+    
     program = QString::fromStdString( path );
     //-f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i "0:0" -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename "output_%03d.ts" output.m3u8
-    arguments << "-f" << "avfoundation" << "-framerate 30" << "-r 30" << "-pixel_format uyvy422" << "-i \"0:0\""
-        << "-c:v h264" << "-c:a aac" << "-hls_time 10" << "-hls_list_size 0" << "-hls_segment_filename \"output_%03d.ts\"" << "output.m3u8";
+    arguments   << "-f" << "avfoundation"
+                << "-framerate" << "30"
+                << "-r" << "30"
+                << "-pixel_format" << "uyvy422"
+                << "-i" << "0:0"
+                << "-c:v" << "h264"
+                << "-c:a" << "aac"
+                << "-hls_time" << "10"
+                << "-hls_list_size" << "0"
+                << "-hls_segment_filename" << "stream_%03d.ts" << "playlist.m3u8";
+    //arguments << "-f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i 0:0 -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename stream_%03d.ts playlist.m3u8";
 #else
 #endif
+    
+    connect( m_ffmpegStreamingProcess, &QProcess::errorOccurred, this, [] ( QProcess::ProcessError error ) {
+        qDebug() << LOG_SOURCE << "🟠 errorOccurred: " << error;
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::started, this, [] () {
+        qDebug() << LOG_SOURCE << "🟢 started! ";
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::stateChanged, this, [] (QProcess::ProcessState state) {
+        qDebug() << LOG_SOURCE << "🟢 state: " << state;
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
+        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
+        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardOutput, this, [this] () {
+        while( m_ffmpegStreamingProcess->canReadLine()){
+               qDebug() << "🔵🔵 " << m_ffmpegStreamingProcess->readLine();
+        }
+    });
+    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardError, this, [this] () {
+        QString err = m_ffmpegStreamingProcess->readAllStandardError();
+        qDebug() << "🟠🟠 " << err;
+    });
+
+    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder;
+    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder) );
+    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
+    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
+    m_ffmpegStreamingProcess->start( program, arguments );
+//    m_ffmpegStreamingProcess->start( "echo", arguments2 );
+    return;
 
     auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
@@ -733,13 +827,13 @@ void MainWin::onStartStreamingBtn()
         try {
             auto streamAnnouncements = m_model->streamerAnnouncements();
             StreamInfo& streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-            qWarning() << LOG_SOURCE << "🔴 streamInfo: " << streamInfo.m_annotation;
+            qDebug() << LOG_SOURCE << "🔵 streamInfo: " << streamInfo.m_annotation;
 
             auto driveKey = currentStreamingDriveKey().toStdString();
             
             if ( ! boost::iequals( streamInfo.m_driveKey, driveKey ) )
             {
-                qWarning() << LOG_SOURCE << "invalid streamInfo: invalid driveKey" << streamInfo.m_driveKey;
+                qWarning() << LOG_SOURCE << "🔴 invalid streamInfo: invalid driveKey" << streamInfo.m_driveKey;
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Invalid drive key" ) );
@@ -755,17 +849,16 @@ void MainWin::onStartStreamingBtn()
             auto* drive = m_model->findDrive( driveKey );
             if ( drive == nullptr )
             {
-                qWarning() << LOG_SOURCE << "! internal error: not found drive: " << driveKey;
+                qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
                 return;
             }
 
             // m3u8StreamFolder - for all streams
-            auto m3u8StreamFolder = ui->m_streamFolder->text().toStdString();
-            boost::trim(m3u8StreamFolder);
+            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo.m_uniqueFolderName;
             
             if ( m3u8StreamFolder.empty() )
             {
-                qCritical() << LOG_SOURCE << "! m3u8StreamFolder.empty()";
+                qCritical() << LOG_SOURCE << "🔴 ! m3u8StreamFolder.empty()";
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Invalid stream folder is not set" ) );
@@ -778,7 +871,7 @@ void MainWin::onStartStreamingBtn()
             std::error_code ec;
             if ( ! fs::exists( m3u8StreamFolder, ec ) )
             {
-                qDebug() << LOG_SOURCE << "Stream folder does not exist" << streamInfo.m_driveKey;
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo.m_driveKey;
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Stream folder does not exist" ) );
@@ -793,7 +886,7 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( m3u8StreamFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "! cannot create folder : " << m3u8StreamFolder << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << m3u8StreamFolder << " error:" << ec.message();
 
                     QMessageBox msgBox;
                     msgBox.setText( QString::fromStdString( "Cannot create folder" ) );
@@ -817,7 +910,7 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( chuncksFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "! cannot create folder : " << chuncksFolder.string() << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << chuncksFolder.string() << " error:" << ec.message();
                     return;
                 }
             }
@@ -826,19 +919,22 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( torrentsFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "! cannot create folder : " << torrentsFolder.string() << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << torrentsFolder.string() << " error:" << ec.message();
                     return;
                 }
             }
 
-            fs::path m3u8Playlist = m3u8StreamFolder +"/obs-stream.m3u8";
+            fs::path m3u8Playlist = m3u8StreamFolder / "playlist.m3u8";
             sirius::Hash256 todoStreamHash;
             sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
 
+            startFfmpegStreamingProcess( m3u8StreamFolder.string() );
+            return;
+            
             endpoint_list endPointList = drive->getEndpointReplicatorList();
             if ( endPointList.empty() )
             {
-                qWarning() << LOG_SOURCE << "todo ! endPointList.empty() !";
+                qWarning() << LOG_SOURCE << "🔴 ! endPointList.empty() !";
                 return;
             }
 

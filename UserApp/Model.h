@@ -182,6 +182,7 @@ class Model : public QObject
         //
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
         std::vector<StreamInfo>&        streamerAnnouncements();
+        std::string&                    streamFolder();
 
         //
         // Viewing

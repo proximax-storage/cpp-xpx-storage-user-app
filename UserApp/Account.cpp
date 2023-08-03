@@ -1,7 +1,6 @@
 #include "Account.h"
 
-Account::Account(QObject* parent)
-    : QObject(parent)
+Account::Account()
 {}
 
 Account::~Account()

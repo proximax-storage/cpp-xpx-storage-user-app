@@ -19,7 +19,8 @@
 Settings::Settings(QObject *parent)
     : QObject(parent)
     , m_isDriveStructureAsTree(false)
-{}
+{
+}
 
 Settings::~Settings()
 {}
@@ -32,7 +33,6 @@ Settings::Settings(const Settings& s)
     m_feeMultiplier = s.m_feeMultiplier;
     m_windowGeometry = s.m_windowGeometry;
     m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
-    m_settingsVersion = s.m_settingsVersion;
     m_accounts = s.m_accounts;
     m_currentAccountIndex = s.m_currentAccountIndex;
     m_loaded = s.m_loaded;
@@ -49,7 +49,6 @@ Settings &Settings::operator=(const Settings &s) {
     m_feeMultiplier = s.m_feeMultiplier;
     m_windowGeometry = s.m_windowGeometry;
     m_isDriveStructureAsTree = s.m_isDriveStructureAsTree;
-    m_settingsVersion = s.m_settingsVersion;
     m_accounts = s.m_accounts;
     m_currentAccountIndex = s.m_currentAccountIndex;
     m_loaded = s.m_loaded;
@@ -109,10 +108,9 @@ bool Settings::load( const std::string& pwd )
 
         try
         {
-            uint32_t settingsVersion;
-            iarchive( settingsVersion );
+            iarchive( gSettingsVersion );
 
-            if ( settingsVersion != m_settingsVersion )
+            if ( gSettingsVersion < MIN_SETTINGS_VERSION || gSettingsVersion > MAX_SETTINGS_VERSION )
             {
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
@@ -217,7 +215,8 @@ void Settings::save()
     {
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
-        archive( m_settingsVersion );
+        gSettingsVersion = MAX_SETTINGS_VERSION;
+        archive( gSettingsVersion );
         archive( m_restBootstrap );
         archive( m_replicatorBootstrap );
         archive( m_udpPort );
@@ -233,29 +232,6 @@ void Settings::save()
         std::ofstream fStream( getSettingsFolder() / "config", std::ios::binary );
         fStream << os.str();
         fStream.close();
-
-        if (1)
-        {
-            std::ostringstream os( std::ios::binary );
-            cereal::JSONOutputArchive archive( os );
-            archive( m_settingsVersion );
-            archive( m_restBootstrap );
-            archive( m_replicatorBootstrap );
-            archive( m_udpPort );
-            archive( m_feeMultiplier );
-            archive( m_currentAccountIndex );
-            archive( m_accounts );
-            archive( m_windowGeometry.top() );
-            archive( m_windowGeometry.left() );
-            archive( m_windowGeometry.width() );
-            archive( m_windowGeometry.height() );
-            archive( m_isDriveStructureAsTree );
-
-            std::ofstream fStream( getSettingsFolder() / "config.json", std::ios::binary );
-            fStream << os.str();
-            fStream.close();
-
-        }
     }
     catch( const std::exception& ex )
     {

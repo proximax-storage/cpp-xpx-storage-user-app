@@ -18,12 +18,15 @@
 #define STREAM_ROOT_FOLDER_NAME ".videos"
 #define STREAM_INFO_FILE_NAME   "info"
 
-class Account : public QObject
-{
-    Q_OBJECT
+const  uint32_t MIN_SETTINGS_VERSION = 1;
+const  uint32_t MAX_SETTINGS_VERSION = 2;
+inline uint32_t gSettingsVersion = 0;
 
+
+class Account
+{
     public:
-        Account(QObject* parent = nullptr);
+        Account();
         ~Account();
         Account( const Account& a );
         Account& operator=( const Account& a );
@@ -50,6 +53,11 @@ class Account : public QObject
                     m_currentStreamRefIndex,
                     m_currentDriveKey,
                     m_lastUniqueStreamIndex );
+            
+            if ( gSettingsVersion >= 2 )
+            {
+                ar( m_streamFolder );
+            }
         }
 
         std::string m_accountName;
@@ -77,6 +85,9 @@ class Account : public QObject
         std::vector<StreamInfo> m_streamRefs; // viewer part
         int                     m_currentStreamRefIndex = -1;
         uint64_t                m_lastUniqueStreamIndex = 0;
+    
+        std::string             m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
+
 
         std::optional<sirius::crypto::KeyPair> m_keyPair;
 };

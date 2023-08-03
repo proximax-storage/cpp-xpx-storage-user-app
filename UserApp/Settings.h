@@ -57,7 +57,6 @@ class Settings : public QObject
         friend class PrivKeyDialog;
         friend class SettingsDialog;
 
-        uint32_t                m_settingsVersion = 1;
         std::vector<Account>    m_accounts;
         int                     m_currentAccountIndex = -1;
         bool                    m_loaded = false;

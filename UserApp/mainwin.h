@@ -156,7 +156,7 @@ private:
 
     void updateViewerProgressPanel( int tabIndex );
 
-    void startFfmpegStreamingProcess();
+    void startFfmpegStreamingProcess( std::string workingFolder );
 
     void cancelOrFinishStreaming();
     void updateStreamerProgressPanel( int tabIndex );
@@ -245,7 +245,7 @@ private:
     
     ModifyProgressPanel*    m_startViewingProgressPanel;
     ModifyProgressPanel*    m_streamingProgressPanel;
-    QProcess*               m_ffmpegStreamingProcess;
+    QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;
     QThread*                mpThread;
