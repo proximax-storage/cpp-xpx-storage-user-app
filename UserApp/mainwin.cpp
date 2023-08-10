@@ -462,8 +462,7 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelOrFinishStreaming(); },
-                                                       ModifyProgressPanel::streaming );
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 800, 600, this, [this]{ finishStreaming(); } );
     m_streamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
@@ -881,6 +880,13 @@ void MainWin::drivesInitialized()
 
 MainWin::~MainWin()
 {
+    if ( m_ffmpegStreamingProcess != nullptr )
+    {
+        // on case of SIGTERM or SIG...
+        m_ffmpegStreamingProcess->kill();
+        delete m_ffmpegStreamingProcess;
+    }
+    
     m_model->endStorageEngine();
     delete ui;
 }
@@ -1544,7 +1550,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 else
                 {
                     m_modifyProgressPanel->setVisible(false);
-                    m_streamingProgressPanel->setVisible(true);
+                    m_streamingProgressPanel->setVisible(false);
                 }
                 
                 switch(state)

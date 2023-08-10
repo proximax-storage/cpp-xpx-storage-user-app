@@ -6,8 +6,25 @@
 #include <QLocale>
 #include <QTranslator>
 
+#include <csignal>
+
+void sigHandler(int s)
+{
+    std::cerr << "signal: " << s << "\n";
+    std::signal(s, SIG_DFL);
+    qApp->quit();
+    exit(s);
+}
+
 int main(int argc, char *argv[])
 {
+    std::signal(SIGINT,  sigHandler);
+    std::signal(SIGTERM, sigHandler);
+    std::signal(SIGKILL, sigHandler);
+    std::signal(SIGILL,  sigHandler);
+    std::signal(SIGABRT, sigHandler);
+    std::signal(SIGSEGV, sigHandler);
+
 restart_label:
     QApplication a(argc, argv);
     QApplication::setWindowIcon(QIcon(getResource("./resources/icons/icon.png")));

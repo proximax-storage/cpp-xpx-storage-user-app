@@ -190,7 +190,8 @@ class Model : public QObject
         void                            addStreamRef( const StreamInfo& streamInfo );
         void                            deleteStreamRef( int index );
         const std::vector<StreamInfo>&  streamRefs() const;
-        int                             currentStreamIndex() const;
+        void                            setCurrentStreamInfo( std::optional<StreamInfo> info );
+        std::optional<StreamInfo>       currentStreamInfo() const;
         const StreamInfo*               getStreamRef( int index ) const;
         StreamInfo*                     getStreamRef( int index );
 

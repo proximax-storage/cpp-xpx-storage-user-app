@@ -87,6 +87,7 @@ class Drive
         endpoint_list getEndpointReplicatorList() const;
 
         bool isStreaming() const { return m_isStreaming; }
+        void setIsStreaming( bool isStreaming ) { m_isStreaming = isStreaming; }
 
         void updateDriveState(DriveState state);
 

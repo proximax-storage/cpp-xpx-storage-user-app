@@ -25,6 +25,7 @@ class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
 class ModifyProgressPanel;
+class StreamingView;
 class Model;
 class Settings;
 class ContractDeploymentData;
@@ -140,6 +141,8 @@ private:
     QString currentStreamingDriveKey() const;
     Drive* currentStreamingDrive() const;
     void initStreaming();
+    void connectToStreamingTransactions();
+    StreamInfo* selectedStreamInfo() const; // could return nullptr
     void updateStreamerTable( Drive& );
     void readStreamingAnnotations( const Drive& );
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
@@ -156,9 +159,10 @@ private:
 
     void updateViewerProgressPanel( int tabIndex );
 
-    void startFfmpegStreamingProcess( std::string workingFolder );
+    void startFfmpegStreamingProcess();
 
-    void cancelOrFinishStreaming();
+    void cancelStreaming();
+    void finishStreaming();
     void updateStreamerProgressPanel( int tabIndex );
 
     void initWorker();
@@ -245,6 +249,7 @@ private:
     
     ModifyProgressPanel*    m_startViewingProgressPanel;
     ModifyProgressPanel*    m_streamingProgressPanel;
+    StreamingView*          m_streamingView = nullptr;
     QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;

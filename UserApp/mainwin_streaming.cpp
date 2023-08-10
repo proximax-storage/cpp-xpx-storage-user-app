@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "StreamInfo.h"
 #include "ModifyProgressPanel.h"
+#include "StreamingView.h"
 #include "StorageEngine.h"
 #include "Account.h"
 
@@ -52,14 +53,26 @@ Drive* MainWin::currentStreamingDrive() const
     return drive;
 }
 
+StreamInfo* MainWin::selectedStreamInfo() const
+{
+    auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
+    if ( rowList.count() > 0 )
+    {
+        try
+        {
+            int rowIndex = rowList.constFirst().row();
+            return &m_model->streamerAnnouncements().at(rowIndex);
+        }
+        catch (...) {}
+    }
+    return nullptr;
+}
+
 void MainWin::initStreaming()
 {
     //todo remove streamerAnnouncements from serializing
     m_model->streamerAnnouncements().clear();
     
-    // m_startStreamingBtn
-    connect( ui->m_startStreamingBtn, &QPushButton::released, this, &MainWin::onStartStreamingBtn, Qt::QueuedConnection );
-
     // m_streamingTabView
     connect(ui->m_streamingTabView, &QTabWidget::currentChanged, this, [this](int index)
     {
@@ -134,21 +147,12 @@ void MainWin::initStreaming()
     }, Qt::QueuedConnection);
 
     // m_delStreamAnnouncementBtn
-    connect(ui->m_delStreamAnnouncementBtn, &QPushButton::released, this, [this] () {
-        auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
-        if ( rowList.count() > 0 )
+    connect(ui->m_delStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
+    {
+        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
         {
-            StreamInfo streamInfo;
-            
-            int rowIndex = rowList.constFirst().row();
-            try {
-                streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-            } catch (...) {
-                return;
-            }
-        
             QMessageBox msgBox;
-            const QString message = QString::fromStdString("'" + streamInfo.m_title + "' will be removed.");
+            const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
@@ -159,7 +163,7 @@ void MainWin::initStreaming()
 
                 if ( drive != nullptr )
                 {
-                    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo.m_uniqueFolderName;
+                    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo->m_uniqueFolderName;
                     std::error_code ec;
                     fs::remove_all( streamFolder, ec );
                     qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
@@ -167,7 +171,7 @@ void MainWin::initStreaming()
                     if ( !ec )
                     {
                         sirius::drive::ActionList actionList;
-                        auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo.m_uniqueFolderName;
+                        auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo->m_uniqueFolderName;
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
 
                         //
@@ -183,32 +187,26 @@ void MainWin::initStreaming()
     }, Qt::QueuedConnection);
 
     // m_copyLinkToStreamBtn
-    connect(ui->m_copyLinkToStreamBtn, &QPushButton::released, this, [this] () {
-        auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
-        if ( rowList.count() > 0 )
+    connect(ui->m_copyLinkToStreamBtn, &QPushButton::released, this, [this] ()
+    {
+        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
         {
-            int rowIndex = rowList.constFirst().row();
-            try {
-                auto streamAnnouncements = m_model->streamerAnnouncements();
-                std::string link = m_model->streamerAnnouncements().at(rowIndex).getLink();
+            std::string link = streamInfo->getLink();
 
-                QClipboard* clipboard = QApplication::clipboard();
-                if ( !clipboard ) {
-                    qWarning() << LOG_SOURCE << "bad clipboard";
-                    return;
-                }
-
-                clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
-                if ( clipboard->supportsSelection() ) {
-                    clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
-                }
-            } catch (...) {
+            QClipboard* clipboard = QApplication::clipboard();
+            if ( !clipboard ) {
+                qWarning() << LOG_SOURCE << "bad clipboard";
                 return;
+            }
+
+            clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
             }
         }
     }, Qt::QueuedConnection);
     
-    // m_addStreamAnnouncementBtn
+    // m_startStreamingBtn
     connect(ui->m_startStreamingBtn, &QPushButton::released, this, [this] ()
     {
         auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
@@ -223,8 +221,10 @@ void MainWin::initStreaming()
                 msgBox.exec();
                 return;
             }
-            
-            
+        }
+        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
+        {
+            onStartStreamingBtn();
         }
     }, Qt::QueuedConnection);
 
@@ -285,31 +285,8 @@ void MainWin::initStreaming()
         startViewingStream();
     }, Qt::QueuedConnection);
 
+    connectToStreamingTransactions();
     
-    connect(m_onChainClient, &OnChainClient::streamStartTransactionConfirmed, this, [this](const std::array<uint8_t,32>& tx) {
-        qDebug () << "MainWin::streamStartTransactionConfirmed: '" + rawHashToHex(tx);
-        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
-        {
-            drive->updateDriveState(uploading);
-        }
-        else
-        {
-            qWarning () << "!!! MainWin::MainWin::streamStartTransactionConfirmed: drive not found!";
-        }
-
-        loadBalance();
-    }, Qt::QueuedConnection);
-
-    connect(m_onChainClient, &OnChainClient::streamStartTransactionFailed, this, [this](const std::array<uint8_t,32>& tx, const QString& errorText )
-    {
-        qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(tx);
-        qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
-        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
-        {
-            drive->updateDriveState(failed);
-        }
-    }, Qt::QueuedConnection);
-
     // m_streamFolder
     ui->m_streamFolder->setText( QString::fromStdString( m_model->streamFolder() ) );
     
@@ -637,7 +614,11 @@ void MainWin::cancelViewingStream()
     m_startViewingProgressPanel->setVisible( false );
 }
 
-void MainWin::cancelOrFinishStreaming()
+void MainWin::finishStreaming()
+{
+}
+
+void MainWin::cancelStreaming()
 {
     Drive* drive = currentStreamingDrive();
     if ( drive == nullptr )
@@ -645,25 +626,44 @@ void MainWin::cancelOrFinishStreaming()
         qWarning() << LOG_SOURCE << "cancelOrFinishStreaming: drive == nullptr";
     }
 
-//    switch ( drive->getState() ) {
-//        case registering:
-//            break;
-//
-//            creating,
-//            unconfirmed,
-//            deleting,
-//            deleted,
-//            no_modifications,
-//            registering,
-//            approved,
-//            uploading,
-//            failed,
-//            canceling,
-//            canceled,
-//
-//        default:
-//            break;
-//    }
+    switch ( drive->getState() )
+    {
+//        case creating: break;
+//        case unconfirmed: break;
+//        case deleting: break;
+//        case deleted: break;
+//        case no_modifications: break;
+//        case registering: break;
+//        case approved: break;
+        case uploading:
+        {
+            //todo!!!
+            if ( m_ffmpegStreamingProcess != nullptr )
+            {
+                m_ffmpegStreamingProcess->write("q");
+            }
+            drive->updateDriveState( canceling );
+            drive->updateDriveState( canceled );
+            drive->setIsStreaming( false );
+            m_model->setCurrentStreamInfo( {} );
+            break;
+            
+//            if ( m_ffmpegStreamingProcess != nullptr )
+//            {
+//                m_ffmpegStreamingProcess->write("q");
+//            }
+//            drive->updateDriveState( canceling );
+//            drive->setIsStreaming( false );
+//            m_model->setCurrentStreamInfo( {} );
+            break;
+        }
+        case failed: break;
+        case canceling: break;
+        case canceled: break;
+            
+        default:
+            break;
+    }
     m_streamingProgressPanel->setVisible(false);
 }
 
@@ -698,13 +698,37 @@ static bool checkFfmpegInstalled()
 #endif
 }
 
-void MainWin::startFfmpegStreamingProcess( std::string workingFolder )
+void MainWin::startFfmpegStreamingProcess()
 {
+    std::optional<StreamInfo> streamInfo = m_model->currentStreamInfo();
+    if ( !streamInfo )
+    {
+        qWarning() << LOG_SOURCE << "🔴 currentStreamInfo is not set !!!";
+        return;
+    }
+    auto workingFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo->m_uniqueFolderName;
+
+    std::error_code ec;
+    if ( fs::is_empty(workingFolder) )
+    {
+        QMessageBox msgBox;
+        const QString message = QString::fromStdString("Folder is not empty. All data will be removed.");
+        msgBox.setText(message);
+        msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+        auto reply = msgBox.exec();
+
+        if ( reply != QMessageBox::Ok )
+        {
+            return;
+        }
+    }
+    
     delete m_ffmpegStreamingProcess;
     m_ffmpegStreamingProcess = new QProcess(this);
 
     QString program = "ffmpeg";
     QStringList arguments;
+
 #if defined _WIN32
 #elif defined __APPLE__
     auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
@@ -720,8 +744,8 @@ void MainWin::startFfmpegStreamingProcess( std::string workingFolder )
                 << "-c:a" << "aac"
                 << "-hls_time" << "10"
                 << "-hls_list_size" << "0"
+                << "-fs" << "100000000" //TODO!!!
                 << "-hls_segment_filename" << "stream_%03d.ts" << "playlist.m3u8";
-    //arguments << "-f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i 0:0 -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename stream_%03d.ts playlist.m3u8";
 #else
 #endif
     
@@ -751,58 +775,11 @@ void MainWin::startFfmpegStreamingProcess( std::string workingFolder )
     });
 
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder;
-    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder) );
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
+
+    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder) );
     m_ffmpegStreamingProcess->start( program, arguments );
-//    m_ffmpegStreamingProcess->start( "echo", arguments2 );
-    return;
-
-    auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
-    if ( rowList.count() > 0 )
-    {
-        StreamInfo streamInfo;
-        
-        int rowIndex = rowList.constFirst().row();
-        try {
-            streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-        } catch (...) {
-            return;
-        }
-    
-        QMessageBox msgBox;
-        const QString message = QString::fromStdString("'" + streamInfo.m_title + "' will be started.");
-        msgBox.setText(message);
-        msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-        auto reply = msgBox.exec();
-
-        if ( reply == QMessageBox::Ok )
-        {
-            auto* drive = currentStreamingDrive();
-
-            if ( drive != nullptr )
-            {
-                auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo.m_uniqueFolderName;
-                std::error_code ec;
-                fs::remove_all( streamFolder, ec );
-                qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
-
-                if ( !ec )
-                {
-                    sirius::drive::ActionList actionList;
-                    auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo.m_uniqueFolderName;
-                    actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
-
-                    //
-                    // Start modification
-                    //
-                    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                    m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                    drive->updateDriveState(registering);
-                }
-            }
-        }
-    }
 }
 
 //
@@ -818,22 +795,49 @@ void MainWin::startFfmpegStreamingProcess( std::string workingFolder )
 //void streamPaymentTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
 //void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 //
+
+void MainWin::connectToStreamingTransactions()
+{
+    connect(m_onChainClient, &OnChainClient::streamStartTransactionConfirmed, this, [this](const std::array<uint8_t,32>& tx) {
+        qDebug () << "MainWin::streamStartTransactionConfirmed: '" + rawHashToHex(tx);
+        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
+        {
+            drive->updateDriveState(uploading);
+            startFfmpegStreamingProcess();
+        }
+        else
+        {
+            qWarning () << "!!! MainWin::MainWin::streamStartTransactionConfirmed: drive not found!";
+        }
+
+        loadBalance();
+    }, Qt::QueuedConnection);
+
+    connect(m_onChainClient, &OnChainClient::streamStartTransactionFailed, this, [this](const std::array<uint8_t,32>& tx, const QString& errorText )
+    {
+        qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(tx);
+        qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
+        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
+        {
+            drive->updateDriveState(failed);
+        }
+        m_model->setCurrentStreamInfo({});
+    }, Qt::QueuedConnection);
+}
+
 void MainWin::onStartStreamingBtn()
 {
-    auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
-    if ( rowList.count() > 0 )
+    if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
     {
-        int rowIndex = rowList.constFirst().row();
-        try {
-            auto streamAnnouncements = m_model->streamerAnnouncements();
-            StreamInfo& streamInfo = m_model->streamerAnnouncements().at(rowIndex);
-            qDebug() << LOG_SOURCE << "🔵 streamInfo: " << streamInfo.m_annotation;
+        try
+        {
+            qDebug() << LOG_SOURCE << "🔵 streamInfo: " << streamInfo->m_annotation;
 
             auto driveKey = currentStreamingDriveKey().toStdString();
             
-            if ( ! boost::iequals( streamInfo.m_driveKey, driveKey ) )
+            if ( ! boost::iequals( streamInfo->m_driveKey, driveKey ) )
             {
-                qWarning() << LOG_SOURCE << "🔴 invalid streamInfo: invalid driveKey" << streamInfo.m_driveKey;
+                qWarning() << LOG_SOURCE << "🔴 invalid streamInfo: invalid driveKey" << streamInfo->m_driveKey;
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Invalid drive key" ) );
@@ -854,7 +858,7 @@ void MainWin::onStartStreamingBtn()
             }
 
             // m3u8StreamFolder - for all streams
-            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo.m_uniqueFolderName;
+            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo->m_uniqueFolderName;
             
             if ( m3u8StreamFolder.empty() )
             {
@@ -871,7 +875,8 @@ void MainWin::onStartStreamingBtn()
             std::error_code ec;
             if ( ! fs::exists( m3u8StreamFolder, ec ) )
             {
-                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo.m_driveKey;
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo->m_driveKey;
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << m3u8StreamFolder;
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Stream folder does not exist" ) );
@@ -901,7 +906,7 @@ void MainWin::onStartStreamingBtn()
             
             uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
-            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo.m_uniqueFolderName;
+            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo->m_uniqueFolderName;
             auto chuncksFolder = uniqueStreamFolder / "chunks";
             auto torrentsFolder = uniqueStreamFolder / "torrents";
             
@@ -924,13 +929,6 @@ void MainWin::onStartStreamingBtn()
                 }
             }
 
-            fs::path m3u8Playlist = m3u8StreamFolder / "playlist.m3u8";
-            sirius::Hash256 todoStreamHash;
-            sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
-
-            startFfmpegStreamingProcess( m3u8StreamFolder.string() );
-            return;
-            
             endpoint_list endPointList = drive->getEndpointReplicatorList();
             if ( endPointList.empty() )
             {
@@ -938,45 +936,46 @@ void MainWin::onStartStreamingBtn()
                 return;
             }
 
-            gStorageEngine->startStreaming( todoStreamHash,
+            fs::path m3u8Playlist = m3u8StreamFolder / "playlist.m3u8";
+            sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
+
+            drive->setIsStreaming( true );
+            m_model->setCurrentStreamInfo( *streamInfo );
+
+            //TODO!!!
+            {
+                //delete m_streamingView;
+                m_streamingView = new StreamingView(this);
+                m_streamingView->setWindowModality(Qt::WindowModal);
+                m_streamingView->show();
+                startFfmpegStreamingProcess();
+                return;
+            }
+            {
+                drive->updateDriveState(registering);
+                drive->updateDriveState(uploading);
+                //startFfmpegStreamingProcess();
+                return;
+            }
+            
+            //
+            //std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
+            //auto txHash = rawHashFromHex( txHashString.c_str() );
+            //
+            sirius::Hash256 txHash;
+            gStorageEngine->startStreaming( txHash,
                                            driveKeyHex, m3u8Playlist,
                                            chuncksFolder,
                                            torrentsFolder,
                                            endPointList );
             
-            //
-            //std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
-            std::string txHashString = drive->getKey();
-            auto txHash = rawHashFromHex( txHashString.c_str() );
-            //auto txHash = rawHashFromHex( drive->getKey().c_str() );
-            drive->setModificationHash( txHash, true );
+            drive->setModificationHash( txHash.array(), true );
             drive->updateDriveState(registering);
-//            drive->updateDriveState(uploading);
         }
         catch (...) {
             return;
         }
     }
-
-//    auto drive = m_model->currentDrive();
-//    if (!drive) {
-//        qWarning() << "MainWin::onApplyChanges. Unknown drive (Invalid pointer to current drive)";
-//        return;
-//    }
-//
-//    auto actionList = drive->getActionsList();
-//    if ( actionList.empty() )
-//    {
-//        qWarning() << LOG_SOURCE << "no actions to apply";
-//        const QString message = "There is no difference.";
-//        showNotification(message);
-//        addNotification(message);
-//        return;
-//    }
-//
-//    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-//    m_onChainClient->applyDataModification(driveKeyHex, actionList);
-//    drive->updateState(registering);
 }
 
 void MainWin::dbg()

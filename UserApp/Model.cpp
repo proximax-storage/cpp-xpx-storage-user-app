@@ -706,9 +706,14 @@ const std::vector<StreamInfo>& Model::streamRefs() const
     return m_settings->config().m_streamRefs;
 }
 
-int Model::currentStreamIndex() const
+void Model::setCurrentStreamInfo( std::optional<StreamInfo> info )
 {
-    return m_settings->config().m_currentStreamIndex;
+    m_settings->config().m_currentStreamInfo = info;
+}
+
+std::optional<StreamInfo> Model::currentStreamInfo() const
+{
+    return m_settings->config().m_currentStreamInfo;
 }
 
 const StreamInfo*  Model::getStreamRef( int index ) const
