@@ -614,59 +614,6 @@ void MainWin::cancelViewingStream()
     m_startViewingProgressPanel->setVisible( false );
 }
 
-void MainWin::finishStreaming()
-{
-}
-
-void MainWin::cancelStreaming()
-{
-    Drive* drive = currentStreamingDrive();
-    if ( drive == nullptr )
-    {
-        qWarning() << LOG_SOURCE << "cancelOrFinishStreaming: drive == nullptr";
-    }
-
-    switch ( drive->getState() )
-    {
-//        case creating: break;
-//        case unconfirmed: break;
-//        case deleting: break;
-//        case deleted: break;
-//        case no_modifications: break;
-//        case registering: break;
-//        case approved: break;
-        case uploading:
-        {
-            //todo!!!
-            if ( m_ffmpegStreamingProcess != nullptr )
-            {
-                m_ffmpegStreamingProcess->write("q");
-            }
-            drive->updateDriveState( canceling );
-            drive->updateDriveState( canceled );
-            drive->setIsStreaming( false );
-            m_model->setCurrentStreamInfo( {} );
-            break;
-            
-//            if ( m_ffmpegStreamingProcess != nullptr )
-//            {
-//                m_ffmpegStreamingProcess->write("q");
-//            }
-//            drive->updateDriveState( canceling );
-//            drive->setIsStreaming( false );
-//            m_model->setCurrentStreamInfo( {} );
-            break;
-        }
-        case failed: break;
-        case canceling: break;
-        case canceled: break;
-            
-        default:
-            break;
-    }
-    m_streamingProgressPanel->setVisible(false);
-}
-
 static void showErrorMessage( QString title, QString message )
 {
     QMessageBox msgBox;
@@ -678,15 +625,20 @@ static void showErrorMessage( QString title, QString message )
 
 static fs::path ffmpegPath()
 {
+#if defined _WIN32
+#elif defined __APPLE__
     auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
     return fs::path(path);
+#else // LINUX
+    return "/usr/bin/ffmpeg";
+#endif
 }
 
 
 static bool checkFfmpegInstalled()
 {
 #if defined _WIN32
-#elif defined __APPLE__
+#else
     std::error_code ec;
     auto path = ffmpegPath();
     if ( ! fs::exists(path,ec) )
@@ -694,7 +646,7 @@ static bool checkFfmpegInstalled()
         showErrorMessage( QString::fromStdString(path.string()), "ffmpeg is not installed" );
         return false;
     }
-#else
+    return true;
 #endif
 }
 
@@ -782,6 +734,7 @@ void MainWin::startFfmpegStreamingProcess()
     m_ffmpegStreamingProcess->start( program, arguments );
 }
 
+#pragma mark --Chain-Interface--
 //
 //-- methods OnChainClient
 //std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey, const std::string& folderName, uint64_t expectedUploadSizeMegabytes, uint64_t feedbackFeeAmount);
@@ -795,35 +748,6 @@ void MainWin::startFfmpegStreamingProcess()
 //void streamPaymentTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
 //void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 //
-
-void MainWin::connectToStreamingTransactions()
-{
-    connect(m_onChainClient, &OnChainClient::streamStartTransactionConfirmed, this, [this](const std::array<uint8_t,32>& tx) {
-        qDebug () << "MainWin::streamStartTransactionConfirmed: '" + rawHashToHex(tx);
-        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
-        {
-            drive->updateDriveState(uploading);
-            startFfmpegStreamingProcess();
-        }
-        else
-        {
-            qWarning () << "!!! MainWin::MainWin::streamStartTransactionConfirmed: drive not found!";
-        }
-
-        loadBalance();
-    }, Qt::QueuedConnection);
-
-    connect(m_onChainClient, &OnChainClient::streamStartTransactionFailed, this, [this](const std::array<uint8_t,32>& tx, const QString& errorText )
-    {
-        qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(tx);
-        qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
-        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
-        {
-            drive->updateDriveState(failed);
-        }
-        m_model->setCurrentStreamInfo({});
-    }, Qt::QueuedConnection);
-}
 
 void MainWin::onStartStreamingBtn()
 {
@@ -939,37 +863,32 @@ void MainWin::onStartStreamingBtn()
             fs::path m3u8Playlist = m3u8StreamFolder / "playlist.m3u8";
             sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
 
-            drive->setIsStreaming( true );
             m_model->setCurrentStreamInfo( *streamInfo );
 
             //TODO!!!
-            {
-                //delete m_streamingView;
-                m_streamingView = new StreamingView(this);
-                m_streamingView->setWindowModality(Qt::WindowModal);
-                m_streamingView->show();
-                startFfmpegStreamingProcess();
-                return;
-            }
-            {
-                drive->updateDriveState(registering);
-                drive->updateDriveState(uploading);
-                //startFfmpegStreamingProcess();
-                return;
-            }
+//            {
+//                //delete m_streamingView;
+//                m_streamingView = new StreamingView( [this] {cancelStreaming();}, [this] {finishStreaming();}, this );
+//                m_streamingView->setWindowModality(Qt::WindowModal);
+//                m_streamingView->show();
+//                //startFfmpegStreamingProcess();
+//                return;
+//            }
             
-            //
-            //std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamFolder.string(), expectedUploadSizeMegabytes, feedbackFeeAmount );
-            //auto txHash = rawHashFromHex( txHashString.c_str() );
-            //
-            sirius::Hash256 txHash;
-            gStorageEngine->startStreaming( txHash,
-                                           driveKeyHex, m3u8Playlist,
-                                           chuncksFolder,
-                                           torrentsFolder,
-                                           endPointList );
-            
-            drive->setModificationHash( txHash.array(), true );
+//            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount );
+//            qDebug () << "streamStart: txHashString: " << txHashString.c_str();
+//            auto txHash = rawHashFromHex( txHashString.c_str() );
+//
+//            gStorageEngine->startStreaming( txHash,
+//                                           driveKeyHex, m3u8Playlist,
+//                                           chuncksFolder,
+//                                           torrentsFolder,
+//                                           endPointList );
+//
+//            drive->setModificationHash( txHash, true );
+            drive->setModificationHash( {}, true );
+            drive->updateDriveState(canceled); //todo
+            drive->updateDriveState(no_modifications); //todo
             drive->updateDriveState(registering);
         }
         catch (...) {
@@ -977,6 +896,125 @@ void MainWin::onStartStreamingBtn()
         }
     }
 }
+
+void MainWin::connectToStreamingTransactions()
+{
+    // streamStartTransactionConfirmed
+    connect(m_onChainClient, &OnChainClient::streamStartTransactionConfirmed, this, [this](const std::array<uint8_t,32>& streamId )
+    {
+        qDebug () << "MainWin::streamStartTransactionConfirmed: " << sirius::drive::toString(streamId).c_str();
+        if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
+        {
+            drive->updateDriveState(uploading);
+            
+            assert( m_streamingView == nullptr );
+            m_streamingView = new StreamingView( [this] {cancelStreaming();}, [this] {finishStreaming();}, this );
+            m_streamingView->setWindowModality(Qt::WindowModal);
+            m_streamingView->show();
+            
+            startFfmpegStreamingProcess();
+        }
+        else
+        {
+            qWarning () << "!!! MainWin::MainWin::streamStartTransactionConfirmed: drive not found!";
+        }
+
+        loadBalance();
+    }, Qt::QueuedConnection);
+
+    // streamStartTransactionFailed
+    connect(m_onChainClient, &OnChainClient::streamStartTransactionFailed, this, [this](const std::array<uint8_t,32>& tx, const QString& errorText )
+    {
+        qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(tx);
+        qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
+        if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
+        {
+            drive->updateDriveState(failed);
+            drive->setIsStreaming(false);
+        }
+        m_model->setCurrentStreamInfo({});
+    }, Qt::QueuedConnection);
+    
+    // cancelModificationTransactionConfirmed
+    connect( m_onChainClient, &OnChainClient::cancelModificationTransactionConfirmed, this,
+        [this] ( const std::array<uint8_t, 32> &driveId, const QString &modificationId )
+    {
+        auto* drive = m_model->findDrive( sirius::drive::toString(driveId) );
+        if ( drive == nullptr )
+        {
+            qWarning() << "cancelModificationTransactionConfirmed: drive not found: " << sirius::drive::toString(driveId).c_str();
+            return;
+        }
+        
+        if ( drive->getState() == canceled )
+        {
+            drive->updateDriveState(no_modifications);
+            return;
+        }
+        
+        m_model->setCurrentStreamInfo({});
+        drive->setIsStreaming(false);
+        drive->updateDriveState(canceled);
+
+    }, Qt::QueuedConnection);
+    
+    // cancelModificationTransactionFailed
+    connect( m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this,
+        [this] ( const std::array<uint8_t, 32> &driveId, const QString &modificationId )
+    {
+        m_model->setCurrentStreamInfo({});
+    }, Qt::QueuedConnection);
+
+    // streamFinishTransactionConfirmed
+    connect( m_onChainClient, &OnChainClient::streamFinishTransactionConfirmed, this,
+        [this] ( const std::array<uint8_t, 32> &streamId )
+    {
+    }, Qt::QueuedConnection);
+
+    // streamFinishTransactionFailed
+    connect( m_onChainClient, &OnChainClient::streamFinishTransactionFailed, this,
+        [this] ( const std::array<uint8_t, 32> &streamId, const QString& errorText )
+    {
+    }, Qt::QueuedConnection);
+}
+
+void MainWin::finishStreaming()
+{
+    m_ffmpegStreamingProcess->kill();
+    delete m_ffmpegStreamingProcess;
+    m_ffmpegStreamingProcess = nullptr;
+}
+
+void MainWin::cancelStreaming()
+{
+    Drive* drive = currentStreamingDrive();
+    assert( drive != nullptr );
+    
+    QMessageBox msgBox;
+    msgBox.setText( "Confirmation" );
+    msgBox.setInformativeText( "Please confirm cancel streaming" );
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Discard );
+    if ( msgBox.exec() != QMessageBox::Ok )
+    {
+        return;
+    }
+
+    if ( m_ffmpegStreamingProcess != nullptr )
+    {
+        m_ffmpegStreamingProcess->kill();
+        delete m_ffmpegStreamingProcess;
+        m_ffmpegStreamingProcess = nullptr;
+    }
+    
+    m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ) );
+
+    if ( drive->getState() == registering )
+    {
+        drive->updateDriveState(uploading);
+    }
+    drive->updateDriveState(canceling);
+}
+
 
 void MainWin::dbg()
 {

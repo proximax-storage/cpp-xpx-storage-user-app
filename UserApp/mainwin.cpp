@@ -462,7 +462,7 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 800, 600, this, [this]{ finishStreaming(); } );
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 800, 600, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::streaming );
     m_streamingProgressPanel->setVisible(false);
 
 #ifndef __APPLE__
@@ -1550,7 +1550,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 else
                 {
                     m_modifyProgressPanel->setVisible(false);
-                    m_streamingProgressPanel->setVisible(false);
+                    m_streamingProgressPanel->setVisible( state==registering ); // todo 'true'
                 }
                 
                 switch(state)

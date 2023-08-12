@@ -86,6 +86,9 @@ public:
                          const fs::path&         torrentsFolder,
                          const endpoint_list&    endPointList );
 
+    void finishStreaming();
+    void cancelStreaming();
+
 private:
     void addTorrentFileToSession(const std::string &torrentFilename,
                                  const std::string &folderWhereFileIsLocated,

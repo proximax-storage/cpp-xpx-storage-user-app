@@ -295,3 +295,13 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
 {
     m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, endPointList );
 }
+
+void StorageEngine::finishStreaming()
+{
+    m_session->finishStream();
+}
+                                                   
+void StorageEngine::cancelStreaming()
+{
+    m_session->cancelStream();
+}

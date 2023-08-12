@@ -19,7 +19,10 @@ public:
     Q_OBJECT
 
 public:
-    explicit StreamingView( QWidget *parent = nullptr);
+    explicit StreamingView( std::function<void()> cancelStreamingFunc,
+                            std::function<void()> finishStreamingFunc,
+                            QWidget *parent = nullptr);
+    
     ~StreamingView() override;
 
 private:
@@ -28,8 +31,6 @@ private:
     QMediaCaptureSession    m_captureSession;
     QScopedPointer<QCamera> m_camera;
     
-//    QScopedPointer<QAudioInput>     m_audioInput;
-//    QImageCapture*                  m_imageCapture;
-//    QScopedPointer<QMediaRecorder>  m_mediaRecorder;
-
+    std::function<void()> m_cancelStreamingFunc;
+    std::function<void()> m_finishStreamingFunc;
 };
