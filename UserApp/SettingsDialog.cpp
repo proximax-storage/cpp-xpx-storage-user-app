@@ -286,7 +286,6 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 
     int index = mpSettingsDraft->m_currentAccountIndex;
     ASSERT( index >= 0 );
-    qDebug() << "ui->m_accountCbox->setCurrentIndex: " << index;
     ui->m_accountCbox->setCurrentIndex(index);
 }
 
