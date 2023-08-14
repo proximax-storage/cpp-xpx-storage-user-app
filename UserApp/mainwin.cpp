@@ -465,9 +465,7 @@ void MainWin::init()
     m_streamingProgressPanel = new ModifyProgressPanel( m_model, 800, 600, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::streaming );
     m_streamingProgressPanel->setVisible(false);
 
-#ifndef __APPLE__
     ui->tabWidget->setTabVisible( 4, false );
-#endif
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
 
         updateViewerProgressPanel( index );
