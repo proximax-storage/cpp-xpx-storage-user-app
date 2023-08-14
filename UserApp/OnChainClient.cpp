@@ -256,11 +256,11 @@ void OnChainClient::initConnects() {
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
-        emit downloadChannelOpenTransactionConfirmed(alias, channelId, driveKey);
+        emit downloadChannelOpenTransactionConfirmed(alias, rawHashToHex(channelId).toStdString(), rawHashToHex(driveKey).toStdString());
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
-        emit downloadChannelOpenTransactionFailed(channelId, errorText);
+        emit downloadChannelOpenTransactionFailed(channelId.toStdString(), errorText.toStdString());
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelConfirmed, this, [this](auto channelId) {
@@ -490,7 +490,7 @@ void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::downlo
 }
 
 void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string& privateKey) {
-    qInfo () << "OnChainClient::init. Connected to server: " << config.nodeAddress << " : " << config.port;
+    qInfo () << "OnChainClient::init. Connected to server: " << config.nodeAddress << ":" << config.port;
 
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
     mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {

@@ -82,8 +82,8 @@ class OnChainClient : public QObject
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);
         void downloadChannelsLoaded(ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
-        void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& driveKey);
-        void downloadChannelOpenTransactionFailed(const QString& channelId, const QString& errorText);
+        void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::string& channelId, const std::string& driveKey);
+        void downloadChannelOpenTransactionFailed(const std::string& channelId, const std::string& errorText);
         void downloadChannelCloseTransactionConfirmed(const std::array<uint8_t, 32>& channelId);
         void downloadChannelCloseTransactionFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
         void prepareDriveTransactionConfirmed(const std::array<uint8_t, 32>& driveKey);
