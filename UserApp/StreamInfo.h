@@ -17,13 +17,14 @@ struct StreamInfo
     
     uint8_t                 m_version = 1;
     std::string             m_driveKey;
-    uint64_t                m_streamIndex = -1; // unique index of stream on this drive
     std::string             m_title;
     std::string             m_annotation;
     uint64_t                m_secsSinceEpoch = 0;   // start time
     std::string             m_uniqueFolderName;
-    std::string             m_streamTx;         // streamId for started stream
     int                     m_streamingStatus = ss_regestring;
+    
+    uint64_t                m_totalStreamSizeBytes = 0;
+    uint64_t                m_totalStreamStreamDurationSeconds = 0;
 
     StreamInfo() : m_streamingStatus(ss_deleting) {}
     StreamInfo( const std::string&  driveKey,
@@ -45,14 +46,13 @@ struct StreamInfo
     {
         ar( m_version,
             m_driveKey,
-            m_streamIndex,
             m_title,
             m_annotation,
             m_secsSinceEpoch,
-            m_uniqueFolderName,
-            m_streamTx,
-            m_streamingStatus
+            m_uniqueFolderName
            );
+        ar( m_totalStreamSizeBytes );
+        ar( m_totalStreamStreamDurationSeconds );
     }
 
     std::string getLink() const;

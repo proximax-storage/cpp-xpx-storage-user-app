@@ -86,6 +86,9 @@ public:
                          const fs::path&         torrentsFolder,
                          const endpoint_list&    endPointList );
 
+    void finishStreaming();
+    void cancelStreaming();
+
 signals:
     void newError(int errorType, const QString& errorText);
 

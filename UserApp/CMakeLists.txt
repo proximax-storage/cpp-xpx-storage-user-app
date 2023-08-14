@@ -76,8 +76,8 @@ endif()
 
 add_definitions(-DSIRIUS_DRIVE_MULTI)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Multimedia MultimediaWidgets Widgets LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Multimedia MultimediaWidgets Widgets LinguistTools)
 
 set(PROJECT_ROOT_DIR ..)
 include_directories(${PROJECT_ROOT_DIR}/cpp-xpx-storage-sdk/include)
@@ -102,11 +102,12 @@ set(PROJECT_SOURCES
 
         FsTreeTableModel.h            FsTreeTableModel.cpp        DownloadPaymentDialog.ui
         DownloadsTableModel.h         DownloadsTableModel.cpp     StoragePaymentDialog.ui
-        DriveTreeModel.h              DriveTreeModel.cpp          ModifyProgressPanel.ui
+        DriveTreeModel.h              DriveTreeModel.cpp
         DiffTableModel.h              DiffTableModel.cpp          ReplicatorOnBoardingDialog.ui
         Diff.h                        Diff.cpp                    ReplicatorOffBoardingDialog.ui
         ReplicatorInfoDialog.h        ReplicatorInfoDialog.cpp    ReplicatorInfoDialog.ui
-        ModifyProgressPanel.h         ModifyProgressPanel.cpp
+        ModifyProgressPanel.h         ModifyProgressPanel.cpp     ModifyProgressPanel.ui
+        StreamingView.h               StreamingView.cpp           StreamingView.ui
         PopupMenu.h                   PopupMenu.cpp
 
         LocalDriveItem.h
@@ -190,7 +191,7 @@ if (WIN32)
             BOOST_EXCEPTION_DISABLE
             )
 else()
-    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
 endif()
 
 set_target_properties(StorageClientApp PROPERTIES

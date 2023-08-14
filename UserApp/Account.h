@@ -46,7 +46,6 @@ class Account
                     m_drives,
                     m_currentDriveKey,
                     m_myReplicators,
-                    m_streams,
                     m_currentStreamIndex,
                     m_streamRefs,
                     m_viewerStreamRootFolder,
@@ -79,16 +78,16 @@ class Account
 
         DriveContractModel      m_driveContractModel;
 
-        std::optional<StreamInfo> m_approvingStream;
-        std::vector<StreamInfo> m_streams;
-        int                     m_currentStreamIndex = -1;
-        std::vector<StreamInfo> m_streamRefs; // viewer part
-        int                     m_currentStreamRefIndex = -1;
-        uint64_t                m_lastUniqueStreamIndex = 0;
+        std::vector<StreamInfo>     m_streams;
+        std::optional<StreamInfo>   m_currentStreamInfo;
+        std::vector<StreamInfo>     m_streamRefs; // viewer part
     
-        std::string             m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
+        std::string                 m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
 
-
+        int                     m_currentStreamIndex = -1; // unused
+        int                     m_currentStreamRefIndex = -1; // unused
+        uint64_t                m_lastUniqueStreamIndex = 0; // unused
+    
         std::optional<sirius::crypto::KeyPair> m_keyPair;
 };
 

@@ -86,7 +86,7 @@ void ModifyProgressPanel::setRegistering()
     }
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
-    ui->m_cancel->setEnabled(false);
+    ui->m_cancel->setEnabled(m_mode == streaming ); //todo always 'false'
     ui->m_statusIcon->setMovie(m_loading);
     m_loading->start();
     adjustSize();
