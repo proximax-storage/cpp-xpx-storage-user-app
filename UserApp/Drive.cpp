@@ -261,11 +261,6 @@ void Drive::updateDriveState(DriveState newState)
         {
             if ( newState == deleting )
             {
-                //m_driveState = no_modifications;
-                MainWin::instance()->onDriveStateChanged( *this );
-            }
-            if ( newState == deleting )
-            {
                 m_driveState = newState;
                 MainWin::instance()->onDriveStateChanged( *this );
             }
