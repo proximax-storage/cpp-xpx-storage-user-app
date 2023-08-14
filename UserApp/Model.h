@@ -158,7 +158,8 @@ class Model : public QObject
         //
         // StorageEngine
         //
-        void startStorageEngine( std::function<void()> addressAlreadyInUseHandler );
+        void initStorageEngine();
+        void startStorageEngine();
         void endStorageEngine();
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,

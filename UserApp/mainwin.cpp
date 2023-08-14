@@ -113,17 +113,8 @@ void MainWin::init()
 
     initWorker();
 
-    m_model->startStorageEngine( [this]
-    {
-//         QMessageBox msgBox(this);
-//         msgBox.setText( QString::fromStdString( "Address already in use") );
-//         msgBox.setInformativeText( QString::fromStdString( "Port: " + gSettings.m_udpPort ) );
-//         msgBox.setStandardButtons( QMessageBox::Ok );
-//         msgBox.exec();
-
-        qWarning() << "MainWin::init. Address already in use: " << m_model->getUdpPort();
-        exit(1);
-    });
+    m_model->initStorageEngine();
+    connect(gStorageEngine.get(), &StorageEngine::newError, this, &MainWin::onErrorsHandler, Qt::QueuedConnection);
 
     setupIcons();
     setupNotifications();
@@ -133,6 +124,7 @@ void MainWin::init()
     qDebug() << "MainWin::init. Private key: " << privateKey;
 
     m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier(), this);
+    m_model->startStorageEngine();
 
     m_modificationsWatcher = new QFileSystemWatcher(this);
 
@@ -319,8 +311,7 @@ void MainWin::init()
         dialog.exec();
     }, Qt::QueuedConnection);
 
-    connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto driveKey) {
-        onDriveCreationConfirmed( sirius::drive::toString( driveKey ) );
+    connect(m_onChainClient, &OnChainClient::prepareDriveTransactionConfirmed, this, [this](auto driveKey) {onDriveCreationConfirmed( sirius::drive::toString( driveKey ) );
     }, Qt::QueuedConnection);
 
     connect(m_onChainClient, &OnChainClient::prepareDriveTransactionFailed, this, [this](auto driveKey, auto errorText) {
@@ -409,7 +400,7 @@ void MainWin::init()
         cancelModification();
     };
 
-    m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
+    m_modifyProgressPanel = new ModifyProgressPanel( m_model, 325, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
 
     connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){
@@ -1390,26 +1381,41 @@ void MainWin::updateReplicatorsForChannel(const std::string& channelId, const st
 
 void MainWin::onErrorsHandler(int errorType, const QString& errorText)
 {
-    showNotification(errorText);
-    addNotification(errorText);
-
     switch (errorType)
     {
         case ErrorType::Network:
         {
+            showNotification(errorText);
+            addNotification(errorText);
             qWarning () << "MainWin::onErrorsHandler. Network error: " << errorText;
             break;
         }
 
         case ErrorType::NetworkInit:
         {
+            showNotification(errorText);
+            addNotification(errorText);
             qWarning () << "MainWin::onErrorsHandler. NetworkInit error: " << errorText;
             break;
         }
 
         case ErrorType::InvalidData:
         {
+            showNotification(errorText);
+            addNotification(errorText);
             qWarning () << "MainWin::onErrorsHandler. InvalidData error: " << errorText;
+            break;
+        }
+
+        case ErrorType::Storage:
+        {
+            const auto finalErrorMessage = errorText + QString::fromStdString(m_model->getUdpPort());
+            showNotification(finalErrorMessage);
+            addNotification(finalErrorMessage);
+            qWarning () << "MainWin::onErrorsHandler. Storage error: " << finalErrorMessage;
+//            qApp->quit();
+//            QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
+            //QTimer::singleShot(3000, this, [](){ QApplication::exit(1024); });
             break;
         }
 

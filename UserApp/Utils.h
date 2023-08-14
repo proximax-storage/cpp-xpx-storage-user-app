@@ -38,7 +38,8 @@ enum ErrorType
     Network,
     NetworkInit,
     InvalidData,
-    Critical
+    Critical,
+    Storage
 };
 
 #endif //UTILS_H

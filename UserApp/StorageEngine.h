@@ -51,7 +51,7 @@ public:
                                        uint64_t& modifySize,
                                        const std::vector<std::string>& replicators);
 
-    void start( std::function<void()> addressAlreadyInUseHandler );
+    void start();
 
     void restart();
 
@@ -85,6 +85,9 @@ public:
                          const fs::path&         chunksFolder,
                          const fs::path&         torrentsFolder,
                          const endpoint_list&    endPointList );
+
+signals:
+    void newError(int errorType, const QString& errorText);
 
 private:
     void addTorrentFileToSession(const std::string &torrentFilename,

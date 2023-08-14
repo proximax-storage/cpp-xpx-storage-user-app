@@ -34,7 +34,7 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
         ui->m_title->setWindowTitle("Streaming status");
     }
     ui->m_title->setAlignment(Qt::AlignCenter);
-    setGeometry( QRect( x, y, 255, 130) );
+    setGeometry( QRect( x, y, 280, 130) );
     setFrameShape( QFrame::StyledPanel );
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Midlight);

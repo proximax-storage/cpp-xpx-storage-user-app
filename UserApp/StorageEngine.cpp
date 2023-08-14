@@ -40,8 +40,13 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
     return m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize);
 }
 
-void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
+void StorageEngine::start()
 {
+    auto errorsCallback = [this]()
+    {
+        emit newError(ErrorType::Storage , "Port already in use: ");
+        m_session->stop();
+    };
 
     if ( ALEX_LOCAL_TEST )
     {
@@ -51,7 +56,7 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
         gStorageEngine->init(mp_model->getKeyPair(),
                              "192.168.2.201:2001",
                              bootstraps,
-                             addressAlreadyInUseHandler );
+                             errorsCallback );
     }
     else if ( VICTOR_LOCAL_TEST )
     {
@@ -61,7 +66,7 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
         gStorageEngine->init(mp_model->getKeyPair(),
                              "192.168.20.30:" + mp_model->getUdpPort(),
                              bootstraps,
-                             addressAlreadyInUseHandler );
+                             errorsCallback );
     }
     else
     {
@@ -75,7 +80,7 @@ void StorageEngine::start( std::function<void()> addressAlreadyInUseHandler )
         gStorageEngine->init(mp_model->getKeyPair(),
                              "0.0.0.0:" + mp_model->getUdpPort(),
                              bootstraps,
-                             addressAlreadyInUseHandler );
+                             errorsCallback );
     }
 }
 

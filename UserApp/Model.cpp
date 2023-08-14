@@ -611,10 +611,14 @@ void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::d
     }
 }
 
-void Model::startStorageEngine( std::function<void()> addressAlreadyInUseHandler )
+void Model::initStorageEngine()
 {
     gStorageEngine = std::make_shared<StorageEngine>(this);
-    gStorageEngine->start( addressAlreadyInUseHandler );
+}
+
+void Model::startStorageEngine()
+{
+    gStorageEngine->start();
 }
 
 void Model::endStorageEngine()
