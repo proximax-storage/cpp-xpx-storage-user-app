@@ -202,6 +202,8 @@ private slots:
     void lockDrive();
     void unlockDrive();
     void networkDataHandler(const QString networkName);
+    void onCloseChannel();
+    void onCloseDrive();
     void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
     void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);

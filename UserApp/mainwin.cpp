@@ -121,7 +121,7 @@ void MainWin::init()
 //         msgBox.setStandardButtons( QMessageBox::Ok );
 //         msgBox.exec();
 
-        qWarning() << "MainWin::init. Address already in use: udoPort: " << m_model->getUdpPort();
+        qWarning() << "MainWin::init. Address already in use: " << m_model->getUdpPort();
         exit(1);
     });
 
@@ -297,14 +297,8 @@ void MainWin::init()
         m_onChainClient->loadDownloadChannels(options);
     }, Qt::QueuedConnection);
 
-    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, [this](auto alias, auto channelKey, auto driveKey) {
-        onChannelCreationConfirmed( alias, sirius::drive::toString( channelKey ), sirius::drive::toString(driveKey) );
-    }, Qt::QueuedConnection);
-
-    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, [this](auto& channelKey, auto& errorText) {
-           onChannelCreationFailed( channelKey.toStdString(), errorText.toStdString() );
-    }, Qt::QueuedConnection);
-
+    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionConfirmed, this, &MainWin::onChannelCreationConfirmed, Qt::QueuedConnection);
+    connect(m_onChainClient, &OnChainClient::downloadChannelOpenTransactionFailed, this, &MainWin::onChannelCreationFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionConfirmed, this, &MainWin::onDownloadChannelCloseConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::downloadChannelCloseTransactionFailed, this, &MainWin::onDownloadChannelCloseFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::downloadPaymentTransactionConfirmed, this, &MainWin::onDownloadPaymentConfirmed, Qt::QueuedConnection);
@@ -317,37 +311,11 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::replicatorOnBoardingTransactionFailed, this, &MainWin::onReplicatorOnBoardingTransactionFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionConfirmed, this, &MainWin::onReplicatorOffBoardingTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::replicatorOffBoardingTransactionFailed, this, &MainWin::onReplicatorOffBoardingTransactionFailed, Qt::QueuedConnection);
-
-    connect(ui->m_closeChannel, &QPushButton::released, this, [this] () {
-        auto channel = m_model->currentDownloadChannel();
-        if (!channel) {
-            qWarning() << LOG_SOURCE << "Bad current download channel. Channels count: " << m_model->getDownloadChannels().size();
-            return;
-        }
-
-        CloseChannelDialog dialog(m_onChainClient, channel->getKey().c_str(), channel->getName().c_str(), this);
-        auto rc = dialog.exec();
-        if ( rc==QMessageBox::Ok )
-        {
-            channel->setDeleting(true);
-            updateDownloadChannelStatusOnUi(*channel);
-            lockChannel(channel->getKey());
-        }
-    }, Qt::QueuedConnection);
+    connect(ui->m_closeChannel, &QPushButton::released, this, &MainWin::onCloseChannel, Qt::QueuedConnection);
+    connect(ui->m_closeDrive, &QPushButton::released, this, &MainWin::onCloseDrive, Qt::QueuedConnection);
 
     connect(ui->m_addDrive, &QPushButton::released, this, [this] () {
         AddDriveDialog dialog(m_onChainClient, m_model, this);
-        dialog.exec();
-    }, Qt::QueuedConnection);
-
-    connect(ui->m_closeDrive, &QPushButton::released, this, [this] () {
-        auto drive = m_model->currentDrive();
-        if (!drive) {
-            qWarning() << LOG_SOURCE << "bad drive";
-            return;
-        }
-
-        CloseDriveDialog dialog(m_onChainClient, drive, this);
         dialog.exec();
     }, Qt::QueuedConnection);
 
@@ -379,15 +347,12 @@ void MainWin::init()
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionFailed, this, &MainWin::onDataModificationApprovalTransactionFailed, Qt::QueuedConnection);
-    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
-             &MainWin::onDeployContractTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::deployContractTransactionFailed, this,
-             &MainWin::onDeployContractTransactionFailed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
-             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
-    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,
-             &MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,&MainWin::onDeployContractTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionFailed, this,&MainWin::onDeployContractTransactionFailed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,&MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
+    connect( m_onChainClient, &OnChainClient::deployContractTransactionConfirmed, this,&MainWin::onDeployContractApprovalTransactionConfirmed, Qt::QueuedConnection );
     connect(ui->m_refresh, &QPushButton::released, this, &MainWin::onRefresh, Qt::QueuedConnection);
+
     connect(m_onChainClient, &OnChainClient::newNotification, this, [this](auto notification) {
         showNotification(notification);
         addNotification(notification);
@@ -901,7 +866,6 @@ void MainWin::cancelModification()
 }
 
 void MainWin::setupIcons() {
-    qDebug() << getResource("./resources/icons/settings.png");
     QIcon settingsButtonIcon(getResource("./resources/icons/settings.png"));
     ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
     ui->m_settingsButton->setText("");
@@ -2875,6 +2839,36 @@ void MainWin::networkDataHandler(const QString networkName)
     }
 }
 
+void MainWin::onCloseChannel()
+{
+    auto channel = m_model->currentDownloadChannel();
+    if (!channel) {
+        qWarning() << LOG_SOURCE << "Bad current download channel. Channels count: " << m_model->getDownloadChannels().size();
+        return;
+    }
+
+    CloseChannelDialog dialog(m_onChainClient, channel->getKey().c_str(), channel->getName().c_str(), this);
+    auto rc = dialog.exec();
+    if ( rc == QMessageBox::Ok )
+    {
+        channel->setDeleting(true);
+        updateDownloadChannelStatusOnUi(*channel);
+        lockChannel(channel->getKey());
+    }
+}
+
+void MainWin::onCloseDrive()
+{
+    auto drive = m_model->currentDrive();
+    if (!drive) {
+        qWarning() << LOG_SOURCE << "bad drive";
+        return;
+    }
+
+    CloseDriveDialog dialog(m_onChainClient, drive, this);
+    dialog.exec();
+}
+
 void MainWin::onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi)
 {
     qDebug()  << "MainWin::onDownloadFsTreeDirect. Drive key: " << driveId << " fileStructureCdi: " << fileStructureCdi;
@@ -3050,14 +3044,14 @@ void MainWin::getMosaicIdByName(const QString& accountPublicKey, const QString& 
             const QString clientPublicKey = QString::fromStdString(message);
             if (clientPublicKey.contains(m_model->getClientPublicKey().c_str(), Qt::CaseInsensitive))
             {
-                onErrorsHandler(ErrorType::InvalidData, "Current account not found, try to use another account or switch to other API Gateway!");
+                qWarning() << "Account info not found. The account can be new! Balance set to 0!";
             }
             else
             {
                 onErrorsHandler(ErrorType::InvalidData, message.c_str());
             }
 
-            return;
+            return callback(0);
         }
 
         std::vector<xpx_chain_sdk::MosaicId> mosaicIds;
