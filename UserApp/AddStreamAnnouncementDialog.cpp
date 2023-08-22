@@ -189,7 +189,7 @@ void AddStreamAnnouncementDialog::accept()
 
     mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 40 );
         
-    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / mUniqueFolderName;
+    auto streamFolder = fs::path(drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + mUniqueFolderName);
     
     //
     // Try to create stream folder
@@ -221,7 +221,7 @@ void AddStreamAnnouncementDialog::accept()
 
     try
     {
-        std::ofstream fStream( streamFolder / STREAM_INFO_FILE_NAME, std::ios::binary );
+        std::ofstream fStream( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, std::ios::binary );
         fStream << os.str();
         fStream.close();
     }
@@ -238,8 +238,8 @@ void AddStreamAnnouncementDialog::accept()
     // Create action list
     //
     sirius::drive::ActionList actionList;
-    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / mUniqueFolderName;
-    actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder.string() + "/" + STREAM_INFO_FILE_NAME ) );
+    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ).string() + "/" + mUniqueFolderName;
+    actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder + "/" + STREAM_INFO_FILE_NAME ) );
 
     //
     // Start modification
