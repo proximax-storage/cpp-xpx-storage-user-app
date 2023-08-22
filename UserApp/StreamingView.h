@@ -2,14 +2,26 @@
 
 #include <QDialog>
 
-#include <QCamera>
-#include <QImageCapture>
-#include <QMediaRecorder>
-#include <QScopedPointer>
-#include <QMediaMetaData>
-#include <QMediaCaptureSession>
-#include <QMediaDevices>
-#include <QAudioInput>
+#ifdef _WIN64
+    #include <QtMultimedia/QCamera>
+    #include <QtMultimedia/QImageCapture>
+    #include <QtMultimedia/QMediaRecorder>
+    #include <QScopedPointer>
+    #include <QtMultimedia/QMediaMetaData>
+    #include <QtMultimedia/QMediaCaptureSession>
+    #include <QtMultimedia/QMediaDevices>
+    #include <QtMultimedia/QAudioInput>
+#else
+    #include <QCamera>
+    #include <QImageCapture>
+    #include <QMediaRecorder>
+    #include <QScopedPointer>
+    #include <QMediaMetaData>
+    #include <QMediaCaptureSession>
+    #include <QMediaDevices>
+    #include <QAudioInput>
+#endif
+
 
 namespace Ui { class StreamingView; }
 

@@ -162,7 +162,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     qDebug() << LOG_SOURCE << "downloadFsTree(): m_session->download(...";
 
     const auto fsTreeHashUpperCase = QString::fromStdString(sirius::drive::toString(fsTreeHash)).toUpper().toStdString();
-    auto fsTreeSaveFolder = getFsTreesFolder()/fsTreeHashUpperCase;
+    auto fsTreeSaveFolder = getFsTreesFolder().string() + "/" + fsTreeHashUpperCase;
 
     auto notification = [this, driveId, fsTreeSaveFolder](sirius::drive::download_status::code code,
                                                             const sirius::drive::InfoHash& infoHash,
@@ -170,11 +170,11 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
                                                             size_t /*downloaded*/,
                                                             size_t /*fileSize*/,
                                                             const std::string& /*errorText*/) {
-        qDebug() << LOG_SOURCE << "fstree received: " << fsTreeSaveFolder.string();
+        qDebug() << LOG_SOURCE << "fstree received: " << fsTreeSaveFolder;
         sirius::drive::FsTree fsTree;
         try
         {
-            fsTree.deserialize( (fsTreeSaveFolder / FS_TREE_FILE_NAME).string() );
+            fsTree.deserialize( fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME );
         } catch (const std::runtime_error& ex )
         {
             qDebug() << LOG_SOURCE << "Invalid fsTree: " << ex.what();
@@ -186,7 +186,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder.string(), "", {}, replicators);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicators);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,

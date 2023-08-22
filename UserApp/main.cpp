@@ -18,16 +18,25 @@ void sigHandler(int s)
 
 int main(int argc, char *argv[])
 {
+#ifdef not _WIN64
+    std::signal(SIGKILL, sigHandler);
+#endif
     std::signal(SIGINT,  sigHandler);
     std::signal(SIGTERM, sigHandler);
-    std::signal(SIGKILL, sigHandler);
     std::signal(SIGILL,  sigHandler);
     std::signal(SIGABRT, sigHandler);
     std::signal(SIGSEGV, sigHandler);
 
 restart_label:
     QApplication a(argc, argv);
-    QApplication::setWindowIcon(QIcon(getResource("./resources/icons/icon.png")));
+
+    QIcon appIcon(getResource("./resources/icons/icon.png"));
+    if (appIcon.isNull()) {
+        qWarning () << "main: app icon is null: icon.png";
+    } else {
+        QApplication::setWindowIcon(appIcon);
+    }
+
     qInstallMessageHandler(customMessageHandler);
 // TODO: same style for all platforms
 //#ifdef Q_OS_LINUX

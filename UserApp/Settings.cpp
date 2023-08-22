@@ -88,7 +88,7 @@ bool Settings::load( const std::string& pwd )
 {
     try
     {
-        fs::path filePath = getSettingsFolder() / "config";
+        fs::path filePath = fs::path(getSettingsFolder().string() + "/config");
 
         if ( ! fs::exists( filePath ) )
         {
@@ -300,8 +300,8 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
         {
             if ( dnInfo.getHandle() == handle )
             {
-                fs::path srcPath = fs::path(dnInfo.getDownloadFolder()) / sirius::drive::toString( dnInfo.getHash() );
-                fs::path destPath = fs::path(dnInfo.getSaveFolder()) / dnInfo.getFileName();
+                fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash()) );
+                fs::path destPath = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName());
                 qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath.c_str();
 
                 std::error_code ec;
@@ -331,7 +331,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     auto newName = fs::path(dnInfo.getFileName()).stem().string()
                                     + " (" + std::to_string(index) + ")"
                                     + fs::path(dnInfo.getFileName()).extension().string();
-                    destPath = fs::path(dnInfo.getSaveFolder()) / newName;
+                    destPath = fs::path(dnInfo.getSaveFolder() + "/" + newName);
                     dnInfo.setFileName(newName);
                 }
 
@@ -401,13 +401,13 @@ void Settings::removeFromDownloads( int index )
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        fs::remove( downloadFolder() / dnInfo.getFileName(), ec );
-        qDebug() << "Settings::removeFromDownloads. Remove(1): " << (downloadFolder() / dnInfo.getFileName()).string().c_str() << " ec=" << ec.message().c_str();
+        fs::remove( downloadFolder().string() + "/" + dnInfo.getFileName(), ec );
+        qDebug() << "Settings::removeFromDownloads. Remove(1): " << downloadFolder().string() + "/" + dnInfo.getFileName() << " ec=" << ec.message().c_str();
     }
     else if ( hashCounter == 1 )
     {
-        fs::remove( downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash()), ec );
-        qDebug() << "Settings::removeFromDownloads. Remove(2): " << (downloadFolder() / sirius::drive::hashToFileName(dnInfo.getHash())).string().c_str() << " ec=" << ec.message().c_str();
+        fs::remove( downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash()), ec );
+        qDebug() << "Settings::removeFromDownloads. Remove(2): " << downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash()) << " ec=" << ec.message().c_str();
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );

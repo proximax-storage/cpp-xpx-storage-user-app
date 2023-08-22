@@ -90,9 +90,9 @@ void MainWin::initStreaming()
     });
     
     QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
-    header->setSectionResizeMode(0,QHeaderView::Stretch);
-    header->setSectionResizeMode(1,QHeaderView::Stretch);
-    header->setSectionResizeMode(2,QHeaderView::Stretch);
+//    header->setSectionResizeMode(0,QHeaderView::Stretch);
+//    header->setSectionResizeMode(1,QHeaderView::Stretch);
+//    header->setSectionResizeMode(2,QHeaderView::Stretch);
 
     
     // m_streamDriveCBox
@@ -163,7 +163,7 @@ void MainWin::initStreaming()
 
                 if ( drive != nullptr )
                 {
-                    auto streamFolder = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo->m_uniqueFolderName;
+                    auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
                     std::error_code ec;
                     fs::remove_all( streamFolder, ec );
                     qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
@@ -171,7 +171,7 @@ void MainWin::initStreaming()
                     if ( !ec )
                     {
                         sirius::drive::ActionList actionList;
-                        auto streamFolder = fs::path( STREAM_ROOT_FOLDER_NAME ) / streamInfo->m_uniqueFolderName;
+                        auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
 
                         //
@@ -322,7 +322,7 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
     
     // read from disc (.videos/*/info)
     {
-        auto path = fs::path( driveInfo.getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME;
+        auto path = fs::path( driveInfo.getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME);
         
         std::error_code ec;
         if ( ! fs::is_directory(path,ec) )
@@ -335,7 +335,7 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
             const auto entryName = entry.path().filename().string();
             if ( entry.is_directory() )
             {
-                auto fileName = path / entryName / STREAM_INFO_FILE_NAME;
+                auto fileName = fs::path(path.string() + "/" + entryName + "/" + STREAM_INFO_FILE_NAME);
                 try
                 {
                     std::ifstream is( fileName, std::ios::binary );
@@ -658,7 +658,7 @@ void MainWin::startFfmpegStreamingProcess()
         qWarning() << LOG_SOURCE << "🔴 currentStreamInfo is not set !!!";
         return;
     }
-    auto workingFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo->m_uniqueFolderName;
+    auto workingFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() + "/" + streamInfo->m_uniqueFolderName);
 
     std::error_code ec;
     if ( fs::is_empty(workingFolder) )
@@ -730,7 +730,7 @@ void MainWin::startFfmpegStreamingProcess()
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
 
-    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder) );
+    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder.string()) );
     m_ffmpegStreamingProcess->start( program, arguments );
 }
 
@@ -782,7 +782,7 @@ void MainWin::onStartStreamingBtn()
             }
 
             // m3u8StreamFolder - for all streams
-            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() ) / streamInfo->m_uniqueFolderName;
+            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() + "/" + streamInfo->m_uniqueFolderName);
             
             if ( m3u8StreamFolder.empty() )
             {
@@ -830,7 +830,7 @@ void MainWin::onStartStreamingBtn()
             
             uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
-            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() ) / STREAM_ROOT_FOLDER_NAME / streamInfo->m_uniqueFolderName;
+            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName);
             auto chuncksFolder = uniqueStreamFolder / "chunks";
             auto torrentsFolder = uniqueStreamFolder / "torrents";
             
@@ -860,7 +860,7 @@ void MainWin::onStartStreamingBtn()
                 return;
             }
 
-            fs::path m3u8Playlist = m3u8StreamFolder / "playlist.m3u8";
+            fs::path m3u8Playlist = fs::path(m3u8StreamFolder.string() + "/" + "playlist.m3u8");
             sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
 
             m_model->setCurrentStreamInfo( *streamInfo );
