@@ -24,7 +24,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
                 auto* treeItem = new DriveTreeItem( true, false, ldi_not_changed, child, parent );
                 parent->appendChild( treeItem );
 
-                scanFolderR( treeItem, path / entryName );
+                scanFolderR( treeItem, fs::path(path.string() + "/" + entryName) );
             }
             else if ( entry.is_regular_file() && entryName != ".DS_Store" )
             {

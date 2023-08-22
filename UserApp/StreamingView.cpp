@@ -4,15 +4,8 @@
 #include <iostream>
 
 #include <QPushButton>
-
 #include <QUrl>
-#include <QMediaRecorder>
-#include <QVideoWidget>
-#include <QCameraDevice>
-#include <QMediaMetaData>
-#include <QMediaDevices>
-#include <QAudioDevice>
-#include <QAudioInput>
+
 
 // !!! opera very slow while playing Video or flash !!!
 // "Menu -> settings -> browser" and uncheck "Use hardware acceleration when available"

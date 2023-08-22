@@ -373,7 +373,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             Drive newDrive;
             newDrive.setKey(remoteDrive.data.multisig);
             newDrive.setName(remoteDrive.data.multisig);
-            newDrive.setLocalFolder((homeFolder()/newDrive.getKey()).string());
+            newDrive.setLocalFolder(homeFolder().string() + "/" + newDrive.getKey());
             newDrive.setSize(remoteDrive.data.size);
             newDrive.setReplicatorsCount(remoteDrive.data.replicatorCount);
             addDrive(newDrive);

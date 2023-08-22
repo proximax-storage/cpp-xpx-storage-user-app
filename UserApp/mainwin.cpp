@@ -861,29 +861,47 @@ void MainWin::cancelModification()
 
 void MainWin::setupIcons() {
     QIcon settingsButtonIcon(getResource("./resources/icons/settings.png"));
-    ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+    if (settingsButtonIcon.isNull())
+    {
+        qWarning () << "MainWin::setupIcons: settings icon is null: settings.png";
+    } else {
+        ui->m_settingsButton->setFixedSize(settingsButtonIcon.availableSizes().first());
+        ui->m_settingsButton->setIcon(settingsButtonIcon);
+    }
+
     ui->m_settingsButton->setText("");
-    ui->m_settingsButton->setIcon(settingsButtonIcon);
     ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIconSize(QSize(18, 18));
 
     QIcon notificationsButtonIcon(getResource("./resources/icons/notification.png"));
-    ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+    if (notificationsButtonIcon.isNull())
+    {
+        qWarning () << "MainWin::setupIcons: notifications icon is null: notification.png";
+    } else {
+        ui->m_notificationsButton->setFixedSize(notificationsButtonIcon.availableSizes().first());
+        ui->m_notificationsButton->setIcon(notificationsButtonIcon);
+    }
+
     ui->m_notificationsButton->setText("");
-    ui->m_notificationsButton->setIcon(notificationsButtonIcon);
     ui->m_notificationsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_notificationsButton->setIconSize(QSize(18, 18));
 
     QPixmap networkIcon(getResource("./resources/icons/network.png"));
-    ui->m_networkLabel->setPixmap(networkIcon);
+    if (settingsButtonIcon.isNull())
+    {
+        qWarning () << "MainWin::setupIcons: network icon is null: network.png";
+    } else {
+        ui->m_networkLabel->setPixmap(networkIcon);
+    }
+
     ui->m_networkLabel->setStyleSheet("padding: 5px 5px 5px 5px;");
     ui->m_networkLabel->setAlignment(Qt::AlignLeft);
     ui->m_networkName->setAlignment(Qt::AlignLeft);
     ui->m_networkName->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
+
     ui->m_balance->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
     ui->m_balanceValue->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
     ui->label_5->setStyleSheet("padding-top: 5px; padding-bottom: 5px;");
-
     ui->m_balance->setText("Balance:");
 }
 
@@ -1170,7 +1188,7 @@ void MainWin::setupDownloadsTable()
     ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
     ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
     ui->m_downloadsTableView->setColumnWidth(1, 60);
-    ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    //ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     ui->m_removeDownloadBtn->setEnabled( false );
 
@@ -2934,8 +2952,11 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         drive->setFsTree(fsTree);
 
         if (isCurrentDrive(drive)) {
+            calculateDiffAsync([this](auto, auto){
+                updateDiffView();
+            });
+
             updateDriveView();
-            updateDiffView();
         }
 
         // inform stream annotations about possible changes

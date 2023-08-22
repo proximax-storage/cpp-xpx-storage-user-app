@@ -85,7 +85,7 @@ std::filesystem::path getSettingsFolder()
 {
     std::filesystem::path path;
 #ifdef _WIN32
-    path = QDir::currentPath().toStdString() + "/.XpxSiriusStorageClient";
+    path = QDir::currentPath().toStdString() + "/XpxSiriusStorageClient";
 #else
     const char* homePath = getenv("HOME");
     path = std::string(homePath) + "/.XpxSiriusStorageClient";
@@ -111,7 +111,7 @@ std::filesystem::path getSettingsFolder()
 
 std::filesystem::path getFsTreesFolder()
 {
-    return getSettingsFolder() / "FsTrees";
+    return {getSettingsFolder().string() + "/FsTrees" };
 }
 
 std::string getPrettyDriveState(int state) {
