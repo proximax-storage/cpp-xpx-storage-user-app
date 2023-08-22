@@ -400,7 +400,7 @@ void MainWin::init()
         cancelModification();
     };
 
-    m_modifyProgressPanel = new ModifyProgressPanel( m_model, 325, 350, this, modifyPanelCallback );
+    m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
 
     connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){

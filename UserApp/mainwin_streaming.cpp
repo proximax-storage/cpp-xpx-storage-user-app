@@ -726,7 +726,7 @@ void MainWin::startFfmpegStreamingProcess()
         qDebug() << "🟠🟠 " << err;
     });
 
-    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder;
+    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder.string();
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
     qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
 
@@ -800,7 +800,7 @@ void MainWin::onStartStreamingBtn()
             if ( ! fs::exists( m3u8StreamFolder, ec ) )
             {
                 qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo->m_driveKey;
-                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << m3u8StreamFolder;
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << m3u8StreamFolder.string();
 
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Stream folder does not exist" ) );
