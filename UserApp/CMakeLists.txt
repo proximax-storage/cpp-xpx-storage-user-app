@@ -172,6 +172,8 @@ if (WIN32)
     target_link_libraries(StorageClientApp PRIVATE
             ${Boost_LIBRARIES}
             Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Multimedia
+            Qt${QT_VERSION_MAJOR}::MultimediaWidgets
             wsock32
             ws2_32
             torrent-sirius
@@ -180,7 +182,7 @@ if (WIN32)
             sdk_external
             nodediscovery
             ionet
-            crypto
+            storage-crypto
             net
             model
             utils
@@ -191,7 +193,7 @@ if (WIN32)
             BOOST_EXCEPTION_DISABLE
             )
 else()
-    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet crypto net model utils xpxchaincpp)
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet storage-crypto net model utils xpxchaincpp)
 endif()
 
 set_target_properties(StorageClientApp PROPERTIES
