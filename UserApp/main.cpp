@@ -18,7 +18,7 @@ void sigHandler(int s)
 
 int main(int argc, char *argv[])
 {
-#ifdef not _WIN64
+#ifndef _WIN64
     std::signal(SIGKILL, sigHandler);
 #endif
     std::signal(SIGINT,  sigHandler);
