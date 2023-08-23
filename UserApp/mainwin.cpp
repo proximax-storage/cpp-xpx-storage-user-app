@@ -226,8 +226,8 @@ void MainWin::init()
                             }
 
                             const auto rootHashUpperCase = QString::fromStdString(sirius::drive::toString(drive->getRootHash())).toUpper().toStdString();
-                            auto fsTreeSaveFolder = getFsTreesFolder()/rootHashUpperCase;
-                            bool isFsTreeExists = fs::exists( fsTreeSaveFolder / FS_TREE_FILE_NAME );
+                            auto fsTreeSaveFolder = getFsTreesFolder().string() + "/" + rootHashUpperCase;
+                            bool isFsTreeExists = fs::exists( fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME );
 
                             const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
                             if (!isFsTreeExists && drive->getRootHash() == remoteRootHash && Model::isZeroHash(remoteRootHash)) {
@@ -238,7 +238,7 @@ void MainWin::init()
                                 outdatedDrives.push_back(drive);
                             } else if (isFsTreeExists && drive->getRootHash() == remoteRootHash) {
                                 sirius::drive::FsTree fsTree;
-                                fsTree.deserialize((fsTreeSaveFolder / FS_TREE_FILE_NAME).string());
+                                fsTree.deserialize(fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME);
                                 drive->setFsTree(fsTree);
                             }
                         }
@@ -791,7 +791,8 @@ void MainWin::init()
 
 void MainWin::drivesInitialized()
 {
-    disconnect(this,&MainWin::driveStateChangedSignal,0,0);
+    qInfo() << "MainWin::drivesInitialized: " << m_model->getDrives().size();
+    disconnect(this,&MainWin::driveStateChangedSignal, nullptr, nullptr);
 
     ui->m_driveCBox->clear();
     ui->m_streamDriveCBox->clear();
