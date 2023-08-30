@@ -13,7 +13,7 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         BUILD_IMAGE_WINDOWS = "cpp-xpx-so-dependencies-win-build-image:v1.0-ubuntu"
-        BUILD_IMAGE_LINUX = "cpp-xpx-so-dependencies-linux-build-image:v1.0-bullseye"
+        BUILD_IMAGE_LINUX = "cpp-xpx-so-dependencies-linux-build-image:v1.1-bullseye"
     }
     
     stages {
@@ -99,6 +99,9 @@ pipeline {
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Core.dll \$DESTDIR
+                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Multimedia.dll \$DESTDIR
+                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6MultimediaWidgets.dll \$DESTDIR
+                                cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Network.dll \$DESTDIR
                                 find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
                                 zip -r windows-storage-tool.zip \$DESTDIR
                             """
