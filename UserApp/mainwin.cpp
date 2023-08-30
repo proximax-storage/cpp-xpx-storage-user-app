@@ -118,6 +118,7 @@ void MainWin::init()
 
     setupIcons();
     setupNotifications();
+    initGeometry();
     setGeometry(m_model->getWindowGeometry());
 
     const std::string privateKey = m_model->getClientPrivateKey();
@@ -789,6 +790,14 @@ void MainWin::init()
     initStreaming();
 }
 
+void MainWin::initGeometry()
+{
+    QRect basicGeometry;
+    basicGeometry.setWidth(1000);
+    basicGeometry.setHeight(700);
+    m_model->setWindowGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, basicGeometry.size(), basicGeometry));
+}
+
 void MainWin::drivesInitialized()
 {
     qInfo() << "MainWin::drivesInitialized: " << m_model->getDrives().size();
@@ -1263,11 +1272,6 @@ bool MainWin::requestPrivateKey()
     {
         return false;
     }
-
-    QRect basicGeometry;
-    basicGeometry.setWidth(1000);
-    basicGeometry.setHeight(700);
-    m_model->setWindowGeometry(basicGeometry);
 
     return true;
 }

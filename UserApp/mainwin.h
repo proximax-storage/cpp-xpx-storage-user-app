@@ -70,6 +70,7 @@ signals:
     void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
 
 private:
+    void initGeometry();
     void drivesInitialized();
     bool requestPrivateKey();
     void cancelModification();
