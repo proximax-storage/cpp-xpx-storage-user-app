@@ -123,7 +123,12 @@ void MainWin::init()
     const std::string privateKey = m_model->getClientPrivateKey();
     qDebug() << "MainWin::init. Private key: " << privateKey;
 
-    m_onChainClient = new OnChainClient(gStorageEngine.get(), privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier(), this);
+    m_onChainClient = new OnChainClient(gStorageEngine.get(), this);
+
+    // Should be called before m_onChainClient->start(...)
+    connect(m_onChainClient, &OnChainClient::newError, this, &MainWin::onErrorsHandler, Qt::QueuedConnection);
+
+    m_onChainClient->start(privateKey, m_model->getGatewayIp(), m_model->getGatewayPort(), m_model->getFeeMultiplier());
     m_model->startStorageEngine();
 
     m_modificationsWatcher = new QFileSystemWatcher(this);
@@ -333,7 +338,6 @@ void MainWin::init()
         dialog.exec();
     });
 
-    connect(m_onChainClient, &OnChainClient::newError, this, &MainWin::onErrorsHandler, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionConfirmed, this, &MainWin::onDataModificationTransactionConfirmed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationTransactionFailed, this, &MainWin::onDataModificationTransactionFailed, Qt::QueuedConnection);
     connect(m_onChainClient, &OnChainClient::dataModificationApprovalTransactionConfirmed, this, &MainWin::onDataModificationApprovalTransactionConfirmed, Qt::QueuedConnection);

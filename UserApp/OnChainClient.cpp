@@ -3,17 +3,17 @@
 #include <QDebug>
 #include <boost/algorithm/string/predicate.hpp>
 
-OnChainClient::OnChainClient(StorageEngine* storage,
-                             const std::string& privateKey,
-                             const std::string& address,
-                             const std::string& port,
-                             const double feeMultiplier,
-                             QObject* parent)
+OnChainClient::OnChainClient(StorageEngine* storage, QObject* parent)
     : QObject(parent)
     , mpStorageEngine(storage)
 {
     qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
+}
 
+void OnChainClient::start(const std::string& privateKey,
+                          const std::string& address,
+                          const std::string& port,
+                          const double feeMultiplier) {
     init(address, port, feeMultiplier, privateKey);
 
     connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){

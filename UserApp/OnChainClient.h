@@ -17,10 +17,6 @@ class OnChainClient : public QObject
 
     public:
         OnChainClient(StorageEngine* storage,
-                      const std::string& privateKey,
-                      const std::string& address,
-                      const std::string& port,
-                      const double feeMultiplier,
                       QObject* parent = nullptr);
 
         ~OnChainClient() = default;
@@ -30,6 +26,11 @@ class OnChainClient : public QObject
         Q_ENUM(ChannelsType)
 
     public:
+        void start(const std::string& privateKey,
+                   const std::string& address,
+                   const std::string& port,
+                   const double feeMultiplier);
+
         void loadDrives(const xpx_chain_sdk::DrivesPageOptions& options);
         void loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options);
 
