@@ -52,6 +52,7 @@ if (APPLE)
     set(CMAKE_PREFIX_PATH "~/Qt/6.4.0/macos")
     set(BOOST_INCLUDE_DIR "/usr/local/include")
     set(BOOST_LIB_DIR "/usr/local/lib")
+    add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT)
     set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
     set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
     
