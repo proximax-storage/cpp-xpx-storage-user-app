@@ -64,17 +64,17 @@ void Settings::initForTests()
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_A04", "A04F01F652364657087FB254DFA69460E7137247854373E49D3E590F96D14994" );
+        config().initAccount( "test_staging_DA", "3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_C62", "C62F0F5E3A2A00BDBEABDF5DD45B9DCC01A210A09CF1D442B711B6C0F45B53E8" );
+        config().initAccount( "test_staging_FA", "FEB6F12EEF165E0BF19B8A1D02A2C3BEF5DA6B88897E241C3A47B12A6E2FC153" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_B89", "92CFFA0FA7B67DE5C7C3CB13893169F7784CF3DB51F30A88C0A68E30C917BAAF" );
+        config().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
 
         if ( ! ALEX_LOCAL_TEST )
