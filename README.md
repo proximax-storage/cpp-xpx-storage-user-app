@@ -57,3 +57,16 @@ cmake -DSIRIUS_DRIVE_MULTI=ON ..
 make -j 4
 sudo make install
 ```
+
+### Static link library
+```shell
+cd /cpp-xpx-storage-user-app/build/UserApp
+make clean
+qmake -config release
+make
+```
+
+### View linked library
+```shell
+otool -L StorageClientApp.app/Contents/MacOs/StorageClientApp
+```
