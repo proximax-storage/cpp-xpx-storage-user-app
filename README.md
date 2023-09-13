@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* macOS 12.0 or later (macOS Monterey)
+* ***macOS 12.0 or later (macOS Monterey)***
 * C++ compliler with C++20 support
 * CMake 3.9 or higher
 * [Conan] (https://conan.io)
@@ -12,6 +12,34 @@
 
 
 ## Build for MacOS
+### Install Xcode Command Line Tools (CLT)
+```shell
+xcode-select --install
+```
+
+### Install Homebrew
+```shell
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Install dependencies/tools
+```shell
+brew install cmake
+```
+```shell
+brew install conan
+```
+```shell
+brew install qt
+```
+```shell
+brew install boost
+```
+```shell
+brew install cereal
+```
+
+### Clone repo
 ```shell
 git clone https://github.com/proximax-storage/cpp-xpx-storage-user-app.git
 cd cpp-xpx-storage-user-app
