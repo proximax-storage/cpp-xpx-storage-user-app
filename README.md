@@ -2,6 +2,7 @@
 
 ## Prerequisites
 
+* macOS 12.0 or later (macOS Monterey)
 * C++ compliler with C++20 support
 * CMake 3.9 or higher
 * [Conan] (https://conan.io)
