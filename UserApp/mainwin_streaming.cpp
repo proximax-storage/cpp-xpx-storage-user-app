@@ -867,7 +867,7 @@ void MainWin::onStartStreamingBtn()
 
             //TODO!!!
 //            {
-//                //delete m_streamingView;
+//                delete m_streamingView;
 //                m_streamingView = new StreamingView( [this] {cancelStreaming();}, [this] {finishStreaming();}, this );
 //                m_streamingView->setWindowModality(Qt::WindowModal);
 //                m_streamingView->show();
@@ -875,20 +875,19 @@ void MainWin::onStartStreamingBtn()
 //                return;
 //            }
             
-//            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount );
-//            qDebug () << "streamStart: txHashString: " << txHashString.c_str();
-//            auto txHash = rawHashFromHex( txHashString.c_str() );
-//
-//            gStorageEngine->startStreaming( txHash,
-//                                           driveKeyHex, m3u8Playlist,
-//                                           chuncksFolder,
-//                                           torrentsFolder,
-//                                           endPointList );
-//
-//            drive->setModificationHash( txHash, true );
-            drive->setModificationHash( {}, true );
-            drive->updateDriveState(canceled); //todo
-            drive->updateDriveState(no_modifications); //todo
+            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount );
+            qDebug () << "streamStart: txHashString: " << txHashString.c_str();
+            auto txHash = rawHashFromHex( txHashString.c_str() );
+
+            gStorageEngine->startStreaming( txHash,
+                                           driveKeyHex, m3u8Playlist,
+                                           chuncksFolder,
+                                           torrentsFolder,
+                                           endPointList );
+
+            drive->setModificationHash( txHash, true );
+//            drive->updateDriveState(canceled); //todo
+//            drive->updateDriveState(no_modifications); //todo
             drive->updateDriveState(registering);
         }
         catch (...) {
