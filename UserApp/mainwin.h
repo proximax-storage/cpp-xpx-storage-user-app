@@ -11,6 +11,7 @@
 #include "Worker.h"
 #include "OnChainClient.h"
 #include "types.h"
+#include "CustomLogsRedirector.h"
 #include "drive/FlatDrive.h"
 
 QT_BEGIN_NAMESPACE
@@ -258,4 +259,8 @@ private:
     Worker*                 mpWorker;
     QThread*                mpThread;
     std::map<QUuid, std::function<void(QVariant)>> mResolvers;
+
+    std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
+    std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
+    std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 };

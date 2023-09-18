@@ -58,6 +58,9 @@ MainWin::MainWin(QWidget *parent)
     , m_XPX_MOSAIC_ID(0)
     , mpWorker(new Worker)
     , mpThread(new QThread)
+    , mpCustomCoutStream(std::make_shared<CustomLogsRedirector>(std::cout))
+    , mpCustomCerrorStream(std::make_shared<CustomLogsRedirector>(std::cerr))
+    , mpCustomClogStream(std::make_shared<CustomLogsRedirector>(std::clog))
 {
     ui->setupUi(this);
     m_instance = this;
@@ -232,8 +235,8 @@ void MainWin::init()
                             }
 
                             const auto rootHashUpperCase = QString::fromStdString(sirius::drive::toString(drive->getRootHash())).toUpper().toStdString();
-                            auto fsTreeSaveFolder = getFsTreesFolder().string() + "/" + rootHashUpperCase;
-                            bool isFsTreeExists = fs::exists( fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME );
+                            auto fsTreeSaveFolder = getFsTreesFolder() / rootHashUpperCase;
+                            bool isFsTreeExists = fs::exists( (fsTreeSaveFolder / FS_TREE_FILE_NAME).make_preferred() );
 
                             const auto remoteRootHash = rawHashFromHex(remoteDrive.data.rootHash.c_str());
                             if (!isFsTreeExists && drive->getRootHash() == remoteRootHash && Model::isZeroHash(remoteRootHash)) {
@@ -244,7 +247,7 @@ void MainWin::init()
                                 outdatedDrives.push_back(drive);
                             } else if (isFsTreeExists && drive->getRootHash() == remoteRootHash) {
                                 sirius::drive::FsTree fsTree;
-                                fsTree.deserialize(fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME);
+                                fsTree.deserialize((fsTreeSaveFolder / FS_TREE_FILE_NAME).make_preferred());
                                 drive->setFsTree(fsTree);
                             }
                         }
@@ -855,6 +858,7 @@ MainWin::~MainWin()
     }
     
     m_model->endStorageEngine();
+
     delete ui;
 }
 
@@ -1159,6 +1163,7 @@ void MainWin::onDownloadBtn()
 
     if (m_channelFsTreeTableModel->getSelectedRows().empty()) {
         qInfo() << "MainWin::onDownload. Select at least one row";
+        onErrorsHandler(ErrorType::InvalidData, "Select at least one row!");
         return;
     }
 
@@ -1439,7 +1444,7 @@ void MainWin::onErrorsHandler(int errorType, const QString& errorText)
 
         case ErrorType::Storage:
         {
-            const auto finalErrorMessage = errorText + QString::fromStdString(m_model->getUdpPort());
+            const auto finalErrorMessage = errorText + " UDP Port: " + QString::fromStdString(m_model->getUdpPort());
             showNotification(finalErrorMessage);
             addNotification(finalErrorMessage);
             qWarning () << "MainWin::onErrorsHandler. Storage error: " << finalErrorMessage;
