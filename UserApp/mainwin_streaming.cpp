@@ -987,8 +987,8 @@ void MainWin::finishStreaming()
 
 void MainWin::cancelStreaming()
 {
-    Drive* drive = currentStreamingDrive();
-    assert( drive != nullptr );
+    auto drive = currentStreamingDrive();
+    assert( drive );
     
     QMessageBox msgBox;
     msgBox.setText( "Confirmation" );
@@ -1012,6 +1012,7 @@ void MainWin::cancelStreaming()
     {
         drive->updateDriveState(uploading);
     }
+
     drive->updateDriveState(canceling);
 }
 
