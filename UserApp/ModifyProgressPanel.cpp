@@ -33,6 +33,7 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
     {
         ui->m_title->setWindowTitle("Streaming status");
     }
+
     ui->m_title->setAlignment(Qt::AlignCenter);
     setGeometry( QRect( x, y, 280, 130) );
     setFrameShape( QFrame::StyledPanel );
@@ -47,11 +48,18 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
         {
             auto drive = mp_model->currentDrive();
             if (drive) {
-                if (ui->m_cancel->text() == "Cancel") {
-                    m_cancelModificationFunc();
-                } else {
-                    setVisible(false);
-                    drive->updateDriveState(no_modifications);
+                switch (drive->getState())
+                {
+                    case uploading:
+                    case contract_deploying:
+                    {
+                        m_cancelModificationFunc();
+                        break;
+                    }
+                    default:
+                    {
+                        qDebug () << "ModifyProgressPanel::cancel: invalid operation. Drive key:" << drive->getKey() << " state: " << drive->getState();
+                    }
                 }
             } else {
                 qWarning () << "ModifyProgressPanel::cancel: invalid drive";
