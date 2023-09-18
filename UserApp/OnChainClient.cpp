@@ -147,7 +147,16 @@ void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
 }
 
 void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveId) {
-    mpTransactionsEngine->cancelDataModification(driveId);
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),[this](auto drive, auto isSuccess, auto message, auto code)
+    {
+        if (!isSuccess) {
+            qWarning() << "OnChainClient::cancelDataModification. Drive key: " << drive.data.multisig.c_str() << " Message: " << message.c_str() << " code: " << code.c_str();
+            emit newError(ErrorType::Network, message.c_str());
+            return;
+        }
+
+        mpTransactionsEngine->cancelDataModification(drive);
+    });
 }
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
