@@ -320,29 +320,20 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &driveKey) {
-    QString drivePubKey = rawHashToHex(driveKey);
-    if (!mDataModifications.contains(driveKey) || mDataModifications[driveKey].empty() ) {
-        qWarning() << "TransactionsEngine::cancelDataModification. Not active modifications found! Drive key: " << drivePubKey;
+void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& drive) {
+    if (drive.data.activeDataModifications.empty()) {
+        qWarning() << "TransactionsEngine::cancelDataModification. Not active modifications found! Drive key: " << drive.data.multisig;
         return;
     }
 
-    const unsigned long lastModificationIndex = mDataModifications[driveKey].size() - 1;
-    ModificationEntity lastModification = mDataModifications[driveKey][lastModificationIndex];
-    if (!lastModification.isConfirmed && !lastModification.isApproved) {
-        qInfo() << "TransactionsEngine::cancelDataModification. Mark modification for execution: " << rawHashToHex(lastModification.id);
-        mDataModifications[driveKey][lastModificationIndex].isApproved = true;
-        return;
-    }
+    const unsigned long lastModificationIndex = drive.data.activeDataModifications.size() - 1;
+    const auto currentModification = drive.data.activeDataModifications[lastModificationIndex].dataModification;
 
     xpx_chain_sdk::Key rawDriveKey;
-    xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), rawDriveKey);
-
-    const auto modificationId = lastModification.id;
-    const QString modificationHex = rawHashToHex(modificationId);
+    xpx_chain_sdk::ParseHexStringIntoContainer(drive.data.multisig.c_str(), drive.data.multisig.size(), rawDriveKey);
 
     xpx_chain_sdk::Hash256 modificationHash256;
-    xpx_chain_sdk::ParseHexStringIntoContainer(modificationHex.toStdString().c_str(), modificationHex.size(), modificationHash256);
+    xpx_chain_sdk::ParseHexStringIntoContainer(currentModification.id.c_str(), currentModification.id.size(), modificationHash256);
 
     auto dataModificationCancelTransaction = xpx_chain_sdk::CreateDataModificationCancelTransaction(rawDriveKey, modificationHash256,
                                                                                                     std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
@@ -352,9 +343,11 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationCancelNotifier;
 
     const std::string hash = rawHashToHex(dataModificationCancelTransaction->hash()).toStdString();
-    qInfo() << "TransactionsEngine::cancelDataModification. Started 'cancel modification': " << modificationHex << " transaction id: " << hash;
+    qInfo() << "TransactionsEngine::cancelDataModification. Started 'cancel modification': " << currentModification.id << " transaction id: " << hash;
 
-    statusNotifier.set([this, hash, driveKey, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), modificationHex](
+    const auto driveKeyRaw = rawHashFromHex(drive.data.multisig.c_str());
+    const QString currentModificationHex = QString::fromStdString(currentModification.id);
+    statusNotifier.set([this, hash, driveKeyRaw, dataModificationCancelNotifierId = dataModificationCancelNotifier.getId(), currentModificationHex](
             const auto& id,
             const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
@@ -363,14 +356,16 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
             removeConfirmedAddedNotifier(mpChainAccount->address(), dataModificationCancelNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit cancelModificationFailed(driveKey, modificationHex);
+            emit cancelModificationFailed(driveKeyRaw, currentModificationHex);
         }
     });
 
     mpChainClient->notifications()->addStatusNotifiers(mpChainAccount->address(), { statusNotifier }, {},
                                                        [](auto errorCode) {qCritical() << LOG_SOURCE << errorCode.message().c_str(); });
 
-    dataModificationCancelNotifier.set([this, hash, modificationId, statusNotifierId = statusNotifier.getId(), driveKey, drivePubKey, modificationHex](
+    const auto activeModifications = drive.data.activeDataModifications;
+    const auto driveKey = drive.data.multisig;
+    dataModificationCancelNotifier.set([this, activeModifications, hash, currentModification, driveKey, statusNotifierId = statusNotifier.getId()](
             const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
             qInfo() << "TransactionsEngine::cancelDataModification: " << "confirmed dataModificationCancelTransaction hash: " << hash.c_str();
@@ -378,25 +373,25 @@ void TransactionsEngine::cancelDataModification(const std::array<uint8_t, 32> &d
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
 
-            auto iterator = std::find_if(mDataModifications[driveKey].begin(), mDataModifications[driveKey].end(), [&](const auto& modification) {
-                return modification.id == modificationId;
+            auto iterator = std::find_if(activeModifications.begin(), activeModifications.end(), [&](const auto& modification) {
+                return boost::iequals(modification.dataModification.id, currentModification.id);
             });
 
-            if (iterator == mDataModifications[driveKey].end()) {
-                qWarning() << "TransactionsEngine::cancelDataModification: data modification not found: " << hash << " drive id: " << drivePubKey;
-            } else {
-                mDataModifications[driveKey].erase(iterator);
+            if (iterator == activeModifications.end()) {
+                qWarning() << "TransactionsEngine::cancelDataModification: data modification not found: " << hash << " drive id: " << driveKey;
             }
+            else
+            {
+                const std::string pathToSandbox = getSettingsFolder().string() + "/" + driveKey + mSandbox;
+                const QString pathToActionList = findFile(currentModification.id.c_str(), pathToSandbox.c_str());
+                if (pathToActionList.isEmpty()) {
+                    qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << pathToSandbox;
+                } else {
+                    removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+                }
 
-            const std::string pathToSandbox = getSettingsFolder().string() + "/" + drivePubKey.toStdString() + mSandbox;
-            const QString pathToActionList = findFile(modificationHex, pathToSandbox.c_str());
-            if (pathToActionList.isEmpty()) {
-                qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << pathToSandbox;
-            } else {
-                removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+                emit cancelModificationConfirmed(rawHashFromHex(driveKey.c_str()), currentModification.id.c_str());
             }
-
-            emit cancelModificationConfirmed(driveKey, modificationHex);
         }
     });
 
@@ -425,6 +420,8 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
     };
 
     const std::string pathToSandbox = getSettingsFolder().string() + "/" + rawHashToHex(driveId).toStdString() + mSandbox;
+    qDebug() << "TransactionsEngine::applyDataModification. Path to sandbox: " << std::filesystem::path(pathToSandbox).make_preferred().string();
+
     emit addActions(actions, driveId, pathToSandbox, replicators, callback);
 }
 
@@ -519,7 +516,6 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> replicatorsStatusNotifier;
 
     const std::string hash = rawHashToHex(dataModificationTransaction->hash()).toStdString();
-    qInfo() << "TransactionsEngine::sendModification: modification id 1: " << hash;
     std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
 
     if (uploadSize == 0 || totalModifyDataSize == 0) {
@@ -537,7 +533,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     modificationEntity.id = modificationId;
 
     mDataModifications[driveId].push_back(modificationEntity);
-    qInfo() << "TransactionsEngine::sendModification: modification id 2: " << rawHashToHex(mDataModifications[driveId][mDataModifications[driveId].size() - 1].id);
+
     emit modificationCreated(driveKeyHex, modificationId);
 
     statusNotifier.set([this, driveId, hash, modificationId, driveKeyHex, replicators,
@@ -588,7 +584,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                 if (modificationEntity.id == modificationId) {
                     modificationEntity.isConfirmed = true;
                     if (modificationEntity.isApproved) {
-                        cancelDataModification(driveId);
+                        //cancelDataModification(driveId);
                     }
 
                     return;
@@ -899,7 +895,7 @@ QString TransactionsEngine::findFile(const QString& fileName, const QString& dir
 
 void TransactionsEngine::removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox) {
     sirius::drive::ActionList actionList;
-    actionList.deserialize(pathToActionList.toStdString());
+    actionList.deserialize(std::filesystem::path(pathToActionList.toStdString()).make_preferred());
 
     for (const auto& action : actionList) {
         if (action.m_actionId == sirius::drive::action_list_id::upload) {

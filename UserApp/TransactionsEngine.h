@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <xpxchaincpp/sdk.h>
+#include <xpxchaincpp/model/storage/drive.h>
 #include <BlockchainEngine.h>
 #include <utils/HexFormatter.h>
 #include <drive/ActionList.h>
@@ -32,7 +33,7 @@ class TransactionsEngine : public QObject
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
         std::string addDrive(const uint64_t& driveSize, ushort replicatorsCount);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
-        void cancelDataModification(const std::array<uint8_t, 32> &driveKey);
+        void cancelDataModification(const xpx_chain_sdk::Drive& drive);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::vector<xpx_chain_sdk::Address>& addresses,
