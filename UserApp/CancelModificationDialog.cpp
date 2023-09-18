@@ -10,7 +10,7 @@ CancelModificationDialog::CancelModificationDialog(OnChainClient* onChainClient,
     , mDriveId(driveId)
 {
     setWindowTitle("Confirmation");
-    setText("Please confirm canceling last modification for drive: " + alias);
+    setText("Please confirm canceling last modification for the drive: " + alias);
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Cancel);
     button(QMessageBox::Ok)->setText("Confirm");
