@@ -24,6 +24,7 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
                                                   const std::vector<std::string>& replicators)
 {
     auto driveKey = rawHashToHex(driveId.array()).toStdString();
+    qDebug() << "StorageEngine::addActions. Drive key: " << driveKey << " Path to sandbox: " << sandboxFolder;
     if (replicators.empty()) {
         qWarning () << "StorageEngine::addActions. Replicators list is empty! Drive key: " << driveKey;
     }
@@ -37,7 +38,14 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
     drive->setReplicators(replicators);
     m_session->addReplicatorList( drive->getReplicators() );
 
-    return m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize);
+    std::error_code ec;
+    auto hash = m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize, {}, ec);
+    if (ec) {
+        qCritical () << "StorageEngine::addActionListToSession. Error: " << ec.message() << " code: " << ec.value();
+        emit newError(ErrorType::Storage, ec.message().c_str());
+    }
+
+    return hash;
 }
 
 void StorageEngine::start()
@@ -167,7 +175,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     qDebug() << "StorageEngine::downloadFsTree. downloadFsTree(): m_session->download(...";
 
     const auto fsTreeHashUpperCase = QString::fromStdString(sirius::drive::toString(fsTreeHash)).toUpper().toStdString();
-    auto fsTreeSaveFolder = getFsTreesFolder().string() + "/" + fsTreeHashUpperCase;
+    auto fsTreeSaveFolder = getFsTreesFolder() / fsTreeHashUpperCase;
 
     auto notification = [this, driveId, fsTreeSaveFolder](sirius::drive::download_status::code code,
                                                             const sirius::drive::InfoHash& infoHash,
@@ -175,11 +183,11 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
                                                             size_t /*downloaded*/,
                                                             size_t /*fileSize*/,
                                                             const std::string& /*errorText*/) {
-        qDebug() <<"StorageEngine::downloadFsTree. fstree received: " << fsTreeSaveFolder;
+        qDebug() <<"StorageEngine::downloadFsTree. fstree received: " << fsTreeSaveFolder.string();
         sirius::drive::FsTree fsTree;
         try
         {
-            fsTree.deserialize( fsTreeSaveFolder + "/" + FS_TREE_FILE_NAME );
+            fsTree.deserialize( (fsTreeSaveFolder / FS_TREE_FILE_NAME).make_preferred() );
         } catch (const std::runtime_error& ex )
         {
             qDebug() << "StorageEngine::downloadFsTree. Invalid fsTree: " << ex.what();
@@ -191,7 +199,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     };
 
     sirius::drive::DownloadContext downloadContext(sirius::drive::DownloadContext::fs_tree, notification, fsTreeHash, channelId, 0);
-    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, "", {}, replicators);
+    m_session->download(std::move(downloadContext), channelId, fsTreeSaveFolder, {}, {}, replicators);
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
@@ -239,8 +247,8 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                                     ""
                                 ),
                        channelId,
-                       mp_model->getDownloadFolder().string(),
-                       "",
+                       mp_model->getDownloadFolder().make_preferred(),
+                                       {},
                        {},
                        replicators );
     return handle;
