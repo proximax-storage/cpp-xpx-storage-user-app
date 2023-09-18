@@ -382,12 +382,13 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
             }
             else
             {
-                const std::string pathToSandbox = getSettingsFolder().string() + "/" + driveKey + mSandbox;
-                const QString pathToActionList = findFile(currentModification.id.c_str(), pathToSandbox.c_str());
+                std::filesystem::path pathToSandbox = getSettingsFolder().string() + "/" + driveKey + mSandbox;
+                const auto preferredPathFormat = pathToSandbox.make_preferred().string();
+                const QString pathToActionList = findFile(currentModification.id.c_str(), preferredPathFormat.c_str());
                 if (pathToActionList.isEmpty()) {
-                    qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << pathToSandbox;
+                    qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << preferredPathFormat.c_str();
                 } else {
-                    removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+                    removeDriveModifications(pathToActionList, preferredPathFormat.c_str());
                 }
 
                 emit cancelModificationConfirmed(rawHashFromHex(driveKey.c_str()), currentModification.id.c_str());
@@ -481,7 +482,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
     for (const auto & action : actions) {
         if (action.m_actionId == sirius::drive::action_list_id::upload) {
-            const QString path = action.m_param1.c_str();
+            const QString path = QDir::toNativeSeparators(action.m_param1.c_str());
             qInfo() << "TransactionsEngine::sendModification. path for upload: " << path;
 
             if (!QFile::exists(path)) {
@@ -875,7 +876,7 @@ void TransactionsEngine::onError(const std::string& transactionId, boost::beast:
 
 QString TransactionsEngine::findFile(const QString& fileName, const QString& directory) {
     QFileInfoList hitList;
-    QDirIterator it(directory, QDirIterator::Subdirectories);
+    QDirIterator it(QDir::toNativeSeparators(directory), QDirIterator::Subdirectories);
 
     while (it.hasNext()) {
         QString filename = it.next();
