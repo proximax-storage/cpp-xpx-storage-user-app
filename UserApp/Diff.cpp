@@ -7,28 +7,28 @@
 
 void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calculateHashes, std::array<uint8_t,32>* driveKey )
 {
-    if ( ! fs::exists(path) || ! fs::is_directory(path) )
+    if ( ! fs::exists(path.make_preferred()) || ! fs::is_directory(path.make_preferred()) )
     {
         return;
     }
 
-    for( const auto& entry : std::filesystem::directory_iterator(path) )
+    for( const auto& entry : std::filesystem::directory_iterator(path.make_preferred()) )
     {
-        const auto entryName = entry.path().filename().string();
+        const auto entryName = entry.path().filename().make_preferred();
         if ( entry.is_directory() )
         {
             std::error_code errorCode(errno, std::generic_category());
             auto lastWriteTime = fs::last_write_time(entry, errorCode);
 
             if (errorCode.value() == 0) {
-                LocalDriveItem child{ true, entryName, 0, "", {}, lastWriteTime };
-                calcLocalDriveInfoR( child, fs::path(path.string() + "/" + entryName), calculateHashes, driveKey );
-                parent.m_childs[entryName] = std::move(child);
+                LocalDriveItem child{ true, entryName.string(), 0, "", {}, lastWriteTime };
+                calcLocalDriveInfoR( child, (path / entryName).make_preferred(), calculateHashes, driveKey );
+                parent.m_childs[entryName.string()] = std::move(child);
             } else {
                 qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message();
             }
         }
-        else if ( entry.is_regular_file() && entryName != ".DS_Store" )
+        else if ( entry.is_regular_file() && entryName.string() != ".DS_Store" )
         {
             size_t fileSize = entry.file_size();
 
@@ -41,14 +41,14 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 }
                 else
                 {
-                    hash = sirius::drive::calculateInfoHash(path.string() + "/" + entryName, sirius::Key(*driveKey) ).array();
+                    hash = sirius::drive::calculateInfoHash((path / entryName).make_preferred(), sirius::Key(*driveKey) ).array();
                 }
 
                 std::error_code errorCode(errno, std::generic_category());
-                auto lastWriteTime = fs::last_write_time(entry, errorCode);
+                auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
                 if (errorCode.value() == 0) {
-                    parent.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, lastWriteTime };
+                    parent.m_childs[entryName.string()] = LocalDriveItem{ false, entryName.string(), fileSize, hash.array(), {}, lastWriteTime };
                 } else {
                     qWarning () << "Diff::calcLocalDriveInfoR. entry.is_regular_file(). Error code: " << errorCode.value() << " message: " << errorCode.message();
                 }
@@ -56,10 +56,10 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
             else
             {
                 std::error_code errorCode(errno, std::generic_category());
-                auto lastWriteTime = fs::last_write_time(entry, errorCode);
+                auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
                 if (errorCode.value() == 0) {
-                    parent.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, {}, {}, lastWriteTime };
+                    parent.m_childs[entryName.string()] = LocalDriveItem{ false, entryName.string(), fileSize, {}, {}, lastWriteTime };
                 } else {
                     qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message();
                 }
@@ -73,14 +73,14 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
                                   fs::path                  fsPath,
                                   std::array<uint8_t,32>&   driveKey )
 {
-    for( const auto& entry : std::filesystem::directory_iterator(fsPath) )
+    for( const auto& entry : std::filesystem::directory_iterator(fsPath.make_preferred()) )
     {
         const auto entryName = entry.path().filename().string();
 
         if ( entry.is_directory() )
         {
             std::error_code errorCode(errno, std::generic_category());
-            auto lastWriteTime = fs::last_write_time(entry, errorCode);
+            auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
             if (errorCode.value() == 0) {
                 LocalDriveItem child{ true, entryName, 0, "", {}, lastWriteTime };
@@ -88,11 +88,11 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
                 auto oldIt = oldRoot.m_childs.find( entryName );
                 if ( oldIt != oldRoot.m_childs.end() && oldIt->second.m_isFolder )
                 {
-                    updateLocalDriveInfoR( child, oldIt->second, fs::path(fsPath.string() + "/" + entryName), driveKey );
+                    updateLocalDriveInfoR( child, oldIt->second, fs::path(fsPath.string() + "/" + entryName).make_preferred(), driveKey );
                 }
                 else
                 {
-                    updateLocalDriveInfoR( child, {}, fs::path(fsPath.string() + "/" + entryName), driveKey );
+                    updateLocalDriveInfoR( child, {}, fs::path(fsPath.string() + "/" + entryName).make_preferred(), driveKey );
                 }
 
                 newRoot.m_childs[entryName] = std::move(child);
@@ -108,7 +108,7 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             if ( oldIt != oldRoot.m_childs.end() && ! oldIt->second.m_isFolder )
             {
                 std::error_code errorCode(errno, std::generic_category());
-                auto modifyTime = fs::last_write_time(fs::path(fsPath.string() + "/" + entryName), errorCode);
+                auto modifyTime = fs::last_write_time((fsPath/ entryName).make_preferred(), errorCode);
 
                 if (errorCode.value() == 0) {
                     if ( modifyTime == oldIt->second.m_modifyTime )
@@ -128,11 +128,11 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             }
             else
             {
-                hash = sirius::drive::calculateInfoHash( fsPath.string() + "/" + entryName, sirius::Key(driveKey) ).array();
+                hash = sirius::drive::calculateInfoHash( (fsPath / entryName).make_preferred(), sirius::Key(driveKey) ).array();
             }
 
             std::error_code errorCode(errno, std::generic_category());
-            auto modifyTime = fs::last_write_time(entry, errorCode);
+            auto modifyTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
             if (errorCode.value() == 0) {
                 newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, modifyTime };
@@ -162,9 +162,9 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
     for( auto& [name, localChild] : localChilds )
     {
         // Logic path of file/folder on the drive
-        fs::path childPath = localFolderPath.string() + "/" + name;
-        fs::path fsChildPath = fsPath.empty() ? fs::path(localChild.m_name) : fs::path(fsPath.string() + "/" + name);
-        qDebug() << LOG_SOURCE << "!!! fsChildPath: " << fsChildPath.string().c_str();
+        fs::path childPath = localFolderPath / name;
+        fs::path fsChildPath = fsPath.empty() ? fs::path(localChild.m_name) : fs::path(fsPath / name);
+        qDebug() << "Diff::calcDiff !!! fsChildPath: " << fsChildPath.string().c_str();
 
         // check that file (or folder) exists on the drive
         //
@@ -249,7 +249,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
             if ( localChild.m_isFolder )
             {
                 // add local folder
-                addFolderWithChilds( localChild, childPath, fsChildPath );
+                addFolderWithChilds( localChild, childPath.make_preferred(), fsChildPath );
                 localChild.m_ldiStatus = ldi_added;
             }
             else
@@ -330,7 +330,7 @@ void Diff::removeFolderWithChilds( const sirius::drive::Folder& remoteFolder, Lo
         if ( isFolder(child) )
         {
             LocalDriveItem folder{ true,name,{},0,{},{},ldi_removed};
-            removeFolderWithChilds( getFolder(child), folder, fs::path(path.string() + "/" + name));
+            removeFolderWithChilds( getFolder(child), folder, path / name);
 
             localFolder.m_childs[name] = std::move(folder);
         }
@@ -349,13 +349,13 @@ void Diff::addFolderWithChilds( LocalDriveItem& localFolder,
     {
         if ( item.m_isFolder )
         {
-            addFolderWithChilds( item, localFolderPath.string() + "/" + name, path.string() + "/" + name );
+            addFolderWithChilds( item, localFolderPath / name, path / name );
         }
         else
         {
             if ( item.m_size > 0 )
             {
-                m_diffActionList.push_back( sirius::drive::Action::upload(localFolderPath.string() + "/" + name, path.string() + "/" + name) );
+                m_diffActionList.push_back( sirius::drive::Action::upload((localFolderPath / name).string(), (path / name).string()) );
                 item.m_ldiStatus = ldi_added;
             }
         }
