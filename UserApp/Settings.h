@@ -60,4 +60,5 @@ class Settings : public QObject
         std::vector<Account>    m_accounts;
         int                     m_currentAccountIndex = -1;
         bool                    m_loaded = false;
+        fs::path                m_configPath;
 };

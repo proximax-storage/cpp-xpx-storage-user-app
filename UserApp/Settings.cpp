@@ -1,5 +1,3 @@
-//#include "moc_Settings.cpp"
-
 #include "Settings.h"
 #include "Model.h"
 #include "StorageEngine.h"
@@ -8,10 +6,7 @@
 #include <filesystem>
 
 #include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/map.hpp>
 #include <cereal/archives/portable_binary.hpp>
-#include <cereal/archives/json.hpp>
 
 #include <QDebug>
 #include <QMessageBox>
@@ -19,6 +14,7 @@
 Settings::Settings(QObject *parent)
     : QObject(parent)
     , m_isDriveStructureAsTree(false)
+    , m_configPath(fs::path(getSettingsFolder().string() + "/config").make_preferred())
 {
 }
 
@@ -88,21 +84,26 @@ bool Settings::load( const std::string& pwd )
 {
     try
     {
-        fs::path filePath = fs::path(getSettingsFolder().string() + "/config");
+        std::error_code ec;
+        bool isExists = fs::exists( m_configPath, ec );
+        if (ec)
+        {
+            qCritical () << "Settings::load. fs::exists error: " << ec.message() << " code: " << std::to_string(ec.value()) << " path: " << m_configPath.string();
+            return false;
+        }
 
-        if ( ! fs::exists( filePath ) )
+        if ( ! isExists )
         {
             return false;
         }
 
-        std::ifstream ifStream( filePath, std::ios::binary );
+        std::ifstream ifStream( m_configPath, std::ios::binary );
 
         std::ostringstream os;
         os << ifStream.rdbuf();
 
         std::istringstream is( os.str(), std::ios::binary );
         cereal::PortableBinaryInputArchive iarchive( is );
-        //cereal::XMLInputArchive iarchive( is );
 
         bool isCorrupted = false;
 
@@ -121,6 +122,7 @@ bool Settings::load( const std::string& pwd )
                 {
                     exit(1);
                 }
+
                 return false;
             }
 
@@ -157,10 +159,10 @@ bool Settings::load( const std::string& pwd )
         if ( isCorrupted || m_accounts.size() <= size_t(m_currentAccountIndex) )
         {
             std::cerr << "Your config data is corrupted" << std::endl;
-            std::cerr << filePath << std::endl;
+            std::cerr << m_configPath << std::endl;
             QMessageBox msgBox;
             msgBox.setText( QString::fromStdString( "Your config data is corrupted" ) );
-            msgBox.setInformativeText( QString::fromStdString( filePath.string() ) );
+            msgBox.setInformativeText( QString::fromStdString( m_configPath.string() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
             exit(1);
@@ -195,9 +197,16 @@ bool Settings::load( const std::string& pwd )
 void Settings::save()
 {
     std::error_code ec;
-    if ( ! fs::exists( getSettingsFolder(), ec ) )
+    bool isExists = fs::exists( getSettingsFolder().make_preferred(), ec );
+    if (ec)
     {
-        fs::create_directories( getSettingsFolder(), ec );
+        qCritical () << "Settings::save. fs::exists error: " << ec.message() << " code: " << std::to_string(ec.value());
+        return;
+    }
+
+    if ( ! isExists )
+    {
+        fs::create_directories( getSettingsFolder().make_preferred(), ec );
         if ( ec )
         {
             QMessageBox msgBox;
@@ -205,6 +214,10 @@ void Settings::save()
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
+
+            qCritical () << "Settings::save. fs::create_directories error: " << ec.message() << " code: " << std::to_string(ec.value())
+                         << " path: " << getSettingsFolder().make_preferred().string();
+
             exit(1);
         }
     }
@@ -229,17 +242,18 @@ void Settings::save()
         archive( m_windowGeometry.height() );
         archive( m_isDriveStructureAsTree );
 
-        std::ofstream fStream( getSettingsFolder() / "config", std::ios::binary );
+        std::ofstream fStream( m_configPath, std::ios::binary );
         fStream << os.str();
         fStream.close();
     }
     catch( const std::exception& ex )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + (getSettingsFolder() / "config").string() ) );
+        msgBox.setText( QString::fromStdString( "Cannot save settings in file: " + m_configPath.string() ) );
         msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();
+        qCritical () << "Settings::save. msgBox error: " << msgBox.text();
         exit(1);
     }
 
@@ -254,11 +268,11 @@ bool Settings::loaded() const
 std::vector<std::string> Settings::accountList()
 {
     std::vector<std::string> list;
-
     for( const auto& account : m_accounts )
     {
         list.push_back( account.m_accountName );
     }
+
     return list;
 }
 
@@ -300,12 +314,11 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
         {
             if ( dnInfo.getHandle() == handle )
             {
-                fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash()) );
-                fs::path destPath = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName());
+                fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
+                fs::path destPath = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
                 qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath.c_str();
 
                 std::error_code ec;
-
                 if ( ! fs::exists( destPath.parent_path(), ec ) )
                 {
                     fs::create_directories( destPath.parent_path(), ec );
@@ -331,7 +344,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     auto newName = fs::path(dnInfo.getFileName()).stem().string()
                                     + " (" + std::to_string(index) + ")"
                                     + fs::path(dnInfo.getFileName()).extension().string();
-                    destPath = fs::path(dnInfo.getSaveFolder() + "/" + newName);
+                    destPath = fs::path(dnInfo.getSaveFolder() + "/" + newName).make_preferred();
                     dnInfo.setFileName(newName);
                 }
 
@@ -401,13 +414,29 @@ void Settings::removeFromDownloads( int index )
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        fs::remove( downloadFolder().string() + "/" + dnInfo.getFileName(), ec );
-        qDebug() << "Settings::removeFromDownloads. Remove(1): " << downloadFolder().string() + "/" + dnInfo.getFileName() << " ec=" << ec.message().c_str();
+        const std::string path = fs::path(downloadFolder().string() + "/" + dnInfo.getFileName()).make_preferred().string();
+        fs::remove( path, ec );
+        if (ec)
+        {
+            qCritical () << "Settings::save. fs::remove error: " << ec.message() << " code: " + std::to_string(ec.value()) << " path: " << path;
+        }
+        else
+        {
+            qDebug() << "Settings::removeFromDownloads. Remove(1): " << path;
+        }
     }
     else if ( hashCounter == 1 )
     {
-        fs::remove( downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash()), ec );
-        qDebug() << "Settings::removeFromDownloads. Remove(2): " << downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash()) << " ec=" << ec.message().c_str();
+        const std::string path = fs::path(downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash())).make_preferred().string();
+        fs::remove( path, ec );
+        if (ec)
+        {
+            qCritical () << "Settings::save. fs::remove error: " << ec.message() << " code: " + std::to_string(ec.value()) << " path: " << path;
+        }
+        else
+        {
+            qDebug() << "Settings::removeFromDownloads. Remove(2): " << path;
+        }
     }
 
     config().m_downloads.erase( config().m_downloads.begin()+index );
