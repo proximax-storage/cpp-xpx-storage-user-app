@@ -392,15 +392,29 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         }
 
         Drive& currentDrive = drives[QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString()];
-        if ( ! remoteDrive.data.activeDataModifications.empty() &&
-             ! remoteDrive.data.activeDataModifications[remoteDrive.data.activeDataModifications.size() - 1].dataModification.isStream) {
+        if (remoteDrive.data.activeDataModifications.empty())
+        {
+            continue;
+        }
+        else if (remoteDrive.data.activeDataModifications[remoteDrive.data.activeDataModifications.size() - 1].dataModification.isStream)
+        {
+            // For stream modification
+            auto lastModificationIndex = remoteDrive.data.activeDataModifications.size();
+            auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
 
+            currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
+            currentDrive.updateDriveState(registering);
+            currentDrive.updateDriveState(uploading);
+        }
+        else
+        {
+            // For modifications
             auto lastModificationIndex = remoteDrive.data.activeDataModifications.size();
             auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
 
             const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + "/modify_drive_data";
-            bool isDirExists = QDir(pathToDriveData.c_str()).exists();
+            bool isDirExists = QDir(QDir::toNativeSeparators(pathToDriveData.c_str())).exists();
             if (isDirExists) {
                 std::map<QString, QFileInfo> filesData;
                 QFileInfoList torrentsList;
