@@ -92,13 +92,13 @@ std::filesystem::path getSettingsFolder()
 #endif
 
     std::error_code ec;
-    if ( ! std::filesystem::exists( path, ec ) )
+    if ( ! std::filesystem::exists( path.make_preferred(), ec ) )
     {
         std::filesystem::create_directories( path, ec );
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + path.string() ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + path.make_preferred().string() ) );
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
