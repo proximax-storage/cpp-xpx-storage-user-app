@@ -28,6 +28,7 @@ void PrivKeyDialog::init()
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 
     setModal(true);
+    setWindowTitle("Create new account");
 
     connect( ui->m_generateKeysBtn, SIGNAL (released()), this, SLOT( onGenerateKeysBtn() ));
     connect( ui->m_loadFromFileBtn, SIGNAL (released()), this, SLOT( onLoadFromFileBtn() ));
