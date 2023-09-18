@@ -56,6 +56,15 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
                         m_cancelModificationFunc();
                         break;
                     }
+                    case approved:
+                    case no_modifications:
+                    case failed:
+                    case canceled:
+                    {
+                        setVisible(false);
+                        drive->updateDriveState(no_modifications);
+                        break;
+                    }
                     default:
                     {
                         qDebug () << "ModifyProgressPanel::cancel: invalid operation. Drive key:" << drive->getKey() << " state: " << drive->getState();
