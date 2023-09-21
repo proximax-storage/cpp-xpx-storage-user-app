@@ -413,6 +413,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
 
+            // TODO: Approach needs to be improved
             const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + "/modify_drive_data";
             bool isDirExists = QDir(QDir::toNativeSeparators(pathToDriveData.c_str())).exists();
             if (isDirExists) {
@@ -432,7 +433,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
                     if (nameTemplate.match(file.fileName()).hasMatch()) {
                         torrentsList.append(file);
                     } else {
-                        filesData.insert_or_assign(file.fileName() + ".torrent", file);
+                        filesData.insert_or_assign(file.fileName(), file);
                     }
                 }
 
