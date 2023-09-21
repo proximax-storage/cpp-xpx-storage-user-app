@@ -83,7 +83,9 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
     stackUnder( this );
 
     ui->horizontalLayout->setAlignment(Qt::AlignCenter);
-    ui->m_statusIcon->setText("");
+    ui->m_statusIcon->setMovie(m_loading);
+    ui->m_statusLabel->setText( "Modification is initializing ");
+    adjustSize();
 }
 
 ModifyProgressPanel::~ModifyProgressPanel()
@@ -104,8 +106,8 @@ void ModifyProgressPanel::setRegistering()
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(m_mode == streaming ); //todo always 'false'
-    ui->m_statusIcon->setMovie(m_loading);
     m_loading->start();
+    ui->m_statusLabel->adjustSize();
     adjustSize();
 }
 
@@ -120,7 +122,10 @@ void ModifyProgressPanel::setUploading()
         ui->m_statusLabel->setText( "Is streaming ...");
         ui->m_cancel->setText("Finish streaming");
     }
+
     ui->m_cancel->setEnabled(true);
+    m_loading->start();
+
     adjustSize();
 }
 
@@ -134,7 +139,10 @@ void ModifyProgressPanel::setApproving()
     {
         ui->m_statusLabel->setText( "Stream is ending...");
     }
+
     ui->m_cancel->setEnabled(false);
+    m_loading->start();
+
     adjustSize();
 }
 
@@ -151,6 +159,7 @@ void ModifyProgressPanel::setApproved()
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
+    m_loading->stop();
     ui->m_statusIcon->setPixmap(*m_loaded);
     ui->m_cancel->setEnabled(true);
     adjustSize();
@@ -169,6 +178,7 @@ void ModifyProgressPanel::setFailed()
     ui->m_cancel->setText("Close");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
+    m_loading->stop();
     ui->m_statusIcon->setPixmap(*m_error);
     ui->m_cancel->setEnabled(true);
     adjustSize();
@@ -186,6 +196,8 @@ void ModifyProgressPanel::setCanceling()
     }
     ui->m_cancel->setEnabled(false);
     ui->m_cancel->setText("Ok");
+    m_loading->start();
+
     adjustSize();
 }
 
@@ -202,19 +214,9 @@ void ModifyProgressPanel::setCanceled()
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
+    m_loading->stop();
     ui->m_statusIcon->setPixmap(*m_loaded);
     ui->m_cancel->setEnabled(true);
-    adjustSize();
-}
-
-void ModifyProgressPanel::setWaitingChannelCreation()
-{
-    ui->m_statusLabel->setText( "Waiting channel creation");
-    ui->m_statusIcon->setScaledContents(false);
-    ui->m_cancel->setText("Cancel");
-    ui->m_cancel->setEnabled(true);
-    ui->m_statusIcon->setMovie(m_loading);
-    m_loading->start();
     adjustSize();
 }
 
@@ -224,7 +226,6 @@ void ModifyProgressPanel::setWaitingStreamStart()
     ui->m_statusIcon->setScaledContents(false);
     ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(true);
-    ui->m_statusIcon->setMovie(m_loading);
     m_loading->start();
     adjustSize();
 }
@@ -233,4 +234,5 @@ void ModifyProgressPanel::updateUploadedDataAmount(const uint64_t amount)
 {
     uint64_t currentAmount = ui->m_requestedSize->text().toULongLong();
     ui->m_requestedSize->setText(QString::number(amount + currentAmount));
+    adjustSize();
 }

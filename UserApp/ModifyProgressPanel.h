@@ -28,8 +28,6 @@ public:
     void setFailed();
     void setCanceling();
     void setCanceled();
-    
-    void setWaitingChannelCreation();
     void setWaitingStreamStart();
 
     void updateUploadedDataAmount(const uint64_t amount);
