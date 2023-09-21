@@ -80,6 +80,7 @@ void MainWin::init()
 
     if ( ! m_model->loadSettings() )
     {
+        initGeometry();
         if ( Model::homeFolder() == "/Users/alex" )
         {
             m_model->initForTests();
@@ -121,7 +122,6 @@ void MainWin::init()
 
     setupIcons();
     setupNotifications();
-    initGeometry();
     setGeometry(m_model->getWindowGeometry());
 
     const std::string privateKey = m_model->getClientPrivateKey();
@@ -799,10 +799,9 @@ void MainWin::init()
 
 void MainWin::initGeometry()
 {
-    QRect basicGeometry;
-    basicGeometry.setWidth(1000);
-    basicGeometry.setHeight(700);
-    m_model->setWindowGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, basicGeometry.size(), basicGeometry));
+    auto basicGeometry = QGuiApplication::primaryScreen()->geometry();
+    QRect rect = QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, { 1000, 800 }, basicGeometry);
+    m_model->setWindowGeometry(rect);
 }
 
 void MainWin::drivesInitialized()

@@ -3,6 +3,7 @@
 #include "PrivKeyDialog.h"
 #include "./ui_SettingsDialog.h"
 
+#include <QScreen>
 #include <QIntValidator>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -199,6 +200,11 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         QToolTip::hideText();
         ui->m_dnFolderField->setProperty("is_valid", true);
         validate();
+    }
+
+    if (initSettings) {
+        auto basicGeometry = QGuiApplication::primaryScreen()->geometry();
+        setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, size(), basicGeometry));
     }
 
     setToolTipDuration(10);

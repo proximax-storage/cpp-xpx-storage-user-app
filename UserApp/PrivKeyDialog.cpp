@@ -83,6 +83,9 @@ void PrivKeyDialog::init()
         validate();
     }
 
+    auto basicGeometry = QGuiApplication::primaryScreen()->geometry();
+    setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, size(), basicGeometry));
+
     ui->m_accountName->setFocus();
     setTabOrder(ui->m_accountName, ui->m_pkField);
     setTabOrder(ui->m_pkField, ui->m_generateKeysBtn);
