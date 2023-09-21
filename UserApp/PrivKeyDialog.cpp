@@ -84,6 +84,10 @@ void PrivKeyDialog::init()
     }
 
     ui->m_accountName->setFocus();
+    setTabOrder(ui->m_accountName, ui->m_pkField);
+    setTabOrder(ui->m_pkField, ui->m_generateKeysBtn);
+    setTabOrder(ui->m_generateKeysBtn, ui->m_loadFromFileBtn);
+    setTabOrder(ui->m_loadFromFileBtn, ui->buttonBox);
 }
 
 PrivKeyDialog::~PrivKeyDialog()

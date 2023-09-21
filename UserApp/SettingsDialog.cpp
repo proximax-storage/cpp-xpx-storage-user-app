@@ -204,6 +204,18 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     setToolTipDuration(10);
     setWindowTitle("Settings");
     setFocus();
+    ui->m_restBootAddrField->setFocus();
+
+    setTabOrder(ui->m_restBootAddrField, ui->m_replicatorBootAddrField);
+    setTabOrder(ui->m_replicatorBootAddrField, ui->m_portField);
+    setTabOrder(ui->m_portField, ui->m_accountCbox);
+    setTabOrder(ui->m_accountCbox, ui->m_newAccountBtn);
+    setTabOrder(ui->m_newAccountBtn, ui->m_copyKeyBtn);
+    setTabOrder(ui->m_copyKeyBtn, ui->m_dnFolderField);
+    setTabOrder(ui->m_dnFolderField, ui->m_dnFolderBtn);
+    setTabOrder(ui->m_dnFolderBtn, ui->m_transactionFeeMultiplier);
+    setTabOrder(ui->m_transactionFeeMultiplier, ui->m_driveStructureAsTree);
+    setTabOrder(ui->m_driveStructureAsTree, ui->buttonBox);
 }
 
 SettingsDialog::~SettingsDialog()
