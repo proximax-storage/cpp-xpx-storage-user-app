@@ -52,7 +52,7 @@ WORKDIR /linuxdeployqt
 RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage && \
     chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
 ARG QT=6.5.0
-ARG QT_MODULES="qtscxml "
+ARG QT_MODULES="qtscxml qtmultimedia"
 ARG QT_ARCHIVES="qttools qtbase icu"
 ARG QT_HOST=linux
 ARG QT_TARGET=desktop
