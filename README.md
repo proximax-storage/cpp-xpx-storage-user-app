@@ -28,3 +28,19 @@ cmake -DSIRIUS_DRIVE_MULTI=ON ..
 make -j 4
 sudo make install
 ```
+
+## Running in Linux (prebuilt binary)
+### Dependencies
+```shell
+sudo apt-get install libxcb-cursor0
+```
+
+### Make executable (optional)
+```shell
+chmod a+x ./StorageClientApp
+```
+
+### Run (CLI)
+```shell
+./StorageClientApp
+```

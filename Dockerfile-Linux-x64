@@ -46,7 +46,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libfontconfig \
     cereal \
     ninja-build \
-    patchelf
+    patchelf \
+    zip
 RUN pip install aqtinstall
 WORKDIR /linuxdeployqt
 RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage && \
@@ -88,3 +89,4 @@ RUN rm -r $DESTDIR/lib/CMakeFiles
 RUN rm -r $DESTDIR/lib/xpxchaincpp_autogen
 RUN chmod a+x $DESTDIR/StorageClientApp
 RUN patchelf --force-rpath --set-rpath ./lib $DESTDIR/StorageClientApp
+RUN zip -r storage-tool.zip $DESTDIR
