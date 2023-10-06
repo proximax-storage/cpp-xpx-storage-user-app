@@ -103,7 +103,9 @@ void ModifyProgressPanel::setRegistering()
     {
         ui->m_statusLabel->setText( "Stream is registering ");
     }
-    ui->m_statusIcon->setScaledContents(false);
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setMovie(m_loading);
     ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(m_mode == streaming ); //todo always 'false'
     m_loading->start();
@@ -194,6 +196,9 @@ void ModifyProgressPanel::setCanceling()
     {
         ui->m_statusLabel->setText( "Stream is canceling...");
     }
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setMovie(m_loading);
     ui->m_cancel->setEnabled(false);
     ui->m_cancel->setText("Ok");
     m_loading->start();
@@ -223,7 +228,9 @@ void ModifyProgressPanel::setCanceled()
 void ModifyProgressPanel::setWaitingStreamStart()
 {
     ui->m_statusLabel->setText( "Waiting stream start");
-    ui->m_statusIcon->setScaledContents(false);
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setMovie(m_loading);
     ui->m_cancel->setText("Cancel");
     ui->m_cancel->setEnabled(true);
     m_loading->start();
