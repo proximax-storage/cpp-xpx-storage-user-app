@@ -84,6 +84,10 @@ AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChain
 
     setWindowTitle("Create Stream Announcement");
     setFocus();
+    ui->m_title->setFocus();
+
+    setTabOrder(ui->m_title, ui->m_dateTime);
+    setTabOrder(ui->m_dateTime, ui->buttonBox);
 }
 
 AddStreamAnnouncementDialog::~AddStreamAnnouncementDialog()

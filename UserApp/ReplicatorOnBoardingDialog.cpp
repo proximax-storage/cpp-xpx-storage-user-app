@@ -105,6 +105,14 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(OnChainClient* onChainCli
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ReplicatorOnBoardingDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ReplicatorOnBoardingDialog::reject);
+
+    setFocus();
+    ui->alias->setFocus();
+
+    setTabOrder(ui->alias, ui->replicatorKey);
+    setTabOrder(ui->replicatorKey, ui->capacity);
+    setTabOrder(ui->capacity, ui->checkBox);
+    setTabOrder(ui->checkBox, ui->buttonBox);
 }
 
 ReplicatorOnBoardingDialog::~ReplicatorOnBoardingDialog()

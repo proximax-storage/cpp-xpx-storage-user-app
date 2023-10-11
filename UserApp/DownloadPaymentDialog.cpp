@@ -116,6 +116,11 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
 
     setWindowTitle("Download payment");
     setFocus();
+    ui->m_channelKey->setFocus();
+
+    setTabOrder(ui->m_channelKey, ui->selectChannelBox);
+    setTabOrder(ui->selectChannelBox, ui->m_prepaid);
+    setTabOrder(ui->m_prepaid, ui->buttonBox);
 }
 
 DownloadPaymentDialog::~DownloadPaymentDialog()

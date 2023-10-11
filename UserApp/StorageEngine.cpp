@@ -94,7 +94,8 @@ void StorageEngine::start()
 
 void StorageEngine::restart()
 {
-    //todo
+    // TODO: fix crash
+    //m_session->stop();
 }
 
 void StorageEngine::addReplicators( const sirius::drive::ReplicatorList& replicators)

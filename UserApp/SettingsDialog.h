@@ -16,6 +16,10 @@ public:
     explicit SettingsDialog( Settings* settings, QWidget *parent, bool initSettings = false );
     ~SettingsDialog() override;
 
+public:
+signals:
+    void closeLibtorrentPorts();
+
 protected:
     void accept() override;
     void reject() override;

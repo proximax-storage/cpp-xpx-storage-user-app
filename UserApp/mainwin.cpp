@@ -44,6 +44,7 @@
 #include <QListWidget>
 #include <QAction>
 #include <QToolTip>
+#include <QTcpServer>
 #include <QFileDialog>
 
 #include <boost/algorithm/string.hpp>
@@ -95,6 +96,23 @@ void MainWin::init()
     {
         return;
     }
+// TODO: Check ports availability
+//    QTcpServer server;
+//    bool isPortAvailable = true;
+//    while(true)
+//    {
+//        isPortAvailable = server.listen(QHostAddress::AnyIPv4, std::stoi(m_settings->m_udpPort));
+//        if (isPortAvailable)
+//        {
+//            server.close();
+//            //std::this_thread::sleep_for(std::chrono::seconds(1));
+//            break;
+//        }
+//        else
+//        {
+//            std::this_thread::sleep_for(std::chrono::seconds(1));
+//        }
+//    }
 
     if ( Model::homeFolder() == "/Users/alex" )
     {
@@ -2718,6 +2736,12 @@ void MainWin::setupNotifications() {
 void MainWin::showSettingsDialog()
 {
     SettingsDialog settingsDialog( m_settings, this );
+    connect(&settingsDialog, &SettingsDialog::closeLibtorrentPorts, this, [this]()
+    {
+        m_onChainClient->getStorageEngine()->restart();
+
+        QCoreApplication::exit(1024);
+    });
     settingsDialog.exec();
 }
 

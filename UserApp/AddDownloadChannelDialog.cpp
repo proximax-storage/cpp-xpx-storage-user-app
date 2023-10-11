@@ -170,6 +170,12 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     setWindowTitle("Add new download channel");
     setFocus();
+    ui->name->setFocus();
+
+    setTabOrder(ui->name, ui->driveKey);
+    setTabOrder(ui->driveKey, ui->selectDriveBox);
+    setTabOrder(ui->selectDriveBox, ui->keysLine);
+    setTabOrder(ui->keysLine, ui->buttonBox);
 }
 
 AddDownloadChannelDialog::~AddDownloadChannelDialog()

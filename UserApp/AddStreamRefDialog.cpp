@@ -49,6 +49,13 @@ AddStreamRefDialog::AddStreamRefDialog( OnChainClient* onChainClient,
 
     setWindowTitle("Create Stream Announcement");
     setFocus();
+    ui->lineEdit->setFocus();
+
+    setTabOrder(ui->lineEdit, ui->m_title);
+    setTabOrder(ui->m_title, ui->m_dateTime);
+    setTabOrder(ui->m_dateTime, ui->m_localDriveFolder);
+    setTabOrder(ui->m_localDriveFolder, ui->m_localFolderBtn);
+    setTabOrder(ui->m_localFolderBtn, ui->buttonBox);
 }
 
 AddStreamRefDialog::~AddStreamRefDialog()

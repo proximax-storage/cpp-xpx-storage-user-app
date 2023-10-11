@@ -276,8 +276,11 @@ void SettingsDialog::accept()
     qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->config().m_publicKeyStr );
     qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( mpSettings->config().m_privateKeyStr );
 
-    QCoreApplication::exit(1024);
+    emit closeLibtorrentPorts();
     QDialog::accept();
+
+//    QCoreApplication::exit(1024);
+//    QDialog::accept();
 }
 
 void SettingsDialog::reject()

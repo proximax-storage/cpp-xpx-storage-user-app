@@ -132,6 +132,13 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 
     setWindowTitle("Create Drive");
     setFocus();
+    ui->m_driveName->setFocus();
+
+    setTabOrder(ui->m_driveName, ui->m_replicatorNumber);
+    setTabOrder(ui->m_replicatorNumber, ui->m_size);
+    setTabOrder(ui->m_size, ui->m_localDriveFolder);
+    setTabOrder(ui->m_localDriveFolder, ui->m_localFolderBtn);
+    setTabOrder(ui->m_localFolderBtn, ui->buttonBox);
 }
 
 AddDriveDialog::~AddDriveDialog()

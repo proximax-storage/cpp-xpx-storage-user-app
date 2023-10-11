@@ -112,6 +112,14 @@ ReplicatorOffBoardingDialog::ReplicatorOffBoardingDialog(OnChainClient* onChainC
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ReplicatorOffBoardingDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ReplicatorOffBoardingDialog::reject);
+
+    setFocus();
+    ui->drive->setFocus();
+
+    setTabOrder(ui->drive, ui->drives);
+    setTabOrder(ui->drives, ui->replicatorKey);
+    setTabOrder(ui->replicatorKey, ui->cachedReplicators);
+    setTabOrder(ui->cachedReplicators, ui->buttonBox);
 }
 
 ReplicatorOffBoardingDialog::~ReplicatorOffBoardingDialog()
