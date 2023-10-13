@@ -886,7 +886,7 @@ void MainWin::onStartStreamingBtn()
                 fs::create_directories( m3u8StreamFolder, ec );
                 if ( ec )
                 {
-                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << m3u8StreamFolder << " error:" << ec.message();
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << m3u8StreamFolder.string() << " error:" << ec.message();
 
                     QMessageBox msgBox;
                     msgBox.setText( QString::fromStdString( "Cannot create folder" ) );
