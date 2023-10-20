@@ -59,7 +59,7 @@ pipeline {
                                 chmod a+x \$DESTDIR/StorageClientApp
                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
                                 
-                                tar -Jcvf linux-storage-tool.tar.xz \$DESTDIR
+                                tar -Jcvf linux-storage-tool.tar.xz linux-storage-tool
                             """
                         }
                     }
@@ -103,7 +103,8 @@ pipeline {
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6MultimediaWidgets.dll \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Network.dll \$DESTDIR
                                 find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
-                                zip -r windows-storage-tool.zip \$DESTDIR
+                                
+                                zip -r windows-storage-tool.zip windows-storage-tool
                             """
                         }
                     }
