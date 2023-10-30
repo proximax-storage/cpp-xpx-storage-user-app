@@ -40,7 +40,7 @@ pipeline {
                                                                                                         
                                 rm -rf linux-storage-tool
                                 mkdir linux-storage-tool
-                                export DESTDIR=\$PWD/linux-storage-tool
+                                export DESTDIR=linux-storage-tool
                                 
                                 cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
                                 cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
@@ -89,7 +89,7 @@ pipeline {
 
                                 rm -rf windows-storage-tool
                                 mkdir windows-storage-tool
-                                export DESTDIR=\$PWD/windows-storage-tool
+                                export DESTDIR=windows-storage-tool
                                 
                                 cp \$BUILD_DIR/UserApp/StorageClientApp.exe \$DESTDIR
                                 cp \$BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll \$DESTDIR
@@ -103,6 +103,7 @@ pipeline {
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6MultimediaWidgets.dll \$DESTDIR
                                 cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Network.dll \$DESTDIR
                                 find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt \$DESTDIR
+                                
                                 zip -r windows-storage-tool.zip \$DESTDIR
                             """
                         }
