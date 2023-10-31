@@ -11,7 +11,6 @@
 #include "StreamingView.h"
 #include "StorageEngine.h"
 #include "Account.h"
-
 #include <cerrno>
 #include <qdebug.h>
 #include <QFileIconProvider>
@@ -875,10 +874,23 @@ void MainWin::onStartStreamingBtn()
 //                return;
 //            }
             
+#if 1
             std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount );
             qDebug () << "streamStart: txHashString: " << txHashString.c_str();
             auto txHash = rawHashFromHex( txHashString.c_str() );
+#else
+            // OFF-CHAIN
+            std::array<uint8_t, 32> txHash;
+#endif
 
+            std::cout << "🔵 txHash: " << sirius::Hash256(txHash) << "\n";
+            qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist;
+            qDebug() << "🔵 chuncksFolder: " << chuncksFolder;
+            qDebug() << "🔵 torrentsFolder: " << torrentsFolder;
+            for( auto& endpoint : endPointList )
+            {
+                std::cout << "🔵 endpoint: " << endpoint << "\n";
+            }
             gStorageEngine->startStreaming( txHash,
                                            driveKeyHex, m3u8Playlist,
                                            chuncksFolder,
@@ -894,6 +906,61 @@ void MainWin::onStartStreamingBtn()
             return;
         }
     }
+}
+
+void MainWin::finishStreaming()
+{
+    if ( m_ffmpegStreamingProcess != nullptr )
+    {
+        m_ffmpegStreamingProcess->kill();
+        delete m_ffmpegStreamingProcess;
+        m_ffmpegStreamingProcess = nullptr;
+    }
+    
+    auto driveKey = currentStreamingDriveKey().toStdString();
+    auto* drive = m_model->findDrive( driveKey );
+    auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
+    
+    sirius::drive::FinishStreamInfo info;
+    gStorageEngine->finishStreaming( info );
+    qDebug() << "info.streamSizeBytes: " << info.streamSizeBytes;
+    uint64_t actualUploadSizeMegabytes = (info.streamSizeBytes+(1024*1024-1))/(1024*1024);
+    qDebug() << "actualUploadSizeMegabytes: " << actualUploadSizeMegabytes;
+    m_onChainClient->streamFinish( driveKeyHex,
+                                   drive->getModificationHash(),
+                                   actualUploadSizeMegabytes,
+                                   info.infoHash.array() );
+}
+
+void MainWin::cancelStreaming()
+{
+    auto drive = currentStreamingDrive();
+    assert( drive );
+    
+    QMessageBox msgBox;
+    msgBox.setText( "Confirmation" );
+    msgBox.setInformativeText( "Please confirm cancel streaming" );
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Discard );
+    if ( msgBox.exec() != QMessageBox::Ok )
+    {
+        return;
+    }
+
+    if ( m_ffmpegStreamingProcess != nullptr )
+    {
+        m_ffmpegStreamingProcess->kill();
+        delete m_ffmpegStreamingProcess;
+        m_ffmpegStreamingProcess = nullptr;
+    }
+    
+    m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ) );
+
+    if ( drive->getState() == registering )
+    {
+        drive->updateDriveState(uploading);
+    }
+
+    drive->updateDriveState(canceling);
 }
 
 void MainWin::connectToStreamingTransactions()
@@ -976,45 +1043,6 @@ void MainWin::connectToStreamingTransactions()
     {
     }, Qt::QueuedConnection);
 }
-
-void MainWin::finishStreaming()
-{
-    m_ffmpegStreamingProcess->kill();
-    delete m_ffmpegStreamingProcess;
-    m_ffmpegStreamingProcess = nullptr;
-}
-
-void MainWin::cancelStreaming()
-{
-    auto drive = currentStreamingDrive();
-    assert( drive );
-    
-    QMessageBox msgBox;
-    msgBox.setText( "Confirmation" );
-    msgBox.setInformativeText( "Please confirm cancel streaming" );
-    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Discard );
-    if ( msgBox.exec() != QMessageBox::Ok )
-    {
-        return;
-    }
-
-    if ( m_ffmpegStreamingProcess != nullptr )
-    {
-        m_ffmpegStreamingProcess->kill();
-        delete m_ffmpegStreamingProcess;
-        m_ffmpegStreamingProcess = nullptr;
-    }
-    
-    m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ) );
-
-    if ( drive->getState() == registering )
-    {
-        drive->updateDriveState(uploading);
-    }
-
-    drive->updateDriveState(canceling);
-}
-
 
 void MainWin::dbg()
 {

@@ -16,6 +16,7 @@
 namespace sirius::drive {
     class ClientSession;
     class ViewerSession;
+    class FinishStreamInfo;
     struct DriveKey;
 }
 
@@ -86,7 +87,7 @@ public:
                          const fs::path&         torrentsFolder,
                          const endpoint_list&    endPointList );
 
-    void finishStreaming();
+    void finishStreaming( sirius::drive::FinishStreamInfo& info );
     void cancelStreaming();
 
 signals:

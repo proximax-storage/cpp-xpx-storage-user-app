@@ -2,6 +2,7 @@
 #include "mainwin.h"
 #include "drive/ViewerSession.h"
 #include "drive/ClientSession.h"
+#include "drive/StreamerSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
 #include "Model.h"
@@ -310,9 +311,9 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
     m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, endPointList );
 }
 
-void StorageEngine::finishStreaming()
+void StorageEngine::finishStreaming( sirius::drive::FinishStreamInfo& info )
 {
-    m_session->finishStream();
+    info = m_session->finishStream();
 }
                                                    
 void StorageEngine::cancelStreaming()
