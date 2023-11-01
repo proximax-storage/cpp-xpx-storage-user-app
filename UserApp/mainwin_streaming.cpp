@@ -884,9 +884,9 @@ void MainWin::onStartStreamingBtn()
 #endif
 
             std::cout << "🔵 txHash: " << sirius::Hash256(txHash) << "\n";
-            qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist;
-            qDebug() << "🔵 chuncksFolder: " << chuncksFolder;
-            qDebug() << "🔵 torrentsFolder: " << torrentsFolder;
+            qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
+            qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
+            qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
             for( auto& endpoint : endPointList )
             {
                 std::cout << "🔵 endpoint: " << endpoint << "\n";
