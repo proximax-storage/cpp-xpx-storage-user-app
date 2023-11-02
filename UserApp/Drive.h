@@ -6,7 +6,7 @@
 #include "LocalDriveItem.h"
 #include "drive/ActionList.h"
 
-using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
+using  endpoint_list  = std::vector<boost::asio::ip::udp::endpoint>;
 
 enum DriveState
 {

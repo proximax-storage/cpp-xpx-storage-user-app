@@ -22,7 +22,7 @@ namespace sirius::drive {
 
 namespace fs = std::filesystem;
 
-using  endpoint_list  = std::vector<boost::asio::ip::tcp::endpoint>;
+using  endpoint_list  = std::vector<boost::asio::ip::udp::endpoint>;
 
 class Model;
 struct StreamInfo;
@@ -78,7 +78,7 @@ public:
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
     
-    std::optional<boost::asio::ip::tcp::endpoint> getEndpoint( const sirius::Key& key );
+    std::optional<boost::asio::ip::udp::endpoint> getEndpoint( const sirius::Key& key );
 
     void startStreaming( const sirius::Hash256&  streamId,
                          const sirius::Key&      driveKey,

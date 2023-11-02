@@ -773,7 +773,7 @@ DriveContractModel& Model::driveContractModel() {
 void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     driveKey,
                                         const std::string&     modificationHash,
-                                        std::optional<boost::asio::ip::tcp::endpoint> replicatorEndpoint )
+                                        std::optional<boost::asio::ip::udp::endpoint> replicatorEndpoint )
 {
 //    if ( Model::homeFolder() == "/Users/alex" )
 //    {

@@ -407,7 +407,7 @@ void MainWin::init()
             auto drivePubKey = rawHashFromHex(drive->getKey().c_str());
             auto modificationId = m_onChainClient->transactionsEngine()->getLatestModificationId(drivePubKey);
             for (const auto& replicator : drive->getReplicators()) {
-                std::optional<boost::asio::ip::tcp::endpoint> replicatorEndpoint = {};
+                std::optional<boost::asio::ip::udp::endpoint> replicatorEndpoint = {};
                 //
                 m_model->requestModificationStatus(rawHashToHex(replicator.array()).toStdString(), drive->getKey(), rawHashToHex(modificationId).toStdString());
             }

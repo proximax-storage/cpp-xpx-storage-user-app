@@ -296,7 +296,7 @@ void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          
 #endif
 }
                                                    
-std::optional<boost::asio::ip::tcp::endpoint> StorageEngine::getEndpoint( const sirius::Key& key )
+std::optional<boost::asio::ip::udp::endpoint> StorageEngine::getEndpoint( const sirius::Key& key )
 {
     return m_session->getEndpoint( key );
 }
