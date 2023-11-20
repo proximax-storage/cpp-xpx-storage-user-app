@@ -4,17 +4,15 @@
 
 * C++ compliler with C++20 support
 * CMake 3.9 or higher
-* [Conan] (https://conan.io)
 * Qt 5.12.8 or higher
-* Boost 1.71.0 or higher 
-* [Cereal] 1.3.2 or higher (https://github.com/USCiLab/cereal)
+* Boost 1.71.0 or higher
 
 
 ## Build for MacOS
 ```shell
 git clone https://github.com/proximax-storage/cpp-xpx-storage-user-app.git
 cd cpp-xpx-storage-user-app
-git submodule update --init --recursive --remote
+git submodule update --init --recursive
 ```
 
 ### Build cpp-xpx-storage-user-app
