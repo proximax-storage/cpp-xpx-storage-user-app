@@ -26,6 +26,7 @@ class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
 class ModifyProgressPanel;
+class DeployProgressPanel;
 class StreamingView;
 class Model;
 class Settings;
@@ -250,6 +251,8 @@ private:
     ModifyProgressPanel*    m_modifyProgressPanel;
     QListWidget*            m_notificationsWidget;
     uint64_t                m_XPX_MOSAIC_ID;
+
+    DeployProgressPanel*    m_deployProgressPanel;    //Supercontract deploy
     
     ModifyProgressPanel*    m_startViewingProgressPanel;
     ModifyProgressPanel*    m_streamingProgressPanel;

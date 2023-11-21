@@ -27,6 +27,7 @@
 #include "ReplicatorOffBoardingDialog.h"
 #include "ReplicatorInfoDialog.h"
 #include "ModifyProgressPanel.h"
+#include "DeployProgressPanel.h"
 #include "PopupMenu.h"
 #include "EditDialog.h"
 
@@ -789,6 +790,10 @@ void MainWin::init()
                           }
                           ui->m_contractCallRun->setDisabled(!m_model->driveContractModel().getContractManualCallData().isValid());
                       } );
+
+    // Supercontract deploy progress
+    m_deployProgressPanel = new DeployProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
+    m_deployProgressPanel-> setVisible(false);
 
     connect( ui->m_contractDeployBtn, &QPushButton::released, this, &MainWin::onDeployContract, Qt::QueuedConnection );
 
@@ -3253,6 +3258,8 @@ void
 MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( contract_deploying );
+
+        m_deployProgressPanel->setApproving();
     }
 }
 
@@ -3260,6 +3267,8 @@ void
 MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( no_modifications );
+
+        m_deployProgressPanel->setFailed();
     }
 }
 
@@ -3267,6 +3276,8 @@ void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 
                                                             std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( contract_deployed );
+
+        m_deployProgressPanel->setApproved();
     }
 }
 
@@ -3274,10 +3285,14 @@ void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32>
                                                          std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( no_modifications );
+
+        m_deployProgressPanel->setFailed();
     }
 }
 
 void MainWin::onDeployContract() {
+    m_deployProgressPanel->setInitialize();
+
     if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
         return;
     }
@@ -3290,9 +3305,13 @@ void MainWin::onDeployContract() {
 
     m_onChainClient->deployContract(rawHashFromHex(QString::fromStdString(contractDriveIt->first)),
                                     contractDriveIt->second);
+
+    m_deployProgressPanel->setDeploying();
 }
 
 void MainWin::onRunContract() {
+    m_deployProgressPanel->setInitialize();
+
     m_onChainClient->runContract(m_model->driveContractModel().getContractManualCallData());
     ui->m_contractCallKey->clear();
     ui->m_contractCallFile->clear();
@@ -3302,6 +3321,8 @@ void MainWin::onRunContract() {
     ui->m_contractCallDownloadPayment->setValue(0);
     ui->m_contractCallMosaicTable->setRowCount(0);
     m_model->driveContractModel().getContractManualCallData() = ContractManualCallData{};
+
+    m_deployProgressPanel->setDeploying();
 }
 
 //void MainWin::validateContractDrive() {
