@@ -107,6 +107,7 @@ set(PROJECT_SOURCES
         Diff.h                        Diff.cpp                    ReplicatorOffBoardingDialog.ui
         ReplicatorInfoDialog.h        ReplicatorInfoDialog.cpp    ReplicatorInfoDialog.ui
         ModifyProgressPanel.h         ModifyProgressPanel.cpp     ModifyProgressPanel.ui
+        DeployProgressPanel.h         DeployProgressPanel.cpp     DeployProgressPanel.ui
         StreamingView.h               StreamingView.cpp           StreamingView.ui
         PopupMenu.h                   PopupMenu.cpp
 

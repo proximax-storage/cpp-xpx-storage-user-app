@@ -23,7 +23,7 @@ DeployProgressPanel::DeployProgressPanel( Model* model, int x, int y, QWidget* p
     m_loaded = new QPixmap(getResource("./resources/icons/loaded.png"));
     m_error = new QPixmap(getResource("./resources/icons/error.png"));
 
-    if ( mode == drive_modification )
+    if ( mode == deploy )
     {
         ui->m_title->setWindowTitle("Deploy progress");
     }
@@ -109,7 +109,7 @@ void DeployProgressPanel::setApproved()
 
 void DeployProgressPanel::setFailed()
 {
-    if ( m_mode == drive_modification )
+    if ( m_mode == deploy )
     {
         ui->m_statusLabel->setText( "Supercontract deployment failed!!");
     }

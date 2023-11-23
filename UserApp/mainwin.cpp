@@ -3258,7 +3258,7 @@ void
 MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( contract_deploying );
-
+        m_deployProgressPanel->setVisible(true);
         m_deployProgressPanel->setApproving();
     }
 }
@@ -3267,7 +3267,7 @@ void
 MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( no_modifications );
-
+        m_deployProgressPanel->setVisible(true);
         m_deployProgressPanel->setFailed();
     }
 }
@@ -3276,7 +3276,7 @@ void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 
                                                             std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( contract_deployed );
-
+        m_deployProgressPanel->setVisible(true);
         m_deployProgressPanel->setApproved();
     }
 }
@@ -3285,12 +3285,13 @@ void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32>
                                                          std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( sirius::drive::toString( driveKey )); drive != nullptr ) {
         drive->updateDriveState( no_modifications );
-
+        m_deployProgressPanel->setVisible(true);
         m_deployProgressPanel->setFailed();
     }
 }
 
 void MainWin::onDeployContract() {
+    m_deployProgressPanel->setVisible(true);
     m_deployProgressPanel->setInitialize();
 
     if ( ui->m_contractDriveCBox->currentIndex() == -1 ) {
@@ -3310,6 +3311,7 @@ void MainWin::onDeployContract() {
 }
 
 void MainWin::onRunContract() {
+    m_deployProgressPanel->setVisible(true);
     m_deployProgressPanel->setInitialize();
 
     m_onChainClient->runContract(m_model->driveContractModel().getContractManualCallData());
