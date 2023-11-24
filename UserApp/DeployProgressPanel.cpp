@@ -36,6 +36,13 @@ DeployProgressPanel::DeployProgressPanel( Model* model, int x, int y, QWidget* p
     setFrameStyle( (int)QFrame::StyledPanel | (int)QFrame::Raised );
     ui->m_cancel->setText("Ok");
 
+    connect( ui->m_cancel, &QPushButton::released, this, [this]
+    {
+        if ( m_mode == deploy ) {
+            setVisible(false);
+        }
+    });
+
     stackUnder( this );
 
     ui->horizontalLayout->setAlignment(Qt::AlignCenter);

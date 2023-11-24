@@ -3304,10 +3304,10 @@ void MainWin::onDeployContract() {
         return;
     }
 
+    m_deployProgressPanel->setDeploying();
+
     m_onChainClient->deployContract(rawHashFromHex(QString::fromStdString(contractDriveIt->first)),
                                     contractDriveIt->second);
-
-    m_deployProgressPanel->setDeploying();
 }
 
 void MainWin::onRunContract() {
