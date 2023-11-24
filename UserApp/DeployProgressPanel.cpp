@@ -23,10 +23,10 @@ DeployProgressPanel::DeployProgressPanel( Model* model, int x, int y, QWidget* p
     m_loaded = new QPixmap(getResource("./resources/icons/loaded.png"));
     m_error = new QPixmap(getResource("./resources/icons/error.png"));
 
-    if ( mode == deploy )
-    {
-        ui->m_title->setWindowTitle("Deploy progress");
-    }
+
+    ui->m_title->setText("Deploy progress");
+    ui->m_requestedSize->setText(" ");
+    ui->m_unitsType->setText(" ");
 
     ui->m_title->setAlignment(Qt::AlignCenter);
     setGeometry( QRect( x, y, 280, 130) );
