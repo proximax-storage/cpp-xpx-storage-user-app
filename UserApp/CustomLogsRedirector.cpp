@@ -1,6 +1,7 @@
 #include "CustomLogsRedirector.h"
 
 #include <QDebug>
+#include <QRegularExpression>
 
 CustomLogsRedirector::CustomLogsRedirector(std::ostream &stream)
 :
@@ -15,7 +16,7 @@ CustomLogsRedirector::~CustomLogsRedirector()
 {
     if (!mStr.empty())
     {
-        qDebug() << mStr.c_str();
+        qDebug() << QString::fromStdString(mStr);
     }
 
     mStream.rdbuf(mOldBuf);
@@ -25,8 +26,8 @@ CustomLogsRedirector::int_type CustomLogsRedirector::overflow(int_type v)
 {
     if (v == '\n')
     {
-        qDebug() << mStr.c_str();
-        mStr.erase(mStr.begin(), mStr.end());
+        qDebug() << QString::fromStdString(mStr);
+        mStr.clear();
     }
     else
     {
@@ -45,8 +46,7 @@ std::streamsize CustomLogsRedirector::xsputn(const char *p, std::streamsize n)
         pos = static_cast<long>(mStr.find('\n'));
         if (pos != static_cast<long>(std::string::npos))
         {
-            std::string tmp(mStr.begin(), mStr.begin() + pos);
-            qDebug() << mStr.c_str();
+            qDebug() << QString::fromStdString(mStr);
             mStr.erase(mStr.begin(), mStr.begin() + pos + 1);
         }
     }

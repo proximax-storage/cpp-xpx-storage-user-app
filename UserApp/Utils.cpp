@@ -24,19 +24,19 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
     switch (type)
     {
         case QtInfoMsg:
-            txt += QString("{Info} \t\t %1").arg(msg);
+            txt += QString("{Info} %1").arg(msg);
             break;
         case QtDebugMsg:
-            txt += QString("{Debug} \t\t %1").arg(msg);
+            txt += QString("{Debug} %1").arg(msg);
             break;
         case QtWarningMsg:
-            txt += QString("{Warning} \t %1").arg(msg);
+            txt += QString("{Warning} %1").arg(msg);
             break;
         case QtCriticalMsg:
-            txt += QString("{Critical} \t %1").arg(msg);
+            txt += QString("{Critical} %1").arg(msg);
             break;
         case QtFatalMsg:
-            txt += QString("{Fatal} \t\t %1").arg(msg);
+            txt += QString("{Fatal} %1").arg(msg);
             break;
     }
 
