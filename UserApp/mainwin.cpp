@@ -2739,7 +2739,6 @@ void MainWin::showSettingsDialog()
     connect(&settingsDialog, &SettingsDialog::closeLibtorrentPorts, this, [this]()
     {
         m_onChainClient->getStorageEngine()->restart();
-
         QCoreApplication::exit(1024);
     });
     settingsDialog.exec();
