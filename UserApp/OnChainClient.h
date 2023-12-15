@@ -79,6 +79,7 @@ class OnChainClient : public QObject
     signals:
         void connectedToServer();
         void networkInitialized(const QString& networkName);
+        void updateBalance();
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
         void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);

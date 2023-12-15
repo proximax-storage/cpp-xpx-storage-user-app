@@ -75,6 +75,7 @@ private:
     void drivesInitialized();
     bool requestPrivateKey();
     void cancelModification();
+    void doUpdateBalancePeriodically();
 
     void setupIcons();
     void setupDownloadsTab();

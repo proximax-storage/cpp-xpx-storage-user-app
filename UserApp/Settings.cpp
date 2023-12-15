@@ -13,7 +13,6 @@
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
-    , m_isDriveStructureAsTree(false)
     , m_configPath(fs::path(getSettingsFolder().string() + "/config").make_preferred())
 {
 }

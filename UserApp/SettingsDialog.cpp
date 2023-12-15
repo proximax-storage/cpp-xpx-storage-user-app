@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "SettingsDialog.h"
 #include "PrivKeyDialog.h"
+#include "xpxchaincpp/sdk.h"
 #include "./ui_SettingsDialog.h"
 
 #include <QScreen>
@@ -29,6 +30,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     updateAccountFields();
 
     ui->m_transactionFeeMultiplier->setText(QString::number(mpSettings->m_feeMultiplier));
+    ui->m_driveStructureAsTree->setEnabled(mpSettings->m_isDriveStructureAsTree);
 
     QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
@@ -102,6 +104,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     if ( initSettings )
     {
         ui->m_newAccountBtn->setEnabled(false);
+        ui->m_copyAddress->setEnabled(false);
         ui->m_newAccountBtn->setStyleSheet("QPushButton { color: grey;}" );
     }
 
@@ -116,6 +119,23 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         clipboard->setText(publicKey, QClipboard::Clipboard);
         if (clipboard->supportsSelection()) {
             clipboard->setText(publicKey, QClipboard::Selection);
+        }
+    });
+
+    connect(ui->m_copyAddress, &QPushButton::released, this, [this](){
+        QClipboard* clipboard = QApplication::clipboard();
+        if (!clipboard) {
+            qWarning() << "bad clipboard";
+            return;
+        }
+
+        xpx_chain_sdk::Key publicKey;
+        xpx_chain_sdk::ParseHexStringIntoContainer(mpSettingsDraft->config().m_publicKeyStr.c_str(), mpSettingsDraft->config().m_publicKeyStr.size(), publicKey);
+        xpx_chain_sdk::PublicAccount publicAccount(publicKey, xpx_chain_sdk::GetConfig().NetworkId);
+
+        clipboard->setText(publicAccount.address().encoded().c_str(), QClipboard::Clipboard);
+        if (clipboard->supportsSelection()) {
+            clipboard->setText(publicAccount.address().encoded().c_str(), QClipboard::Selection);
         }
     });
 
@@ -222,6 +242,9 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     setTabOrder(ui->m_dnFolderBtn, ui->m_transactionFeeMultiplier);
     setTabOrder(ui->m_transactionFeeMultiplier, ui->m_driveStructureAsTree);
     setTabOrder(ui->m_driveStructureAsTree, ui->buttonBox);
+
+    // TODO: fix files tree before enable
+    ui->m_driveStructureAsTree->setCheckable(false);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -245,7 +268,7 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
     mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
     mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
-    mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isChecked();
+    mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isEnabled();
 
     bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap           !=   mpSettingsDraft->m_replicatorBootstrap )
                                 ||  ( mpSettings->m_udpPort                   !=   mpSettingsDraft->m_udpPort )

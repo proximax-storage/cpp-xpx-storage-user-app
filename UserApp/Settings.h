@@ -30,7 +30,7 @@ class Settings : public QObject
         std::string     m_udpPort  = "6846";
         double          m_feeMultiplier = 150000;
         QRect           m_windowGeometry;
-        bool            m_isDriveStructureAsTree;
+        bool            m_isDriveStructureAsTree = false;
 
     public:
         explicit Settings(QObject* parent = nullptr);

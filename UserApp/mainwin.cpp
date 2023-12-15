@@ -813,6 +813,7 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
+    doUpdateBalancePeriodically();
 }
 
 void MainWin::initGeometry()
@@ -892,6 +893,13 @@ void MainWin::cancelModification()
     {
         drive->updateDriveState(canceling);
     }
+}
+
+void MainWin::doUpdateBalancePeriodically()
+{
+    connect(m_onChainClient, &OnChainClient::updateBalance, this, [this](){
+        loadBalance();
+    });
 }
 
 void MainWin::setupIcons() {
@@ -1806,7 +1814,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         {
             if ( itIsNewState )
             {
-            removeEntityFromUi(ui->m_driveCBox, driveKey);
+                removeEntityFromUi(ui->m_driveCBox, driveKey);
                 removeEntityFromUi(ui->m_streamDriveCBox, driveKey);
                 m_model->removeDrive(driveKey);
 
@@ -1884,6 +1892,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
 
                 if (m_model->getDrives().empty()) {
                     lockDrive();
+                    ui->m_drivePath->setText("Path:");
 
                     if (m_settings->m_isDriveStructureAsTree) {
                         m_driveTreeModel->updateModel(false);

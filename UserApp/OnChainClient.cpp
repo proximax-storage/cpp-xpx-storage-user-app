@@ -537,6 +537,12 @@ void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string
             mpTransactionsEngine = new TransactionsEngine(mpChainClient, mpChainAccount, mpBlockchainEngine, this);
             initConnects();
             emit networkInitialized(info.name.c_str());
+
+            xpx_chain_sdk::Notifier<xpx_chain_sdk::Block> blockNotifier([this](auto, auto) {
+                emit updateBalance();
+            });
+
+            mpChainClient->notifications()->addBlockNotifiers({ blockNotifier }, [](){}, [](auto){});
         });
     });
 }
