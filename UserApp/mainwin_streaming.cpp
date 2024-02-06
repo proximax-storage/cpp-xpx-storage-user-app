@@ -876,7 +876,7 @@ void MainWin::onStartStreamingBtn()
                 return;
             }
             
-            //std::error_code ec;
+            std::error_code ec;
             if ( ! fs::exists( m3u8StreamFolder, ec ) )
             {
                 fs::create_directories( m3u8StreamFolder );
