@@ -78,6 +78,8 @@ public:
 
     void torrentDeletedHandler( const sirius::drive::InfoHash& infoHash );
     
+    void streamStatusHandler( const std:: string&);
+    
     std::optional<boost::asio::ip::udp::endpoint> getEndpoint( const sirius::Key& key );
 
     void startStreaming( const sirius::Hash256&  streamId,
@@ -85,9 +87,10 @@ public:
                          const fs::path&         m3u8Playlist,
                          const fs::path&         chunksFolder,
                          const fs::path&         torrentsFolder,
+                         sirius::drive::StreamingStatusHandler streamingStatusHandler,
                          const endpoint_list&    endPointList );
 
-    void finishStreaming( sirius::drive::FinishStreamInfo& info );
+    void finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall );
     void cancelStreaming();
 
 signals:

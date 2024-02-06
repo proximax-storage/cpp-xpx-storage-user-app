@@ -109,6 +109,7 @@ set(PROJECT_SOURCES
         ModifyProgressPanel.h         ModifyProgressPanel.cpp     ModifyProgressPanel.ui
         StreamingView.h               StreamingView.cpp           StreamingView.ui
         PopupMenu.h                   PopupMenu.cpp
+        StreamingPanel.h              StreamingPanel.cpp          StreamingPanel.ui
 
         LocalDriveItem.h
         BlockchainEngine.cpp          BlockchainEngine.h

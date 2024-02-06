@@ -27,6 +27,7 @@
 #include "ReplicatorOffBoardingDialog.h"
 #include "ReplicatorInfoDialog.h"
 #include "ModifyProgressPanel.h"
+#include "StreamingPanel.h"
 #include "PopupMenu.h"
 #include "EditDialog.h"
 

@@ -104,6 +104,11 @@ void StorageEngine::addReplicators( const sirius::drive::ReplicatorList& replica
     m_session->addReplicatorList( replicators );
 }
 
+void StorageEngine::streamStatusHandler( const std:: string&)
+{
+    
+}
+
 void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const std::string&              address,
                          const endpoint_list&            bootstraps,
@@ -111,6 +116,7 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
 {
     qDebug() << LOG_SOURCE << "createClientSession: address: " << address.c_str();
     qDebug() << LOG_SOURCE << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
+    
 #ifdef USE_CLIENT_SESSION
     m_session = sirius::drive::createClientSession(  keyPair,
 #else
@@ -124,7 +130,6 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                                                          addressAlreadyInUseHandler();
                                                      },
                                                      bootstraps,
-                                                     false,
                                                      "client_session" );
 
     m_session->setTorrentDeletedHandler( [this] ( lt::torrent_handle handle )
@@ -306,14 +311,15 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
                                     const fs::path&         m3u8Playlist,
                                     const fs::path&         chunksFolder,
                                     const fs::path&         torrentsFolder,
+                                    sirius::drive::StreamingStatusHandler streamingStatusHandler,
                                     const endpoint_list&    endPointList )
 {
-    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, endPointList );
+    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, streamingStatusHandler, endPointList );
 }
 
-void StorageEngine::finishStreaming( sirius::drive::FinishStreamInfo& info )
+void StorageEngine::finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall )
 {
-    info = m_session->finishStream();
+    m_session->finishStream( backCall );
 }
                                                    
 void StorageEngine::cancelStreaming()
