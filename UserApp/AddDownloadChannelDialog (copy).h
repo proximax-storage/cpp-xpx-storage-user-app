@@ -30,7 +30,6 @@ public:
 public:
     void accept() override;
     void reject() override;
-    void displayInfo();
 
 signals:
     void addDownloadChannel(const std::string&             channelName,
