@@ -165,7 +165,11 @@ void AddDownloadChannelDialog::validate() {
 
 void AddDownloadChannelDialog::displayInfo()
 {
-    QString message = "This is the reference information."; // Replace with your actual reference information
+    QString message = "Enter your preferred download channel's Name, "
+                      "the Drive Key that you want to download the files "
+                      "from, Prepaid amount of data to download (in MB), "
+                      "and then press Confirm. After that, wait for a "
+                      "notification that the channel is created successfully.";
     QMessageBox::information(this, "Help", message);
 }
 
