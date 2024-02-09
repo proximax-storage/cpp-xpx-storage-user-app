@@ -123,7 +123,7 @@ This is what the `Downloads` tab looks like:<br>
 You can create a new download channel by pressing the `+` button. This will prompt out a new window to create a new download channel. Download channel is the place where you can download files from drives.<br>
 ![Create_download_channel](./images/12_create_download_channel.png)
 
-Enter your preferred download channel's `Name`, the `Drive` that you want to download the files from, `Keys` (optional), `Prepaid` amount, and then press `Confirm`. After that, wait for a  notification that the channel is created successfully.
+Enter your preferred download channel's `Name`, the `Drive Key` that you want to download the files from, `Prepaid` amount of data you want to download (in MB), and then press `Confirm`. After that, wait for a  notification that the channel is created successfully.
 
 #### Download Channel Tabs (Left Side and Right Side Tabs)
 The left side tab is displaying files in the drives for downloading (you have set them earlier in `Settings` tab). In other words, the left side tab is the download channel. The right side tab displays the files you have downloaded from the channel, including the status of download (for example: `%` (download progress in percentage) status, `done` status).
