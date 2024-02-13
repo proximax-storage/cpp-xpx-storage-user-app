@@ -141,7 +141,6 @@ set(PROJECT_SOURCES
         AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
         AddStreamRefDialog.h          AddStreamRefDialog.cpp          AddStreamRefDialog.ui
         CustomLogsRedirector.h        CustomLogsRedirector.cpp
-
         ${TS_FILES}
 )
 

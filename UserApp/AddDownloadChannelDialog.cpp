@@ -49,19 +49,20 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     }
 
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-
-//    connect(ui->keysLine, &QLineEdit::textChanged, this, [this] (auto text)
-//    {
-//        if (!text.trimmed().isEmpty()) {
-//            QToolTip::showText(ui->keysLine->mapToGlobal(QPoint(0, 15)), tr("Invalid keys!"));
-//            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-//            ui->keysLine->setProperty("is_valid", false);
-//        } else {
-//            QToolTip::hideText();
-//            ui->keysLine->setProperty("is_valid", true);
-//            validate();
-//        }
-//    });
+    connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+            {
+                if (!keyTemplate.match(text).hasMatch()) {
+                    QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
+                    ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+                    ui->driveKey->setProperty("is_valid", false);
+                    mCurrentDriveKey.clear();
+                } else {
+                    QToolTip::hideText();
+                    ui->driveKey->setProperty("is_valid", true);
+                    mCurrentDriveKey = ui->driveKey->text().toStdString();
+                    validate();
+                }
+            });
 //
 //    if (!ui->keysLine->text().trimmed().isEmpty()) {
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
@@ -117,6 +118,12 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
 AddDownloadChannelDialog::~AddDownloadChannelDialog()
 {
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        delete helpMessageBox;
+        helpMessageBox = nullptr;
+    }
+
     delete ui;
 }
 
@@ -153,6 +160,12 @@ void AddDownloadChannelDialog::reject() {
 }
 
 void AddDownloadChannelDialog::validate() {
+    std::boolalpha(std::cout);
+    ___LOG("name " << ui->name->property("is_valid").toBool());
+    ___LOG("driveKey " << ui->driveKey->property("is_valid").toBool());
+    ___LOG("prepaidAmountLine " << ui->prepaidAmountLine->property("is_valid").toBool());
+    ___LOG("---------------------------");
+
     if (ui->name->property("is_valid").toBool() &&
         ui->driveKey->property("is_valid").toBool() &&
         ui->prepaidAmountLine->property("is_valid").toBool()) {
@@ -165,11 +178,21 @@ void AddDownloadChannelDialog::validate() {
 
 void AddDownloadChannelDialog::displayInfo()
 {
-    QString message = "Enter your preferred download channel's Name, "
-                      "the Drive Key that you want to download the files "
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        helpMessageBox = nullptr;
+    }
+    QString message = "<html>Enter your preferred download channel's Name, <br>"
+                      "the <b>Drive Key</b> that you want to download the files "
                       "from, Prepaid amount of data to download (in MB), "
                       "and then press Confirm. After that, wait for a "
-                      "notification that the channel is created successfully.";
-    QMessageBox::information(this, "Help", message);
+                      "notification that the channel is created successfully.</html>";
+    helpMessageBox = new QMessageBox(this);
+    helpMessageBox->setWindowTitle("Help");
+    helpMessageBox->setText(message);
+    helpMessageBox->setWindowModality(Qt::NonModal); // Set the NonModal flag
+    helpMessageBox->move(this->x(), this->y() + 1.7*this->height());
+
+    helpMessageBox->show();
 }
 

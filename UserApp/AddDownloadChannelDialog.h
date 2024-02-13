@@ -46,6 +46,8 @@ private:
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
     Model*                          mpModel;
+    QMessageBox*                    helpMessageBox = nullptr;
+
 };
 
 #endif // ADDDOWNLOADCHANNELDIALOG_H
