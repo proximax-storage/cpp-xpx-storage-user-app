@@ -160,12 +160,6 @@ void AddDownloadChannelDialog::reject() {
 }
 
 void AddDownloadChannelDialog::validate() {
-    std::boolalpha(std::cout);
-    ___LOG("name " << ui->name->property("is_valid").toBool());
-    ___LOG("driveKey " << ui->driveKey->property("is_valid").toBool());
-    ___LOG("prepaidAmountLine " << ui->prepaidAmountLine->property("is_valid").toBool());
-    ___LOG("---------------------------");
-
     if (ui->name->property("is_valid").toBool() &&
         ui->driveKey->property("is_valid").toBool() &&
         ui->prepaidAmountLine->property("is_valid").toBool()) {
@@ -182,11 +176,16 @@ void AddDownloadChannelDialog::displayInfo()
         helpMessageBox->hide();
         helpMessageBox = nullptr;
     }
-    QString message = "<html>Enter your preferred download channel's Name, <br>"
-                      "the <b>Drive Key</b> that you want to download the files "
-                      "from, Prepaid amount of data to download (in MB), "
-                      "and then press Confirm. After that, wait for a "
-                      "notification that the channel is created successfully.</html>";
+    QString message = "<html>"
+                      "A <b>channel</b> is created for downloading files from a remote drive.<br>"
+                      "A channel is only active for at most <b>24 hours</b> and then closes automatically.<br><br>"
+                      "<b>Channel name</b> is a preferred name to associate with the remote drive. "
+                      "It can contain capital and small latin letters as well as digits.<br>"
+                      "<b>Drive key</b> can be received from the remote drive owner. "
+                      "It contains 64 characters (letters and digits).<br><br>"
+                      "<b>Prepaid MBs</b> is an approximate amount of data you are going to download. "
+                      "Unused xpx is refunded to you when the channel is closed."
+                      "</html>";
     helpMessageBox = new QMessageBox(this);
     helpMessageBox->setWindowTitle("Help");
     helpMessageBox->setText(message);

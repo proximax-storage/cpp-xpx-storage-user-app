@@ -16,6 +16,8 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
+    ui->buttonBox->button(QDialogButtonBox::Help)->setText("Help");
+
     setModal(true);
 
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
@@ -87,6 +89,8 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDriveDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveDialog::reject);
+    connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDriveDialog  ::displayInfo);
+
 
     bool isDriveExists = mp_model->isDriveWithNameExists(ui->m_driveName->text());
     if (!nameTemplate.match(ui->m_driveName->text()).hasMatch()) {
@@ -143,6 +147,11 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 
 AddDriveDialog::~AddDriveDialog()
 {
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        delete helpMessageBox;
+        helpMessageBox = nullptr;
+    }
     delete ui;
 }
 
@@ -184,3 +193,29 @@ void AddDriveDialog::reject()
 {
     QDialog::reject();
 }
+
+void AddDriveDialog::displayInfo()
+{
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        helpMessageBox = nullptr;
+    }
+    QString message = "<html>"
+                      "<b>Drive name</b> is a preferred name for the drive. "
+                      "It can contain capital and small latin letters as well as digits.<br><br>"
+                      "<b>Replicator number</b> is the desired number of replicators to store your data. "
+                      "If you aren't sure, set <b>Replicator number</b> to <b>5</b>.<br><br>"
+                      "<b>Max Drive Size</b> is the maximum size of the drive. "
+                      "You can't sore more data than that. <br><br>"
+                      "<b>Local Drive folder</b> is the folder associated with the drive. "
+                      "Changes in this folder are reflected in the Drives tab (right panel)."
+                      "</html>";
+    helpMessageBox = new QMessageBox(this);
+    helpMessageBox->setWindowTitle("Help");
+    helpMessageBox->setText(message);
+    helpMessageBox->setWindowModality(Qt::NonModal); // Set the NonModal flag
+    helpMessageBox->move(this->x(), this->y() + 1.5*this->height());
+
+    helpMessageBox->show();
+}
+
