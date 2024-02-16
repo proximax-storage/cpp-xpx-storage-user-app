@@ -2032,8 +2032,14 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
-        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\n It will be removed.");
-        showNotification(message, errorText.c_str());
+        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\nIt will be removed.");
+        QString explanation;
+
+        if(errorText == "Failure_Core_Insufficient_Balance") {
+            explanation = "You don't have enough XPX to create a channel.";
+        }
+
+        showNotification(message, explanation);
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);

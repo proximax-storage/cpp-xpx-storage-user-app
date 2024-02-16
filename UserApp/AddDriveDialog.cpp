@@ -203,7 +203,7 @@ void AddDriveDialog::displayInfo()
     QString message = "<html>"
                       "<b>Drive name</b> is a preferred name for the drive. "
                       "It can contain capital and small latin letters as well as digits.<br><br>"
-                      "<b>Replicator number</b> is the desired number of replicators to store your data. "
+                      "<b>Replicator number</b> is the desired number of computers to store your data. "
                       "If you aren't sure, set <b>Replicator number</b> to <b>5</b>.<br><br>"
                       "<b>Max Drive Size</b> is the maximum size of the drive. "
                       "You can't sore more data than that. <br><br>"
@@ -214,8 +214,8 @@ void AddDriveDialog::displayInfo()
     helpMessageBox->setWindowTitle("Help");
     helpMessageBox->setText(message);
     helpMessageBox->setWindowModality(Qt::NonModal); // Set the NonModal flag
-    helpMessageBox->move(this->x(), this->y() + 1.5*this->height());
-
     helpMessageBox->show();
+    helpMessageBox->move(this->x() + this->width()/2-this->helpMessageBox->width()/2, this->y() + this->height() + 60);
+
 }
 

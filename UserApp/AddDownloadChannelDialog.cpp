@@ -37,6 +37,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         }
     });
 
+
     bool isChannelExists = mpModel->isChannelWithNameExists(ui->name->text());
     if (!nameTemplate.match(ui->name->text()).hasMatch()) {
         QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
@@ -63,7 +64,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                     validate();
                 }
             });
-//
+
 //    if (!ui->keysLine->text().trimmed().isEmpty()) {
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 //        ui->driveKey->setProperty("is_valid", false);
@@ -180,7 +181,7 @@ void AddDownloadChannelDialog::displayInfo()
                       "A <b>channel</b> is created for downloading files from a remote drive.<br>"
                       "A channel is only active for at most <b>24 hours</b> and then closes automatically.<br><br>"
                       "<b>Channel name</b> is a preferred name to associate with the remote drive. "
-                      "It can contain capital and small latin letters as well as digits.<br>"
+                      "It can contain capital and small latin letters as well as digits.<br><br>"
                       "<b>Drive key</b> can be received from the remote drive owner. "
                       "It contains 64 characters (letters and digits).<br><br>"
                       "<b>Prepaid MBs</b> is an approximate amount of data you are going to download. "
@@ -190,8 +191,7 @@ void AddDownloadChannelDialog::displayInfo()
     helpMessageBox->setWindowTitle("Help");
     helpMessageBox->setText(message);
     helpMessageBox->setWindowModality(Qt::NonModal); // Set the NonModal flag
-    helpMessageBox->move(this->x(), this->y() + 1.7*this->height());
-
     helpMessageBox->show();
+    helpMessageBox->move(this->x() + this->width()/2-this->helpMessageBox->width()/2, this->y() + this->height() + 60);
 }
 
