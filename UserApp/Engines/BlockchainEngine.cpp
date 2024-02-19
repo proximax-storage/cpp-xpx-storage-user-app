@@ -314,3 +314,34 @@ void BlockchainEngine::onRemoveResolver(const QUuid &id) {
 void BlockchainEngine::callbackResolver(const QUuid& id, const QVariant& data) {
     mResolvers[id](data);
 }
+
+void BlockchainEngine::getTransactionDeadline(std::function<void(std::optional<xpx_chain_sdk::NetworkDuration> deadline)> callback)
+{
+    getBlockchainHeight([this, callback](auto height, auto isSuccess, auto message, auto code)
+    {
+        if (!isSuccess)
+        {
+            qWarning() << "BlockchainEngine::getTransactionDeadline: " << message.c_str() << " : " << code.c_str();
+            callback(std::nullopt);
+            return;
+        }
+
+        getBlockByHeight(height, [callback, height](auto block, auto isSuccess, auto message, auto code)
+        {
+            if (!isSuccess)
+            {
+                qWarning() << "BlockchainEngine::getTransactionDeadline::getBlockByHeight " << message.c_str() << " : " << code.c_str();
+                callback(std::nullopt);
+                return;
+            }
+
+            // current block time + 10 minutes
+            std::optional<xpx_chain_sdk::NetworkDuration> deadline(block.data.timestamp + xpx_chain_sdk::GetConfig().TransactionDelta.count());
+            qDebug() << "BlockchainEngine::getTransactionDeadline::getBlockByHeight: height: "
+                     << height << " current block time: " << block.data.timestamp
+                     << " current deadline: " << deadline->count();
+
+            callback(deadline);
+        });
+    });
+}

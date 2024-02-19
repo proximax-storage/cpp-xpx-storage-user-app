@@ -62,6 +62,8 @@ public:
     void getMosaicsNames(const std::vector<xpx_chain_sdk::MosaicId>& ids,
                          const std::function<void(xpx_chain_sdk::MosaicNames, bool, std::string, std::string)>& callback);
 
+    void getTransactionDeadline(std::function<void(std::optional<xpx_chain_sdk::NetworkDuration> deadline)> callback);
+
 signals:
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
