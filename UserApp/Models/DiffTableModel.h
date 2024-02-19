@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QModelIndex>
-#include "Model.h"
+#include "Models/Model.h"
 #include "drive/ActionList.h"
 
 class DiffTableModel: public QAbstractListModel

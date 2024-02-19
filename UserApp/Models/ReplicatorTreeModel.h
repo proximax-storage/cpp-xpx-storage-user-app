@@ -5,7 +5,7 @@
 #include <QVariant>
 
 #include "xpxchaincpp/model/storage/replicator.h"
-#include "CachedReplicator.h"
+#include "Entities/CachedReplicator.h"
 
 class ReplicatorTreeItem;
 class Model;

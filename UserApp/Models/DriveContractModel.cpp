@@ -1,5 +1,5 @@
 #include "DriveContractModel.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 #include <thread>
 
 void DriveContractModel::onDriveStateChanged( const std::string& driveKey, int state ) {

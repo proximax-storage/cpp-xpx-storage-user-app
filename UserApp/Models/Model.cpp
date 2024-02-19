@@ -1,11 +1,11 @@
-#include "Model.h"
+#include "Models/Model.h"
 #include "Diff.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 #include "LocalDriveItem.h"
-#include "StorageEngine.h"
+#include "Engines/StorageEngine.h"
 #include "utils/HexParser.h"
 #include "drive/ViewerSession.h"
-#include "Settings.h"
+#include "Entities/Settings.h"
 
 #include <QFileInfoList>
 #include <QDirIterator>

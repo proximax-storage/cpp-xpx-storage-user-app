@@ -8,7 +8,7 @@
 
 #include <filesystem>
 
-#include "Model.h"
+#include "Models/Model.h"
 #include "LocalDriveItem.h"
 
 namespace fs = std::filesystem;

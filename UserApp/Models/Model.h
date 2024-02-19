@@ -16,12 +16,12 @@
 #include "drive/FlatDrive.h"
 #include "xpxchaincpp/model/storage/drives_page.h"
 #include "xpxchaincpp/model/storage/download_channels_page.h"
-#include "Drive.h"
-#include "DownloadInfo.h"
-#include "DownloadChannel.h"
-#include "CachedReplicator.h"
-#include "StreamInfo.h"
-#include "DriveContractModel.h"
+#include "Entities/Drive.h"
+#include "Entities/DownloadInfo.h"
+#include "Entities/DownloadChannel.h"
+#include "Entities/CachedReplicator.h"
+#include "Entities/StreamInfo.h"
+#include "Models/DriveContractModel.h"
 
 inline bool ALEX_LOCAL_TEST = false;
 inline bool VICTOR_LOCAL_TEST = false;

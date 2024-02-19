@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QModelIndex>
-#include "Model.h"
+#include "Models/Model.h"
 #include "drive/FsTree.h"
 
 using FsTreePath = std::vector<sirius::drive::Folder*>;

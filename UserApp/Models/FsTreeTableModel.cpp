@@ -1,5 +1,5 @@
 #include "FsTreeTableModel.h"
-#include "Settings.h"
+#include "Entities/Settings.h"
 
 #include <QApplication>
 #include <QStyle>

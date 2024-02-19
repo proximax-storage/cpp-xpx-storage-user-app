@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QModelIndex>
-#include "Model.h"
+#include "Models/Model.h"
 
 class DownloadsTableModel : public QAbstractListModel
 {

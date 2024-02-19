@@ -1,6 +1,6 @@
 #include "ReplicatorTreeModel.h"
 #include "ReplicatorTreeItem.h"
-#include "Model.h"
+#include "Models/Model.h"
 
 #include <QStringList>
 
