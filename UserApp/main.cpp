@@ -1,6 +1,6 @@
 #include "mainwin.h"
 #include "Utils.h"
-#include "Model.h"
+#include "Models/Model.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
     std::signal(SIGABRT, sigHandler);
     std::signal(SIGSEGV, sigHandler);
 
+    qInstallMessageHandler(customMessageHandler);
+
 restart_label:
     QApplication a(argc, argv);
 
@@ -37,7 +39,6 @@ restart_label:
         QApplication::setWindowIcon(appIcon);
     }
 
-    qInstallMessageHandler(customMessageHandler);
 // TODO: same style for all platforms
 //#ifdef Q_OS_LINUX
 //    QFile styleFile( getResource("./resources/styles/ubuntu.qss") );
