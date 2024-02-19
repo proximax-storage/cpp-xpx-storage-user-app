@@ -87,59 +87,19 @@ include_directories(${PROJECT_ROOT_DIR}/cpp-xpx-storage-sdk/libtorrent/include)
 
 set(TS_FILES StorageClientApp_en_US.ts)
 
-set(PROJECT_SOURCES
-        main.cpp
-        mainwin.h                     mainwin.cpp                 mainwin.ui
-        mainwin_streaming.cpp
-        SettingsDialog.h              SettingsDialog.cpp          SettingsDialog.ui
-        PrivKeyDialog.h               PrivKeyDialog.cpp           PrivKeyDialog.ui
-        Model.h                       Model.cpp                   AddDownloadChannelDialog.ui
-        Settings.h                    Settings.cpp                progressbardialog.ui
-        StorageEngine.h               StorageEngine.cpp           AddDriveDialog.ui
-        EditDialog.h                  EditDialog.cpp              EditDialog.ui
-        DriveInfoDialog.h             DriveInfoDialog.cpp         DriveInfoDialog.ui
-        ChannelInfoDialog.h           ChannelInfoDialog.cpp       ChannelInfoDialog.ui
-
-        FsTreeTableModel.h            FsTreeTableModel.cpp        DownloadPaymentDialog.ui
-        DownloadsTableModel.h         DownloadsTableModel.cpp     StoragePaymentDialog.ui
-        DriveTreeModel.h              DriveTreeModel.cpp
-        DiffTableModel.h              DiffTableModel.cpp          ReplicatorOnBoardingDialog.ui
-        Diff.h                        Diff.cpp                    ReplicatorOffBoardingDialog.ui
-        ReplicatorInfoDialog.h        ReplicatorInfoDialog.cpp    ReplicatorInfoDialog.ui
-        ModifyProgressPanel.h         ModifyProgressPanel.cpp     ModifyProgressPanel.ui
-        StreamingView.h               StreamingView.cpp           StreamingView.ui
-        PopupMenu.h                   PopupMenu.cpp
-
-        LocalDriveItem.h
-        BlockchainEngine.cpp          BlockchainEngine.h
-        Worker.cpp                    Worker.h
-        TransactionsEngine.cpp        TransactionsEngine.h
-        AddDownloadChannelDialog.cpp  AddDownloadChannelDialog.h
-        CloseChannelDialog.cpp        CloseChannelDialog.h
-        ProgressBarDialog.cpp         ProgressBarDialog.h
-        OnChainClient.cpp             OnChainClient.h
-
-        AddDriveDialog.h              AddDriveDialog.cpp
-        Utils.h                       Utils.cpp
-        CloseDriveDialog.h            CloseDriveDialog.cpp
-        DownloadPaymentDialog.h       DownloadPaymentDialog.cpp
-        StoragePaymentDialog.h        StoragePaymentDialog.cpp
-        CancelModificationDialog.h    CancelModificationDialog.cpp
-        ReplicatorTreeItem.h          ReplicatorTreeItem.cpp
-        ReplicatorTreeModel.h         ReplicatorTreeModel.cpp
-        ReplicatorOnBoardingDialog.h  ReplicatorOnBoardingDialog.cpp
-        ReplicatorOffBoardingDialog.h ReplicatorOffBoardingDialog.cpp
-        Drive.h                       Drive.cpp
-        DownloadChannel.h             DownloadChannel.cpp
-        DownloadInfo.h                DownloadInfo.cpp
-        Account.h                     Account.cpp
-        CachedReplicator.h            CachedReplicator.cpp
-        StreamInfo.h                  StreamInfo.cpp
-        DriveContractModel.h          DriveContractModel.cpp
-
-        AddStreamAnnouncementDialog.h AddStreamAnnouncementDialog.cpp AddStreamAnnouncementDialog.ui
-        AddStreamRefDialog.h          AddStreamRefDialog.cpp          AddStreamRefDialog.ui
-        CustomLogsRedirector.h        CustomLogsRedirector.cpp
+file(GLOB PROJECT_SOURCES
+        "*.h"
+        "*.cpp"
+        "Dialogs/*.h"
+        "Dialogs/*.cpp"
+        "Models/*.h"
+        "Models/*.cpp"
+        "Engines/*.h"
+        "Engines/*.cpp"
+        "Entities/*.h"
+        "Entities/*.cpp"
+        "SignalEmitters/*.h"
+        "SignalEmitters/*.cpp"
 
         ${TS_FILES}
 )
