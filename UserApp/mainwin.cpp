@@ -3,36 +3,36 @@
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
-#include "Settings.h"
-#include "Model.h"
-#include "FsTreeTableModel.h"
-#include "DownloadsTableModel.h"
-#include "DriveTreeModel.h"
-#include "DiffTableModel.h"
+#include "Entities/Settings.h"
+#include "Models/Model.h"
+#include "Models/FsTreeTableModel.h"
+#include "Models/DownloadsTableModel.h"
+#include "Models/DriveTreeModel.h"
+#include "Models/DiffTableModel.h"
 #include "QtGui/qclipboard.h"
-#include "SettingsDialog.h"
-#include "PrivKeyDialog.h"
-#include "ChannelInfoDialog.h"
-#include "DriveInfoDialog.h"
-#include "AddDownloadChannelDialog.h"
-#include "CloseChannelDialog.h"
-#include "CancelModificationDialog.h"
-#include "AddDriveDialog.h"
-#include "CloseDriveDialog.h"
-#include "DownloadPaymentDialog.h"
-#include "StoragePaymentDialog.h"
+#include "Dialogs/SettingsDialog.h"
+#include "Dialogs/PrivKeyDialog.h"
+#include "Dialogs/ChannelInfoDialog.h"
+#include "Dialogs/DriveInfoDialog.h"
+#include "Dialogs/AddDownloadChannelDialog.h"
+#include "Dialogs/CloseChannelDialog.h"
+#include "Dialogs/CancelModificationDialog.h"
+#include "Dialogs/AddDriveDialog.h"
+#include "Dialogs/CloseDriveDialog.h"
+#include "Dialogs/DownloadPaymentDialog.h"
+#include "Dialogs/StoragePaymentDialog.h"
 #include "ReplicatorTreeItem.h"
-#include "ReplicatorTreeModel.h"
-#include "ReplicatorOnBoardingDialog.h"
-#include "ReplicatorOffBoardingDialog.h"
-#include "ReplicatorInfoDialog.h"
-#include "ModifyProgressPanel.h"
+#include "Models/ReplicatorTreeModel.h"
+#include "Dialogs/ReplicatorOnBoardingDialog.h"
+#include "Dialogs/ReplicatorOffBoardingDialog.h"
+#include "Dialogs/ReplicatorInfoDialog.h"
+#include "Dialogs/ModifyProgressPanel.h"
 #include "PopupMenu.h"
-#include "EditDialog.h"
+#include "Dialogs/EditDialog.h"
 
 #include "crypto/Signer.h"
 #include "utils/HexParser.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 
 #include <qdebug.h>
 #include <QFileIconProvider>
@@ -159,7 +159,7 @@ void MainWin::init()
     connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
     connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
         AddDownloadChannelDialog dialog(m_onChainClient, m_model, this);
-        connect(&dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel);
+        connect(m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel);
         dialog.exec();
     }, Qt::QueuedConnection);
 

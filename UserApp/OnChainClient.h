@@ -6,10 +6,11 @@
 #include <xpxchaincpp/sdk.h>
 
 #include "Utils.h"
-#include "StorageEngine.h"
-#include "BlockchainEngine.h"
-#include "TransactionsEngine.h"
+#include "Engines/StorageEngine.h"
+#include "Engines/BlockchainEngine.h"
+#include "Engines/TransactionsEngine.h"
 #include "ContractDeploymentData.h"
+#include "SignalEmitters/DialogSignals.h"
 
 class OnChainClient : public QObject
 {
@@ -36,14 +37,15 @@ class OnChainClient : public QObject
 
         BlockchainEngine* getBlockchainEngine();
 
-        std::string addDownloadChannel(const std::string& channelAlias,
+        void addDownloadChannel(const std::string& channelAlias,
                                        const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
                                        const std::array<uint8_t, 32>& drivePubKey,
                                        const uint64_t& prepaidSize,
-                                       const uint64_t& feedbacksNumber);
+                                       const uint64_t& feedbacksNumber,
+                                       const std::function<void(std::string hash)>& callback);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
-        std::string addDrive(const uint64_t& driveSize, ushort replicatorsCount);
+        void addDrive(const uint64_t& driveSize, ushort replicatorsCount, const std::function<void(std::string hash)>& callback);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
         void cancelDataModification(const std::array<uint8_t, 32> &driveId);
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
@@ -59,10 +61,11 @@ class OnChainClient : public QObject
         void deployContract(const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data);
         void runContract(const ContractManualCallData& data);
 
-        std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
-                                const std::string& folderName,
-                                uint64_t expectedUploadSizeMegabytes,
-                                uint64_t feedbackFeeAmount);
+        void streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
+                         const std::string& folderName,
+                         uint64_t expectedUploadSizeMegabytes,
+                         uint64_t feedbackFeeAmount,
+                         const std::function<void(std::string hash)>& callback);
 
         void streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
                           const std::array<uint8_t, 32>& streamId,
@@ -75,6 +78,7 @@ class OnChainClient : public QObject
 
         TransactionsEngine* transactionsEngine() { return mpTransactionsEngine; }
         StorageEngine* getStorageEngine();
+        DialogSignals* getDialogSignalsEmitter();
 
     signals:
         void connectedToServer();
@@ -143,6 +147,7 @@ class OnChainClient : public QObject
         void onConnected(xpx_chain_sdk::Config& config, const std::string& privateKey);
 
     private:
+        DialogSignals* mpDialogSignalsEmitter;
         StorageEngine* mpStorageEngine;
         BlockchainEngine* mpBlockchainEngine;
         TransactionsEngine* mpTransactionsEngine;

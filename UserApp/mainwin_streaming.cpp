@@ -1,30 +1,24 @@
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
-#include "AddStreamAnnouncementDialog.h"
-#include "AddStreamRefDialog.h"
-#include "AddDownloadChannelDialog.h"
+#include "Dialogs/AddStreamAnnouncementDialog.h"
+#include "Dialogs/AddDownloadChannelDialog.h"
 
-#include "Model.h"
-#include "StreamInfo.h"
-#include "ModifyProgressPanel.h"
-#include "StreamingView.h"
-#include "StorageEngine.h"
-#include "Account.h"
-#include <cerrno>
+#include "Models/Model.h"
+#include "Entities/StreamInfo.h"
+#include "Dialogs/ModifyProgressPanel.h"
+#include "Dialogs/StreamingView.h"
+#include "Engines/StorageEngine.h"
+#include "Entities/Account.h"
 #include <qdebug.h>
 #include <QFileIconProvider>
-#include <QScreen>
 #include <QComboBox>
 #include <QProcess>
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <thread>
 #include <QListWidget>
-#include <QAction>
-#include <QToolTip>
 #include <QFileDialog>
-#include <QProcess>
 #include <QClipboard>
 
 #include <boost/algorithm/string.hpp>
@@ -543,7 +537,7 @@ void MainWin::startViewingStream()
         }
 
         AddDownloadChannelDialog dialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
-        connect( &dialog, &AddDownloadChannelDialog::addDownloadChannel, this, &MainWin::addChannel );
+        connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel );
         auto rc = dialog.exec();
         if ( rc )
         {
@@ -875,32 +869,43 @@ void MainWin::onStartStreamingBtn()
 //            }
             
 #if 1
-            std::string txHashString = m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount );
-            qDebug () << "streamStart: txHashString: " << txHashString.c_str();
-            auto txHash = rawHashFromHex( txHashString.c_str() );
+            auto callback = [model = m_model, driveKey, driveKeyHex, m3u8Playlist, chuncksFolder, torrentsFolder, endPointList](std::string txHashString) {
+                auto* drive = model->findDrive( driveKey );
+                if ( drive == nullptr )
+                {
+                    qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
+                    return;
+                }
+
+                qDebug () << "streamStart: txHashString: " << txHashString.c_str();
+                auto txHash = rawHashFromHex( txHashString.c_str() );
 #else
-            // OFF-CHAIN
+                // OFF-CHAIN
             std::array<uint8_t, 32> txHash;
 #endif
 
-            std::cout << "🔵 txHash: " << sirius::Hash256(txHash) << "\n";
-            qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
-            qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
-            qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
-            for( auto& endpoint : endPointList )
-            {
-                std::cout << "🔵 endpoint: " << endpoint << "\n";
-            }
-            gStorageEngine->startStreaming( txHash,
-                                           driveKeyHex, m3u8Playlist,
-                                           chuncksFolder,
-                                           torrentsFolder,
-                                           endPointList );
+                std::cout << "🔵 txHash: " << sirius::Hash256(txHash) << "\n";
+                qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
+                qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
+                qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
+                for( auto& endpoint : endPointList )
+                {
+                    std::cout << "🔵 endpoint: " << endpoint << "\n";
+                }
 
-            drive->setModificationHash( txHash, true );
+                gStorageEngine->startStreaming( txHash,
+                                                driveKeyHex, m3u8Playlist,
+                                                chuncksFolder,
+                                                torrentsFolder,
+                                                endPointList );
+
+                drive->setModificationHash( txHash, true );
 //            drive->updateDriveState(canceled); //todo
 //            drive->updateDriveState(no_modifications); //todo
-            drive->updateDriveState(registering);
+                drive->updateDriveState(registering);
+            };
+
+            m_onChainClient->streamStart( driveKeyHex, streamInfo->m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback );
         }
         catch (...) {
             return;

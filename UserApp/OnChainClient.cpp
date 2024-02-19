@@ -6,6 +6,7 @@
 OnChainClient::OnChainClient(StorageEngine* storage, QObject* parent)
     : QObject(parent)
     , mpStorageEngine(storage)
+    , mpDialogSignalsEmitter(new DialogSignals(this))
 {
     qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
 }
@@ -127,23 +128,41 @@ BlockchainEngine* OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
 }
 
-std::string OnChainClient::addDownloadChannel(const std::string& channelAlias,
+void OnChainClient::addDownloadChannel(const std::string& channelAlias,
                                        const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
-                                       const std::array<uint8_t, 32> &drivePubKey, const uint64_t &prepaidSize,
-                                       const uint64_t &feedbacksNumber) {
-    return mpTransactionsEngine->addDownloadChannel(channelAlias, listOfAllowedPublicKeys, drivePubKey, prepaidSize, feedbacksNumber);
+                                       const std::array<uint8_t, 32> &drivePubKey,
+                                       const uint64_t &prepaidSize,
+                                       const uint64_t &feedbacksNumber,
+                                       const std::function<void(std::string hash)>& callback) {
+    auto deadlineCallback = [this, alias = channelAlias, keys = listOfAllowedPublicKeys, pKey = drivePubKey, prepaid = prepaidSize, feedback = feedbacksNumber, cb = callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->addDownloadChannel(alias, keys, pKey, prepaid, feedback, deadline, cb);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
-    mpTransactionsEngine->closeDownloadChannel(channelId);
+    auto deadlineCallback = [this, channelId](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->closeDownloadChannel(channelId, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-std::string OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount) {
-    return mpTransactionsEngine->addDrive(driveSize, replicatorsCount);
+void OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount, const std::function<void(std::string hash)>& callback) {
+    auto deadlineCallback = [this, size = driveSize, count = replicatorsCount, cb = callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->addDrive(size, count, deadline, cb);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
-    mpTransactionsEngine->closeDrive(driveKey);
+    auto deadlineCallback = [this, driveKey](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->closeDrive(driveKey, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveId) {
@@ -155,7 +174,11 @@ void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveI
             return;
         }
 
-        mpTransactionsEngine->cancelDataModification(drive);
+        auto deadlineCallback = [this, drive](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->cancelDataModification(drive, deadline);
+        };
+
+        mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
     });
 }
 
@@ -184,16 +207,28 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
             addresses.emplace_back(key);
         }
 
-        mpTransactionsEngine->applyDataModification(driveId, actions, addresses, drive.data.replicators);
+        auto deadlineCallback = [this, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->applyDataModification(driveId, actions, addresses, replicators, deadline);
+        };
+
+        mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
     });
 }
 
 void OnChainClient::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t amount) {
-    mpTransactionsEngine->downloadPayment(channelId, amount);
+    auto deadlineCallback = [this, channelId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->downloadPayment(channelId, amount, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t &amount) {
-    mpTransactionsEngine->storagePayment(driveId, amount);
+    auto deadlineCallback = [this, driveId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->storagePayment(driveId, amount, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, uint64_t capacityMB, bool isExists) {
@@ -219,12 +254,21 @@ void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, ui
             emit replicatorOnBoardingTransactionConfirmed(publicKey);
         });
     } else {
-        mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB);
+
+        auto deadlineCallback = [this, replicatorPrivateKey, capacityMB](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB, deadline);
+        };
+
+        mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
     }
 }
 
 void OnChainClient::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString &replicatorPrivateKey) {
-    mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey);
+    auto deadlineCallback = [this, driveId, replicatorPrivateKey](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->replicatorOffBoarding(driveId, replicatorPrivateKey, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback) {
@@ -257,6 +301,11 @@ void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std
 StorageEngine* OnChainClient::getStorageEngine()
 {
     return mpStorageEngine;
+}
+
+DialogSignals* OnChainClient::getDialogSignalsEmitter()
+{
+    return mpDialogSignalsEmitter;
 }
 
 void OnChainClient::initConnects() {
@@ -570,30 +619,51 @@ void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, con
             addresses.emplace_back(key);
         }
 
-        mpTransactionsEngine->deployContract(driveKey, data, addresses);
+        auto deadlineCallback = [this, driveKey, data, addresses](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->deployContract(driveKey, data, addresses, deadline);
+        };
+
+        mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
     });
 }
 
 void OnChainClient::runContract(const ContractManualCallData& data ) {
-    mpTransactionsEngine->runManualCall(data, {});
+    auto deadlineCallback = [this, data](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->runManualCall(data, {}, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-std::string OnChainClient::streamStart(const std::array<uint8_t, 32> &rawDrivePubKey,
-                                       const std::string &folderName,
-                                       uint64_t expectedUploadSizeMegabytes,
-                                       uint64_t feedbackFeeAmount) {
-    return mpTransactionsEngine->streamStart(rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount);
+void OnChainClient::streamStart(const std::array<uint8_t, 32> &rawDrivePubKey,
+                                const std::string &folderName,
+                                uint64_t expectedUploadSizeMegabytes,
+                                uint64_t feedbackFeeAmount,
+                                const std::function<void(std::string hash)>& callback) {
+    auto deadlineCallback = [this, rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->streamStart(rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount, deadline, callback);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::streamFinish(const std::array<uint8_t, 32> &rawDrivePubKey,
                                  const std::array<uint8_t, 32> &streamId,
                                  uint64_t actualUploadSizeMegabytes,
                                  const std::array<uint8_t, 32> &streamStructureCdi) {
-    mpTransactionsEngine->streamFinish(rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi);
+    auto deadlineCallback = [this, rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->streamFinish(rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
 void OnChainClient::streamPayment(const std::array<uint8_t, 32> &rawDrivePubKey,
                                   const std::array<uint8_t, 32> &streamId,
                                   uint64_t additionalUploadSizeMegabytes) {
-    mpTransactionsEngine->streamPayment(rawDrivePubKey, streamId, additionalUploadSizeMegabytes);
+    auto deadlineCallback = [this, rawDrivePubKey, streamId, additionalUploadSizeMegabytes](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->streamPayment(rawDrivePubKey, streamId, additionalUploadSizeMegabytes, deadline);
+    };
+
+    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
