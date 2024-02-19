@@ -13,7 +13,7 @@
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
 #include "drive/Utils.h"
-#include "DriveContractModel.h"
+#include "Models/DriveContractModel.h"
 
 #define STREAM_ROOT_FOLDER_NAME ".videos"
 #define STREAM_INFO_FILE_NAME   "info"
