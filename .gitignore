@@ -53,6 +53,8 @@ compile_commands.json
 
 .idea
 
+*.patch
+
 
 /cmake-build-debug/
 /build/
