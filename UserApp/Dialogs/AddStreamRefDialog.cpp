@@ -1,5 +1,5 @@
-#include "Model.h"
-#include "AddStreamRefDialog.h"
+#include "Models/Model.h"
+#include "Dialogs/AddStreamRefDialog.h"
 #include "./ui_AddStreamRefDialog.h"
 
 #include <QFileDialog>

@@ -8,7 +8,7 @@
 #include <xpxchaincpp/model/storage/drive.h>
 
 #include "OnChainClient.h"
-#include "Model.h"
+#include "Models/Model.h"
 
 namespace Ui {
 class AddDownloadChannelDialog;
@@ -25,17 +25,11 @@ public:
                                       Model* model,
                                       QWidget *parent = nullptr,
                                       std::string driveKey = "" );
-    ~AddDownloadChannelDialog();
+    ~AddDownloadChannelDialog() override;
 
 public:
     void accept() override;
     void reject() override;
-
-signals:
-    void addDownloadChannel(const std::string&             channelName,
-                            const std::string&             channelKey,
-                            const std::string&             driveKey,
-                            const std::vector<std::string> allowedPublicKeys);
 
 private:
     void validate();

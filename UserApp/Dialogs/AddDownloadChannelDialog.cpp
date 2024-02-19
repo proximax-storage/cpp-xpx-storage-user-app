@@ -2,7 +2,7 @@
 #include "ui_AddDownloadChannelDialog.h"
 #include "Utils.h"
 #include "mainwin.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 #include <QToolTip>
 #include <QRegularExpression>
 
@@ -195,24 +195,24 @@ void AddDownloadChannelDialog::accept() {
         qInfo() << LOG_SOURCE << "listOfAllowedPublicKeys is empty";
     }
 
-    auto channelHash = mpOnChainClient->addDownloadChannel(
-                ui->name->text().toStdString(),
-                listOfAllowedPublicKeys,
-                rawHashFromHex(mCurrentDriveKey.c_str()),
-                ui->prepaidAmountLine->text().toULongLong(),
-                0); // feedback is unused for now
-
-    channelHash = QString::fromStdString(channelHash).toUpper().toStdString();
-
-    qDebug() << LOG_SOURCE << "addChannelHash: " << channelHash.c_str();
-
     std::vector<std::string> publicKeys;
     keys.reserve((int)listOfAllowedPublicKeys.size());
     for (const auto& key : listOfAllowedPublicKeys) {
         publicKeys.push_back(rawHashToHex(key).toStdString());
     }
 
-    emit addDownloadChannel(ui->name->text().toStdString(), channelHash, mCurrentDriveKey, publicKeys);
+    const auto channelName = ui->name->text().toStdString();
+    auto callback = [client = mpOnChainClient, channelName, currDriveKey = mCurrentDriveKey, publicKeys](std::string hash) {
+        hash = QString::fromStdString(hash).toUpper().toStdString();
+        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
+        emit client->getDialogSignalsEmitter()->addDownloadChannel(channelName, hash, currDriveKey, publicKeys);
+    };
+
+    mpOnChainClient->addDownloadChannel(ui->name->text().toStdString(),
+                                        listOfAllowedPublicKeys,rawHashFromHex(mCurrentDriveKey.c_str()),
+                                        ui->prepaidAmountLine->text().toULongLong(),
+                                        0,
+                                        callback); // feedback is unused for now
 
     QDialog::accept();
 }

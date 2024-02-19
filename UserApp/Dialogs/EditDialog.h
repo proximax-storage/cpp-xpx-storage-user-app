@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QDialog>
-#include "Model.h"
+#include "Models/Model.h"
 
 namespace Ui {
 class EditDialog;

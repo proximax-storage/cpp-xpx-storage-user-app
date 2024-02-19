@@ -5,7 +5,7 @@
 #include <QPixmap>
 #include <functional>
 
-#include "Model.h"
+#include "Models/Model.h"
 
 namespace Ui {
     class Frame;

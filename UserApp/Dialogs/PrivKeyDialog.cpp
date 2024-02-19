@@ -1,5 +1,5 @@
-#include "PrivKeyDialog.h"
-#include "Settings.h"
+#include "Dialogs/PrivKeyDialog.h"
+#include "Entities/Settings.h"
 #include "mainwin.h"
 #include "ui_PrivKeyDialog.h"
 #include "drive/Utils.h"

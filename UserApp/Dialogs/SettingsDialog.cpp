@@ -1,5 +1,5 @@
-#include "Settings.h"
-#include "SettingsDialog.h"
+#include "Entities/Settings.h"
+#include "Dialogs/SettingsDialog.h"
 #include "PrivKeyDialog.h"
 #include "xpxchaincpp/sdk.h"
 #include "./ui_SettingsDialog.h"

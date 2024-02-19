@@ -1,5 +1,5 @@
-#include "ModifyProgressPanel.h"
-#include "Model.h"
+#include "Dialogs/ModifyProgressPanel.h"
+#include "Models/Model.h"
 #include "Utils.h"
 #include "mainwin.h"
 #include "ui_ModifyProgressPanel.h"

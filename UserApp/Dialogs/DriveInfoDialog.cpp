@@ -1,5 +1,5 @@
-#include "Model.h"
-#include "DriveInfoDialog.h"
+#include "Models/Model.h"
+#include "Dialogs/DriveInfoDialog.h"
 #include "./ui_DriveInfoDialog.h"
 
 #include <QRegularExpression>

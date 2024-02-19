@@ -4,7 +4,7 @@
 #include <QDialog>
 
 #include "OnChainClient.h"
-#include "Model.h"
+#include "Models/Model.h"
 
 namespace Ui {
 class ReplicatorOnBoardingDialog;

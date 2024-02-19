@@ -2,20 +2,20 @@
 
 #include <QDialog>
 #include "OnChainClient.h"
-#include "Model.h"
+#include "Models/Model.h"
 
-namespace Ui { class AddDriveDialog; }
+namespace Ui { class AddStreamRefDialog; }
 
-class AddDriveDialog : public QDialog
+class AddStreamRefDialog : public QDialog
 {
 public:
     Q_OBJECT
 
 public:
-    explicit AddDriveDialog( OnChainClient* onChainClient,
+    explicit AddStreamRefDialog( OnChainClient* onChainClient,
                              Model* model,
                              QWidget *parent = nullptr);
-    ~AddDriveDialog() override;
+    ~AddStreamRefDialog() override;
 
 public:
     void accept() override;
@@ -25,7 +25,7 @@ private:
     void validate();
 
 private:
-    Ui::AddDriveDialog* ui;
-    Model* mp_model;
+    Ui::AddStreamRefDialog* ui;
+    Model* mpModel;
     OnChainClient* mp_onChainClient;
 };

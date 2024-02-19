@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "Models/Model.h"
 #include "AddDriveDialog.h"
 #include "./ui_AddDriveDialog.h"
 
@@ -159,24 +159,29 @@ void AddDriveDialog::validate() {
 
 void AddDriveDialog::accept()
 {
-    auto hash = mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong() );
+    auto callback = [model = mp_model,
+                     name = ui->m_driveName->text().toStdString(),
+                     count = ui->m_replicatorNumber->text().toInt(),
+                     size = ui->m_size->text().toInt(),
+                     folder = ui->m_localDriveFolder->text().toStdString()](auto hash) {
+        Drive drive;
+        drive.setName(name);
+        drive.setKey(hash);
+        drive.setReplicatorsCount(count);
+        drive.setSize(size);
+        drive.setLocalFolder(folder);
+        drive.setLocalFolderExists(true);
 
-    Drive drive;
-    drive.setName(ui->m_driveName->text().toStdString());
-    drive.setKey(hash);
-    drive.setReplicatorsCount(ui->m_replicatorNumber->text().toInt());
-    drive.setSize(ui->m_size->text().toInt());
-    drive.setLocalFolder(ui->m_localDriveFolder->text().toStdString());
-    drive.setLocalFolderExists(true);
+        model->addDrive(drive);
+        model->setCurrentDriveKey( drive.getKey() );
+        model->saveSettings();
+        auto currentDrive = model->currentDrive();
+        if (currentDrive) {
+            currentDrive->updateDriveState(creating);
+        }
+    };
 
-    mp_model->addDrive(drive);
-    mp_model->setCurrentDriveKey( drive.getKey() );
-    mp_model->saveSettings();
-    auto currentDrive = mp_model->currentDrive();
-    if (currentDrive) {
-        currentDrive->updateDriveState(creating);
-    }
-
+    mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong(), callback);
     QDialog::accept();
 }
 

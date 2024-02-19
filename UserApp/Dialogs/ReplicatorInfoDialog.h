@@ -2,7 +2,7 @@
 #define REPLICATORINFODIALOG_H
 
 #include <QDialog>
-#include "Model.h"
+#include "Models/Model.h"
 #include "xpxchaincpp/model/storage/replicator.h"
 
 namespace Ui {

@@ -5,7 +5,7 @@
 #include <QPushButton>
 
 #include "OnChainClient.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 
 class CloseDriveDialog : public QMessageBox
 {

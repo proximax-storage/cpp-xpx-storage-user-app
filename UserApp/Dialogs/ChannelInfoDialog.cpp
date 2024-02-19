@@ -1,7 +1,7 @@
 #include "ChannelInfoDialog.h"
 #include "ui_ChannelInfoDialog.h"
-#include "Model.h"
-#include "DownloadChannel.h"
+#include "Models/Model.h"
+#include "Entities/DownloadChannel.h"
 #include <QToolTip>
 #include <QRegularExpression>
 
