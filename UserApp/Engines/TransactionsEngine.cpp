@@ -19,17 +19,21 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mSandbox("/modify_drive_data")
 {}
 
-std::string TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
-                                                   const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
-                                                   const std::array<uint8_t, 32> &rawDrivePubKey, const uint64_t &prepaidSize,
-                                                   const uint64_t &feedbacksNumber) {
+void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
+                                            const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
+                                            const std::array<uint8_t, 32> &rawDrivePubKey,
+                                            const uint64_t &prepaidSize,
+                                            const uint64_t &feedbacksNumber,
+                                            const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                            const std::function<void(std::string hash)>& callback) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
     std::vector<xpx_chain_sdk::Key> listOfAllowedPks;
-    for (std::array<uint8_t, 32> key : listOfAllowedPublicKeys) {
+    for (std::array<uint8_t, 32> key : listOfAllowedPublicKeys)
+    {
         const QString keyHex = rawHashToHex(key);
 
         xpx_chain_sdk::Key newKey;
@@ -39,7 +43,7 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
 
     // TODO: fix empty list of keys
     auto downloadTransaction = xpx_chain_sdk::CreateDownloadTransaction(driveKey, prepaidSize, feedbacksNumber, listOfAllowedPks.size(), listOfAllowedPks,
-                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                        std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(downloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -77,13 +81,13 @@ std::string TransactionsEngine::addDownloadChannel(const std::string& channelAli
     });
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { downloadNotifier },
-            [this, data = downloadTransaction->binary()]() { announceTransaction(data); },
-            [this, hash](auto error) { onError(hash, error); });
+                                                               [this, data = downloadTransaction->binary()]() { announceTransaction(data); },
+                                                               [this, hash](auto error) { onError(hash, error); });
 
-    return hash;
+    callback(hash);
 }
 
-void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId) {
+void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &channelId, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     QString channelIdHex = rawHashToHex(channelId);
     if( channelId.empty()) {
         qWarning() << "TransactionsEngine::closeDownloadChannel. Bad channelId: empty!";
@@ -94,7 +98,7 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
     xpx_chain_sdk::ParseHexStringIntoContainer(channelIdHex.toStdString().c_str(), channelIdHex.size(), channelIdKey);
 
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
-    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto finishDownloadTransaction = xpx_chain_sdk::CreateFinishDownloadTransaction(channelIdKey, feedbackFeeAmount, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(finishDownloadTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -134,7 +138,7 @@ void TransactionsEngine::closeDownloadChannel(const std::array<uint8_t, 32> &cha
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t prepaidSize) {
+void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t prepaidSize, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     const QString channelIdHex = rawHashToHex(channelId);
 
     xpx_chain_sdk::Key channelIdKey;
@@ -143,7 +147,7 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
     const xpx_chain_sdk::Amount feedbackFeeAmount = 10;
 
     auto downloadPaymentTransaction = xpx_chain_sdk::CreateDownloadPaymentTransaction(channelIdKey, prepaidSize, feedbackFeeAmount,
-                                                                                      std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                      std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(downloadPaymentTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -183,13 +187,13 @@ void TransactionsEngine::downloadPayment(const std::array<uint8_t, 32> &channelI
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount) {
+void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     QString drivePubKey = rawHashToHex(driveId);
 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
-    auto storagePaymentTransaction = xpx_chain_sdk::CreateStoragePaymentTransaction(driveKey, amount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto storagePaymentTransaction = xpx_chain_sdk::CreateStoragePaymentTransaction(driveKey, amount, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(storagePaymentTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -228,9 +232,12 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-std::string TransactionsEngine::addDrive(const uint64_t& driveSize, const ushort replicatorsCount) {
+void TransactionsEngine::addDrive(const uint64_t& driveSize,
+                                  const ushort replicatorsCount,
+                                  const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                  const std::function<void(std::string hash)>& callback) {
     xpx_chain_sdk::Amount verificationFeeAmount = 100;
-    auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(prepareDriveTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -271,16 +278,16 @@ std::string TransactionsEngine::addDrive(const uint64_t& driveSize, const ushort
                                                                [this, data = prepareDriveTransaction->binary()]() { announceTransaction(data); },
                                                                [this, hash](auto error) { onError(hash, error); });
 
-    return hash;
+    callback(hash);
 }
 
-void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey) {
+void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
 
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(drivePubKey.toStdString().c_str(), drivePubKey.size(), driveKey);
 
-    auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(driveClosureTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -320,7 +327,7 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& drive) {
+void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& drive, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     if (drive.data.activeDataModifications.empty()) {
         qWarning() << "TransactionsEngine::cancelDataModification. Not active modifications found! Drive key: " << drive.data.multisig;
         return;
@@ -336,7 +343,7 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
     xpx_chain_sdk::ParseHexStringIntoContainer(currentModification.id.c_str(), currentModification.id.size(), modificationHash256);
 
     auto dataModificationCancelTransaction = xpx_chain_sdk::CreateDataModificationCancelTransaction(rawDriveKey, modificationHash256,
-                                                                                                    std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                                    std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationCancelTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -404,20 +411,21 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
 void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& driveId,
                                                const sirius::drive::ActionList& actions,
                                                const std::vector<xpx_chain_sdk::Address>& addresses,
-                                               const std::vector<std::string>& replicators) {
+                                               const std::vector<std::string>& replicators,
+                                               const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     qInfo() << "TransactionsEngine::applyDataModification. Drive key: " << rawHashToHex(driveId);
     if (!isValidHash(driveId)) {
         emit newError("TransactionsEngine::applyDataModification. Bad driveId: empty!");
         return;
     }
 
-    auto callback = [this, driveId, actions, addresses](auto totalModifyDataSize, auto infoHash) {
+    auto callback = [this, driveId, actions, addresses, deadline](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
             emit newError("TransactionsEngine::applyDataModification. Invalid info hash: " + rawHashToHex(infoHash));
             return;
         }
 
-        sendModification(driveId, infoHash, actions, totalModifyDataSize, addresses);
+        sendModification(driveId, infoHash, actions, totalModifyDataSize, addresses, deadline);
     };
 
     const std::string pathToSandbox = getSettingsFolder().string() + "/" + rawHashToHex(driveId).toStdString() + mSandbox;
@@ -458,7 +466,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                           const std::array<uint8_t, 32>& infoHash,
                                           const sirius::drive::ActionList& actions,
                                           const uint64_t totalModifyDataSize,
-                                          const std::vector<xpx_chain_sdk::Address>& replicators) {
+                                          const std::vector<xpx_chain_sdk::Address>& replicators,
+                                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     const QString actionListFileName = rawHashToHex(infoHash);
     qInfo() << "TransactionsEngine::sendModification. action list downloadDataCDI: " << actionListFileName;
 
@@ -507,7 +516,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKeyRaw);
 
     auto dataModificationTransaction = xpx_chain_sdk::CreateDataModificationTransaction(driveKeyRaw, downloadDataCdi, uploadSize, feedbackFeeAmount,
-                                                                                        std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                        std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationTransaction.get());
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
@@ -718,7 +727,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId); });
 }
 
-void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const uint64_t capacityMB) {
+void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
         xpx_chain_sdk::Key key;
         ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
@@ -729,7 +738,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> onBoardingNotifier;
 
     auto replicatorOnBoardingTransaction = xpx_chain_sdk::CreateReplicatorOnboardingTransaction(xpx_chain_sdk::Amount(capacityMB),
-                                                                                                std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                                std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     replicatorAccount->signTransaction(replicatorOnBoardingTransaction.get());
 
     const std::string onBoardingTransactionHash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
@@ -770,7 +779,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey) {
+void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     auto driveIdHex = rawHashToHex(driveId).toStdString();
     if (!isValidHash(driveId)) {
         qWarning() << LOG_SOURCE << "invalid hash: " << driveIdHex.c_str();
@@ -785,7 +794,7 @@ void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &dr
     xpx_chain_sdk::Key rawDriveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveIdHex.c_str(), driveIdHex.size(), rawDriveKey);
 
-    auto offBoardingTransaction = xpx_chain_sdk::CreateReplicatorOffboardingTransaction(rawDriveKey, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto offBoardingTransaction = xpx_chain_sdk::CreateReplicatorOffboardingTransaction(rawDriveKey, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
         xpx_chain_sdk::Key key;
         ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
@@ -941,18 +950,21 @@ void TransactionsEngine::unsubscribeFromReplicators(const std::vector<xpx_chain_
 }
 
 void TransactionsEngine::deployContract( const std::array<uint8_t, 32>& driveId, const ContractDeploymentData& data,
-                                         const std::vector<xpx_chain_sdk::Address>& replicators ) {
-    sendContractDeployment(driveId, data, replicators);
+                                         const std::vector<xpx_chain_sdk::Address>& replicators,
+                                         const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+    sendContractDeployment(driveId, data, replicators, deadline);
 }
 
 void TransactionsEngine::runManualCall( const ContractManualCallData& manualCallData,
-                                        const std::vector<xpx_chain_sdk::Address>& replicators ) {
-    sendManualCall(manualCallData, replicators);
+                                        const std::vector<xpx_chain_sdk::Address>& replicators,
+                                        const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+    sendManualCall(manualCallData, replicators, deadline);
 }
 
 void TransactionsEngine::sendContractDeployment( const std::array<uint8_t, 32>& driveId,
                                                  const ContractDeploymentData& data,
-                                                 const std::vector<xpx_chain_sdk::Address>& replicators ) {
+                                                 const std::vector<xpx_chain_sdk::Address>& replicators,
+                                                 const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     auto driveKey = reinterpret_cast<const xpx_chain_sdk::Key&>(driveId);
 
     xpx_chain_sdk::Key assignee;
@@ -977,7 +989,7 @@ void TransactionsEngine::sendContractDeployment( const std::array<uint8_t, 32>& 
                                                                        data.m_automaticDownloadCallPayment,
                                                                        data.m_automaticExecutionsNumber,
                                                                        assignee,
-                                                                       std::nullopt, std::nullopt,
+                                                                       std::nullopt, deadline,
                                                                        mpChainClient->getConfig().NetworkId );
 
     mpChainAccount->signTransaction( transaction.get());
@@ -1196,7 +1208,8 @@ void TransactionsEngine::sendContractDeployment( const std::array<uint8_t, 32>& 
 }
 
 void TransactionsEngine::sendManualCall( const ContractManualCallData& data,
-                                         const std::vector<xpx_chain_sdk::Address>& replicators ) {
+                                         const std::vector<xpx_chain_sdk::Address>& replicators,
+                                         const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     auto contractId = rawHashFromHex(QString::fromStdString(data.m_contractKey));
     auto contractKey = reinterpret_cast<const xpx_chain_sdk::Key&>(contractId);
 
@@ -1213,7 +1226,7 @@ void TransactionsEngine::sendManualCall( const ContractManualCallData& data,
                                                                    data.m_executionCallPayment,
                                                                    data.m_downloadCallPayment,
                                                                    servicePayments,
-                                                                   std::nullopt, std::nullopt,
+                                                                   std::nullopt, deadline,
                                                                    mpChainClient->getConfig().NetworkId );
 
     mpChainAccount->signTransaction( transaction.get());
@@ -1430,10 +1443,12 @@ void TransactionsEngine::sendManualCall( const ContractManualCallData& data,
     } );
 }
 
-std::string TransactionsEngine::streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
+void TransactionsEngine::streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
                                             const std::string& folderName,
                                             uint64_t expectedUploadSizeMegabytes,
-                                            uint64_t feedbackFeeAmount) {
+                                            uint64_t feedbackFeeAmount,
+                                            const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                            const std::function<void(std::string hash)>& callback) {
     const QString driveKeyHex = rawHashToHex(rawDrivePubKey);
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKey);
@@ -1443,7 +1458,7 @@ std::string TransactionsEngine::streamStart(const std::array<uint8_t, 32>& rawDr
             << expectedUploadSizeMegabytes << " feedbackFeeAmount: " << feedbackFeeAmount;
 
     const std::vector<uint8_t> rawFolderName(folderName.begin(), folderName.end());
-    auto streamStartTransaction = xpx_chain_sdk::CreateStreamStartTransaction(driveKey, expectedUploadSizeMegabytes, rawFolderName.size(), feedbackFeeAmount, rawFolderName, std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+    auto streamStartTransaction = xpx_chain_sdk::CreateStreamStartTransaction(driveKey, expectedUploadSizeMegabytes, rawFolderName.size(), feedbackFeeAmount, rawFolderName, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
 
     mpChainAccount->signTransaction(streamStartTransaction.get());
 
@@ -1481,13 +1496,14 @@ std::string TransactionsEngine::streamStart(const std::array<uint8_t, 32>& rawDr
                                                                [this, data = streamStartTransaction->binary()]() { announceTransaction(data); },
                                                                [this, hash](auto error) { onError(hash, error); });
 
-    return hash;
+    callback(hash);
 }
 
 void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
                                       const std::array<uint8_t, 32>& streamId,
                                       uint64_t actualUploadSizeMegabytes,
-                                      const std::array<uint8_t, 32>& streamStructureCdi) {
+                                      const std::array<uint8_t, 32>& streamStructureCdi,
+                                      const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     const QString driveKeyHex = rawHashToHex(rawDrivePubKey);
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKey);
@@ -1505,7 +1521,7 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
             << actualUploadSizeMegabytes << " streamCDI: " << streamStructureCdiHex;
 
     auto streamFinishTransaction = xpx_chain_sdk::CreateStreamFinishTransaction(driveKey, streamIdKey, actualUploadSizeMegabytes, streamCdi,
-                                                                                std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
 
     mpChainAccount->signTransaction(streamFinishTransaction.get());
 
@@ -1546,7 +1562,8 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
 
 void TransactionsEngine::streamPayment(const std::array<uint8_t, 32>& rawDrivePubKey,
                                        const std::array<uint8_t, 32>& streamId,
-                                       uint64_t additionalUploadSizeMegabytes) {
+                                       uint64_t additionalUploadSizeMegabytes,
+                                       const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     const QString driveKeyHex = rawHashToHex(rawDrivePubKey);
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKey);
@@ -1556,7 +1573,7 @@ void TransactionsEngine::streamPayment(const std::array<uint8_t, 32>& rawDrivePu
     xpx_chain_sdk::ParseHexStringIntoContainer(streamIdHex.toStdString().c_str(), streamIdHex.size(), streamIdKey);
 
     auto streamPaymentTransaction = xpx_chain_sdk::CreateStreamPaymentTransaction(driveKey, streamIdKey, additionalUploadSizeMegabytes,
-                                                                                  std::nullopt, std::nullopt, mpChainClient->getConfig().NetworkId);
+                                                                                  std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
 
     mpChainAccount->signTransaction(streamPaymentTransaction.get());
 

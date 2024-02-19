@@ -4,7 +4,7 @@
 #include <QObject>
 #include <xpxchaincpp/sdk.h>
 #include <xpxchaincpp/model/storage/drive.h>
-#include <BlockchainEngine.h>
+#include <Engines/BlockchainEngine.h>
 #include <utils/HexFormatter.h>
 #include <drive/ActionList.h>
 #include "ContractDeploymentData.h"
@@ -22,48 +22,59 @@ class TransactionsEngine : public QObject
         ~TransactionsEngine() = default;
 
     public:
-        std::string addDownloadChannel(const std::string& channelAlias,
-                                       const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
-                                       const std::array<uint8_t, 32>& drivePubKey,
-                                       const uint64_t& prepaidSize,
-                                       const uint64_t& feedbacksNumber);
+        void addDownloadChannel(const std::string& channelAlias,
+                                const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
+                                const std::array<uint8_t, 32>& drivePubKey,
+                                const uint64_t& prepaidSize,
+                                const uint64_t& feedbacksNumber,
+                                const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                const std::function<void(std::string hash)>& callback);
 
-        void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
-        void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize);
-        void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
-        std::string addDrive(const uint64_t& driveSize, ushort replicatorsCount);
-        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
-        void cancelDataModification(const xpx_chain_sdk::Drive& drive);
+        void closeDownloadChannel(const std::array<uint8_t, 32>& channelId, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void addDrive(const uint64_t& driveSize, ushort replicatorsCount,
+                      const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                      const std::function<void(std::string hash)>& callback);
+        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void cancelDataModification(const xpx_chain_sdk::Drive& drive, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::vector<xpx_chain_sdk::Address>& addresses,
-                                   const std::vector<std::string>& replicators);
-        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB);
-        void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
+                                   const std::vector<std::string>& replicators,
+                                   const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
         std::array<uint8_t, 32> getLatestModificationId(const std::array<uint8_t, 32> &driveId);
         bool isModificationsPresent(const std::array<uint8_t, 32> &driveId);
 
         void deployContract( const std::array<uint8_t, 32>& driveId,
                              const ContractDeploymentData& data,
-                             const std::vector<xpx_chain_sdk::Address>& replicators );
+                             const std::vector<xpx_chain_sdk::Address>& replicators,
+                             const std::optional<xpx_chain_sdk::NetworkDuration>& deadline );
 
         void runManualCall( const ContractManualCallData& manualCallData,
-                            const std::vector<xpx_chain_sdk::Address>& replicators );
+                            const std::vector<xpx_chain_sdk::Address>& replicators,
+                            const std::optional<xpx_chain_sdk::NetworkDuration>& deadline );
 
-        std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
+        void streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
                                 const std::string& folderName,
                                 uint64_t expectedUploadSizeMegabytes,
-                                uint64_t feedbackFeeAmount);
+                                uint64_t feedbackFeeAmount,
+                                const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                const std::function<void(std::string hash)>& callback);
 
         void streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
                           const std::array<uint8_t, 32>& streamId,
                           uint64_t actualUploadSizeMegabytes,
-                          const std::array<uint8_t, 32>& streamStructureCdi);
+                          const std::array<uint8_t, 32>& streamStructureCdi,
+                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
         void streamPayment(const std::array<uint8_t, 32>& rawDrivePubKey,
                            const std::array<uint8_t, 32>& streamId,
-                           uint64_t additionalUploadSizeMegabytes);
+                           uint64_t additionalUploadSizeMegabytes,
+                           const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
     signals:
         void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
@@ -128,7 +139,8 @@ class TransactionsEngine : public QObject
                               const std::array<uint8_t, 32>& infoHash,
                               const sirius::drive::ActionList& actionList,
                               uint64_t totalModifySize,
-                              const std::vector<xpx_chain_sdk::Address>& replicators);
+                              const std::vector<xpx_chain_sdk::Address>& replicators,
+                              const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
         void removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
                                           const std::string& id,
@@ -157,10 +169,12 @@ class TransactionsEngine : public QObject
 
         void sendContractDeployment( const std::array<uint8_t, 32>& driveId,
                                      const ContractDeploymentData& data,
-                                     const std::vector<xpx_chain_sdk::Address>& replicators );
+                                     const std::vector<xpx_chain_sdk::Address>& replicators,
+                                     const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
         void sendManualCall( const ContractManualCallData& data,
-                             const std::vector<xpx_chain_sdk::Address>& replicators );
+                             const std::vector<xpx_chain_sdk::Address>& replicators,
+                             const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
     private:
         struct ModificationEntity

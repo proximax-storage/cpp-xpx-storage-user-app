@@ -5,8 +5,8 @@
 #include "drive/StreamerSession.h"
 #include "drive/Session.h"
 #include "utils/HexParser.h"
-#include "Model.h"
-#include "Settings.h"
+#include "Models/Model.h"
+#include "Entities/Settings.h"
 
 #include <QMetaObject>
 #include <QMessageBox>
@@ -308,12 +308,12 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
                                     const fs::path&         torrentsFolder,
                                     const endpoint_list&    endPointList )
 {
-    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, endPointList );
+    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, [](auto){}, endPointList );
 }
 
 void StorageEngine::finishStreaming( sirius::drive::FinishStreamInfo& info )
 {
-    info = m_session->finishStream();
+    m_session->finishStream([](auto finishInfo){});
 }
                                                    
 void StorageEngine::cancelStreaming()
