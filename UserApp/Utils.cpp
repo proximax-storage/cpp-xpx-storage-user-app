@@ -3,13 +3,12 @@
 #include <QTextStream>
 #include <QMutex>
 #include <QCoreApplication>
-#include <QDir>
 #include <iostream>
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
 #include "Utils.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
