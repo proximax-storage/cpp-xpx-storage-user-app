@@ -1034,10 +1034,7 @@ void MainWin::setupDownloadsTab()
 
     connect( ui->m_openDownloadFolderBtn, &QPushButton::released, this, [this]
     {
-#ifdef __APPLE__
         QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( m_settings->downloadFolder().string() )));
-#else
-#endif
     });
 }
 
@@ -2461,14 +2458,15 @@ void MainWin::setupDrivesTab()
 #ifdef __APPLE__
             QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
 #else
+//            QProcess fileManagerProcess;
+//            fileManagerProcess.startDetached("xdg-open", QStringList() << QString::fromStdString( driveInfo->getLocalFolder() ));
+//            if (!fileManagerProcess.waitForStarted())
+//            {
+//                QMessageBox::critical(nullptr, "Error", "Failed to open folder: " +
+//                                                            QString::fromStdString( driveInfo->getLocalFolder() ));
+//            }
             qDebug() << "TRY OPEN " << driveInfo->getLocalFolder();
             QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
-            //QProcess::startDetached("xdg-open " + QString::fromStdString( driveInfo->m_localDriveFolder ));
-            //system("/usr/bin/xdg-open file:///home/cempl");
-//            qDebug() << "TRY OPEN";
-//            auto result = system("/home/cempl/repositories/cpp-xpx-storage-user-app/resources/scripts/open_local_folder.sh");
-//            qDebug() << "TRY OPEN " << result;
-//            qDebug() << "TRY OPEN " << std::strerror(errno);
 #endif
         }
     });
