@@ -92,6 +92,7 @@ file(GLOB PROJECT_SOURCES
         "*.cpp"
         "Dialogs/*.h"
         "Dialogs/*.cpp"
+        "Dialogs/*.ui"
         "Models/*.h"
         "Models/*.cpp"
         "Engines/*.h"
