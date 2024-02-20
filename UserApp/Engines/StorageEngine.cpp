@@ -57,40 +57,17 @@ void StorageEngine::start()
         m_session->stop();
     };
 
-    if ( ALEX_LOCAL_TEST )
-    {
-        endpoint_list bootstraps;
-        bootstraps.emplace_back( boost::asio::ip::make_address("192.168.2.101"), 5001 );
+    endpoint_list bootstraps;
+    std::vector<std::string> addressAndPort;
+    std::string bootstrapReplicatorEndpoint = mp_model->getBootstrapReplicator();
+    boost::split( addressAndPort, bootstrapReplicatorEndpoint, [](char c){ return c==':'; } );
+    bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
+                           (uint16_t)atoi(addressAndPort[1].c_str()) );
 
-        gStorageEngine->init(mp_model->getKeyPair(),
-                             "192.168.2.201:2001",
-                             bootstraps,
-                             errorsCallback );
-    }
-    else if ( VICTOR_LOCAL_TEST )
-    {
-        endpoint_list bootstraps;
-        bootstraps.emplace_back( boost::asio::ip::make_address("192.168.20.20"), 7914 );
-
-        gStorageEngine->init(mp_model->getKeyPair(),
-                             "192.168.20.30:" + mp_model->getUdpPort(),
-                             bootstraps,
-                             errorsCallback );
-    }
-    else
-    {
-        endpoint_list bootstraps;
-        std::vector<std::string> addressAndPort;
-        std::string bootstrapReplicatorEndpoint = mp_model->getBootstrapReplicator();
-        boost::split( addressAndPort, bootstrapReplicatorEndpoint, [](char c){ return c==':'; } );
-        bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
-                               (uint16_t)atoi(addressAndPort[1].c_str()) );
-
-        gStorageEngine->init(mp_model->getKeyPair(),
-                             "0.0.0.0:" + mp_model->getUdpPort(),
-                             bootstraps,
-                             errorsCallback );
-    }
+    gStorageEngine->init(mp_model->getKeyPair(),
+                         "0.0.0.0:" + mp_model->getUdpPort(),
+                         bootstraps,
+                         errorsCallback );
 }
 
 void StorageEngine::restart()
@@ -303,7 +280,7 @@ void StorageEngine::requestStreamStatus( const std::array<uint8_t,32>&          
                                                    
 std::optional<boost::asio::ip::udp::endpoint> StorageEngine::getEndpoint( const sirius::Key& key )
 {
-    return m_session->getEndpoint( key );
+    return m_session->getEndpoint( key.array() );
 }
 
 void StorageEngine::startStreaming( const sirius::Hash256&  streamId,

@@ -775,7 +775,8 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     modificationHash,
                                         std::optional<boost::asio::ip::udp::endpoint> replicatorEndpoint )
 {
-//    if ( Model::homeFolder() == "/Users/alex" )
+//    std::error_code ec;
+//    if ( fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
 //    {
 //        boost::asio::ip::tcp::endpoint endpoint{ boost::asio::ip::make_address("192.168.2.101"), 5001 };
 //
@@ -793,41 +794,3 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
 //    }
 }
 
-void Model::stestInitChannels()
-{
-    m_settings->config().m_dnChannels.clear();
-
-    DownloadChannel channel1;
-    channel1.setName("my_channel");
-    channel1.setKey("0101010100000000000000000000000000000000000000000000000000000000");
-    channel1.setDriveKey("0100000000050607080900010203040506070809000102030405060708090001");
-    m_settings->config().m_dnChannels.insert({ channel1.getKey(), channel1 });
-
-    DownloadChannel channel2;
-    channel2.setName("my_channel2");
-    channel2.setKey("0202020200000000000000000000000000000000000000000000000000000000");
-    channel2.setDriveKey("0200000000050607080900010203040506070809000102030405060708090001");
-    m_settings->config().m_dnChannels.insert({ channel2.getKey(), channel2 });
-    m_settings->config().m_currentDownloadChannelKey = channel1.getKey();
-}
-
-void Model::stestInitDrives()
-{
-    m_settings->config().m_drives.clear();
-    std::array<uint8_t,32> driveKey{1,0,0,0,0,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1};
-
-    Drive d1;
-    d1.setKey( sirius::drive::toString(driveKey));
-    d1.setName("drive1");
-    d1.setLocalFolder("/Users/alex/000-drive1");
-    m_settings->config().m_drives.insert({ d1.getKey(), d1 });
-
-    std::array<uint8_t,32> driveKey2{2,0,0,0,0,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1,2,3,4,5,6,7,8,9, 0,1};
-
-    Drive d2;
-    d2.setKey(sirius::drive::toString(driveKey2));
-    d2.setName("drive2");
-    d2.setLocalFolder("/Users/alex/000-drive2");
-    m_settings->config().m_drives.insert({ d2.getKey(), d2 });
-    m_settings->config().m_currentDriveKey = d1.getKey();
-}
