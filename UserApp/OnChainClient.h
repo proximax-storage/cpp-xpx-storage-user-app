@@ -30,7 +30,7 @@ class OnChainClient : public QObject
         void start(const std::string& privateKey,
                    const std::string& address,
                    const std::string& port,
-                   const double feeMultiplier);
+                   double feeMultiplier);
 
         void loadDrives(const xpx_chain_sdk::DrivesPageOptions& options);
         void loadDownloadChannels(const xpx_chain_sdk::DownloadChannelsPageOptions& options);

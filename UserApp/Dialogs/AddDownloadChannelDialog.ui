@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>647</width>
-    <height>236</height>
+    <height>160</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Name*</string>
+          <string>Channel Name*</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -59,7 +59,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Drive*</string>
+          <string>Drive Key*</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -82,65 +82,17 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QComboBox" name="selectDriveBox">
-         <property name="minimumSize">
-          <size>
-           <width>450</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>30</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="keys">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Keys</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QLineEdit" name="keysLine">
-         <property name="minimumSize">
-          <size>
-           <width>450</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>30</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
+       <item row="2" column="0">
         <widget class="QLabel" name="prepaidAmount">
          <property name="text">
-          <string>Prepaid*</string>
+          <string>Prepaid (MB)*</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="2" column="1">
         <widget class="QLineEdit" name="prepaidAmountLine">
          <property name="minimumSize">
           <size>
@@ -175,7 +127,7 @@
       </size>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Help|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>

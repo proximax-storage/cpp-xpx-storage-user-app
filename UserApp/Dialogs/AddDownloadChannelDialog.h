@@ -30,6 +30,7 @@ public:
 public:
     void accept() override;
     void reject() override;
+    void displayInfo();
 
 private:
     void validate();
@@ -39,6 +40,8 @@ private:
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
     Model*                          mpModel;
+    QMessageBox*                    helpMessageBox = nullptr;
+
 };
 
 #endif // ADDDOWNLOADCHANNELDIALOG_H

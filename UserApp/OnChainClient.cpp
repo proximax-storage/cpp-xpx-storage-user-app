@@ -14,7 +14,7 @@ OnChainClient::OnChainClient(StorageEngine* storage, QObject* parent)
 void OnChainClient::start(const std::string& privateKey,
                           const std::string& address,
                           const std::string& port,
-                          const double feeMultiplier) {
+                          double feeMultiplier) {
     init(address, port, feeMultiplier, privateKey);
 
     connect(this, &OnChainClient::drivesPageLoaded, this, [this](const QUuid& id, const xpx_chain_sdk::drives_page::DrivesPage& drivesPage){

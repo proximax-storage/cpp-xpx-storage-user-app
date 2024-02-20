@@ -27,6 +27,7 @@ class DriveTreeModel;
 class DiffTableModel;
 class ModifyProgressPanel;
 class StreamingView;
+class StreamingPanel;
 class Model;
 class Settings;
 class ContractDeploymentData;
@@ -69,6 +70,8 @@ signals:
     void updateUploadedDataAmount(const uint64_t receivedSize);
     void modificationFinishedByReplicators();
     void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
+    void updateStreamingStatus( const QString& );
+
 
 private:
     void initGeometry();
@@ -116,6 +119,7 @@ private:
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
     void onStartStreamingBtn();
+    void onStartStreamingBtnFfmpeg();
     void loadBalance();
     void setupDrivesTab();
     void setupMyReplicatorTab();
@@ -223,7 +227,6 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
-
 public:
     // if private key is not set it will be 'true'
     bool          m_mustExit = false;
@@ -255,6 +258,7 @@ private:
     ModifyProgressPanel*    m_startViewingProgressPanel;
     ModifyProgressPanel*    m_streamingProgressPanel;
     StreamingView*          m_streamingView = nullptr;
+    StreamingPanel*         m_streamingPanel = nullptr;
     QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;

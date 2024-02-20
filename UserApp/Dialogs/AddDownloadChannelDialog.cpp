@@ -20,6 +20,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     ui->setupUi(this);
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
+    ui->buttonBox->button(QDialogButtonBox::Help)->setText("Help");
 
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
     connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
@@ -36,6 +37,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         }
     });
 
+
     bool isChannelExists = mpModel->isChannelWithNameExists(ui->name->text());
     if (!nameTemplate.match(ui->name->text()).hasMatch()) {
         QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
@@ -47,74 +49,22 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
         validate();
     }
 
-    std::vector<std::string> drivesKeys;
-    drivesKeys.reserve(mpModel->getDrives().size());
-    ui->selectDriveBox->addItem("Select from my drives");
-    for ( const auto& [key, drive] : mpModel->getDrives()) {
-        drivesKeys.push_back(key);
-        ui->selectDriveBox->addItem(drive.getName().c_str());
-    }
-
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
-    connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate, drivesKeys] (auto text)
-    {
-        if (!keyTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
-            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-            ui->driveKey->setProperty("is_valid", false);
-            mCurrentDriveKey.clear();
-            ui->selectDriveBox->setCurrentIndex(0);
-        } else {
-            QToolTip::hideText();
-            ui->driveKey->setProperty("is_valid", true);
-            mCurrentDriveKey = ui->driveKey->text().toStdString();
-            validate();
-
-            auto index = ui->selectDriveBox->currentIndex();
-            if (index >= 1) {
-                bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
-                if (!isEquals) {
-                    ui->selectDriveBox->setCurrentIndex(0);
+    connect(ui->driveKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
+            {
+                if (!keyTemplate.match(text).hasMatch()) {
+                    QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
+                    ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+                    ui->driveKey->setProperty("is_valid", false);
+                    mCurrentDriveKey.clear();
+                } else {
+                    QToolTip::hideText();
+                    ui->driveKey->setProperty("is_valid", true);
+                    mCurrentDriveKey = ui->driveKey->text().toStdString();
+                    validate();
                 }
-            }
-        }
-    });
+            });
 
-    if (!keyTemplate.match(ui->driveKey->text()).hasMatch()) {
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        ui->driveKey->setProperty("is_valid", false);
-        mCurrentDriveKey.clear();
-        ui->selectDriveBox->setCurrentIndex(0);
-        QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
-    } else {
-        QToolTip::hideText();
-        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-        ui->driveKey->setProperty("is_valid", true);
-        mCurrentDriveKey = ui->driveKey->text().toStdString();
-        validate();
-
-        auto index = ui->selectDriveBox->currentIndex();
-        if (index >= 1) {
-            bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
-            if (!isEquals) {
-                ui->selectDriveBox->setCurrentIndex(0);
-            }
-        }
-    }
-
-//    connect(ui->keysLine, &QLineEdit::textChanged, this, [this] (auto text)
-//    {
-//        if (!text.trimmed().isEmpty()) {
-//            QToolTip::showText(ui->keysLine->mapToGlobal(QPoint(0, 15)), tr("Invalid keys!"));
-//            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-//            ui->keysLine->setProperty("is_valid", false);
-//        } else {
-//            QToolTip::hideText();
-//            ui->keysLine->setProperty("is_valid", true);
-//            validate();
-//        }
-//    });
-//
 //    if (!ui->keysLine->text().trimmed().isEmpty()) {
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 //        ui->driveKey->setProperty("is_valid", false);
@@ -154,17 +104,8 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDownloadChannelDialog::reject);
+    connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDownloadChannelDialog::displayInfo);
 
-    connect( ui->selectDriveBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, drivesKeys] (int index)
-    {
-        if (index == 0) {
-            mCurrentDriveKey.clear();
-            ui->driveKey->setText("");
-        } else if (index >= 1) {
-            mCurrentDriveKey = drivesKeys[--index];
-            ui->driveKey->setText(mCurrentDriveKey.c_str());
-        }
-    }, Qt::QueuedConnection);
     
     ui->driveKey->setText( QString::fromStdString( driveKey ) );
 
@@ -173,30 +114,28 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     ui->name->setFocus();
 
     setTabOrder(ui->name, ui->driveKey);
-    setTabOrder(ui->driveKey, ui->selectDriveBox);
-    setTabOrder(ui->selectDriveBox, ui->keysLine);
-    setTabOrder(ui->keysLine, ui->buttonBox);
+    setTabOrder(ui->driveKey, ui->buttonBox);
 }
 
 AddDownloadChannelDialog::~AddDownloadChannelDialog()
 {
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        delete helpMessageBox;
+        helpMessageBox = nullptr;
+    }
+
     delete ui;
 }
 
 void AddDownloadChannelDialog::accept() {
     std::vector<std::array<uint8_t, 32>> listOfAllowedPublicKeys;
 
-    QStringList keys = ui->keysLine->text().trimmed().split(",", Qt::SkipEmptyParts);
-    for (const auto& key : keys) {
-        listOfAllowedPublicKeys.emplace_back(rawHashFromHex(key));
-    }
-
     if (listOfAllowedPublicKeys.empty()) {
         qInfo() << LOG_SOURCE << "listOfAllowedPublicKeys is empty";
     }
 
     std::vector<std::string> publicKeys;
-    keys.reserve((int)listOfAllowedPublicKeys.size());
     for (const auto& key : listOfAllowedPublicKeys) {
         publicKeys.push_back(rawHashToHex(key).toStdString());
     }
@@ -230,3 +169,29 @@ void AddDownloadChannelDialog::validate() {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
     }
 }
+
+
+void AddDownloadChannelDialog::displayInfo()
+{
+    if(helpMessageBox) {
+        helpMessageBox->hide();
+        helpMessageBox = nullptr;
+    }
+    QString message = "<html>"
+                      "A <b>channel</b> is created for downloading files from a remote drive.<br>"
+                      "A channel is only active for at most <b>24 hours</b> and then closes automatically.<br><br>"
+                      "<b>Channel name</b> is a preferred name to associate with the remote drive. "
+                      "It can contain capital and small latin letters as well as digits.<br><br>"
+                      "<b>Drive key</b> can be received from the remote drive owner. "
+                      "It contains 64 characters (letters and digits).<br><br>"
+                      "<b>Prepaid MBs</b> is an approximate amount of data you are going to download. "
+                      "Unused xpx is refunded to you when the channel is closed."
+                      "</html>";
+    helpMessageBox = new QMessageBox(this);
+    helpMessageBox->setWindowTitle("Help");
+    helpMessageBox->setText(message);
+    helpMessageBox->setWindowModality(Qt::NonModal); // Set the NonModal flag
+    helpMessageBox->show();
+    helpMessageBox->move(this->x() + this->width()/2-this->helpMessageBox->width()/2, this->y() + this->height() + 60);
+}
+

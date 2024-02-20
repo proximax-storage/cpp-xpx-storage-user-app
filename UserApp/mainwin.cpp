@@ -27,11 +27,11 @@
 #include "Dialogs/ReplicatorOffBoardingDialog.h"
 #include "Dialogs/ReplicatorInfoDialog.h"
 #include "Dialogs/ModifyProgressPanel.h"
+#include "Dialogs/StreamingPanel.h"
 #include "PopupMenu.h"
 #include "Dialogs/EditDialog.h"
 
 #include "crypto/Signer.h"
-#include "utils/HexParser.h"
 #include "Entities/Drive.h"
 
 #include <qdebug.h>
@@ -96,23 +96,6 @@ void MainWin::init()
     {
         return;
     }
-// TODO: Check ports availability
-//    QTcpServer server;
-//    bool isPortAvailable = true;
-//    while(true)
-//    {
-//        isPortAvailable = server.listen(QHostAddress::AnyIPv4, std::stoi(m_settings->m_udpPort));
-//        if (isPortAvailable)
-//        {
-//            server.close();
-//            //std::this_thread::sleep_for(std::chrono::seconds(1));
-//            break;
-//        }
-//        else
-//        {
-//            std::this_thread::sleep_for(std::chrono::seconds(1));
-//        }
-//    }
 
     if ( Model::homeFolder() == "/Users/alex" )
     {
@@ -2031,8 +2014,14 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
-        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\n It will be removed.");
-        showNotification(message, errorText.c_str());
+        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\nIt will be removed.");
+        QString explanation;
+
+        if(errorText == "Failure_Core_Insufficient_Balance") {
+            explanation = "You don't have enough XPX to create a channel.";
+        }
+
+        showNotification(message, explanation);
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
