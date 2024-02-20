@@ -100,6 +100,8 @@ file(GLOB PROJECT_SOURCES
         "Entities/*.cpp"
         "SignalEmitters/*.h"
         "SignalEmitters/*.cpp"
+        "*.ui"
+        "Dialogs/*.ui"
 
         ${TS_FILES}
 )
