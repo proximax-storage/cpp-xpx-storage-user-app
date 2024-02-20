@@ -25,7 +25,8 @@ protected:
     void reject() override;
 
 private slots:
-    void onNewAccountBtn();
+    void onNewAccount();
+    void onRemoveAccount();
 
 private:
     void updateAccountFields();

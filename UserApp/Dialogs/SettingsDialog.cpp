@@ -19,7 +19,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     mpSettings(settings)
 {
     mpSettingsDraft = new Settings(this);
-    mpSettingsDraft = mpSettings;
+    *mpSettingsDraft = *mpSettings;
 
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
@@ -96,7 +96,8 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         ui->m_dnFolderField->setText(path.trimmed());
     });
 
-    connect(ui->m_newAccountBtn, SIGNAL (released()), this, SLOT( onNewAccountBtn() ) );
+    connect(ui->m_newAccountBtn, &QPushButton::released, this, &SettingsDialog::onNewAccount );
+    connect(ui->m_removeAccount, &QPushButton::released, this, &SettingsDialog::onRemoveAccount );
 
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::accept);
@@ -301,9 +302,6 @@ void SettingsDialog::accept()
 
     emit closeLibtorrentPorts();
     QDialog::accept();
-
-//    QCoreApplication::exit(1024);
-//    QDialog::accept();
 }
 
 void SettingsDialog::reject()
@@ -333,7 +331,7 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
     ui->m_accountCbox->setCurrentIndex(index);
 }
 
-void SettingsDialog::onNewAccountBtn()
+void SettingsDialog::onNewAccount()
 {
     auto pKeyDialog = new PrivKeyDialog( mpSettingsDraft, this );
 
@@ -341,9 +339,36 @@ void SettingsDialog::onNewAccountBtn()
         ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_accountName ));
         int index = mpSettingsDraft->m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
+        ui->m_removeAccount->setEnabled(true);
     });
 
     pKeyDialog->open();
+}
+
+void SettingsDialog::onRemoveAccount()
+{
+    QMessageBox msgBox;
+    const auto currentAccountName = ui->m_accountCbox->currentText();
+    const QString message = "Are you sure you want to permanently delete account' " + currentAccountName + "'?";
+    msgBox.setText(message);
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+    if (msgBox.exec() == QMessageBox::Cancel) {
+        return;
+    }
+
+    int index = mpSettingsDraft->m_currentAccountIndex;
+    mpSettingsDraft->m_currentAccountIndex = 0;
+    erase_if(mpSettingsDraft->m_accounts, [&currentAccountName](auto account)
+    {
+        return account.m_accountName == currentAccountName.toStdString();
+    });
+
+    ui->m_accountCbox->removeItem(index);
+    if (ui->m_accountCbox->count() > 0) {
+        ui->m_accountCbox->setCurrentIndex(0);
+    } else {
+        ui->m_removeAccount->setDisabled(true);
+    }
 }
 
 void SettingsDialog::validate() {
