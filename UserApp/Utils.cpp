@@ -7,6 +7,8 @@
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
+#include <QStandardPaths>
+#include <QDir>
 #include "Utils.h"
 #include "Entities/Drive.h"
 
@@ -41,11 +43,30 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
 
     std::cerr << qPrintable(qFormatLogMessage(type, context, txt)) << std::endl;
 
-    const std::string path = getSettingsFolder().string() + "/logs.log";
-    static QFile file(path.c_str());
-    static bool logFileIsOpen = file.open(QIODevice::WriteOnly | QIODevice::Append);
+    static const auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (path.isEmpty())
+    {
+        qFatal("Cannot determine settings storage location");
+    }
 
-    if (logFileIsOpen) {
+    static QDir d(path);
+    if (!d.mkpath(d.absolutePath()))
+    {
+        qFatal("Cannot create path to settings dir");
+    }
+
+    // Windows: 'C:\Users\user\AppData\Roaming\ProximaX\StorageManager'
+    // Linux: '/home/user/.local/share/ProximaX/StorageManager'
+    static QFile file(d.absolutePath() + "/logs.txt");
+    bool isLimitSucceeded = file.size() >= 50 * 1024 * 1024;
+    if (isLimitSucceeded)
+    {
+        file.resize(0);
+    }
+
+    static bool logFileIsOpen = file.open(QIODevice::WriteOnly | QIODevice::Append);
+    if (logFileIsOpen)
+    {
         file.write(qFormatLogMessage(type, context, txt).toUtf8() + '\n');
         file.flush();
     }

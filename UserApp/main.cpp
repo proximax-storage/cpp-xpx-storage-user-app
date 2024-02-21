@@ -32,6 +32,13 @@ int main(int argc, char *argv[])
 restart_label:
     QApplication a(argc, argv);
 
+    // NOTE! Tt is needed to use 'QStandardPaths::writableLocation'
+    // To make the path like following :
+    // Windows: 'C:\Users\user\AppData\Roaming\ProximaX\StorageManager'
+    // Linux: '/home/user/.local/share/ProximaX/StorageManager'
+    QApplication::setApplicationName("StorageManager");
+    QApplication::setOrganizationName("ProximaX");
+
     QIcon appIcon(getResource("./resources/icons/icon.png"));
     if (appIcon.isNull()) {
         qWarning () << "main: app icon is null: icon.png";
