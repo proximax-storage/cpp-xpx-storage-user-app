@@ -90,8 +90,10 @@ set(TS_FILES StorageClientApp_en_US.ts)
 file(GLOB PROJECT_SOURCES
         "*.h"
         "*.cpp"
+        "*.ui"
         "Dialogs/*.h"
         "Dialogs/*.cpp"
+        "Dialogs/*.ui"
         "Models/*.h"
         "Models/*.cpp"
         "Engines/*.h"

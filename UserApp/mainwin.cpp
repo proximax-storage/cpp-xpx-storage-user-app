@@ -69,20 +69,11 @@ MainWin::MainWin(QWidget *parent)
 
 void MainWin::init()
 {
-    if ( Model::homeFolder() != "/Users/alex" )
-    {
-        ALEX_LOCAL_TEST = false;
-    }
-
-    if ( Model::homeFolder() != "/home/cempl" )
-    {
-        VICTOR_LOCAL_TEST = false;
-    }
-
     if ( ! m_model->loadSettings() )
     {
         initGeometry();
-        if ( Model::homeFolder() == "/Users/alex" )
+        std::error_code ec;
+        if ( fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
         {
             m_model->initForTests();
         }
@@ -95,12 +86,6 @@ void MainWin::init()
     if ( m_mustExit )
     {
         return;
-    }
-
-    if ( Model::homeFolder() == "/Users/alex" )
-    {
-//            m_model->setBootstrapReplicator("15.206.164.53:7904");
-            m_model->setBootstrapReplicator("13.250.14.143:7904");
     }
 
     if ( !fs::exists( getFsTreesFolder() ) )
@@ -796,6 +781,14 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
+    
+    std::error_code ec;
+    if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
+    {
+        ui->tabWidget->setTabVisible( 4, false );
+    }
+    ui->tabWidget->setTabVisible( 3, false );
+
     doUpdateBalancePeriodically();
 }
 
@@ -933,11 +926,6 @@ void MainWin::setupIcons() {
 
 void MainWin::setupDownloadsTab()
 {
-    if ( ALEX_LOCAL_TEST )
-    {
-        m_model->stestInitChannels();
-    }
-
     setupChannelFsTable();
     setupDownloadsTable();
 
@@ -2496,11 +2484,6 @@ void MainWin::setupDrivesTab()
 
         checkDriveForUpdates(drive, callback);
     }, Qt::QueuedConnection);
-
-    if ( ALEX_LOCAL_TEST )
-    {
-        m_model->stestInitDrives();
-    }
 
     m_driveTreeModel = new DriveTreeModel(m_model, false, this);
     ui->m_driveTreeView->setModel( m_driveTreeModel );

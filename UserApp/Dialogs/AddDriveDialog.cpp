@@ -66,9 +66,11 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     connect(ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this](auto text){
         bool isDirExists = QDir(text).exists();
         if (text.trimmed().isEmpty() || !isDirExists) {
-            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
+#ifndef __APPLE__
+            QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exist!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-            ui->m_localDriveFolder->setProperty("is_valid", false);
+#endif
+            ui->m_localDriveFolder->setProperty("is_valid", true);
         } else {
             QToolTip::hideText();
             ui->m_localDriveFolder->setProperty("is_valid", true);
@@ -127,7 +129,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     if (ui->m_localDriveFolder->text().trimmed().isEmpty() || !isDirExists) {
         QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        ui->m_localDriveFolder->setProperty("is_valid", false);
+        ui->m_localDriveFolder->setProperty("is_valid", true);
     } else {
         QToolTip::hideText();
         ui->m_localDriveFolder->setProperty("is_valid", true);
@@ -168,6 +170,19 @@ void AddDriveDialog::validate() {
 
 void AddDriveDialog::accept()
 {
+    if ( ui->m_localDriveFolder->text().isEmpty() )
+    {
+        QMessageBox::critical( nullptr, "Local drive folder not set", "Local drive folder not set" );
+        return;
+    }
+
+    std::error_code ec;
+    if ( fs::is_directory( ui->m_localDriveFolder->text().toStdString(), ec ) || ! ec )
+    {
+        QMessageBox::critical( nullptr, "Folder not exists", ui->m_localDriveFolder->text() );
+        return;
+    }
+    
     auto callback = [model = mp_model,
                      name = ui->m_driveName->text().toStdString(),
                      count = ui->m_replicatorNumber->text().toInt(),

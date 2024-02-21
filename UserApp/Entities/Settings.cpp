@@ -53,7 +53,8 @@ Settings &Settings::operator=(const Settings &s) {
 
 void Settings::initForTests()
 {
-    if ( m_accounts.empty() && Model::homeFolder() == "/Users/alex" )
+    std::error_code ec;
+    if ( m_accounts.empty() && fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
     {
         m_restBootstrap       = "54.151.169.225:3000";
 
@@ -71,11 +72,6 @@ void Settings::initForTests()
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
         config().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
         config().m_downloadFolder = "/Users/alex/000-Downloads";
-
-        if ( ! ALEX_LOCAL_TEST )
-        {
-            setCurrentAccountIndex( 2 );
-        }
     }
 }
 
