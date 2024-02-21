@@ -348,6 +348,7 @@ void SettingsDialog::onRemoveAccount()
     const QString message = "Are you sure you want to permanently delete account' " + currentAccountName + "'?";
     msgBox.setText(message);
     msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+    msgBox.setDefaultButton(QMessageBox::StandardButton::Cancel);
     if (msgBox.exec() == QMessageBox::Cancel) {
         return;
     }
@@ -373,6 +374,7 @@ void SettingsDialog::onReset()
     QString message = "Are you sure you want to PERMANENTLY delete all data(private keys, metadata etc.)?";
     msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
     msgBox.setText(message);
+    msgBox.setDefaultButton(QMessageBox::StandardButton::Cancel);
     if (msgBox.exec() == QMessageBox::Cancel) {
         return;
     }
