@@ -22,6 +22,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     *mpSettingsDraft = *mpSettings;
 
     ui->setupUi(this);
+    mpReset = ui->buttonBox->addButton("Reset", QDialogButtonBox::ButtonRole::ResetRole);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 
     setModal(true);
@@ -30,7 +31,6 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     updateAccountFields();
 
     ui->m_transactionFeeMultiplier->setText(QString::number(mpSettings->m_feeMultiplier));
-    ui->m_driveStructureAsTree->setEnabled(mpSettings->m_isDriveStructureAsTree);
 
     QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
     connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
@@ -98,6 +98,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
 
     connect(ui->m_newAccountBtn, &QPushButton::released, this, &SettingsDialog::onNewAccount );
     connect(ui->m_removeAccount, &QPushButton::released, this, &SettingsDialog::onRemoveAccount );
+    connect(mpReset, &QPushButton::released, this, &SettingsDialog::onReset );
 
     ui->buttonBox->disconnect(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::accept);
@@ -241,11 +242,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     setTabOrder(ui->m_copyKeyBtn, ui->m_dnFolderField);
     setTabOrder(ui->m_dnFolderField, ui->m_dnFolderBtn);
     setTabOrder(ui->m_dnFolderBtn, ui->m_transactionFeeMultiplier);
-    setTabOrder(ui->m_transactionFeeMultiplier, ui->m_driveStructureAsTree);
-    setTabOrder(ui->m_driveStructureAsTree, ui->buttonBox);
-
-    // TODO: fix files tree before enable
-    ui->m_driveStructureAsTree->setCheckable(false);
+    setTabOrder(ui->m_transactionFeeMultiplier, ui->buttonBox);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -269,7 +266,6 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
     mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
     mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
-    mpSettingsDraft->m_isDriveStructureAsTree  = ui->m_driveStructureAsTree->isEnabled();
 
     bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap           !=   mpSettingsDraft->m_replicatorBootstrap )
                                 ||  ( mpSettings->m_udpPort                   !=   mpSettingsDraft->m_udpPort )
@@ -368,6 +364,35 @@ void SettingsDialog::onRemoveAccount()
         ui->m_accountCbox->setCurrentIndex(0);
     } else {
         ui->m_removeAccount->setDisabled(true);
+    }
+}
+
+void SettingsDialog::onReset()
+{
+    QMessageBox msgBox;
+    QString message = "Are you sure you want to PERMANENTLY delete all data(private keys, metadata etc.)?";
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+    msgBox.setText(message);
+    if (msgBox.exec() == QMessageBox::Cancel) {
+        return;
+    }
+
+    QDir dir(getSettingsFolder());
+    if (!dir.exists())
+    {
+        message = "Settings folder does not exists: " + dir.absolutePath();
+        msgBox.setText(message);
+        msgBox.exec();
+        qWarning() << "SettingsDialog::onReset: settings folder does not exists: " << dir.path();
+        return;
+    }
+
+    if (dir.removeRecursively())
+    {
+        emit closeLibtorrentPorts();
+    } else
+    {
+        qWarning() << "SettingsDialog::onReset: cannot remove settings folder: " << dir.path();
     }
 }
 

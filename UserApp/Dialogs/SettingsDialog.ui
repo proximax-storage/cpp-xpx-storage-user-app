@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>757</width>
-    <height>686</height>
+    <width>738</width>
+    <height>535</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,7 +120,7 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
-         <height>45</height>
+         <height>30</height>
         </size>
        </property>
       </spacer>
@@ -201,22 +201,6 @@
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
-      <spacer name="verticalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>45</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
      <item row="7" column="1">
       <widget class="QLabel" name="label_6">
        <property name="font">
@@ -249,7 +233,7 @@
        </property>
       </widget>
      </item>
-     <item row="21" column="1">
+     <item row="17" column="1">
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="minimumSize">
         <size>
@@ -287,13 +271,6 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="1">
-      <widget class="QCheckBox" name="m_driveStructureAsTree">
-       <property name="text">
-        <string>Drive structure as tree</string>
-       </property>
-      </widget>
-     </item>
      <item row="15" column="1">
       <widget class="Line" name="line_4">
        <property name="orientation">
@@ -327,7 +304,7 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
-         <height>45</height>
+         <height>30</height>
         </size>
        </property>
       </spacer>
@@ -344,19 +321,6 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="18" column="1">
-      <widget class="QLabel" name="label_8">
-       <property name="font">
-        <font>
-         <family>Noto Serif</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Style</string>
        </property>
       </widget>
      </item>
@@ -439,13 +403,6 @@
         </widget>
        </item>
       </layout>
-     </item>
-     <item row="19" column="1">
-      <widget class="Line" name="line_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
      </item>
      <item row="2" column="1">
       <widget class="Line" name="line_2">

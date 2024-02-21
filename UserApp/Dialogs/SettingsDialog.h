@@ -27,6 +27,7 @@ protected:
 private slots:
     void onNewAccount();
     void onRemoveAccount();
+    void onReset();
 
 private:
     void updateAccountFields();
@@ -37,6 +38,7 @@ private:
     Ui::SettingsDialog* ui;
     Settings* mpSettings;
     Settings* mpSettingsDraft;
+    QPushButton* mpReset;
 };
 
 #endif // SETTINGDIALOG_H
