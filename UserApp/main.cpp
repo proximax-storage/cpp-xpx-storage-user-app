@@ -1,17 +1,51 @@
 #include "mainwin.h"
 #include "Utils.h"
-#include "Model.h"
+#include "Models/Model.h"
 
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
 
+#include <csignal>
+
+void sigHandler(int s)
+{
+    std::cerr << "signal: " << s << "\n";
+    std::signal(s, SIG_DFL);
+    qApp->quit();
+    exit(s);
+}
+
 int main(int argc, char *argv[])
 {
+#ifndef _WIN64
+    std::signal(SIGKILL, sigHandler);
+#endif
+    std::signal(SIGINT,  sigHandler);
+    std::signal(SIGTERM, sigHandler);
+    std::signal(SIGILL,  sigHandler);
+    std::signal(SIGABRT, sigHandler);
+    std::signal(SIGSEGV, sigHandler);
+
+    qInstallMessageHandler(customMessageHandler);
+
 restart_label:
     QApplication a(argc, argv);
-    QApplication::setWindowIcon(QIcon(getResource("./resources/icons/icon.png")));
-    qInstallMessageHandler(customMessageHandler);
+
+    // NOTE! Tt is needed to use 'QStandardPaths::writableLocation'
+    // To make the path like following :
+    // Windows: 'C:\Users\user\AppData\Roaming\ProximaX\StorageManager'
+    // Linux: '/home/user/.local/share/ProximaX/StorageManager'
+    QApplication::setApplicationName("StorageManager");
+    QApplication::setOrganizationName("ProximaX");
+
+    QIcon appIcon(getResource("./resources/icons/icon.png"));
+    if (appIcon.isNull()) {
+        qWarning () << "main: app icon is null: icon.png";
+    } else {
+        QApplication::setWindowIcon(appIcon);
+    }
+
 // TODO: same style for all platforms
 //#ifdef Q_OS_LINUX
 //    QFile styleFile( getResource("./resources/styles/ubuntu.qss") );
@@ -45,4 +79,6 @@ restart_label:
     auto rc = QApplication::exec();
     if ( rc == 1024 )
         goto restart_label;
+
+    return 0;
 }

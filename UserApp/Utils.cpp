@@ -7,8 +7,10 @@
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
+#include <QStandardPaths>
+#include <QDir>
 #include "Utils.h"
-#include "Drive.h"
+#include "Entities/Drive.h"
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -23,29 +25,48 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
     switch (type)
     {
         case QtInfoMsg:
-            txt += QString("{Info} \t\t %1").arg(msg);
+            txt += QString("{Info} %1").arg(msg);
             break;
         case QtDebugMsg:
-            txt += QString("{Debug} \t\t %1").arg(msg);
+            txt += QString("{Debug} %1").arg(msg);
             break;
         case QtWarningMsg:
-            txt += QString("{Warning} \t %1").arg(msg);
+            txt += QString("{Warning} %1").arg(msg);
             break;
         case QtCriticalMsg:
-            txt += QString("{Critical} \t %1").arg(msg);
+            txt += QString("{Critical} %1").arg(msg);
             break;
         case QtFatalMsg:
-            txt += QString("{Fatal} \t\t %1").arg(msg);
+            txt += QString("{Fatal} %1").arg(msg);
             break;
     }
 
     std::cerr << qPrintable(qFormatLogMessage(type, context, txt)) << std::endl;
 
-    const std::string path = getSettingsFolder().string() + "/logs.log";
-    static QFile file(path.c_str());
-    static bool logFileIsOpen = file.open(QIODevice::WriteOnly | QIODevice::Append);
+    static const auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (path.isEmpty())
+    {
+        qFatal("Cannot determine settings storage location");
+    }
 
-    if (logFileIsOpen) {
+    static QDir d(path);
+    if (!d.mkpath(d.absolutePath()))
+    {
+        qFatal("Cannot create path to settings dir");
+    }
+
+    // Windows: 'C:\Users\user\AppData\Roaming\ProximaX\StorageManager'
+    // Linux: '/home/user/.local/share/ProximaX/StorageManager'
+    static QFile file(d.absolutePath() + "/logs.txt");
+    bool isLimitSucceeded = file.size() >= 50 * 1024 * 1024;
+    if (isLimitSucceeded)
+    {
+        file.resize(0);
+    }
+
+    static bool logFileIsOpen = file.open(QIODevice::WriteOnly | QIODevice::Append);
+    if (logFileIsOpen)
+    {
         file.write(qFormatLogMessage(type, context, txt).toUtf8() + '\n');
         file.flush();
     }
@@ -84,21 +105,20 @@ std::filesystem::path getSettingsFolder()
 {
     std::filesystem::path path;
 #ifdef _WIN32
-    qDebug() << LOG_SOURCE << "!NOT IMPLEMNTED! FOR WIN32: settingsPath()";
-    exit(1);
+    path = QDir::currentPath().toStdString() + "/XpxSiriusStorageClient";
 #else
     const char* homePath = getenv("HOME");
     path = std::string(homePath) + "/.XpxSiriusStorageClient";
 #endif
 
     std::error_code ec;
-    if ( ! std::filesystem::exists( path, ec ) )
+    if ( ! std::filesystem::exists( path.make_preferred(), ec ) )
     {
         std::filesystem::create_directories( path, ec );
         if ( ec )
         {
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Cannot create folder: " + std::string(path) ) );
+            msgBox.setText( QString::fromStdString( "Cannot create folder: " + path.make_preferred().string() ) );
             msgBox.setInformativeText( QString::fromStdString( ec.message() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
@@ -111,7 +131,7 @@ std::filesystem::path getSettingsFolder()
 
 std::filesystem::path getFsTreesFolder()
 {
-    return getSettingsFolder() / "FsTrees";
+    return {getSettingsFolder().string() + "/FsTrees" };
 }
 
 std::string getPrettyDriveState(int state) {

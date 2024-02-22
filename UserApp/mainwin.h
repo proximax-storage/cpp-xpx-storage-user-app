@@ -7,8 +7,11 @@
 #include <QListWidget>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QProcess>
 #include "Worker.h"
+#include "OnChainClient.h"
 #include "types.h"
+#include "CustomLogsRedirector.h"
 #include "drive/FlatDrive.h"
 
 QT_BEGIN_NAMESPACE
@@ -22,10 +25,14 @@ class DownloadsTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
-class OnChainClient;
 class ModifyProgressPanel;
+class StreamingView;
+class StreamingPanel;
 class Model;
 class Settings;
+class ContractDeploymentData;
+
+struct StreamInfo;
 
 namespace sirius { namespace drive
 {
@@ -36,11 +43,14 @@ namespace sirius { namespace drive
 class MainWin : public QMainWindow
 {
     Q_OBJECT
+    static MainWin* m_instance;
 
 public:
     MainWin(QWidget *parent = nullptr);
     ~MainWin();
 
+    static MainWin* instance() { return m_instance; }
+    
     void init();
 
     void addChannel( const std::string&              channelName,
@@ -48,18 +58,27 @@ public:
                      const std::string&              driveKey,
                      const std::vector<std::string>& allowedPublicKeys );
 
+    void removeDrive( Drive* drive );
+    
+    void onDriveStateChanged( Drive& );
+
 signals:
-    void drivesInitialized();
     void refreshMyReplicatorsTable();
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
     void updateUploadedDataAmount(const uint64_t receivedSize);
     void modificationFinishedByReplicators();
+    void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
+    void updateStreamingStatus( const QString& );
+
 
 private:
+    void initGeometry();
+    void drivesInitialized();
     bool requestPrivateKey();
     void cancelModification();
+    void doUpdateBalancePeriodically();
 
     void setupIcons();
     void setupDownloadsTab();
@@ -99,6 +118,8 @@ private:
     void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
+    void onStartStreamingBtn();
+    void onStartStreamingBtnFfmpeg();
     void loadBalance();
     void setupDrivesTab();
     void setupMyReplicatorTab();
@@ -116,8 +137,22 @@ private:
     void updateDownloadChannelData(DownloadChannel* channel);
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
 
+    void onDeployContract();
+    void onRunContract();
+
+    void onDeployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
+    QString explain(const char* errorText) const;
+    QString currentStreamingDriveKey() const;
+    Drive* currentStreamingDrive() const;
     void initStreaming();
-    void updateStreamerTable();
+    void connectToStreamingTransactions();
+    StreamInfo* selectedStreamInfo() const; // could return nullptr
+    void updateStreamerTable( Drive& );
+    void readStreamingAnnotations( const Drive& );
+    void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
     void startViewingStream();
@@ -131,12 +166,19 @@ private:
 
     void updateViewerProgressPanel( int tabIndex );
 
+    void startFfmpegStreamingProcess();
+
     void cancelStreaming();
+    void finishStreaming();
     void updateStreamerProgressPanel( int tabIndex );
 
     void initWorker();
 
     void callbackResolver(const QUuid& id, const QVariant& data);
+
+    ContractDeploymentData* contractDeploymentData();
+
+//    void validateContractDrive();
 
     template<class Type>
     void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
@@ -151,14 +193,16 @@ private:
     
     void dbg();
 
+    void updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState );
+
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
     void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
-    void onInternalError(const QString& errorText);
+    void onErrorsHandler(int errorType, const QString& errorText);
     void setDownloadChannelOnUi(const std::string& channelId);
     void setCurrentDriveOnUi(const std::string& driveKey);
-    void onDriveStateChanged(const std::string& driveKey, int state);
+    void showSettingsDialog();
     void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
     void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);
@@ -168,6 +212,9 @@ private slots:
     void unlockChannel(const std::string& channelId);
     void lockDrive();
     void unlockDrive();
+    void networkDataHandler(const QString networkName);
+    void onCloseChannel();
+    void onCloseDrive();
     void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
     void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
@@ -180,7 +227,6 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
-
 public:
     // if private key is not set it will be 'true'
     bool          m_mustExit = false;
@@ -210,9 +256,16 @@ private:
     uint64_t                m_XPX_MOSAIC_ID;
     
     ModifyProgressPanel*    m_startViewingProgressPanel;
-    ModifyProgressPanel*    m_startStreamingProgressPanel;
+    ModifyProgressPanel*    m_streamingProgressPanel;
+    StreamingView*          m_streamingView = nullptr;
+    StreamingPanel*         m_streamingPanel = nullptr;
+    QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;
     QThread*                mpThread;
     std::map<QUuid, std::function<void(QVariant)>> mResolvers;
+
+    std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
+    std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
+    std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 };

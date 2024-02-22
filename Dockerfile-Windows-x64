@@ -1,0 +1,25 @@
+FROM cempl/mxe-windows-cross-compile:v1
+RUN cd / && rm -r ./storage-tool
+# Copy sources
+COPY . /app-src
+RUN mkdir _build_cross && cd _build_cross
+ENV BUILD_DIR /app-src/_build_cross
+ENV PATH="/home/windows/mxe/usr/bin:$PATH"
+WORKDIR $BUILD_DIR
+RUN x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
+RUN x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j$(nproc)
+ENV DESTDIR /storage-tool
+WORKDIR $DESTDIR
+RUN cp $BUILD_DIR/UserApp/StorageClientApp.exe $DESTDIR
+RUN cp $BUILD_DIR/cpp-xpx-chain-sdk/libxpxchaincpp.dll $DESTDIR
+RUN cp -r $BUILD_DIR/bin/* $DESTDIR
+RUN cp -r /app-src/resources $DESTDIR
+RUN cp -r /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/plugins $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Widgets.dll $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Gui.dll $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Core.dll $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Multimedia.dll $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6MultimediaWidgets.dll $DESTDIR
+RUN cp /home/windows/mxe/usr/x86_64-w64-mingw32.shared/qt6/bin/Qt6Network.dll $DESTDIR
+RUN find /home/windows/mxe/usr/x86_64-w64-mingw32.shared/lib -name "*.dll" -type f | xargs cp -vt $DESTDIR
+RUN zip -r storage-tool.zip /storage-tool

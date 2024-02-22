@@ -1,0 +1,32 @@
+#pragma once
+
+#include <QDialog>
+
+namespace Ui {
+class StreamingPanel;
+}
+
+class StreamingPanel : public QDialog
+{
+    Q_OBJECT
+
+    std::function<void()> m_cancelStreamingFunc;
+    std::function<void()> m_finishStreamingFunc;
+
+public:
+    explicit StreamingPanel( std::function<void()> cancelStreamingFunc,
+                             std::function<void()> finishStreamingFunc,
+                             QWidget *parent = nullptr );
+    ~StreamingPanel();
+
+    void onStartStreaming();
+    void hidePanel();
+
+public slots:
+    void onUpdateStatus( const QString& status );
+
+    
+private:
+    Ui::StreamingPanel *ui;
+};
+

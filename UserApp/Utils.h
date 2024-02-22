@@ -33,4 +33,13 @@ std::string getPrettyDriveState(int state);
 
 QDebug& operator<<(QDebug& out, const std::string& str);
 
+enum ErrorType
+{
+    Network,
+    NetworkInit,
+    InvalidData,
+    Critical,
+    Storage
+};
+
 #endif //UTILS_H
