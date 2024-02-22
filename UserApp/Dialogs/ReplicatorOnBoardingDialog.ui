@@ -106,7 +106,7 @@
        <item>
         <widget class="QCheckBox" name="checkBox">
          <property name="text">
-          <string>Is replicator exists?</string>
+          <string>Does replicator exist?</string>
          </property>
         </widget>
        </item>

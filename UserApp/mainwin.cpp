@@ -1155,8 +1155,8 @@ void MainWin::onDownloadBtn()
     }
 
     if (m_channelFsTreeTableModel->getSelectedRows().empty()) {
-        qInfo() << "MainWin::onDownload. Select at least one row";
-        onErrorsHandler(ErrorType::InvalidData, "Select at least one row!");
+        qInfo() << "MainWin::onDownload. Select at least one file (folder)";
+        onErrorsHandler(ErrorType::InvalidData, "Select at least one file (folder)!");
         return;
     }
 
@@ -2000,13 +2000,7 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\nIt will be removed.");
-        QString explanation;
-
-        if(errorText == "Failure_Core_Insufficient_Balance") {
-            explanation = "You don't have enough XPX to create a channel.";
-        }
-
-        showNotification(message, explanation);
+        showNotification(message, explain(errorText.c_str()));
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
@@ -3280,6 +3274,13 @@ void MainWin::onRunContract() {
     ui->m_contractCallDownloadPayment->setValue(0);
     ui->m_contractCallMosaicTable->setRowCount(0);
     m_model->driveContractModel().getContractManualCallData() = ContractManualCallData{};
+}
+
+QString MainWin::explain(const char * errorText) const
+{
+    std::array<const char*, 2>* dictionary;
+    dictionary[0] = {"fvbu", "sdjkh"};
+    return "";
 }
 
 //void MainWin::validateContractDrive() {

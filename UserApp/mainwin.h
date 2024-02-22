@@ -144,7 +144,7 @@ private:
     void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
-
+    QString explain(const char* errorText) const;
     QString currentStreamingDriveKey() const;
     Drive* currentStreamingDrive() const;
     void initStreaming();
