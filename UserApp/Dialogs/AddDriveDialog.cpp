@@ -177,7 +177,7 @@ void AddDriveDialog::accept()
     }
 
     std::error_code ec;
-    if ( fs::is_directory( ui->m_localDriveFolder->text().toStdString(), ec ) || ! ec )
+    if ( ! fs::is_directory( ui->m_localDriveFolder->text().toStdString(), ec ) || ! ec )
     {
         QMessageBox::critical( nullptr, "Folder not exists", ui->m_localDriveFolder->text() );
         return;
