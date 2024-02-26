@@ -264,7 +264,6 @@ public:
     {
         auto it = std::find_if(m_dictionary.begin(), m_dictionary.end(), [&](const auto& element)
         {
-            std::cout <<"DEB " << element.m_errorCode << '|' << errorCode << std::endl;
             return std::strcmp(element.m_errorCode, errorCode) == 0;
         });
 
