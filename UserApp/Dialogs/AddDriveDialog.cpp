@@ -170,16 +170,17 @@ void AddDriveDialog::validate() {
 
 void AddDriveDialog::accept()
 {
-    if ( ui->m_localDriveFolder->text().isEmpty() )
+    const auto path = ui->m_localDriveFolder->text();
+    if ( path.isEmpty() )
     {
-        QMessageBox::critical( nullptr, "Local drive folder not set", "Local drive folder not set" );
+        QMessageBox::critical( this, "Local drive folder not set", "Local drive folder not set" );
         return;
     }
 
     std::error_code ec;
-    if ( ! fs::is_directory( ui->m_localDriveFolder->text().toStdString(), ec ) || ! ec )
+    if ( ! fs::is_directory( path.toStdString(), ec ) || ec )
     {
-        QMessageBox::critical( nullptr, "Folder not exists", ui->m_localDriveFolder->text() );
+        QMessageBox::critical( this, "Folder does not exists", ui->m_localDriveFolder->text() );
         return;
     }
     
