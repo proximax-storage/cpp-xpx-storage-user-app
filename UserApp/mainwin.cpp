@@ -46,6 +46,7 @@
 #include <QToolTip>
 #include <QTcpServer>
 #include <QFileDialog>
+#include <filesystem>
 
 #include <boost/algorithm/string.hpp>
 
@@ -788,7 +789,6 @@ void MainWin::init()
         ui->tabWidget->setTabVisible( 4, false );
     }
     ui->tabWidget->setTabVisible( 3, false );
-
     doUpdateBalancePeriodically();
 }
 
@@ -1999,8 +1999,8 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
-        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")\nIt will be removed.");
-        showNotification(message, explain(errorText.c_str()));
+        const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
+        showNotification(message, m_errorCodeTranslator.translate(errorText.c_str()));
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
@@ -2034,8 +2034,8 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
 
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
-        const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")\n It will be removed.");
-        showNotification(message, errorText.c_str());
+        const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")");
+        showNotification(message, m_errorCodeTranslator.translate(errorText.c_str()));
         addNotification(message);
         drive->updateDriveState(unconfirmed);
     } else {
@@ -2073,7 +2073,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     QString message = "The drive '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(errorText);
+    message.append(m_errorCodeTranslator.translate(errorText.toStdString().c_str()));
     showNotification(message);
     addNotification(message);
     m_model->markChannelsForDelete(driveId, false);
@@ -2155,7 +2155,7 @@ void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channe
     QString message = "The channel '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(errorText);
+    message.append(m_errorCodeTranslator.translate(errorText.toStdString().c_str()));
     showNotification(message);
     addNotification(message);
     unlockChannel(channelKey);
@@ -3274,13 +3274,6 @@ void MainWin::onRunContract() {
     ui->m_contractCallDownloadPayment->setValue(0);
     ui->m_contractCallMosaicTable->setRowCount(0);
     m_model->driveContractModel().getContractManualCallData() = ContractManualCallData{};
-}
-
-QString MainWin::explain(const char * errorText) const
-{
-    std::array<const char*, 2>* dictionary;
-    dictionary[0] = {"fvbu", "sdjkh"};
-    return "";
 }
 
 //void MainWin::validateContractDrive() {

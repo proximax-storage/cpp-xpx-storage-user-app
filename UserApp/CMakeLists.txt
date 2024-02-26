@@ -100,6 +100,8 @@ file(GLOB PROJECT_SOURCES
         "Engines/*.cpp"
         "Entities/*.h"
         "Entities/*.cpp"
+        "ErrorCodeTranslator/*.h"
+        "ErrorCodeTranslator/*.txt"
         "SignalEmitters/*.h"
         "SignalEmitters/*.cpp"
         "*.ui"

@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
+#include "ErrorCodeTranslator/ErrorCodeTranslator.h"
 #include "Worker.h"
 #include "OnChainClient.h"
 #include "types.h"
@@ -144,7 +145,6 @@ private:
     void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
-    QString explain(const char* errorText) const;
     QString currentStreamingDriveKey() const;
     Drive* currentStreamingDrive() const;
     void initStreaming();
@@ -268,4 +268,7 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
+
+    ErrorCodeTranslator    m_errorCodeTranslator;
+
 };
