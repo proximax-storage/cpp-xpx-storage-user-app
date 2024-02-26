@@ -33,6 +33,7 @@
 
 #include "crypto/Signer.h"
 #include "Entities/Drive.h"
+#include "ErrorCodeTranslator/ErrorCodeTranslator.h"
 
 #include <qdebug.h>
 #include <QFileIconProvider>
@@ -2000,7 +2001,7 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
-        showNotification(message, m_errorCodeTranslator.translate(errorText.c_str()));
+        showNotification(message, gErrorCodeTranslator.translate(errorText));
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
@@ -2035,7 +2036,7 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
         const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")");
-        showNotification(message, m_errorCodeTranslator.translate(errorText.c_str()));
+        showNotification(message, gErrorCodeTranslator.translate(errorText.c_str()));
         addNotification(message);
         drive->updateDriveState(unconfirmed);
     } else {
@@ -2073,7 +2074,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     QString message = "The drive '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(m_errorCodeTranslator.translate(errorText.toStdString().c_str()));
+    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
     showNotification(message);
     addNotification(message);
     m_model->markChannelsForDelete(driveId, false);
@@ -2155,7 +2156,7 @@ void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channe
     QString message = "The channel '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(m_errorCodeTranslator.translate(errorText.toStdString().c_str()));
+    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
     showNotification(message);
     addNotification(message);
     unlockChannel(channelKey);

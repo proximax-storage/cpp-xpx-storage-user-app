@@ -8,7 +8,6 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
-#include "ErrorCodeTranslator/ErrorCodeTranslator.h"
 #include "Worker.h"
 #include "OnChainClient.h"
 #include "types.h"
@@ -268,7 +267,4 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
-
-    ErrorCodeTranslator    m_errorCodeTranslator;
-
 };

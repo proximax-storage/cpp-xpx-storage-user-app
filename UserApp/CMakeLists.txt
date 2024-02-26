@@ -101,6 +101,7 @@ file(GLOB PROJECT_SOURCES
         "Entities/*.h"
         "Entities/*.cpp"
         "ErrorCodeTranslator/*.h"
+        "ErrorCodeTranslator/*.cpp"
         "ErrorCodeTranslator/*.txt"
         "SignalEmitters/*.h"
         "SignalEmitters/*.cpp"
