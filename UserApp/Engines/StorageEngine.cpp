@@ -40,11 +40,14 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
     m_session->addReplicatorList( drive->getReplicators() );
 
     std::error_code ec;
+    m_lastModifySize = 0;
     auto hash = m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize, {}, ec);
     if (ec) {
         qCritical () << "StorageEngine::addActionListToSession. Error: " << ec.message() << " code: " << ec.value();
         emit newError(ErrorType::Storage, ec.message().c_str());
     }
+    
+    m_lastModifySize = modifySize;
 
     return hash;
 }

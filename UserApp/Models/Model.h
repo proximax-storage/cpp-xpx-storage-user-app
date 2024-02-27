@@ -158,6 +158,8 @@ class Model : public QObject
         void initStorageEngine();
         void startStorageEngine();
         void endStorageEngine();
+    
+        uint64_t lastModificationSize() const;
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
                                                const std::array<uint8_t,32>& fileHash );

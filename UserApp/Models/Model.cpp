@@ -641,6 +641,11 @@ void Model::endStorageEngine()
     gStorageEngine.reset();
 }
 
+uint64_t Model::lastModificationSize() const
+{
+    return gStorageEngine->m_lastModifySize;
+}
+
 sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
                                              const std::array<uint8_t, 32> &fileHash)
 {

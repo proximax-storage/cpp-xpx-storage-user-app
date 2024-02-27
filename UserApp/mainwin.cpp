@@ -399,8 +399,8 @@ void MainWin::init()
     m_modifyProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, modifyPanelCallback );
     m_modifyProgressPanel->setVisible(false);
 
-    connect(this, &MainWin::updateUploadedDataAmount, this, [this](auto amount){
-        m_modifyProgressPanel->updateUploadedDataAmount(amount);
+    connect(this, &MainWin::updateUploadedDataAmount, this, [this](uint64_t amount, uint64_t replicatorNumber) {
+        m_modifyProgressPanel->updateUploadedDataAmount(amount,replicatorNumber);
     }, Qt::QueuedConnection);
 
     connect(this, &MainWin::modificationFinishedByReplicators, this, [this]() {
@@ -3201,7 +3201,7 @@ void MainWin::dataModificationsStatusHandler(const sirius::drive::ReplicatorKey 
     }
 
     if (receivedSize > 0) {
-        emit updateUploadedDataAmount(receivedSize);
+        emit updateUploadedDataAmount(receivedSize,msg.m_modifyTrafficMap.size());
     }
 
     if (isModificationFinished) {

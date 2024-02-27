@@ -67,7 +67,7 @@ signals:
     void addResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void removeResolver(const QUuid& id);
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
-    void updateUploadedDataAmount(const uint64_t receivedSize);
+    void updateUploadedDataAmount(uint64_t receivedSize, uint64_t replicatorNumber);
     void modificationFinishedByReplicators();
     void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
     void updateStreamingStatus( const QString& );

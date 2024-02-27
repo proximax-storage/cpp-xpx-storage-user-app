@@ -44,6 +44,9 @@ public:
     std::recursive_mutex                            m_mutex;
 
 public:
+    uint64_t                                        m_lastModifySize;
+
+public:
     StorageEngine(Model* model, QObject* parent = nullptr);
 
     sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,

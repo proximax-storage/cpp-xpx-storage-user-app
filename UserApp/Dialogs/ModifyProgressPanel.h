@@ -30,7 +30,7 @@ public:
     void setCanceled();
     void setWaitingStreamStart();
 
-    void updateUploadedDataAmount(const uint64_t amount);
+    void updateUploadedDataAmount(const uint64_t amount, uint64_t replicatorNumber);
 
 private:
     std::function<void()> m_cancelModificationFunc;
@@ -41,5 +41,8 @@ private:
     QPixmap* m_loaded;
     QPixmap* m_error;
     QSize m_commonSize;
+    
+    uint64_t m_lastUploadedDataAmount = 0;
+
 };
 

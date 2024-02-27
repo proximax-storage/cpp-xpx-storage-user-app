@@ -379,7 +379,7 @@ void SettingsDialog::onReset()
         return;
     }
 
-    QDir dir(getSettingsFolder());
+    QDir dir(getSettingsFolder().string().c_str());
     if (!dir.exists())
     {
         message = "Settings folder does not exists: " + dir.absolutePath();
