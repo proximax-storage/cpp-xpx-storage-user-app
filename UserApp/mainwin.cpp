@@ -2270,7 +2270,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     }
 
     QString message;
-    message.append("Your modifications was DECLINED. Drive: ");
+    message.append("Your modification was DECLINED. Drive: ");
     message.append(driveAlias.c_str());
     showNotification(message);
 	addNotification(message);

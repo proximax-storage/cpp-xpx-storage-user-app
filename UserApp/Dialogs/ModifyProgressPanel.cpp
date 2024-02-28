@@ -23,8 +23,8 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
     m_loaded = new QPixmap(getResource("./resources/icons/loaded.png"));
     m_error = new QPixmap(getResource("./resources/icons/error.png"));
 
-    ui->m_requestedSize->setText("0");
-    ui->m_unitsType->setText("%");
+    ui->m_requestedSize->setText("0%");
+
     if ( mode == drive_modification )
     {
         ui->m_title->setWindowTitle("Modification status");
@@ -94,7 +94,7 @@ ModifyProgressPanel::~ModifyProgressPanel()
 
 void ModifyProgressPanel::setRegistering()
 {
-    ui->m_requestedSize->setText("0");
+    ui->m_requestedSize->setText("0%");
     if ( m_mode == drive_modification )
     {
         ui->m_statusLabel->setText( "Modification is registering ");
@@ -136,7 +136,7 @@ void ModifyProgressPanel::setApproving()
     if ( m_mode == drive_modification )
     {
         ui->m_statusLabel->setText( "Modification is completing ");
-        ui->m_requestedSize->setText("100");
+        ui->m_requestedSize->setText("100%");
         m_lastUploadedDataAmount = 100;
     }
     else
@@ -244,11 +244,13 @@ void ModifyProgressPanel::updateUploadedDataAmount(const uint64_t amount, uint64
     uint64_t percents = 0;
     if ( replicatorNumber > 0 && mp_model->lastModificationSize() > 0 )
     {
-        percents = ((100 * amount) / replicatorNumber) / mp_model->lastModificationSize();
+//        percents = ((100 * amount) / replicatorNumber) / mp_model->lastModificationSize();
+        percents = (100 * amount) / mp_model->lastModificationSize() <= 100 ?
+                       (100 * amount) / mp_model->lastModificationSize() : 100;
     }
     if ( m_lastUploadedDataAmount < percents )
     {
-        ui->m_requestedSize->setText( QString::number(percents));
+        ui->m_requestedSize->setText( QString::number(percents) + "%");
         m_lastUploadedDataAmount = percents;
     }
     adjustSize();
