@@ -141,7 +141,7 @@ void ModifyProgressPanel::setApproving()
     }
     else
     {
-        ui->m_statusLabel->setText( "Stream is ending...");
+        ui->m_statusLabel->setText( "Stream is finishing...");
     }
 
     ui->m_cancel->setEnabled(false);
@@ -154,11 +154,11 @@ void ModifyProgressPanel::setApproved()
 {
     if ( m_mode == drive_modification )
     {
-        ui->m_statusLabel->setText("Modification is completed!");
+        ui->m_statusLabel->setText("Modification completed!");
     }
     else
     {
-        ui->m_statusLabel->setText("Stream is completed!");
+        ui->m_statusLabel->setText("Stream completed!");
     }
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
@@ -173,11 +173,11 @@ void ModifyProgressPanel::setFailed()
 {
     if ( m_mode == drive_modification )
     {
-        ui->m_statusLabel->setText( "Modification is failed!");
+        ui->m_statusLabel->setText( "Modification failed!");
     }
     else
     {
-        ui->m_statusLabel->setText( "Stream is failed!");
+        ui->m_statusLabel->setText( "Stream failed!");
     }
     ui->m_cancel->setText("Close");
     ui->m_statusIcon->clear();
@@ -212,11 +212,11 @@ void ModifyProgressPanel::setCanceled()
 {
     if ( m_mode == drive_modification )
     {
-        ui->m_statusLabel->setText("Modification is canceled!");
+        ui->m_statusLabel->setText("Modification canceled!");
     }
     else
     {
-        ui->m_statusLabel->setText("Stream is canceled!");
+        ui->m_statusLabel->setText("Stream canceled!");
     }
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
@@ -229,7 +229,7 @@ void ModifyProgressPanel::setCanceled()
 
 void ModifyProgressPanel::setWaitingStreamStart()
 {
-    ui->m_statusLabel->setText( "Waiting stream start");
+    ui->m_statusLabel->setText( "Waiting for stream start");
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
     ui->m_statusIcon->setMovie(m_loading);
@@ -244,7 +244,6 @@ void ModifyProgressPanel::updateUploadedDataAmount(const uint64_t amount, uint64
     uint64_t percents = 0;
     if ( replicatorNumber > 0 && mp_model->lastModificationSize() > 0 )
     {
-//        percents = ((100 * amount) / replicatorNumber) / mp_model->lastModificationSize();
         percents = (100 * amount) / mp_model->lastModificationSize() <= 100 ?
                        (100 * amount) / mp_model->lastModificationSize() : 100;
     }
