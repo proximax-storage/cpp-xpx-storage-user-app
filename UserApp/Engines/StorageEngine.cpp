@@ -287,14 +287,14 @@ std::optional<boost::asio::ip::udp::endpoint> StorageEngine::getEndpoint( const 
 }
 
 void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
+                                    const std::string&      streamFolderName,
                                     const sirius::Key&      driveKey,
                                     const fs::path&         m3u8Playlist,
-                                    const fs::path&         chunksFolder,
-                                    const fs::path&         torrentsFolder,
+                                    const fs::path&         driveLocalFolder,
                                     sirius::drive::StreamingStatusHandler streamingStatusHandler,
                                     const endpoint_list&    endPointList )
 {
-//    m_session->initStream( streamId, driveKey, m3u8Playlist, chunksFolder, torrentsFolder, streamingStatusHandler, endPointList );
+    m_session->initStream( streamId, streamFolderName, driveKey, m3u8Playlist, driveLocalFolder, streamingStatusHandler, endPointList );
 }
 
 void StorageEngine::finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall )

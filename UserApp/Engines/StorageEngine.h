@@ -86,10 +86,10 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> getEndpoint( const sirius::Key& key );
 
     void startStreaming( const sirius::Hash256&  streamId,
+                         const std::string&      streamFolderName,
                          const sirius::Key&      driveKey,
                          const fs::path&         m3u8Playlist,
-                         const fs::path&         chunksFolder,
-                         const fs::path&         torrentsFolder,
+                         const fs::path&         driveLocalFolder,
                          sirius::drive::StreamingStatusHandler streamingStatusHandler,
                          const endpoint_list&    endPointList );
 

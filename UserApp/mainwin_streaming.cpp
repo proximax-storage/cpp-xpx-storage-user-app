@@ -883,7 +883,7 @@ void MainWin::onStartStreamingBtn()
 //            }
 
 #if 1
-            auto callback = [model = m_model, driveKey, driveKeyHex, m3u8Playlist, chuncksFolder, torrentsFolder, endPointList](std::string txHashString) {
+            auto callback = [=,model = m_model](std::string txHashString) {
                 auto* drive = model->findDrive( driveKey );
                 if ( drive == nullptr )
                 {
@@ -907,9 +907,11 @@ void MainWin::onStartStreamingBtn()
                 std::cout << "🔵 endpoint: " << endpoint << "\n";
             }
 //            gStorageEngine->startStreaming( txHash,
-//                                           driveKeyHex, m3u8Playlist,
-//                                           chuncksFolder,
-//                                           torrentsFolder,
+//                                           uniqueStreamFolder,
+//                                           driveKeyHex,
+//                                           m3u8Playlist,
+//                                           drive->getLocalFolder(),
+//                                           [](const std::string&){},
 //                                           endPointList );
 
             drive->setModificationHash( txHash, true );
