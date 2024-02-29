@@ -928,35 +928,35 @@ void MainWin::onStartStreamingBtn()
 
 void MainWin::finishStreaming()
 {
-    if ( m_ffmpegStreamingProcess != nullptr )
-    {
-        m_ffmpegStreamingProcess->kill();
-        delete m_ffmpegStreamingProcess;
-        m_ffmpegStreamingProcess = nullptr;
-    }
-
-    auto driveKey = currentStreamingDriveKey().toStdString();
-
-    sirius::drive::FinishStreamInfo info;
-    gStorageEngine->finishStreaming( [=,this]( const sirius::drive::FinishStreamInfo& info )
-    {
-        // Execute code on the main thread
-        QTimer::singleShot( 0, this, [=,this]
-        {
-            auto* drive = m_model->findDrive( driveKey );
-            auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
-
-            qDebug() << "info.streamSizeBytes: " << info.streamSizeBytes;
-            uint64_t actualUploadSizeMegabytes = (info.streamSizeBytes+(1024*1024-1))/(1024*1024);
-            qDebug() << "actualUploadSizeMegabytes: " << actualUploadSizeMegabytes;
-            m_onChainClient->streamFinish( driveKeyHex,
-                                           drive->getModificationHash(),
-                                           actualUploadSizeMegabytes,
-                                           info.infoHash.array() );
-        });
-    });
-
-    m_streamingPanel->hidePanel();
+//    if ( m_ffmpegStreamingProcess != nullptr )
+//    {
+//        m_ffmpegStreamingProcess->kill();
+//        delete m_ffmpegStreamingProcess;
+//        m_ffmpegStreamingProcess = nullptr;
+//    }
+//
+//    auto driveKey = currentStreamingDriveKey().toStdString();
+//
+//    sirius::drive::FinishStreamInfo info;
+//    gStorageEngine->finishStreaming( [=,this]( const sirius::drive::FinishStreamInfo& info )
+//    {
+//        // Execute code on the main thread
+//        QTimer::singleShot( 0, this, [=,this]
+//        {
+//            auto* drive = m_model->findDrive( driveKey );
+//            auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
+//
+//            qDebug() << "info.streamSizeBytes: " << info.streamSizeBytes;
+//            uint64_t actualUploadSizeMegabytes = (info.streamSizeBytes+(1024*1024-1))/(1024*1024);
+//            qDebug() << "actualUploadSizeMegabytes: " << actualUploadSizeMegabytes;
+//            m_onChainClient->streamFinish( driveKeyHex,
+//                                           drive->getModificationHash(),
+//                                           actualUploadSizeMegabytes,
+//                                           info.infoHash.array() );
+//        });
+//    });
+//
+//    m_streamingPanel->hidePanel();
 }
 
 void MainWin::cancelStreaming()

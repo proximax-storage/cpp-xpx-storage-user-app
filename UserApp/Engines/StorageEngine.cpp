@@ -299,7 +299,7 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
 
 void StorageEngine::finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall )
 {
-    m_session->finishStream( backCall );
+    //m_session->finishStream( backCall );
 }
                                                    
 void StorageEngine::cancelStreaming()
