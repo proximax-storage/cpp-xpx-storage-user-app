@@ -10,7 +10,7 @@ class ErrorCodeTranslator
 public:
     ErrorCodeTranslator();
 
-    const char* translate(const std::string& errorCode) const
+    const std::string translate(const std::string& errorCode) const
     {
         auto it = m_dictionary.find(errorCode);
 
@@ -19,7 +19,7 @@ public:
             return errorCode.c_str();
         }
 
-        return it->second.c_str();
+        return it->second;
     }
 };
 

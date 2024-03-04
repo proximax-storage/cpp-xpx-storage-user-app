@@ -785,10 +785,10 @@ void MainWin::init()
     initStreaming();
     
     std::error_code ec;
-    if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
-    {
-        ui->tabWidget->setTabVisible( 4, false );
-    }
+    // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
+    // {
+    //     ui->tabWidget->setTabVisible( 4, false );
+    // }
     ui->tabWidget->setTabVisible( 3, false );
     doUpdateBalancePeriodically();
 }
@@ -2001,7 +2001,7 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
-        showNotification(message, gErrorCodeTranslator.translate(errorText));
+        showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
@@ -2036,7 +2036,7 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
         const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")");
-        showNotification(message, gErrorCodeTranslator.translate(errorText));
+        showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         drive->updateDriveState(unconfirmed);
     } else {
@@ -2187,7 +2187,7 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
     }
 
     const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "' ");
-    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(errorText.toStdString())));
     addNotification(message);
 }
 
@@ -2216,7 +2216,7 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
     }
 
     const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "' ");
-    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(errorText.toStdString())));
     addNotification(message);
 }
 
@@ -2239,8 +2239,8 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
     qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
     auto message = gErrorCodeTranslator.translate(status.toStdString());
 
-    showNotification("Data modification failed: ", message);
-    addNotification(message);
+    showNotification("Data modification failed: ", message.c_str());
+    addNotification(message.c_str());
 
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
@@ -2315,8 +2315,8 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     }
 
     auto errorText = gErrorCodeTranslator.translate(error.toStdString());
-    showNotification(errorText);
-    addNotification(errorText);
+    showNotification(errorText.c_str());
+    addNotification(errorText.c_str());
 }
 
 void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
@@ -2347,7 +2347,7 @@ void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorP
     QString message;
     message.append("Replicator onboarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(error.toStdString())));
     addNotification(message);
 }
 
@@ -2367,7 +2367,7 @@ void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicator
     QString message;
     message.append("Replicator off-boarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(error.toStdString())));
     addNotification(message);
 }
 
