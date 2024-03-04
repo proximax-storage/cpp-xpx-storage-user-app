@@ -85,7 +85,7 @@ class OnChainClient : public QObject
         void networkInitialized(const QString& networkName);
         void updateBalance();
         void dataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
-        void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
+        void dataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId, const QString& status);
         void drivesLoaded(const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& drivesPages);
         void downloadChannelsLoaded(ChannelsType type, const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages);
         void downloadChannelOpenTransactionConfirmed(const std::string& channelAlias, const std::string& channelId, const std::string& driveKey);
@@ -104,11 +104,11 @@ class OnChainClient : public QObject
         void dataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
         void dataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t code);
         void cancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
-        void cancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+        void cancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId, const QString& error);
         void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
-        void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey);
+        void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);
         void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
-        void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
+        void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
 
         void deployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
         void deployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);

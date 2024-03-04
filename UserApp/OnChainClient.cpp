@@ -194,7 +194,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
         }
 
         if (drive.data.replicators.empty()) {
-            emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, " received empty replicators list");
             emit newError(ErrorType::InvalidData, "OnChainClient::applyDataModification. Empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
             return;
         }
@@ -371,32 +371,32 @@ void OnChainClient::initConnects() {
         emit dataModificationTransactionConfirmed(driveId, modificationId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto driveId, auto modificationId) {
-        emit dataModificationTransactionFailed(driveId, modificationId);
+    connect(mpTransactionsEngine, &TransactionsEngine::dataModificationFailed, this, [this](auto driveId, auto modificationId, auto status) {
+        emit dataModificationTransactionFailed(driveId, modificationId, status);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationConfirmed, this, [this](auto driveId, auto modificationId) {
         emit cancelModificationTransactionConfirmed(driveId, modificationId);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto driveId, auto modificationId) {
-        emit cancelModificationTransactionFailed(driveId, modificationId);
+    connect(mpTransactionsEngine, &TransactionsEngine::cancelModificationFailed, this, [this](auto driveId, auto modificationId, auto error) {
+        emit cancelModificationTransactionFailed(driveId, modificationId, error);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey) {
         emit replicatorOnBoardingTransactionConfirmed(replicatorPublicKey);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey, auto replicatorPrivateKey) {
-        emit replicatorOnBoardingTransactionFailed(replicatorPublicKey, replicatorPrivateKey);
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey, auto replicatorPrivateKey, auto error) {
+        emit replicatorOnBoardingTransactionFailed(replicatorPublicKey, replicatorPrivateKey, error);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingConfirmed, this, [this](auto replicatorPublicKey) {
         emit replicatorOffBoardingTransactionConfirmed(replicatorPublicKey);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingFailed, this, [this](auto replicatorPublicKey) {
-        emit replicatorOffBoardingTransactionFailed(replicatorPublicKey);
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOffBoardingFailed, this, [this](auto replicatorPublicKey, auto error) {
+        emit replicatorOffBoardingTransactionFailed(replicatorPublicKey, error);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::deployContractConfirmed, this, [this](auto driveId, auto contractId) {

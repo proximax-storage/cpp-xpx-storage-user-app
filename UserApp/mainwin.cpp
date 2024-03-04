@@ -2036,7 +2036,7 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
         const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")");
-        showNotification(message, gErrorCodeTranslator.translate(errorText.c_str()));
+        showNotification(message, gErrorCodeTranslator.translate(errorText));
         addNotification(message);
         drive->updateDriveState(unconfirmed);
     } else {
@@ -2186,8 +2186,8 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
         qWarning () << LOG_SOURCE << "bad channel (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "'");
-    showNotification(message);
+    const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "' ");
+    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
     addNotification(message);
 }
 
@@ -2215,8 +2215,8 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << alias;
     }
 
-    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "'");
-    showNotification(message);
+    const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "' ");
+    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
     addNotification(message);
 }
 
@@ -2235,8 +2235,13 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
     loadBalance();
 }
 
-void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId) {
+void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32> &modificationId, const QString& status) {
     qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
+    auto message = gErrorCodeTranslator.translate(status.toStdString());
+
+    showNotification("Data modification failed: ", message);
+    addNotification(message);
+
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
         drive->updateDriveState(failed);
@@ -2269,10 +2274,24 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
     }
 
+    QString error;
+    auto status = static_cast<sirius::drive::ModificationStatus>(code);
+    if (code == 2) { // ACTION_LIST_IS_ABSENT
+        error = " because action list is absent.";
+    } else if (code == 4) { // DOWNLOAD_FAILED
+        error = " because download data failed.";
+    } else if (code == 1) { // INVALID_ACTION_LIST
+        error = " because action list is incorrect.";
+    } else if (code == 3) { // NOT_ENOUGH_SPACE
+        error = " because there is not enough free space.";
+    } else {
+        error = " because of unknown internal error.";
+    }
+
     QString message;
-    message.append("Your modification was DECLINED. Drive: ");
+    message.append("Your modification was DECLINED, Drive: ");
     message.append(driveAlias.c_str());
-    showNotification(message);
+    showNotification(message, error);
 	addNotification(message);
 }
 
@@ -2286,7 +2305,7 @@ void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t,
     }
 }
 
-void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
+void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32> &driveId, const QString &modificationId, const QString& error) {
     std::string driveRawId = rawHashToHex(driveId).toStdString();
     auto drive = m_model->findDrive(driveRawId);
     if (drive) {
@@ -2294,6 +2313,10 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     } else {
         qWarning () << LOG_SOURCE << "bad drive: " << driveRawId.c_str() << " modification id: " << modificationId;
     }
+
+    auto errorText = gErrorCodeTranslator.translate(error.toStdString());
+    showNotification(errorText);
+    addNotification(errorText);
 }
 
 void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
@@ -2315,7 +2338,7 @@ void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicat
     addNotification(message);
 }
 
-void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey) {
+void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error) {
     qInfo () << "MainWin::onReplicatorOnBoardingTransactionFailed" << replicatorPublicKey;
 
     m_model->removeMyReplicator(replicatorPrivateKey.toStdString());
@@ -2324,7 +2347,7 @@ void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorP
     QString message;
     message.append("Replicator onboarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message);
+    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
     addNotification(message);
 }
 
@@ -2338,13 +2361,13 @@ void MainWin::onReplicatorOffBoardingTransactionConfirmed(const QString& replica
     addNotification(message);
 }
 
-void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey) {
+void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error) {
     qInfo () << "MainWin::onReplicatorOffBoardingTransactionFailed" << replicatorPublicKey;
 
     QString message;
     message.append("Replicator off-boarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message);
+    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
     addNotification(message);
 }
 

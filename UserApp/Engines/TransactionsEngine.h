@@ -99,14 +99,14 @@ class TransactionsEngine : public QObject
         void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
         void dataModificationApprovalFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t errorCode);
         void dataModificationConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
-        void dataModificationFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
+        void dataModificationFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId, const QString& errorText);
         void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
-        void cancelModificationFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
+        void cancelModificationFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId, const QString& error);
         void modificationCreated(const QString& driveId, const std::array<uint8_t,32>& modificationId);
         void replicatorOffBoardingConfirmed(const QString& replicatorPublicKey);
-        void replicatorOffBoardingFailed(const QString& replicatorPublicKey);
+        void replicatorOffBoardingFailed(const QString& replicatorPublicKey, const QString& error);
         void replicatorOnBoardingConfirmed(const QString& replicatorPublicKey);
-        void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey);
+        void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
         void newError(const QString& errorText);
         void removeTorrent(const std::array<uint8_t, 32>& torrentId);
 

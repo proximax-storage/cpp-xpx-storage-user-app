@@ -363,7 +363,7 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
             removeConfirmedAddedNotifier(mpChainAccount->address(), dataModificationCancelNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
 
-            emit cancelModificationFailed(driveKeyRaw, currentModificationHex);
+            emit cancelModificationFailed(driveKeyRaw, currentModificationHex, notification.status.c_str());
         }
     });
 
@@ -483,7 +483,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     const QString pathToActionList = findFile(actionListFileName, pathToSandbox.c_str());
     if (pathToActionList.isEmpty()) {
         emit newError("TransactionsEngine::sendModification. File actionList.bin not found: " + pathToActionList + " . Drive key: " + driveKeyHex);
-        emit dataModificationFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        emit dataModificationFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, " action list not found");
         return;
     } else {
         qInfo() << "TransactionsEngine::sendModification. actionList.bin found: " << pathToActionList;
@@ -531,7 +531,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     if (uploadSize == 0 || totalModifyDataSize == 0) {
         emit newError("Invalid size of upload data: 0. Modification canceled!");
         qWarning() << "Invalid size of upload data: 0. Modification canceled! Drive key: " << driveKeyHex << " modificationId: " << hash.c_str();
-        emit dataModificationFailed(driveId, modificationId);
+        emit dataModificationFailed(driveId, modificationId, " invalid size of upload data: 0");
         return;
     }
 
@@ -561,7 +561,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId);
 
             qWarning() << "TransactionsEngine::sendModification. drive key: " + driveKeyHex << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
-            emit dataModificationFailed(driveId, modificationId);
+            emit dataModificationFailed(driveId, modificationId, notification.status.c_str());
         }
     });
 
@@ -751,7 +751,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
 
             auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
             qWarning() << LOG_SOURCE << "replicator key: " + replicatorPublicKey << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
-            emit replicatorOnBoardingFailed(replicatorPublicKey, replicatorPrivateKey);
+            emit replicatorOnBoardingFailed(replicatorPublicKey, replicatorPrivateKey, notification.status.c_str());
         }
     });
 
@@ -818,7 +818,7 @@ void TransactionsEngine::replicatorOffBoarding(const std::array<uint8_t, 32> &dr
 
             auto replicatorPublicKey = rawHashToHex(replicatorAccount->publicKey());
             qWarning() << LOG_SOURCE << "replicator key: " + replicatorPublicKey << " : " << notification.status.c_str() << " transactionId: " << notification.hash.c_str();
-            emit replicatorOffBoardingFailed(replicatorPublicKey);
+            emit replicatorOffBoardingFailed(replicatorPublicKey, notification.status.c_str());
         }
     });
 
