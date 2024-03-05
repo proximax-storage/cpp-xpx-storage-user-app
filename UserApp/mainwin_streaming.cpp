@@ -289,26 +289,6 @@ void MainWin::initStreaming()
 
     connectToStreamingTransactions();
 
-    // m_streamFolder
-    ui->m_streamFolder->setText( QString::fromStdString( m_model->streamFolder() ) );
-
-    connect( ui->m_streamFolder, &QLineEdit::textChanged, this, [this] (auto text)
-    {
-        m_model->streamFolder() = text.trimmed().toStdString();
-        m_model->saveSettings();
-    });
-
-    // m_browseStreamFolderBtn
-    connect( ui->m_browseStreamFolderBtn, &QPushButton::released, this, [this]()
-    {
-        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
-#ifdef Q_OS_LINUX
-        options |= QFileDialog::DontUseNativeDialog;
-#endif
-        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose stream directory"), "/", options);
-        ui->m_streamFolder->setText(path.trimmed());
-    });
-
 //    void streamFinishTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
 //    void streamFinishTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 
@@ -657,89 +637,89 @@ static bool checkFfmpegInstalled()
 #endif
 }
 
-void MainWin::startFfmpegStreamingProcess()
-{
-    std::optional<StreamInfo> streamInfo = m_model->currentStreamInfo();
-    if ( !streamInfo )
-    {
-        qWarning() << LOG_SOURCE << "🔴 currentStreamInfo is not set !!!";
-        return;
-    }
-    auto workingFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() + "/" + streamInfo->m_uniqueFolderName);
-
-    std::error_code ec;
-    if ( fs::is_empty(workingFolder) )
-    {
-        QMessageBox msgBox;
-        const QString message = QString::fromStdString("Folder is not empty. All data will be removed.");
-        msgBox.setText(message);
-        msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-        auto reply = msgBox.exec();
-
-        if ( reply != QMessageBox::Ok )
-        {
-            return;
-        }
-    }
-
-    delete m_ffmpegStreamingProcess;
-    m_ffmpegStreamingProcess = new QProcess(this);
-
-    QString program = "ffmpeg";
-    QStringList arguments;
-
-#if defined _WIN32
-#elif defined __APPLE__
-    auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
-
-    program = QString::fromStdString( path );
-    //-f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i "0:0" -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename "output_%03d.ts" output.m3u8
-    arguments   << "-f" << "avfoundation"
-                << "-framerate" << "30"
-                << "-r" << "30"
-                << "-pixel_format" << "uyvy422"
-                << "-i" << "0:0"
-                << "-c:v" << "h264"
-                << "-c:a" << "aac"
-                << "-hls_time" << "10"
-                << "-hls_list_size" << "0"
-                << "-fs" << "100000000" //TODO!!!
-                << "-hls_segment_filename" << "stream_%03d.ts" << "playlist.m3u8";
-#else
-#endif
-
-    connect( m_ffmpegStreamingProcess, &QProcess::errorOccurred, this, [] ( QProcess::ProcessError error ) {
-        qDebug() << LOG_SOURCE << "🟠 errorOccurred: " << error;
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::started, this, [] () {
-        qDebug() << LOG_SOURCE << "🟢 started! ";
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::stateChanged, this, [] (QProcess::ProcessState state) {
-        qDebug() << LOG_SOURCE << "🟢 state: " << state;
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
-        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
-        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardOutput, this, [this] () {
-        while( m_ffmpegStreamingProcess->canReadLine()){
-               qDebug() << "🔵🔵 " << m_ffmpegStreamingProcess->readLine();
-        }
-    });
-    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardError, this, [this] () {
-        QString err = m_ffmpegStreamingProcess->readAllStandardError();
-        qDebug() << "🟠🟠 " << err;
-    });
-
-    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder.string();
-    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
-    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
-
-    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder.string()) );
-    m_ffmpegStreamingProcess->start( program, arguments );
-}
+void MainWin::startFfmpegStreamingProcess(){}
+//{
+//    std::optional<StreamInfo> streamInfo = m_model->currentStreamInfo();
+//    if ( !streamInfo )
+//    {
+//        qWarning() << LOG_SOURCE << "🔴 currentStreamInfo is not set !!!";
+//        return;
+//    }
+//    auto workingFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() + "/" + streamInfo->m_uniqueFolderName);
+//
+//    std::error_code ec;
+//    if ( fs::is_empty(workingFolder) )
+//    {
+//        QMessageBox msgBox;
+//        const QString message = QString::fromStdString("Folder is not empty. All data will be removed.");
+//        msgBox.setText(message);
+//        msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+//        auto reply = msgBox.exec();
+//
+//        if ( reply != QMessageBox::Ok )
+//        {
+//            return;
+//        }
+//    }
+//
+//    delete m_ffmpegStreamingProcess;
+//    m_ffmpegStreamingProcess = new QProcess(this);
+//
+//    QString program = "ffmpeg";
+//    QStringList arguments;
+//
+//#if defined _WIN32
+//#elif defined __APPLE__
+//    auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
+//
+//    program = QString::fromStdString( path );
+//    //-f avfoundation -framerate 30 -r 30 -pixel_format uyvy422 -i "0:0" -c:v h264 -c:a aac -hls_time 10 -hls_list_size 0 -hls_segment_filename "output_%03d.ts" output.m3u8
+//    arguments   << "-f" << "avfoundation"
+//                << "-framerate" << "30"
+//                << "-r" << "30"
+//                << "-pixel_format" << "uyvy422"
+//                << "-i" << "0:0"
+//                << "-c:v" << "h264"
+//                << "-c:a" << "aac"
+//                << "-hls_time" << "10"
+//                << "-hls_list_size" << "0"
+//                << "-fs" << "100000000" //TODO!!!
+//                << "-hls_segment_filename" << "stream_%03d.ts" << "playlist.m3u8";
+//#else
+//#endif
+//
+//    connect( m_ffmpegStreamingProcess, &QProcess::errorOccurred, this, [] ( QProcess::ProcessError error ) {
+//        qDebug() << LOG_SOURCE << "🟠 errorOccurred: " << error;
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::started, this, [] () {
+//        qDebug() << LOG_SOURCE << "🟢 started! ";
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::stateChanged, this, [] (QProcess::ProcessState state) {
+//        qDebug() << LOG_SOURCE << "🟢 state: " << state;
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
+//        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::finished, this, [] (int exitCode) {
+//        qDebug() << LOG_SOURCE << "🟢 finished: " << exitCode;
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardOutput, this, [this] () {
+//        while( m_ffmpegStreamingProcess->canReadLine()){
+//               qDebug() << "🔵🔵 " << m_ffmpegStreamingProcess->readLine();
+//        }
+//    });
+//    connect( m_ffmpegStreamingProcess, &QProcess::readyReadStandardError, this, [this] () {
+//        QString err = m_ffmpegStreamingProcess->readAllStandardError();
+//        qDebug() << "🟠🟠 " << err;
+//    });
+//
+//    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; workingFolder: " << workingFolder.string();
+//    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; program: " << program;
+//    qDebug() << LOG_SOURCE << "🔵 Start ffmpeg; arguments: " << arguments;
+//
+//    m_ffmpegStreamingProcess->setWorkingDirectory( QString::fromStdString(workingFolder.string()) );
+//    m_ffmpegStreamingProcess->start( program, arguments );
+//}
 
 #pragma mark --Chain-Interface--
 //
@@ -755,6 +735,17 @@ void MainWin::startFfmpegStreamingProcess()
 //void streamPaymentTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
 //void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 //
+
+struct ObsProfileData
+{
+    std::string m_recordingPath;
+    
+    ObsProfileData()
+    {
+        QSettings my_settings("/Users/alex/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
+        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+    }
+};
 
 void MainWin::onStartStreamingBtn()
 {
@@ -789,7 +780,8 @@ void MainWin::onStartStreamingBtn()
             }
 
             // m3u8StreamFolder - for all streams
-            auto m3u8StreamFolder = fs::path( ui->m_streamFolder->text().trimmed().toStdString() + "/" + streamInfo->m_uniqueFolderName);
+            ObsProfileData obsProfileData;
+            auto m3u8StreamFolder = fs::path( obsProfileData.m_recordingPath ) / streamInfo->m_uniqueFolderName;
 
             if ( m3u8StreamFolder.empty() )
             {

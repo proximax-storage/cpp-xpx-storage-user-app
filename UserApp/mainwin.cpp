@@ -2074,7 +2074,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     QString message = "The drive '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
+    message.append( QString::fromStdString( gErrorCodeTranslator.translate(errorText.toStdString())));
     showNotification(message);
     addNotification(message);
     m_model->markChannelsForDelete(driveId, false);
@@ -2156,7 +2156,7 @@ void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channe
     QString message = "The channel '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
+    message.append( QString::fromStdString( gErrorCodeTranslator.translate(errorText.toStdString())));
     showNotification(message);
     addNotification(message);
     unlockChannel(channelKey);

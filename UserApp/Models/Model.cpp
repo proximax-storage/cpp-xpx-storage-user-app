@@ -702,11 +702,6 @@ std::vector<StreamInfo>& Model::streamerAnnouncements()
     return m_settings->config().m_streams;
 }
 
-std::string& Model::streamFolder()
-{
-    return m_settings->config().m_streamFolder;
-}
-
 void Model::addStreamRef( const StreamInfo& streamInfo )
 {
     auto& streams = m_settings->config().m_streamRefs;
