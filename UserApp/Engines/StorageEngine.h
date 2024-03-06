@@ -90,6 +90,7 @@ public:
                          const sirius::Key&      driveKey,
                          const fs::path&         m3u8Playlist,
                          const fs::path&         driveLocalFolder,
+                         const fs::path&         torrentLocalFolder,
                          sirius::drive::StreamingStatusHandler streamingStatusHandler,
                          const endpoint_list&    endPointList );
 

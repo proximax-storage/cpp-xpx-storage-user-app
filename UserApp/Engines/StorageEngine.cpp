@@ -291,10 +291,11 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
                                     const sirius::Key&      driveKey,
                                     const fs::path&         m3u8Playlist,
                                     const fs::path&         driveLocalFolder,
+                                    const fs::path&         torrentLocalFolder,
                                     sirius::drive::StreamingStatusHandler streamingStatusHandler,
                                     const endpoint_list&    endPointList )
 {
-    m_session->initStream( streamId, streamFolderName, driveKey, m3u8Playlist, driveLocalFolder, streamingStatusHandler, endPointList );
+    m_session->initStream( streamId, streamFolderName, driveKey, m3u8Playlist, driveLocalFolder, torrentLocalFolder, streamingStatusHandler, endPointList );
 }
 
 void StorageEngine::finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall )
