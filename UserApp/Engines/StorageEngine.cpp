@@ -47,6 +47,7 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
         emit newError(ErrorType::Storage, ec.message().c_str());
     }
     
+    qDebug() << "modifySize: " << modifySize;
     m_lastModifySize = modifySize;
 
     return hash;
