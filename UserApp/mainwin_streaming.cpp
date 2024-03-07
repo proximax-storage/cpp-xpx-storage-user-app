@@ -742,8 +742,17 @@ struct ObsProfileData
     
     ObsProfileData()
     {
-        QSettings my_settings("/Users/alex/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
+#if defined _WIN32
+#elif defined __APPLE__
+        QString homePath = QDir::homePath();
+        QSettings my_settings( homePath + "/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
         m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+#else // LINUX
+        QString homePath = QDir::homePath();
+        QSettings my_settings( homePath + "/.config/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
+        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+#endif
+
     }
 };
 
