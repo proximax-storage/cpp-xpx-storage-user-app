@@ -783,7 +783,8 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
-    
+    initWizardStreaming();
+
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
     // {

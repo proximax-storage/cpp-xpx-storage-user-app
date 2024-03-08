@@ -25,7 +25,6 @@
 #include <QFileDialog>
 #include <QProcess>
 #include <QClipboard>
-#include <QSettings>
 
 #include <boost/algorithm/string.hpp>
 
@@ -736,26 +735,6 @@ void MainWin::startFfmpegStreamingProcess(){}
 //void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 //
 
-struct ObsProfileData
-{
-    std::string m_recordingPath;
-    
-    ObsProfileData()
-    {
-#if defined _WIN32
-#elif defined __APPLE__
-        QString homePath = QDir::homePath();
-        QSettings my_settings( homePath + "/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
-        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
-#else // LINUX
-        QString homePath = QDir::homePath();
-        QSettings my_settings( homePath + "/.config/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
-        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
-#endif
-
-    }
-};
-
 void MainWin::onStartStreamingBtn()
 {
     if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
@@ -875,7 +854,7 @@ void MainWin::onStartStreamingBtn()
                 return;
             }
 
-            fs::path m3u8Playlist = fs::path(m3u8StreamFolder.string() + "/" + "playlist.m3u8");
+            fs::path m3u8Playlist = fs::path(m3u8StreamFolder.string()) / PLAYLIST_FILE_NAME;
             sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
 
             m_model->setCurrentStreamInfo( *streamInfo );

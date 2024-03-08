@@ -147,6 +147,7 @@ private:
     QString currentStreamingDriveKey() const;
     Drive* currentStreamingDrive() const;
     void initStreaming();
+    void initWizardStreaming();
     void connectToStreamingTransactions();
     StreamInfo* selectedStreamInfo() const; // could return nullptr
     void updateStreamerTable( Drive& );

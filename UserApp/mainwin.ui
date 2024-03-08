@@ -1399,7 +1399,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -1865,6 +1865,22 @@
              </layout>
             </item>
            </layout>
+          </widget>
+          <widget class="QWidget" name="WizardTab">
+           <attribute name="title">
+            <string>Wizard</string>
+           </attribute>
+           <widget class="QWidget" name="verticalLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>3</x>
+              <y>15</y>
+              <width>905</width>
+              <height>573</height>
+             </rect>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_6"/>
+           </widget>
           </widget>
          </widget>
         </item>
