@@ -251,8 +251,6 @@ void Settings::save()
         qCritical () << "Settings::save. msgBox error: " << msgBox.text();
         exit(1);
     }
-
-    qDebug() << "Settings::save. Settings saved";
 }
 
 bool Settings::loaded() const
@@ -390,9 +388,9 @@ void Settings::removeFromDownloads( int index )
 
     int  hashCounter = 0;
 
-    for( auto it = downloads.begin(); it != downloads.end(); it++ )
+    for(auto & download : downloads)
     {
-        if ( it->getHash() == dnInfo.getHash() )
+        if ( download.getHash() == dnInfo.getHash() )
         {
             hashCounter++;
         }
@@ -409,7 +407,7 @@ void Settings::removeFromDownloads( int index )
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        const std::string path = fs::path(downloadFolder().string() + "/" + dnInfo.getFileName()).make_preferred().string();
+        const std::string path = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred().string();
         fs::remove( path, ec );
         if (ec)
         {
