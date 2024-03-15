@@ -93,7 +93,6 @@ file(GLOB PROJECT_SOURCES
         "*.ui"
         "Dialogs/*.h"
         "Dialogs/*.cpp"
-        "Dialogs/*.ui"
         "Models/*.h"
         "Models/*.cpp"
         "Engines/*.h"
@@ -105,11 +104,15 @@ file(GLOB PROJECT_SOURCES
         "ErrorCodeTranslator/*.txt"
         "SignalEmitters/*.h"
         "SignalEmitters/*.cpp"
-        "*.ui"
-        "Dialogs/*.ui"
 
         ${TS_FILES}
 )
+
+file(GLOB PROJECT_UI_SOURCES
+        "Dialogs/*.ui"
+        "*.ui"
+)
+qt_wrap_ui(SOURCES ${PROJECT_UI_SOURCES} mainwindow.ui)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(StorageClientApp
