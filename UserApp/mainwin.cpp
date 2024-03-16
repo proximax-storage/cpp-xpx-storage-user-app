@@ -783,7 +783,7 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
-    initWizardStreaming();
+    //initWizardStreaming();
 
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
@@ -846,13 +846,6 @@ void MainWin::drivesInitialized()
 
 MainWin::~MainWin()
 {
-    if ( m_ffmpegStreamingProcess != nullptr )
-    {
-        // on case of SIGTERM or SIG...
-        m_ffmpegStreamingProcess->kill();
-        delete m_ffmpegStreamingProcess;
-    }
-    
     m_model->endStorageEngine();
 
     delete ui;

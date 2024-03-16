@@ -90,7 +90,7 @@ void MainWin::initStreaming()
         }
     });
 
-    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
+//    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
 //    header->setSectionResizeMode(0,QHeaderView::Stretch);
 //    header->setSectionResizeMode(1,QHeaderView::Stretch);
 //    header->setSectionResizeMode(2,QHeaderView::Stretch);
@@ -885,7 +885,8 @@ void MainWin::onStartStreamingBtn()
                 std::array<uint8_t, 32> txHash;
 #endif
 
-                std::cout << "🔵 txHash: " << sirius::Hash256(txHash) << "\n";
+                qDebug() << "🔵 txHash: " << sirius::drive::toString(txHash);
+                qDebug() << "🔵 driveKeyHex: " << sirius::drive::toString(driveKeyHex);
                 qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
                 qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
                 qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
@@ -918,13 +919,6 @@ void MainWin::onStartStreamingBtn()
 
 void MainWin::finishStreaming()
 {
-//    if ( m_ffmpegStreamingProcess != nullptr )
-//    {
-//        m_ffmpegStreamingProcess->kill();
-//        delete m_ffmpegStreamingProcess;
-//        m_ffmpegStreamingProcess = nullptr;
-//    }
-//
 //    auto driveKey = currentStreamingDriveKey().toStdString();
 //
 //    sirius::drive::FinishStreamInfo info;
@@ -945,8 +939,8 @@ void MainWin::finishStreaming()
 //                                           info.infoHash.array() );
 //        });
 //    });
-//
-//    m_streamingPanel->hidePanel();
+
+    m_streamingPanel->hidePanel();
 }
 
 void MainWin::cancelStreaming()
@@ -961,13 +955,6 @@ void MainWin::cancelStreaming()
     if ( msgBox.exec() != QMessageBox::Ok )
     {
         return;
-    }
-
-    if ( m_ffmpegStreamingProcess != nullptr )
-    {
-        m_ffmpegStreamingProcess->kill();
-        delete m_ffmpegStreamingProcess;
-        m_ffmpegStreamingProcess = nullptr;
     }
 
     m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ) );
