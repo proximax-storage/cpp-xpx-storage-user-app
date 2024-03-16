@@ -8,11 +8,14 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
-#include "Worker.h"
-#include "OnChainClient.h"
+//#include "Worker.h"
+//#include "OnChainClient.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
 #include "drive/FlatDrive.h"
+
+class OnChainClient;
+class Worker;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -259,7 +262,6 @@ private:
     ModifyProgressPanel*    m_streamingProgressPanel;
     StreamingView*          m_streamingView = nullptr;
     StreamingPanel*         m_streamingPanel = nullptr;
-    QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;
     QThread*                mpThread;
