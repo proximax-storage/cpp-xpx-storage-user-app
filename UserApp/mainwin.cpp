@@ -3307,3 +3307,10 @@ void MainWin::onRunContract() {
 //    << std::endl;
 //    ui->m_contractDeployBtn->setDisabled( !isContractValid );
 //}
+
+
+void MainWin::on_m_wizardAddStreamAnnouncementBtn_clicked()
+{
+
+}
+

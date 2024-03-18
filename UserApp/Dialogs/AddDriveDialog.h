@@ -15,7 +15,7 @@ public:
 public:
     explicit AddDriveDialog( OnChainClient* onChainClient,
                              Model* model,
-                             QWidget *parent = nullptr);
+                             QWidget *parent = nullptr );
     ~AddDriveDialog() override;
 
 public:

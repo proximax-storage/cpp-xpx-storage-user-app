@@ -230,6 +230,8 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
+    void on_m_wizardAddStreamAnnouncementBtn_clicked();
+
 public:
     // if private key is not set it will be 'true'
     bool          m_mustExit = false;
