@@ -3,7 +3,7 @@
 #include "Entities/StreamInfo.h"
 #include "WizardAddStreamAnnounceDialog.h"
 #include "drive/Utils.h"
-#include "./ui_WizardAddStreamAnnounceDialog.h"
+#include "ui_WizardAddStreamAnnounceDialog.h"
 
 #include <QFileDialog>
 #include <QPushButton>

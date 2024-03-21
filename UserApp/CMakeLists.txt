@@ -93,6 +93,7 @@ file(GLOB PROJECT_SOURCES
         "*.ui"
         "Dialogs/*.h"
         "Dialogs/*.cpp"
+        "Dialogs/*.ui"
         "Models/*.h"
         "Models/*.cpp"
         "Engines/*.h"
@@ -109,7 +110,6 @@ file(GLOB PROJECT_SOURCES
 )
 
 file(GLOB PROJECT_UI_SOURCES
-        "Dialogs/*.ui"
         "*.ui"
 )
 qt_wrap_ui(SOURCES ${PROJECT_UI_SOURCES} mainwindow.ui)

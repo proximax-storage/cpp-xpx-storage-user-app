@@ -325,7 +325,7 @@ void MainWin::init()
         dialog.exec();
     });
 
-    connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
+    connect(ui->m_offBoardReplicatorBtn, &QPushButton::released, this, [this](){
         ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
     });
@@ -2621,8 +2621,8 @@ void MainWin::setupDrivesTab()
 
 void MainWin::setupMyReplicatorTab() {
     m_myReplicatorsModel = new ReplicatorTreeModel(this);
-    ui->myReplicators->setModel(m_myReplicatorsModel);
-    ui->myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->m_myReplicators->setModel(m_myReplicatorsModel);
+    ui->m_myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     for (const auto& r : m_settings->config().m_myReplicators) {
         m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this, r] (auto replicator, auto isSuccess, auto message, auto code ) {
@@ -2636,11 +2636,22 @@ void MainWin::setupMyReplicatorTab() {
         });
     }
 
-    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this](){
+    bool haveReplicators = ! m_model->getMyReplicators().empty();
+    ui->m_myReplicators->setVisible( haveReplicators );
+    ui->m_offBoardReplicatorBtn->setVisible( haveReplicators );
+    ui->m_replicatorsLabel->setVisible( haveReplicators );
+
+    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this]()
+    {
         m_myReplicatorsModel->setupModelData(m_model->getMyReplicators());
+
+        bool haveReplicators = ! m_model->getMyReplicators().empty();
+        ui->m_myReplicators->setVisible( haveReplicators );
+        ui->m_offBoardReplicatorBtn->setVisible( haveReplicators );
+        ui->m_replicatorsLabel->setVisible( haveReplicators );
     }, Qt::QueuedConnection);
 
-    connect(ui->myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
+    connect(ui->m_myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
         if (!index.isValid()) {
             return;
         }
