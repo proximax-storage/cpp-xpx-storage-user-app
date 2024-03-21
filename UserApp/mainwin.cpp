@@ -783,7 +783,7 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
-    //initWizardStreaming();
+    initWizardStreaming();
 
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
@@ -2793,6 +2793,10 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+            if(m_wizardAddStreamAnnounceDialog)
+            {
+                // m_wizardAddStreamAnnounceDialog.onDriveCreated(drive.getKey());
+            }
         }
     }
 }

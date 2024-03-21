@@ -34,6 +34,7 @@ class StreamingPanel;
 class Model;
 class Settings;
 class ContractDeploymentData;
+class WizardAddStreamAnnounceDialog;
 
 struct StreamInfo;
 
@@ -272,4 +273,6 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
+
+    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog;
 };

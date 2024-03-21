@@ -1,4 +1,4 @@
-#include "AskDriveWizardDialog.h"
+#include "Dialogs/AskDriveWizardDialog.h"
 #include "Dialogs/AddDriveDialog.h"
 #include <QDebug>
 
@@ -18,8 +18,7 @@ AskDriveWizardDialog::AskDriveWizardDialog(QString title,
     setDefaultButton(QMessageBox::Ok);
     setBaseSize(1000, height());
 
-
-    processAction(exec());
+    // processAction(exec());
 }
 
 
