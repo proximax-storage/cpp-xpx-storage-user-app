@@ -122,7 +122,7 @@ private:
     void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);
-    void onStartStreamingBtn();
+    void startStreamingProcess( const StreamInfo& streamInfo );
     void onStartStreamingBtnFfmpeg();
     void loadBalance();
     void setupDrivesTab();

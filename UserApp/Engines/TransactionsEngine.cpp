@@ -16,7 +16,7 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mpChainClient(client)
     , mpBlockchainEngine(blockchainEngine)
     , mpChainAccount(account)
-    , mSandbox("/modify_drive_data")
+    , mSandbox(CLIENT_SANDBOX_FOLDER)
 {}
 
 void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,

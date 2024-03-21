@@ -7,6 +7,7 @@
 #include "utils/HexParser.h"
 #include "Models/Model.h"
 #include "Entities/Settings.h"
+#include "Utils.h"
 
 #include <QMetaObject>
 #include <QMessageBox>
@@ -299,9 +300,28 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
     m_session->initStream( streamId, streamFolderName, driveKey, m3u8Playlist, driveLocalFolder, torrentLocalFolder, streamingStatusHandler, endPointList );
 }
 
-void StorageEngine::finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall )
+void StorageEngine::finishStreaming( const std::string& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall )
 {
-    //m_session->finishStream( backCall );
+    if ( auto drive = mp_model->findDrive(driveKey); drive != nullptr )
+    {
+        auto replicators = drive->getReplicators();
+
+        if ( replicators.empty() )
+        {
+            qCritical() << "StorageEngine::finishStreaming. Replicators list is empty! Channel key: " << driveKey;
+            return;
+        }
+        else
+        {
+            m_session->addReplicatorList( replicators );
+        }
+        auto pathToSandbox = getSettingsFolder().string() + "/" + driveKey + CLIENT_SANDBOX_FOLDER;
+        m_session->finishStream( backCall, replicators, pathToSandbox, {} );
+    }
+    else
+    {
+        qWarning () << "StorageEngine::finishStreaming. Replicators list is empty! Channel key: " << driveKey;
+    }
 }
                                                    
 void StorageEngine::cancelStreaming()
