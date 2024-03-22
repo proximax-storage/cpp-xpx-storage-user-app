@@ -51,7 +51,6 @@ pipeline {
                                 cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
                                 rm -r \$DESTDIR/lib/boost
                                 rm -r \$DESTDIR/lib/CMakeFiles
-                                rm -r \$DESTDIR/lib/xpxchaincpp_autogen
                                 cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.74.0 \$DESTDIR/lib/

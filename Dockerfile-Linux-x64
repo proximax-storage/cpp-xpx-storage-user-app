@@ -86,7 +86,6 @@ RUN cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 $DESTDIR/lib/
 RUN cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.74.0 $DESTDIR/lib/
 RUN rm -r $DESTDIR/lib/boost
 RUN rm -r $DESTDIR/lib/CMakeFiles
-RUN rm -r $DESTDIR/lib/xpxchaincpp_autogen
 RUN chmod a+x $DESTDIR/StorageClientApp
 RUN patchelf --force-rpath --set-rpath ./lib $DESTDIR/StorageClientApp
 RUN zip -r storage-tool.zip $DESTDIR
