@@ -2,12 +2,15 @@
 #include "mainwin.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QDir>
 #include <QStyle>
 #include <QIcon>
 #include <QIdentityProxyModel>
 
 DownloadsTableModel::DownloadsTableModel( Model* model, QObject *parent )
-    : mp_model(model)
+    : QAbstractListModel(parent)
+    , mp_model(model)
 {
 }
 

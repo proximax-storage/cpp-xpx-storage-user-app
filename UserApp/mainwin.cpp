@@ -1060,7 +1060,7 @@ void MainWin::setupChannelFsTable()
         }
     }, Qt::QueuedConnection);
 
-    m_channelFsTreeTableModel = new FsTreeTableModel( m_model, true );
+    m_channelFsTreeTableModel = new FsTreeTableModel( m_model, true, this );
 
     ui->m_channelFsTableView->setModel( m_channelFsTreeTableModel );
     ui->m_channelFsTableView->setColumnWidth(0,300);
@@ -1112,7 +1112,7 @@ void MainWin::setupDriveFsTable()
         }
     }, Qt::QueuedConnection);
 
-    m_driveTableModel = new FsTreeTableModel(m_model, false );
+    m_driveTableModel = new FsTreeTableModel(m_model, false, this );
 
     ui->m_driveFsTableView->setModel(m_driveTableModel );
     ui->m_driveFsTableView->horizontalHeader()->hide();

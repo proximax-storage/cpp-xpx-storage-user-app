@@ -7,7 +7,7 @@
 class DownloadsTableModel : public QAbstractListModel
 {
 public:
-    explicit DownloadsTableModel( Model* model, QObject *parent );
+    explicit DownloadsTableModel( Model* model, QObject* parent = nullptr );
 
 public:
     int onDoubleClick( int row );

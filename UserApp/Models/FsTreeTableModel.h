@@ -11,7 +11,7 @@ class FsTreeTableModel: public QAbstractListModel
     Q_OBJECT
 
 public:
-    FsTreeTableModel( Model* model, bool isChannelFsModel );
+    FsTreeTableModel( Model* model, bool isChannelFsModel, QObject* parent = nullptr );
     ~FsTreeTableModel() override;
 
     int onDoubleClick( int row );

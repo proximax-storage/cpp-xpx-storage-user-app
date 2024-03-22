@@ -6,8 +6,9 @@
 #include <QPushButton>
 #include <QThread>
 
-FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel) 
-    : m_isChannelFsModel(isChannelFsModel)
+FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel, QObject* parent)
+    : QAbstractListModel(parent)
+    , m_isChannelFsModel(isChannelFsModel)
     , mp_model(model)
 {}
 
