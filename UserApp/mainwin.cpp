@@ -355,7 +355,7 @@ void MainWin::init()
     {
         auto selectedIndexes = ui->m_downloadsTableView->selectionModel()->selectedRows();
 
-        m_downloadsTableModel->updateProgress();
+        //m_downloadsTableModel->updateProgress();
 
         if ( ! selectedIndexes.empty() )
         {
@@ -930,6 +930,7 @@ void MainWin::setupDownloadsTab()
     setupChannelFsTable();
     setupDownloadsTable();
 
+    ui->m_downloadsPath->setText(static_cast<QLatin1StringView>("Path: " + m_settings->config().m_downloadFolder));
     ui->m_channels->addItem( "Loading..." );
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, &MainWin::onDownloadBtn, Qt::QueuedConnection);
@@ -1161,19 +1162,24 @@ void MainWin::onDownloadBtn()
         return;
     }
 
-    auto updateReplicatorsCallback = [this, channel]() {
+    auto updateReplicatorsCallback = [this, channel]()
+    {
+        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows(false))
+        {
+            m_downloadsTableModel->addRow(selectedRow);
+        }
+
         for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
         {
             QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
 
             auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
-            m_downloadsTableModel->beginResetModel();
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash(selectedRow.m_hash);
             downloadInfo.setDownloadChannelKey(channel->getKey());
             downloadInfo.setFileName(selectedRow.m_name);
-            downloadInfo.setSaveFolder(m_model->getDownloadFolder().string() + selectedRow.m_path);
+            downloadInfo.setSaveFolder(selectedRow.m_path);
             downloadInfo.setDownloadFolder(m_model->getDownloadFolder().string());
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
@@ -1181,7 +1187,6 @@ void MainWin::onDownloadBtn()
             downloadInfo.setHandle(ltHandle);
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
-            m_downloadsTableModel->endResetModel();
             m_model->saveSettings();
         }
     };
@@ -1194,21 +1199,29 @@ void MainWin::setupDownloadsTable()
     m_downloadsTableModel = new DownloadsTableModel(m_model, this);
 
     ui->m_downloadsTableView->setModel( m_downloadsTableModel );
+//    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
+//    ui->m_downloadsTableView->horizontalHeader()->hide();
+//    ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
+//    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+//    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
+//    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
+//    ui->m_downloadsTableView->setColumnWidth(1, 60);
+    //ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+    ui->m_downloadsTableView->setColumnWidth(0,300);
     ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_downloadsTableView->horizontalHeader()->hide();
     ui->m_downloadsTableView->setGridStyle( Qt::NoPen );
-    ui->m_downloadsTableView->setSelectionBehavior( QAbstractItemView::SelectRows );
-    ui->m_downloadsTableView->setSelectionMode( QAbstractItemView::SingleSelection );
-    ui->m_downloadsTableView->horizontalHeader()->setStretchLastSection(false);
-    ui->m_downloadsTableView->setColumnWidth(1, 60);
-    //ui->m_downloadsTableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->m_downloadsTableView->update();
+    // TODO: add variable for downloads
+    //ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
 
     ui->m_removeDownloadBtn->setEnabled( false );
 
-    connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
-    {
-        ui->m_downloadsTableView->selectRow( index.row() );
-    });
+//    connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
+//    {
+//        ui->m_downloadsTableView->selectRow( index.row() );
+//    });
 
     connect( ui->m_downloadsTableView, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
@@ -1222,8 +1235,6 @@ void MainWin::setupDownloadsTable()
 
     connect( ui->m_removeDownloadBtn, &QPushButton::released, this, [this] ()
     {
-        qDebug() << LOG_SOURCE << "removeDownloadBtn pressed: " << ui->m_downloadsTableView->selectionModel()->selectedRows();
-
         auto rows = ui->m_downloadsTableView->selectionModel()->selectedRows();
         if ( rows.empty() )
         {
@@ -1251,6 +1262,22 @@ void MainWin::setupDownloadsTable()
             }
         }
     });
+
+    connect( ui->m_downloadsTableView, &QTableView::doubleClicked, this, [this] (const QModelIndex &index)
+    {
+        if (!index.isValid()) {
+            return;
+        }
+
+        int toBeSelectedRow = m_downloadsTableModel->onDoubleClick( index.row() );
+        ui->m_downloadsTableView->selectRow( toBeSelectedRow );
+        //ui->m_path->setText( "Path: " + QString::fromStdString(m_channelFsTreeTableModel->currentPathString()));
+//        if ( auto* channelPtr = m_model->currentDownloadChannel(); channelPtr != nullptr )
+//        {
+//            channelPtr->setLastOpenedPath(m_channelFsTreeTableModel->currentPath());
+//            qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << channelPtr->getLastOpenedPath();
+//        }
+    }, Qt::QueuedConnection);
 }
 
 bool MainWin::requestPrivateKey()
