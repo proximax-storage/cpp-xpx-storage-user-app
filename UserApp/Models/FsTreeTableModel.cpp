@@ -422,16 +422,20 @@ void FsTreeTableModel::readFolder(const Row& parentRow, std::vector<Row>& rows, 
     }
 }
 
-std::vector<FsTreeTableModel::Row> FsTreeTableModel::getSelectedRows()
+std::vector<FsTreeTableModel::Row> FsTreeTableModel::getSelectedRows(bool isSkipFolders)
 {
     std::vector<FsTreeTableModel::Row> rows;
     rows.reserve(m_checkList.size());
     QSetIterator<QPersistentModelIndex> iterator(m_checkList);
-    while (iterator.hasNext()) {
+    while (iterator.hasNext())
+    {
         const QModelIndex index = iterator.next();
-        if (index.isValid() && index.row() < m_rows.size()) {
+        if (index.isValid() && index.row() < m_rows.size())
+        {
             auto row = m_rows[index.row()];
-            if (row.m_isFolder)
+
+            // Return files only (if isSkipFolders = true)
+            if (row.m_isFolder && isSkipFolders)
             {
                 readFolder(row, row.m_chailds, rows);
             }

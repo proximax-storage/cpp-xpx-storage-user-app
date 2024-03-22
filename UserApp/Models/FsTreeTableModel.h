@@ -50,7 +50,7 @@ public:
         std::vector<Row> m_chailds;
     };
 
-    std::vector<Row> getSelectedRows();
+    std::vector<Row> getSelectedRows(bool isSkipFolders = true);
 
     void updateRows();
 
