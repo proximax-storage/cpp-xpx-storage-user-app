@@ -10,6 +10,8 @@
 
 #include <QDebug>
 #include <QMessageBox>
+#include <QFile>
+#include <QDir>
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
@@ -308,7 +310,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
             if ( dnInfo.getHandle() == handle )
             {
                 fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
-                fs::path destPath = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
+                fs::path destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
                 qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath.c_str();
 
                 std::error_code ec;
@@ -331,14 +333,42 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 }
 
                 int index = 0;
-                while( fs::exists(destPath,ec) )
+                bool isFolder = !dnInfo.getSaveFolder().empty();
+                bool isExists = QFile(destPath.string().c_str()).exists();
+                auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
+                const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
+                while( isExists )
                 {
                     index++;
-                    auto newName = fs::path(dnInfo.getFileName()).stem().string()
-                                    + " (" + std::to_string(index) + ")"
-                                    + fs::path(dnInfo.getFileName()).extension().string();
-                    destPath = fs::path(dnInfo.getSaveFolder() + "/" + newName).make_preferred();
-                    dnInfo.setFileName(newName);
+                    if (isFolder)
+                    {
+                        auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
+                        destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
+                        isExists = QDir(destPath.string().c_str()).exists();
+                        if (!isExists)
+                        {
+                            saveFolderPath.pop_front();
+                            saveFolderPath.push_front(newFolderName.string().c_str());
+                            auto rawPath = saveFolderPath.join("/");
+                            dnInfo.setSaveFolder("/" + rawPath.toStdString());
+                            const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
+                            QDir().mkpath(finalDownloadFolder.c_str());
+                            destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
+                        }
+                    }
+                    else
+                    {
+                        auto newName = fs::path(dnInfo.getFileName()).stem().string()
+                                       + " (" + std::to_string(index) + ")"
+                                       + fs::path(dnInfo.getFileName()).extension().string();
+
+                        destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
+                        isExists = QFile(destPath.string().c_str()).exists();
+                        if (!isExists)
+                        {
+                            dnInfo.setFileName(newName);
+                        }
+                    }
                 }
 
                 dnInfo.getFileName() = destPath.filename().string();
@@ -407,7 +437,7 @@ void Settings::removeFromDownloads( int index )
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        const std::string path = fs::path(dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred().string();
+        const std::string path = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred().string();
         fs::remove( path, ec );
         if (ec)
         {
