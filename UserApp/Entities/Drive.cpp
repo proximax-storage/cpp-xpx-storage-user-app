@@ -1,4 +1,5 @@
 #include "Drive.h"
+#include "Engines/StorageEngine.h"
 #include "mainwin.h"
 #include "utils/HexParser.h"
 #include "Utils.h"

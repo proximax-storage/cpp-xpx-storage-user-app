@@ -15,7 +15,7 @@
 #include "drive/Utils.h"
 #include "Models/DriveContractModel.h"
 
-#define STREAM_ROOT_FOLDER_NAME ".videos"
+#define STREAM_ROOT_FOLDER_NAME "video"
 #define STREAM_INFO_FILE_NAME   "info"
 
 const  uint32_t MIN_SETTINGS_VERSION = 1;

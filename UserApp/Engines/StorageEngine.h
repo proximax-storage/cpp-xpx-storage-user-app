@@ -90,10 +90,11 @@ public:
                          const sirius::Key&      driveKey,
                          const fs::path&         m3u8Playlist,
                          const fs::path&         driveLocalFolder,
+                         const fs::path&         torrentLocalFolder,
                          sirius::drive::StreamingStatusHandler streamingStatusHandler,
                          const endpoint_list&    endPointList );
 
-    void finishStreaming( std::function<void(const sirius::drive::FinishStreamInfo&)> backCall );
+    void finishStreaming( const std::string& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall );
     void cancelStreaming();
 
 signals:

@@ -8,11 +8,14 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
-#include "Worker.h"
-#include "OnChainClient.h"
+//#include "Worker.h"
+//#include "OnChainClient.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
 #include "drive/FlatDrive.h"
+
+class OnChainClient;
+class Worker;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWin; }
@@ -31,6 +34,7 @@ class StreamingPanel;
 class Model;
 class Settings;
 class ContractDeploymentData;
+class WizardAddStreamAnnounceDialog;
 
 struct StreamInfo;
 
@@ -118,7 +122,7 @@ private:
     void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);
-    void onStartStreamingBtn();
+    void startStreamingProcess( const StreamInfo& streamInfo );
     void onStartStreamingBtnFfmpeg();
     void loadBalance();
     void setupDrivesTab();
@@ -147,6 +151,7 @@ private:
     QString currentStreamingDriveKey() const;
     Drive* currentStreamingDrive() const;
     void initStreaming();
+    void initWizardStreaming();
     void connectToStreamingTransactions();
     StreamInfo* selectedStreamInfo() const; // could return nullptr
     void updateStreamerTable( Drive& );
@@ -226,6 +231,8 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
+    void on_m_wizardAddStreamAnnouncementBtn_clicked();
+
 public:
     // if private key is not set it will be 'true'
     bool          m_mustExit = false;
@@ -258,7 +265,6 @@ private:
     ModifyProgressPanel*    m_streamingProgressPanel;
     StreamingView*          m_streamingView = nullptr;
     StreamingPanel*         m_streamingPanel = nullptr;
-    QProcess*               m_ffmpegStreamingProcess = nullptr;
 
     Worker*                 mpWorker;
     QThread*                mpThread;
@@ -267,4 +273,6 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCoutStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
+
+    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog;
 };

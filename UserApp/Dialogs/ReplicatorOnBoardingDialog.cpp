@@ -14,7 +14,7 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(OnChainClient* onChainCli
       , mpOnChainClient(onChainClient)
 {
     ui->setupUi(this);
-    setWindowTitle("Replicator onboarding");
+    setWindowTitle("My replicator onboarding");
 
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
     connect(ui->alias, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)

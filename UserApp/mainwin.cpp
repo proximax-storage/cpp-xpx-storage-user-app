@@ -325,7 +325,7 @@ void MainWin::init()
         dialog.exec();
     });
 
-    connect(ui->m_offBoardReplicator, &QPushButton::released, this, [this](){
+    connect(ui->m_offBoardReplicatorBtn, &QPushButton::released, this, [this](){
         ReplicatorOffBoardingDialog dialog(m_onChainClient, m_model, this);
         dialog.exec();
     });
@@ -783,13 +783,20 @@ void MainWin::init()
     ui->label_7->hide();
 
     initStreaming();
-    
+    initWizardStreaming();
+
     std::error_code ec;
-    if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
-    {
-        ui->tabWidget->setTabVisible( 4, false );
-    }
+    // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
+    // {
+    //     ui->tabWidget->setTabVisible( 4, false );
+    // }
+
+    // Hide contracts
     ui->tabWidget->setTabVisible( 3, false );
+
+    // Hide streaming
+    ui->tabWidget->setTabVisible( 4, false );
+
     doUpdateBalancePeriodically();
 }
 
@@ -845,13 +852,6 @@ void MainWin::drivesInitialized()
 
 MainWin::~MainWin()
 {
-    if ( m_ffmpegStreamingProcess != nullptr )
-    {
-        // on case of SIGTERM or SIG...
-        m_ffmpegStreamingProcess->kill();
-        delete m_ffmpegStreamingProcess;
-    }
-    
     m_model->endStorageEngine();
 
     delete ui;
@@ -2028,7 +2028,7 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
-        showNotification(message, gErrorCodeTranslator.translate(errorText));
+        showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
@@ -2063,7 +2063,7 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
         const QString message = QString::fromStdString( "Drive creation failed (" + drive->getName() + ")");
-        showNotification(message, gErrorCodeTranslator.translate(errorText));
+        showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         drive->updateDriveState(unconfirmed);
     } else {
@@ -2101,7 +2101,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     QString message = "The drive '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
+    message.append( QString::fromStdString( gErrorCodeTranslator.translate(errorText.toStdString())));
     showNotification(message);
     addNotification(message);
     m_model->markChannelsForDelete(driveId, false);
@@ -2183,7 +2183,7 @@ void MainWin::onDownloadChannelCloseFailed(const std::array<uint8_t, 32> &channe
     QString message = "The channel '";
     message.append(alias.c_str());
     message.append("' was not close by reason: ");
-    message.append(gErrorCodeTranslator.translate(errorText.toStdString()));
+    message.append( QString::fromStdString( gErrorCodeTranslator.translate(errorText.toStdString())));
     showNotification(message);
     addNotification(message);
     unlockChannel(channelKey);
@@ -2214,7 +2214,7 @@ void MainWin::onDownloadPaymentFailed(const std::array<uint8_t, 32> &channelId, 
     }
 
     const QString message = QString::fromStdString( "Your payment for the following channel was UNSUCCESSFUL: '" + alias  + "' ");
-    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(errorText.toStdString())));
     addNotification(message);
 }
 
@@ -2243,7 +2243,7 @@ void MainWin::onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, co
     }
 
     const QString message = QString::fromStdString( "Your payment for the following drive was UNSUCCESSFUL: '" + alias  + "' ");
-    showNotification(message, gErrorCodeTranslator.translate(errorText.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(errorText.toStdString())));
     addNotification(message);
 }
 
@@ -2266,8 +2266,8 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
     qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(modificationId);
     auto message = gErrorCodeTranslator.translate(status.toStdString());
 
-    showNotification("Data modification failed: ", message);
-    addNotification(message);
+    showNotification("Data modification failed: ", message.c_str());
+    addNotification(message.c_str());
 
     if ( auto drive = m_model->findDrive( sirius::drive::toString(driveKey)); drive != nullptr )
     {
@@ -2342,8 +2342,8 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     }
 
     auto errorText = gErrorCodeTranslator.translate(error.toStdString());
-    showNotification(errorText);
-    addNotification(errorText);
+    showNotification(errorText.c_str());
+    addNotification(errorText.c_str());
 }
 
 void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
@@ -2374,7 +2374,7 @@ void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorP
     QString message;
     message.append("Replicator onboarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(error.toStdString())));
     addNotification(message);
 }
 
@@ -2394,7 +2394,7 @@ void MainWin::onReplicatorOffBoardingTransactionFailed(const QString& replicator
     QString message;
     message.append("Replicator off-boarded FAILED: ");
     message.append(replicatorPublicKey);
-    showNotification(message, gErrorCodeTranslator.translate(error.toStdString()));
+    showNotification(message, QString::fromStdString(gErrorCodeTranslator.translate(error.toStdString())));
     addNotification(message);
 }
 
@@ -2654,8 +2654,8 @@ void MainWin::setupDrivesTab()
 
 void MainWin::setupMyReplicatorTab() {
     m_myReplicatorsModel = new ReplicatorTreeModel(this);
-    ui->myReplicators->setModel(m_myReplicatorsModel);
-    ui->myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->m_myReplicators->setModel(m_myReplicatorsModel);
+    ui->m_myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     for (const auto& r : m_settings->config().m_myReplicators) {
         m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this, r] (auto replicator, auto isSuccess, auto message, auto code ) {
@@ -2669,11 +2669,22 @@ void MainWin::setupMyReplicatorTab() {
         });
     }
 
-    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this](){
+    bool haveReplicators = ! m_model->getMyReplicators().empty();
+    ui->m_myReplicators->setVisible( haveReplicators );
+    ui->m_offBoardReplicatorBtn->setVisible( haveReplicators );
+    ui->m_replicatorsLabel->setVisible( haveReplicators );
+
+    connect(this, &MainWin::refreshMyReplicatorsTable, this, [this]()
+    {
         m_myReplicatorsModel->setupModelData(m_model->getMyReplicators());
+
+        bool haveReplicators = ! m_model->getMyReplicators().empty();
+        ui->m_myReplicators->setVisible( haveReplicators );
+        ui->m_offBoardReplicatorBtn->setVisible( haveReplicators );
+        ui->m_replicatorsLabel->setVisible( haveReplicators );
     }, Qt::QueuedConnection);
 
-    connect(ui->myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
+    connect(ui->m_myReplicators, &QTreeView::doubleClicked, this, [this](QModelIndex index){
         if (!index.isValid()) {
             return;
         }
@@ -2826,6 +2837,10 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
+            if(m_wizardAddStreamAnnounceDialog)
+            {
+                // m_wizardAddStreamAnnounceDialog.onDriveCreated(drive.getKey());
+            }
         }
     }
 }
@@ -3340,3 +3355,10 @@ void MainWin::onRunContract() {
 //    << std::endl;
 //    ui->m_contractDeployBtn->setDisabled( !isContractValid );
 //}
+
+
+void MainWin::on_m_wizardAddStreamAnnouncementBtn_clicked()
+{
+
+}
+

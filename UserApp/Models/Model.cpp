@@ -6,6 +6,7 @@
 #include "utils/HexParser.h"
 #include "drive/ViewerSession.h"
 #include "Entities/Settings.h"
+#include "Entities/Settings.h"
 
 #include <QFileInfoList>
 #include <QDirIterator>
@@ -414,7 +415,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
 
             // TODO: Approach needs to be improved
-            const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + "/modify_drive_data";
+            const std::string pathToDriveData = getSettingsFolder().string() + "/" + QString(currentDrive.getKey().c_str()).toUpper().toStdString() + CLIENT_SANDBOX_FOLDER;
             bool isDirExists = QDir(QDir::toNativeSeparators(pathToDriveData.c_str())).exists();
             if (isDirExists) {
                 std::map<QString, QFileInfo> filesData;
@@ -700,11 +701,6 @@ const std::vector<StreamInfo>& Model::streamerAnnouncements() const
 std::vector<StreamInfo>& Model::streamerAnnouncements()
 {
     return m_settings->config().m_streams;
-}
-
-std::string& Model::streamFolder()
-{
-    return m_settings->config().m_streamFolder;
 }
 
 void Model::addStreamRef( const StreamInfo& streamInfo )

@@ -1,9 +1,9 @@
 #include "Models/Model.h"
 #include "Entities/Account.h"
 #include "Entities/StreamInfo.h"
-#include "AddStreamAnnouncementDialog.h"
+#include "WizardAddStreamAnnounceDialog.h"
 #include "drive/Utils.h"
-#include "./ui_AddStreamAnnouncementDialog.h"
+#include "ui_WizardAddStreamAnnounceDialog.h"
 
 #include <QFileDialog>
 #include <QPushButton>
@@ -11,12 +11,12 @@
 #include <QToolTip>
 #include <QMessageBox>
 
-AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChainClient,
+WizardAddStreamAnnounceDialog::WizardAddStreamAnnounceDialog( OnChainClient* onChainClient,
                                                           Model*         model,
                                                           std::string    driveKey,
                                                           QWidget*       parent ) :
     QDialog( parent ),
-    ui( new Ui::AddStreamAnnouncementDialog() ),
+    ui( new Ui::WizardAddStreamAnnounceDialog() ),
     mp_onChainClient(onChainClient),
     m_model(model),
     mDriveKey(driveKey)
@@ -77,8 +77,8 @@ AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChain
 //    });
 
     ui->buttonBox->disconnect(this);
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddStreamAnnouncementDialog::accept);
-    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddStreamAnnouncementDialog::reject);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &WizardAddStreamAnnounceDialog::accept);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &WizardAddStreamAnnounceDialog::reject);
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 
@@ -90,12 +90,12 @@ AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChain
     setTabOrder(ui->m_dateTime, ui->buttonBox);
 }
 
-AddStreamAnnouncementDialog::~AddStreamAnnouncementDialog()
+WizardAddStreamAnnounceDialog::~WizardAddStreamAnnounceDialog()
 {
     delete ui;
 }
 
-void AddStreamAnnouncementDialog::validate()
+void WizardAddStreamAnnounceDialog::validate()
 {
     if ( mDriveKey.empty() )
     {
@@ -158,7 +158,7 @@ void AddStreamAnnouncementDialog::validate()
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }
 
-void AddStreamAnnouncementDialog::accept()
+void WizardAddStreamAnnounceDialog::accept()
 {
     auto* drive = m_model->findDrive( mDriveKey );
     if ( drive == nullptr )
@@ -255,7 +255,7 @@ void AddStreamAnnouncementDialog::accept()
     QDialog::accept();
 }
 
-void AddStreamAnnouncementDialog::reject()
+void WizardAddStreamAnnounceDialog::reject()
 {
     QDialog::reject();
 }

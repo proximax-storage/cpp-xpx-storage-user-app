@@ -15,6 +15,8 @@
     }\
 }
 
+#define CLIENT_SANDBOX_FOLDER "/modify_drive_data" // it is used for user modification torrents
+
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 QString rawHashToHex(const std::array<uint8_t, 32>& rawHash);

@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include <QSettings>
+#include <QDir>
 #include <QObject>
 #include <QDateTime>
 #include <QDebug>
@@ -10,6 +12,28 @@
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/portable_binary.hpp>
+
+struct ObsProfileData
+{
+    std::string m_recordingPath;
+    
+    ObsProfileData()
+    {
+#if defined _WIN32
+#elif defined __APPLE__
+        QString homePath = QDir::homePath();
+        QSettings my_settings( homePath + "/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
+        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+#else // LINUX
+        QString homePath = QDir::homePath();
+        QSettings my_settings( homePath + "/.config/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
+        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+#endif
+
+    }
+    
+    bool isObsInstalled() { return ! m_recordingPath.empty(); }
+};
 
 struct StreamInfo
 {

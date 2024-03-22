@@ -16,7 +16,7 @@ TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> c
     , mpChainClient(client)
     , mpBlockchainEngine(blockchainEngine)
     , mpChainAccount(account)
-    , mSandbox("/modify_drive_data")
+    , mSandbox(CLIENT_SANDBOX_FOLDER)
 {}
 
 void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
@@ -1483,7 +1483,7 @@ void TransactionsEngine::streamStart(const std::array<uint8_t, 32>& rawDrivePubK
 
     streamStartNotifier.set([this, hash, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
-            qInfo() << "TransactionsEngine::streamFinish:: confirmed streamFinishTransaction, hash: " << hash.c_str();
+            qInfo() << "confirmed streamTransaction, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);

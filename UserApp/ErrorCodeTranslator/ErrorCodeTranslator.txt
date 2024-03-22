@@ -237,4 +237,5 @@
 {"Failure_Exchange_No_Offered_Mosaics_To_Remove", "Validation failed because there are no offered mosaics to remove."},
 {"Failure_Exchange_Duplicated_Offer_In_Request", "Validation failed because the offer is duplicated in the request."},
 {"Failure_Exchange_Offer_Exists", "Validation failed because the offer already exists."},
-{"Failure_Exchange_Zero_Offer_Duration", "Validation failed because the offer duration is zero."}
+{"Failure_Exchange_Zero_Offer_Duration", "Validation failed because the offer duration is zero."},
+{"Failure_Storage_Drive_Size_Insufficient", "Validation failed because your files exceed maximum drive size."}
