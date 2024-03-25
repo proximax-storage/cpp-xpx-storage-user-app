@@ -612,6 +612,8 @@ static void showErrorMessage( QString title, QString message )
 static fs::path ffmpegPath()
 {
 #if defined _WIN32
+    path = QDir::currentPath().toStdString() + "/XpxSiriusStorageClient/ffmpeg";
+    return fs::path(path);
 #elif defined __APPLE__
     auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
     return fs::path(path);
@@ -894,7 +896,7 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             }
             
             gStorageEngine->startStreaming( txHash,
-                                           uniqueStreamFolder,
+                                           uniqueStreamFolder.string(),
                                            driveKeyHex,
                                            m3u8Playlist,
                                            drive->getLocalFolder(),
