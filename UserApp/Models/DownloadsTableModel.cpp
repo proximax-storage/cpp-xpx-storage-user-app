@@ -218,17 +218,17 @@ bool DownloadsTableModel::isExists(const FsTreeTableModel::Row& row, std::string
         if (row.m_isFolder)
         {
             path = fs::path(mp_model->getDownloadFolder().string() + "/" + name).make_preferred();
-            QDir dir(path.c_str());
+            QDir dir(QString::fromStdString(path.string()));
             isExistsLocally = dir.exists();
         }
         else
         {
             path = fs::path(mp_model->getDownloadFolder().string() + row.m_path + "/" + name).make_preferred();
-            QFile file(path.c_str());
+            QFile file(QString::fromStdString(path.string()));
             isExistsLocally = file.exists();
         }
 
-        QDir parentDir(path.parent_path().c_str());
+        QDir parentDir(QString::fromStdString(path.parent_path().string()));
         if ( ! parentDir.exists() && !QDir().mkpath(parentDir.path()))
         {
             qWarning() << "DownloadsTableModel::isExists: Cannot create path recursively!";
