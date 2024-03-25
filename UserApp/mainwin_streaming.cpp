@@ -612,8 +612,7 @@ static void showErrorMessage( QString title, QString message )
 static fs::path ffmpegPath()
 {
 #if defined _WIN32
-    path = QDir::currentPath().toStdString() + "/XpxSiriusStorageClient/ffmpeg";
-    return fs::path(path);
+    return fs::path(getSettingsFolder().string() + "/ffmpeg");
 #elif defined __APPLE__
     auto path = std::string(getenv("HOME")) + "/.XpxSiriusFfmpeg/ffmpeg";
     return fs::path(path);
