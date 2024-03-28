@@ -3,6 +3,7 @@
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
+#include "Dialogs/WizardAddStreamAnnounceDialog.h"
 #include "Entities/Settings.h"
 #include "Models/Model.h"
 #include "Models/FsTreeTableModel.h"
@@ -795,7 +796,7 @@ void MainWin::init()
     ui->tabWidget->setTabVisible( 3, false );
 
     // Hide streaming
-    ui->tabWidget->setTabVisible( 4, false );
+    ui->tabWidget->setTabVisible( 4, true );
 
     doUpdateBalancePeriodically();
 }
@@ -2047,6 +2048,11 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
         m_modificationsWatcher->addPath(drive->getLocalFolder().c_str());
         drive->updateDriveState(no_modifications);
         m_model->saveSettings();
+
+        if(m_wizardAddStreamAnnounceDialog) {
+            // trigger drive->getName()
+            m_wizardAddStreamAnnounceDialog->setCreatedDrive(drive);
+        }
 
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
         showNotification(message);

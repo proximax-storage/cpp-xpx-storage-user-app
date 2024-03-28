@@ -11,17 +11,12 @@ AskDriveWizardDialog::AskDriveWizardDialog(QString title,
     , m_model(model)
     , m_parent(parent)
 {
-    setWindowTitle(title);
-    setText( "<p align='center'><br><b>There are no created drives</b></p>" );
-    setInformativeText( "<p align='center'>Create drive for streaming?</p>" );
+    setWindowTitle("There are no created drives");
+    setInformativeText( "<p align='center'>Create drive for streaming?<br><br></p>" );
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Ok);
     setBaseSize(1000, height());
-
-    // processAction(exec());
 }
-
-
 
 void AskDriveWizardDialog::resizeEvent(QResizeEvent *event)
 {
@@ -32,33 +27,6 @@ void AskDriveWizardDialog::showEvent(QShowEvent *event)
 {
     QMessageBox::showEvent(event);
     setFixedWidth(500);
-}
-
-void AskDriveWizardDialog::processAction(int choice)
-{
-    switch (choice)
-    {
-    case QMessageBox::Ok:
-    {
-        AddDriveDialog dialog(m_onChainClient, m_model, m_parent);
-
-        if(auto rc = dialog.exec(); rc == QDialog::Accepted)
-        {
-
-        }
-        else {
-
-        }
-        break;
-    }
-
-    case QMessageBox::Cancel:
-        break;
-
-    default:
-        // should never be reached
-        break;
-    }
 }
 
 AskDriveWizardDialog::~AskDriveWizardDialog()

@@ -274,5 +274,5 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 
-    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog;
+    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
 };
