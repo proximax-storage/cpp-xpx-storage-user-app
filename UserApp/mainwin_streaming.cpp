@@ -80,7 +80,10 @@ void MainWin::initStreaming()
         updateViewerProgressPanel( ui->tabWidget->currentIndex() );
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
 
-        if (auto drive = currentStreamingDrive(); drive && ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 ) {
+        if (auto drive = currentStreamingDrive();
+            drive && ui->tabWidget->currentIndex() == 4 &&
+            (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 ) )
+        {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
         else
@@ -861,8 +864,8 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
         uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
         uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
         auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);
-        auto chuncksFolder = uniqueStreamFolder / "chunks";
-        auto torrentsFolder = m3u8StreamFolder / "torrents";
+        auto chuncksFolder = uniqueStreamFolder / "HLS";
+        auto torrentsFolder = getSettingsFolder() / driveKey / CLIENT_SANDBOX_FOLDER0;
 
         if ( ! fs::exists( chuncksFolder, ec ) )
         {
@@ -932,7 +935,7 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             }
             
             gStorageEngine->startStreaming( txHash,
-                                           uniqueStreamFolder.string(),
+                                           streamInfo.m_uniqueFolderName,
                                            driveKeyHex,
                                            m3u8Playlist,
                                            drive->getLocalFolder(),

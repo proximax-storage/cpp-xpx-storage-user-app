@@ -41,7 +41,11 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 }
                 else
                 {
+
                     hash = sirius::drive::calculateInfoHash((path / entryName).make_preferred(), sirius::Key(*driveKey) ).array();
+                    qWarning () << "driveKey: " << sirius::drive::toString(*driveKey).c_str();
+                    qWarning () << "filename: " << (path / entryName);
+                    qWarning () << "hash: " << sirius::drive::toString(hash).c_str();
                 }
 
                 std::error_code errorCode(errno, std::generic_category());
@@ -168,6 +172,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
 
         // check that file (or folder) exists on the drive
         //
+        //fsFolder.dbgPrint();
         if ( auto fsIt = fsFolder.childs().find(name); fsIt != fsFolder.childs().end() )
         {
             // Item exists in local folder and in remote drive
@@ -225,6 +230,8 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     if ( localChild.m_fileHash != getFile(fsIt->second).hash().array() )
                     {
                         // Replace file
+                        qDebug() << "HASH!!! " << sirius::drive::arrayToString(localChild.m_fileHash).c_str() << " != "
+                                    << sirius::drive::arrayToString(getFile(fsIt->second).hash().array()).c_str();
 
                         // add (upload) local file
                         if ( localChild.m_size == 0 )

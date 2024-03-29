@@ -16,6 +16,7 @@
 }
 
 #define CLIENT_SANDBOX_FOLDER "/modify_drive_data" // it is used for user modification torrents
+#define CLIENT_SANDBOX_FOLDER0 "modify_drive_data" // it is used for user modification torrents
 
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 

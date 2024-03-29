@@ -48,6 +48,7 @@
 #include <QToolTip>
 #include <QTcpServer>
 #include <QFileDialog>
+#include <QStyledItemDelegate>
 #include <filesystem>
 
 #include <boost/algorithm/string.hpp>
@@ -2553,8 +2554,7 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->hide();
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-
-
+    
     auto menu = new PopupMenu(ui->m_moreDrivesBtn, this);
     auto renameAction = new QAction("Rename", this);
     menu->addAction(renameAction);

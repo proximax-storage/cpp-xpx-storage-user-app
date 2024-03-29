@@ -675,6 +675,7 @@ void Model::calcDiff( Drive& drive )
         Diff::calcLocalDriveInfoR( *localDrive, drive.getLocalFolder(), true, &driveKey );
         sirius::drive::ActionList actionList;
         Diff diff( *localDrive, drive.getLocalFolder(), drive.getFsTree(), actionList);
+        drive.getFsTree().dbgPrint();
 
         drive.setActionsList(actionList);
         drive.setLocalDriveItem(std::move(localDrive));
