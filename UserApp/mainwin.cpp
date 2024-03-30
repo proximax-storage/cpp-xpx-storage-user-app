@@ -453,7 +453,7 @@ void MainWin::init()
             updateDriveWidgets(drive->getKey(), drive->getState(),false);
         }
         else if (auto drive = m_model->findDriveByNameOrPublicKey(ui->m_streamDriveCBox->currentText().toStdString());
-                 drive && index == 4 && ui->m_streamingTabView->currentIndex() == 1 )
+                 drive && index == 4 && (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2))
         {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
@@ -1561,7 +1561,8 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case uploading:
         {
             if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
-                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) ) {
+                (ui->tabWidget->currentIndex() == 4 &&
+                 (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2) && streamingDrive != nullptr) ) {
 
                 if ( !drive->isStreaming() )
                 {

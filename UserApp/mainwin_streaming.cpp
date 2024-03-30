@@ -898,17 +898,8 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 
         m_model->setCurrentStreamInfo( streamInfo );
 
-        //TODO!!!
-//            {
-//                delete m_streamingView;
-//                m_streamingView = new StreamingView( [this] {cancelStreaming();}, [this] {finishStreaming();}, this );
-//                m_streamingView->setWindowModality(Qt::WindowModal);
-//                m_streamingView->show();
-//                //startFfmpegStreamingProcess();
-//                return;
-//            }
-
-#if 1
+//#define OFFCHAIN_DBG
+#ifndef OFFCHAIN_DBG
         auto callback = [=,model = m_model](std::string txHashString) {
             auto* drive = model->findDrive( driveKey );
             if ( drive == nullptr )
@@ -947,9 +938,11 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 //              drive->updateDriveState(canceled); //todo
 //              drive->updateDriveState(no_modifications); //todo
             drive->updateDriveState(registering);
+#ifndef OFFCHAIN_DBG
         };
 
         m_onChainClient->streamStart( driveKeyHex, streamInfo.m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback );
+#endif
     }
     catch (...) {
         return;
