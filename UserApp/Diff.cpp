@@ -157,7 +157,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
     //
     std::list<LocalDriveItem> removedItems;
 
-    // Find files that were added or modifyed by user
+    // Find files that were added or modified by user
     //
     for( auto& [name, localChild] : localChilds )
     {
