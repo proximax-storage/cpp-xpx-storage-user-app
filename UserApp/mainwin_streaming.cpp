@@ -110,8 +110,8 @@ void MainWin::initStreaming()
             {
                 return;
             }
-
-            updateStreamerTable( *drive );
+            updateStreamerTable( ui->m_streamAnnouncementTable, *drive );
+            updateStreamerTable( ui->m_wizardStreamAnnouncementTable, *drive );
         }
     }, Qt::QueuedConnection );
 
@@ -121,6 +121,8 @@ void MainWin::initStreaming()
     //
     ui->m_streamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_streamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
+    ui->m_wizardStreamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
+    ui->m_wizardStreamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
 
     connect( ui->m_streamAnnouncementTable, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
@@ -386,21 +388,21 @@ void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
     auto* currentDrive = currentStreamingDrive();
     if ( currentDrive != nullptr && boost::iequals( currentDrive->getKey(), drive.getKey() ) )
     {
-        updateStreamerTable( *currentDrive );
+        updateStreamerTable( ui->m_streamAnnouncementTable, *currentDrive );
+        updateStreamerTable( ui->m_wizardStreamAnnouncementTable, *currentDrive );
     }
 }
 
-void MainWin::updateStreamerTable( Drive& driveInfo )
+void MainWin::updateStreamerTable(QTableWidget* table, Drive& drive )
 {
-    readStreamingAnnotations( driveInfo );
-//  m_wizardStreamAnnouncementTable
+    readStreamingAnnotations( drive );
 //    ui->m_streamAnnouncementTable->clearContents();
 
     qDebug() << "announcements: " << m_model->streamerAnnouncements().size();
 
-    while( ui->m_streamAnnouncementTable->rowCount() > 0 )
+    while( table->rowCount() > 0 )
     {
-        ui->m_streamAnnouncementTable->removeRow(0);
+        table->removeRow(0);
     }
 
     for( const auto& streamInfo: m_model->streamerAnnouncements() )
@@ -410,12 +412,12 @@ void MainWin::updateStreamerTable( Drive& driveInfo )
             continue;
         }
 
-        size_t rowIndex = ui->m_streamAnnouncementTable->rowCount();
-        ui->m_streamAnnouncementTable->insertRow( (int)rowIndex );
+        size_t rowIndex = table->rowCount();
+        table->insertRow( (int)rowIndex );
         {
             QDateTime dateTime = QDateTime::currentDateTime();
             dateTime.setSecsSinceEpoch( streamInfo.m_secsSinceEpoch );
-            ui->m_streamAnnouncementTable->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
+            table->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
         }
         {
             auto* item = new QTableWidgetItem();
@@ -427,47 +429,14 @@ void MainWin::updateStreamerTable( Drive& driveInfo )
 //            {
                 item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
 //            }
-            ui->m_streamAnnouncementTable->setItem( (int)rowIndex, 1, item );
+            table->setItem( (int)rowIndex, 1, item );
         }
         {
-            ui->m_streamAnnouncementTable->setItem( (int)rowIndex, 2, new QTableWidgetItem( QString::fromStdString( streamInfo.m_uniqueFolderName ) ) );
-        }
-    }
-
-    //---------------------------------------------------------------------------------------------------------------
-    while( ui->m_wizardStreamAnnouncementTable->rowCount() > 0 )
-    {
-        ui->m_wizardStreamAnnouncementTable->removeRow(0);
-    }
-
-    for( const auto& streamInfo: m_model->streamerAnnouncements() )
-    {
-        if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
-        {
-            continue;
-        }
-
-        size_t rowIndex = ui->m_wizardStreamAnnouncementTable->rowCount();
-        ui->m_wizardStreamAnnouncementTable->insertRow( (int)rowIndex );
-        {
-            QDateTime dateTime = QDateTime::currentDateTime();
-            dateTime.setSecsSinceEpoch( streamInfo.m_secsSinceEpoch );
-            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
-        }
-        {
-            auto* item = new QTableWidgetItem();
-            //            else if ( streamInfo.m_streamingStatus == StreamInfo::ss_running )
-            //            {
-            //                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (running...)") );
-            //            }
-            //            else
-            //            {
-            item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
-            //            }
-            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 1, item );
-        }
-        {
-            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 2, new QTableWidgetItem( QString::fromStdString( streamInfo.m_uniqueFolderName ) ) );
+            table->setItem( (int)rowIndex, 2, new QTableWidgetItem(
+                                                  QString::fromStdString(
+                                                  //m_model->findDrive(streamInfo.m_driveKey)->getName()
+                                                  streamInfo.m_uniqueFolderName
+            ) ) );
         }
     }
 }

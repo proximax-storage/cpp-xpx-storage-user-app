@@ -9,6 +9,17 @@
 
 void MainWin::initWizardStreaming()
 {
+    ui->m_wizardStreamAnnouncementTable->hide();
+    ui->m_wizardStartSelectedStreamBtn->hide();
+
+    connect(ui->m_wizardStreamAnnouncementTable->model()
+            , &QAbstractItemModel::rowsRemoved, this
+            , &MainWin::onRowsRemoved);
+
+    connect(ui->m_wizardStreamAnnouncementTable->model()
+            , &QAbstractItemModel::rowsInserted, this
+            , &MainWin::onRowsInserted);
+
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
             if(ui->m_driveCBox->count() == 0) {
@@ -28,8 +39,8 @@ void MainWin::initWizardStreaming()
                                                               hash,
                                                               this);
                         m_wizardAddStreamAnnounceDialog->exec();
-                        delete m_wizardAddStreamAnnounceDialog;
-                        m_wizardAddStreamAnnounceDialog = nullptr;
+                        // delete m_wizardAddStreamAnnounceDialog;
+                        // m_wizardAddStreamAnnounceDialog = nullptr;
                     });
                     dialog.exec();
                 }
@@ -71,9 +82,48 @@ void MainWin::initWizardStreaming()
                     });
                     dialog.exec();
                 }
-
             }
-
         }, Qt::QueuedConnection);
+
+    connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
+        {
+            auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+            if ( rowList.count() == 0 )
+            {
+                if ( m_model->streamerAnnouncements().size() == 0 )
+                {
+                    QMessageBox msgBox;
+                    msgBox.setText( QString::fromStdString( "Add stream announcement" ) );
+                    msgBox.setInformativeText( "Press button '+'" );
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.exec();
+                    return;
+                }
+            }
+            if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
+            {
+                startStreamingProcess( *streamInfo );
+            }
+        }, Qt::QueuedConnection);
+}
+
+void MainWin::onRowsRemoved()
+{
+    if (ui->m_wizardStreamAnnouncementTable->rowCount() == 0)
+    {
+        ui->m_wizardStreamAnnouncementTable->hide();
+        ui->m_wizardStartSelectedStreamBtn->hide();
+    }
+    else
+    {
+        ui->m_wizardStreamAnnouncementTable->show();
+        ui->m_wizardStartStreamingBtn->show();
+    }
+}
+
+void MainWin::onRowsInserted()
+{
+    ui->m_wizardStreamAnnouncementTable->show();
+    ui->m_wizardStartSelectedStreamBtn->show();
 }
 

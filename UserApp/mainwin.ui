@@ -2073,6 +2073,13 @@
                  </spacer>
                 </item>
                 <item>
+                 <widget class="QPushButton" name="m_wizardStartSelectedStreamBtn">
+                  <property name="text">
+                   <string>Start Streaming</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="horizontalSpacer_30">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -2088,17 +2095,14 @@
                </layout>
               </item>
               <item>
-               <spacer name="verticalSpacer_5">
+               <spacer name="horizontalSpacer_34">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::MinimumExpanding</enum>
+                 <enum>Qt::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
-                  <width>20</width>
-                  <height>10</height>
+                  <width>40</width>
+                  <height>20</height>
                  </size>
                 </property>
                </spacer>
@@ -2131,12 +2135,17 @@
                 </attribute>
                 <column>
                  <property name="text">
-                  <string>Planned Start time</string>
+                  <string>Planned Start Time</string>
                  </property>
                 </column>
                 <column>
                  <property name="text">
                   <string>Stream Title</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Drive</string>
                  </property>
                 </column>
                </widget>

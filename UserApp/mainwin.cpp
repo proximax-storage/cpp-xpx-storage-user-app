@@ -3364,8 +3364,5 @@ void MainWin::onRunContract() {
 //}
 
 
-void MainWin::on_m_wizardAddStreamAnnouncementBtn_clicked()
-{
 
-}
 

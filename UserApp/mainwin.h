@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
+#include <QTableWidget>
 //#include "Worker.h"
 //#include "OnChainClient.h"
 #include "types.h"
@@ -154,7 +155,7 @@ private:
     void initWizardStreaming();
     void connectToStreamingTransactions();
     StreamInfo* selectedStreamInfo() const; // could return nullptr
-    void updateStreamerTable( Drive& );
+    void updateStreamerTable( QTableWidget* table, Drive& drive );
     void readStreamingAnnotations( const Drive& );
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
@@ -232,6 +233,9 @@ private slots:
                                         bool isModificationFinished,
                                         const std::string &error);
     void on_m_wizardAddStreamAnnouncementBtn_clicked();
+
+    void onRowsRemoved();
+    void onRowsInserted();
 
 public:
     // if private key is not set it will be 'true'
