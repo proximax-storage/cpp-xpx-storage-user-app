@@ -155,7 +155,10 @@ private:
     void initWizardStreaming();
     void connectToStreamingTransactions();
     StreamInfo* selectedStreamInfo() const; // could return nullptr
+    StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
     void updateStreamerTable( QTableWidget* table, Drive& drive );
+    void wizardUpdateStreamerTable( Drive& drive );
+
     void readStreamingAnnotations( const Drive& );
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();

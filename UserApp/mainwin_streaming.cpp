@@ -111,7 +111,7 @@ void MainWin::initStreaming()
                 return;
             }
             updateStreamerTable( ui->m_streamAnnouncementTable, *drive );
-            updateStreamerTable( ui->m_wizardStreamAnnouncementTable, *drive );
+            wizardUpdateStreamerTable( *drive );
         }
     }, Qt::QueuedConnection );
 
@@ -385,7 +385,10 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
                 if ( sirius::drive::isFolder(child) )
                 {
                     const auto& streamFolder = sirius::drive::getFolder( child );
-                    auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [&streamFolder] (const StreamInfo& streamInfo) {
+                    auto it = std::find_if( streamInfoVector.begin()
+                                          , streamInfoVector.end()
+                                          , [&streamFolder] (const StreamInfo& streamInfo)
+                    {
                         return streamFolder.name() == streamInfo.m_uniqueFolderName;
                     });
                     if ( it != streamInfoVector.end() )
@@ -420,7 +423,7 @@ void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
     if ( currentDrive != nullptr && boost::iequals( currentDrive->getKey(), drive.getKey() ) )
     {
         updateStreamerTable( ui->m_streamAnnouncementTable, *currentDrive );
-        updateStreamerTable( ui->m_wizardStreamAnnouncementTable, *currentDrive );
+        wizardUpdateStreamerTable( *currentDrive );
     }
 }
 
