@@ -181,9 +181,8 @@ std::array<uint8_t, 32> Drive::getModificationHash() const {
     return m_currentModificationHash;
 }
 
-void Drive::setModificationHash(const std::array<uint8_t, 32>& modificationHash, bool isStreaming) {
+void Drive::setModificationHash(const std::array<uint8_t, 32>& modificationHash) {
     m_currentModificationHash = modificationHash;
-    m_isStreaming = isStreaming;
 }
 
 DriveState Drive::getState() const {

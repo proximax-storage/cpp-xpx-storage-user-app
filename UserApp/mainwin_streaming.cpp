@@ -139,17 +139,29 @@ void MainWin::initStreaming()
     }, Qt::QueuedConnection);
 
     // m_addStreamAnnouncementBtn
-    connect(ui->m_addStreamAnnouncementBtn, &QPushButton::released, this, [this] () {
+    connect(ui->m_addStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
+    {
         std::string driveKey = currentStreamingDriveKey().toStdString();
 
-        if ( m_model->findDrive(driveKey) == nullptr )
+        auto* drive = m_model->findDrive(driveKey);
+        if ( drive == nullptr )
         {
             qWarning() << LOG_SOURCE << "bad driveKey";
+            return;
+        }
+        
+        if ( drive->isStreaming() )
+        {
+            qWarning() << LOG_SOURCE << "drive already 'is streaming'";
             return;
         }
 
         AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, driveKey, this);
         auto rc = dialog.exec();
+        if (rc == QDialog::Accepted)
+        {
+            drive->setCreatingStreamAnnouncement();
+        }
     }, Qt::QueuedConnection);
 
     // m_delStreamAnnouncementBtn
@@ -215,6 +227,21 @@ void MainWin::initStreaming()
     // m_startStreamingBtn
     connect(ui->m_startStreamingBtn, &QPushButton::released, this, [this] ()
     {
+        std::string driveKey = currentStreamingDriveKey().toStdString();
+
+        auto* drive = m_model->findDrive(driveKey);
+        if ( drive == nullptr )
+        {
+            qWarning() << LOG_SOURCE << "bad driveKey";
+            return;
+        }
+        
+        if ( drive->isStreaming() )
+        {
+            qWarning() << LOG_SOURCE << "drive already 'is streaming'";
+            return;
+        }
+
         auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
         if ( rowList.count() == 0 )
         {
@@ -230,6 +257,10 @@ void MainWin::initStreaming()
         }
         if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
         {
+//            drive->setIsStreaming();
+//            m_streamingProgressPanel->updateStreamingMode(drive);
+//            m_streamingProgressPanel->setRegistering();
+//            m_streamingProgressPanel->setVisible(true);
             startStreamingProcess( *streamInfo );
         }
     }, Qt::QueuedConnection);
@@ -903,7 +934,8 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
                                            [](const std::string&){},
                                            endPointList );
 
-            drive->setModificationHash( txHash, true );
+            drive->setModificationHash( txHash );
+            drive->setIsStreaming();
 //              drive->updateDriveState(canceled); //todo
 //              drive->updateDriveState(no_modifications); //todo
             drive->updateDriveState(registering);
@@ -930,9 +962,12 @@ void MainWin::finishStreaming()
         // Execute code on the main thread
         QTimer::singleShot( 0, this, [=,this]
         {
-            qDebug() << "info.streamSizeBytes: " << streamBytes;
+            qDebug() << "finishStreaming: driveKey: " << sirius::drive::toString(driveKey.array()).c_str();
+            qDebug() << "finishStreaming: streamId: " << sirius::drive::toString(streamId).c_str();
+            qDebug() << "finishStreaming: actionListHash: " << sirius::drive::toString(actionListHash).c_str();
+            qDebug() << "finishStreaming: streamSizeBytes: " << streamBytes;
             uint64_t actualUploadSizeMegabytes = (streamBytes+(1024*1024-1))/(1024*1024);
-            qDebug() << "actualUploadSizeMegabytes: " << actualUploadSizeMegabytes;
+            qDebug() << "finishStreaming: actualUploadSizeMegabytes: " << actualUploadSizeMegabytes;
             m_onChainClient->streamFinish( driveKey.array(),
                                            streamId.array(),
                                            actualUploadSizeMegabytes,
@@ -1009,7 +1044,7 @@ void MainWin::connectToStreamingTransactions()
         if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
         {
             drive->updateDriveState(failed);
-            drive->setIsStreaming(false);
+            drive->resetStreamingStatus();
         }
         m_model->setCurrentStreamInfo({});
     }, Qt::QueuedConnection);
@@ -1032,8 +1067,8 @@ void MainWin::connectToStreamingTransactions()
         }
 
         m_model->setCurrentStreamInfo({});
-        drive->setIsStreaming(false);
         drive->updateDriveState(canceled);
+        drive->resetStreamingStatus();
 
     }, Qt::QueuedConnection);
 

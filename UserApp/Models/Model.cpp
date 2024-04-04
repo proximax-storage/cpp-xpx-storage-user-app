@@ -404,6 +404,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
 
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
+            currentDrive.setIsStreaming();
             currentDrive.updateDriveState(registering);
             currentDrive.updateDriveState(uploading);
         }

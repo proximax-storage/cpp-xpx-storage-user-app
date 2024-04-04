@@ -43,3 +43,16 @@ void StreamingPanel::onUpdateStatus( const QString& status )
 {
     ui->m_statusLabel->setText( status );
 }
+
+// for debugging
+void StreamingPanel::setVisible( bool value )
+{
+    if ( value )
+    {
+        QDialog::setVisible(true);
+    }
+    else
+    {
+        QDialog::setVisible(false);
+    }
+}

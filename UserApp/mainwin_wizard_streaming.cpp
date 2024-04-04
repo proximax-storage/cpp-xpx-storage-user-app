@@ -20,6 +20,7 @@ void MainWin::initWizardStreaming()
             , &QAbstractItemModel::rowsInserted, this
             , &MainWin::onRowsInserted);
 
+    
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
             if(ui->m_driveCBox->count() == 0) {

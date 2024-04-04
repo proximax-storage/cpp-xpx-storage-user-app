@@ -21,6 +21,8 @@ public:
 
     void onStartStreaming();
     void hidePanel();
+    
+    void setVisible( bool );
 
 public slots:
     void onUpdateStatus( const QString& status );

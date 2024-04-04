@@ -416,7 +416,7 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::streaming );
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::create_announcement );
     m_streamingProgressPanel->setVisible(false);
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
@@ -1535,6 +1535,8 @@ void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
 
 void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState)
 {
+    qInfo() << ">> MainWin::onDriveStateChanged. Drive key: " << driveKey << " state: " << getPrettyDriveState(state);
+
     auto drive = m_model->findDrive(driveKey);
     if (!drive) {
         qWarning() << "MainWin::onDriveStateChanged. Drive not found!";
@@ -1548,8 +1550,14 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
     if ( boost::iequals( driveKey, ui->m_streamDriveCBox->currentData().toString().toStdString() ) )
     {
         streamingDrive = drive;
+        m_streamingProgressPanel->updateStreamingMode(drive);
     }
-    
+
+    bool isPanelVisible =   ( isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1 )
+                            || ( ( streamingDrive != nullptr ) &&
+                                   ( ui->tabWidget->currentIndex() == 4 &&
+                                     ( ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 )));
+
     // Update drive progress panels
     switch(state)
     {
@@ -1560,10 +1568,13 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case canceled:
         case uploading:
         {
-            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
-                (ui->tabWidget->currentIndex() == 4 &&
-                 (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2) && streamingDrive != nullptr) ) {
-
+            if ( !isPanelVisible )
+            {
+                m_modifyProgressPanel->setVisible(false);
+                m_streamingProgressPanel->setVisible(false);
+            }
+            else
+            {
                 if ( !drive->isStreaming() )
                 {
                     m_modifyProgressPanel->setVisible(true);
@@ -1573,7 +1584,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 else
                 {
                     m_modifyProgressPanel->setVisible(false);
-                    m_streamingProgressPanel->setVisible( state==registering ); // todo 'true'
+                    m_streamingProgressPanel->setVisible( true );
                 }
                 
                 switch(state)
@@ -1586,12 +1597,6 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                         unlockDrive();
                 }
             }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-                m_streamingProgressPanel->setVisible(false);
-            }
-
             break;
         }
         case no_modifications:
@@ -1601,13 +1606,12 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case deleted:
         default:
         {
-            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
-                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) )
+            if ( !isPanelVisible )
             {
                 m_modifyProgressPanel->setVisible(false);
                 m_streamingProgressPanel->setVisible(false);
-                unlockDrive();
             }
+            unlockDrive();
         }
     }
 
@@ -1616,6 +1620,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case no_modifications:
         {
             updateDriveStatusOnUi(*drive);
+            drive->resetStreamingStatus();
 
             if (isCurrentDrive(drive)) {
                 calculateDiffAsync([this](auto, auto){
@@ -1672,17 +1677,17 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
 
                 if ( itIsNewState )
                 {
-                    if ( !drive->isStreaming() )
+                    if ( drive->getStreamingStatus() == Drive::ss_streaming )
                     {
                         QString message;
-                        message.append("Your modification was applied. Drive: ");
+                        message.append("Your streaming was applied. Drive: ");
                         message.append(drive->getName().c_str());
                         addNotification(message);
                     }
                     else
                     {
                         QString message;
-                        message.append("Your streaming was applied. Drive: ");
+                        message.append("Your modification was applied. Drive: ");
                         message.append(drive->getName().c_str());
                         addNotification(message);
                     }

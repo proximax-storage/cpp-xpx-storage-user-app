@@ -232,7 +232,7 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
-    void on_m_wizardAddStreamAnnouncementBtn_clicked();
+    //void on_m_wizardAddStreamAnnouncementBtn_clicked();
 
     void onRowsRemoved();
     void onRowsInserted();
