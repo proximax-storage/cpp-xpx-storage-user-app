@@ -71,6 +71,19 @@ MainWin::MainWin(QWidget *parent)
     m_instance = this;
 }
 
+void MainWin::displayError( const std::string& text, const std::string& informativeText )
+{
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( text ) );
+    if ( !informativeText.empty() )
+    {
+        msgBox.setInformativeText( "Press button '+'" );
+    }
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.exec();
+
+}
+
 void MainWin::init()
 {
     if ( ! m_model->loadSettings() )
@@ -2056,9 +2069,9 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
         drive->updateDriveState(no_modifications);
         m_model->saveSettings();
 
-        if(m_wizardAddStreamAnnounceDialog) {
-            // trigger drive->getName()
-            m_wizardAddStreamAnnounceDialog->setCreatedDrive(drive);
+        if ( m_wizardAddStreamAnnounceDialog )
+        {
+            m_wizardAddStreamAnnounceDialog->onDriveCreated(drive);
         }
 
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
@@ -2849,9 +2862,10 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
-            if(m_wizardAddStreamAnnounceDialog)
+
+            if ( m_wizardAddStreamAnnounceDialog )
             {
-                // m_wizardAddStreamAnnounceDialog.onDriveCreated(drive.getKey());
+                m_wizardAddStreamAnnounceDialog->onDriveCreated( &drive );
             }
         }
     }

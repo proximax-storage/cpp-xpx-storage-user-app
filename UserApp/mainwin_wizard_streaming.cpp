@@ -23,7 +23,8 @@ void MainWin::initWizardStreaming()
     
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
-            if(ui->m_driveCBox->count() == 0) {
+            if ( ui->m_driveCBox->count() == 0 )
+            {
                 AskDriveWizardDialog dial(ui->m_wizardAddStreamAnnouncementBtn->text(),
                                           m_onChainClient, m_model, this);
                 auto rc = dial.exec();
@@ -32,16 +33,16 @@ void MainWin::initWizardStreaming()
                     AddDriveDialog dialog(m_onChainClient,
                                           m_model,
                                           this,
-                                          [this](std::string hash)
+                                          [this](std::string driveHash)
                     {
                         m_wizardAddStreamAnnounceDialog
                           = new WizardAddStreamAnnounceDialog(m_onChainClient,
                                                               m_model,
-                                                              hash,
+                                                              driveHash,
                                                               this);
                         m_wizardAddStreamAnnounceDialog->exec();
-                        // delete m_wizardAddStreamAnnounceDialog;
-                        // m_wizardAddStreamAnnounceDialog = nullptr;
+                        delete m_wizardAddStreamAnnounceDialog;
+                        m_wizardAddStreamAnnounceDialog = nullptr;
                     });
                     dialog.exec();
                 }
@@ -59,6 +60,7 @@ void MainWin::initWizardStreaming()
             }
         }, Qt::QueuedConnection);
 
+    // Start streaming w/o annoucement
     connect(ui->m_wizardStartStreamingBtn, &QPushButton::released, this, [this] ()
         {
             if(ui->m_driveCBox->count() == 0) {
@@ -72,7 +74,7 @@ void MainWin::initWizardStreaming()
                                           this,
                                           [this](std::string hash)
                     {
-                        m_wizardAddStreamAnnounceDialog
+                        auto m_wizardAddStreamAnnounceDialog
                           = new WizardAddStreamAnnounceDialog(m_onChainClient,
                                                               m_model,
                                                               hash,
@@ -86,62 +88,83 @@ void MainWin::initWizardStreaming()
             }
         }, Qt::QueuedConnection);
 
+    //
     connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
         {
-            std::string driveKey = currentStreamingDriveKey().toStdString();
+            std::string driveKey = selectedDriveKeyInWizardTable().toStdString();
+
+            auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+            if ( rowList.count() == 0 )
+            {
+                if ( m_model->getStreams().size() == 0 )
+                {
+                    displayError( "Add stream announcement" );
+                    return;
+                }
+            }
 
             auto* drive = m_model->findDrive(driveKey);
             if ( drive == nullptr )
             {
-                qWarning() << LOG_SOURCE << "bad driveKey";
+                qWarning() << LOG_SOURCE << "bad driveKey: " << driveKey.c_str();
+                displayError( "Cannot found drive: " );
                 return;
             }
 
             if ( drive->isStreaming() )
             {
                 qWarning() << LOG_SOURCE << "drive already 'is streaming'";
+                displayError( "Current stream is not finished" );
                 return;
             }
 
-            auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
-            if ( rowList.count() == 0 )
-            {
-                if ( m_model->streamerAnnouncements().size() == 0 )
-                {
-                    QMessageBox msgBox;
-                    msgBox.setText( QString::fromStdString( "Add stream announcement" ) );
-                    msgBox.setInformativeText( "Press button '+'" );
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.exec();
-                    return;
-                }
-            }
             if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo != nullptr )
             {
-                //            drive->setIsStreaming();
-                //            m_streamingProgressPanel->updateStreamingMode(drive);
-                //            m_streamingProgressPanel->setRegistering();
-                //            m_streamingProgressPanel->setVisible(true);
                 startStreamingProcess( *streamInfo );
-                //int y = 0;
+            }
+            else
+            {
+                qWarning() << LOG_SOURCE << "Internal error: no streaInfo";
+                displayError( "Internal error: no streaInfo" );
+                return;
             }
         }, Qt::QueuedConnection);
-
 }
 
-void MainWin::wizardUpdateStreamerTable( Drive& drive )
+QString MainWin::selectedDriveKeyInWizardTable() const
+{
+    auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+    if ( rowList.count() > 0 )
+    {
+        return ui->m_wizardStreamAnnouncementTable->item( rowList.first().row(), 2 )->data(Qt::UserRole).toString();
+    }
+    return "";
+}
+
+Drive* MainWin::selectedDriveInWizardTable() const
+{
+    auto driveKey = selectedDriveKeyInWizardTable().toStdString();
+    Drive* drive = m_model->findDrive( driveKey );
+    if ( drive == nullptr && (ui->m_streamDriveCBox->count() == 0) )
+    {
+        qWarning() << LOG_SOURCE << "! internal error: bad drive key";
+    }
+    return drive;
+}
+
+void MainWin::wizardUpdateStreamerTable( const Drive& drive )
 {
     readStreamingAnnotations( drive );
     //    ui->m_streamAnnouncementTable->clearContents();
 
-    qDebug() << "announcements: " << m_model->streamerAnnouncements().size();
+    qDebug() << "announcements: " << m_model->getStreams().size();
 
     while( ui->m_wizardStreamAnnouncementTable->rowCount() > 0 )
     {
         ui->m_wizardStreamAnnouncementTable->removeRow(0);
     }
 
-    for( const auto& streamInfo: m_model->streamerAnnouncements() )
+    for( const auto& streamInfo: m_model->getStreams() )
     {
         if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
         {
@@ -157,22 +180,13 @@ void MainWin::wizardUpdateStreamerTable( Drive& drive )
         }
         {
             auto* item = new QTableWidgetItem();
-            //            else if ( streamInfo.m_streamingStatus == StreamInfo::ss_running )
-            //            {
-            //                item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title + " (running...)") );
-            //            }
-            //            else
-            //            {
             item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
-            //            }
             ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 1, item );
         }
         {
-            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 3, new QTableWidgetItem(
-                                                  QString::fromStdString(
-                                                      //m_model->findDrive(streamInfo.m_driveKey)->getName()
-                                                      streamInfo.m_uniqueFolderName
-                                                      ) ) );
+            auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
+            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
+            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 2, item );
         }
     }
 }
@@ -186,7 +200,7 @@ StreamInfo* MainWin::wizardSelectedStreamInfo() const
         try
         {
             int rowIndex = rowList.constFirst().row();
-            return &m_model->streamerAnnouncements().at(rowIndex);
+            return &m_model->getStreams().at(rowIndex);
         }
         catch (...) {}
     }

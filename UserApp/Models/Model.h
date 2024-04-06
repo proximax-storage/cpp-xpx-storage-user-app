@@ -178,7 +178,9 @@ class Model : public QObject
         // Streaming
         //
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
-        std::vector<StreamInfo>&        streamerAnnouncements();
+        std::vector<StreamInfo>&        getStreams();
+    
+        Drive*                          currentStreamingDrive() const;
 
         //
         // Viewing

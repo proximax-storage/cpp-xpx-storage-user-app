@@ -23,7 +23,7 @@ public:
     void reject() override;
 
     std::string streamFolderName() const { return mUniqueFolderName; };
-    void setCreatedDrive(Drive* drive);
+    void onDriveCreated( const Drive* drive );
     void addDrivesToCBox();
 
 private slots:

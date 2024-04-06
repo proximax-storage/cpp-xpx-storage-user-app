@@ -21,6 +21,16 @@ WizardAddStreamAnnounceDialog::WizardAddStreamAnnounceDialog( OnChainClient* onC
     m_model(model),
     mDriveKey(driveKey)
 {
+    if ( m_model->currentStreamingDrive() != nullptr )
+    {
+        QMessageBox msgBox;
+        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        msgBox.setText(message);
+        msgBox.setStandardButtons( QMessageBox::Close );
+        msgBox.exec();
+        return;
+    }
+
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
     setModal(true);
@@ -176,6 +186,16 @@ void WizardAddStreamAnnounceDialog::validate()
 
 void WizardAddStreamAnnounceDialog::accept()
 {
+    if ( m_model->currentStreamingDrive() != nullptr )
+    {
+        QMessageBox msgBox;
+        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        msgBox.setText(message);
+        msgBox.setStandardButtons( QMessageBox::Close );
+        msgBox.exec();
+        return;
+    }
+    
     auto* drive = m_model->findDrive( mDriveKey );
     if ( drive == nullptr )
     {
@@ -266,6 +286,7 @@ void WizardAddStreamAnnounceDialog::accept()
     //
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
     mp_onChainClient->applyDataModification(driveKeyHex, actionList);
+    drive->setCreatingStreamAnnouncement();
     drive->updateDriveState(registering);
     
     QDialog::accept();
@@ -277,7 +298,8 @@ void WizardAddStreamAnnounceDialog::reject()
 }
 
 // used when drive is created from wizard
-void WizardAddStreamAnnounceDialog::setCreatedDrive(Drive* drive)
+//
+void WizardAddStreamAnnounceDialog::onDriveCreated( const Drive* drive )
 {
     ui->m_driveSelection->setEnabled(true);
     ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);

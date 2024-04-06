@@ -700,9 +700,21 @@ const std::vector<StreamInfo>& Model::streamerAnnouncements() const
     return m_settings->config().m_streams;
 }
 
-std::vector<StreamInfo>& Model::streamerAnnouncements()
+std::vector<StreamInfo>& Model::getStreams()
 {
     return m_settings->config().m_streams;
+}
+
+Drive* Model::currentStreamingDrive() const
+{
+    for( auto& [key,drive] : m_settings->config().m_drives )
+    {
+        if ( drive.isStreaming() )
+        {
+            return &drive;
+        }
+    }
+    return nullptr;
 }
 
 void Model::addStreamRef( const StreamInfo& streamInfo )

@@ -57,6 +57,8 @@ public:
     static MainWin* instance() { return m_instance; }
     
     void init();
+    
+    void displayError(  const std::string& text, const std::string& informativeText = "" );
 
     void addChannel( const std::string&              channelName,
                      const std::string&              channelKey,
@@ -149,15 +151,18 @@ private:
     void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
-    QString currentStreamingDriveKey() const;
-    Drive* currentStreamingDrive() const;
+    QString selectedDriveKeyInTable() const;
+    Drive*  selectedDriveInTable() const;
+    QString selectedDriveKeyInWizardTable() const;
+    Drive*  selectedDriveInWizardTable() const;
+    Drive*  currentStreamingDrive() const;
     void initStreaming();
     void initWizardStreaming();
     void connectToStreamingTransactions();
     StreamInfo* selectedStreamInfo() const; // could return nullptr
     StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
-    void updateStreamerTable( QTableWidget* table, Drive& drive );
-    void wizardUpdateStreamerTable( Drive& drive );
+    void updateStreamerTable( const Drive& drive );
+    void wizardUpdateStreamerTable( const Drive& drive );
 
     void readStreamingAnnotations( const Drive& );
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
@@ -281,5 +286,6 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 
+    // For notification (when drive is created)
     WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
 };

@@ -12,7 +12,7 @@ AskDriveWizardDialog::AskDriveWizardDialog(QString title,
     , m_parent(parent)
 {
     setWindowTitle("There are no created drives");
-    setInformativeText( "<p align='center'>Create drive for streaming?<br><br></p>" );
+    setText( "<p align='center'>Create drive for streaming?<br><br></p>" );
     setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     setDefaultButton(QMessageBox::Ok);
     setBaseSize(1000, height());
