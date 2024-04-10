@@ -130,6 +130,46 @@ void MainWin::initWizardStreaming()
                 return;
             }
         }, Qt::QueuedConnection);
+
+    connect(ui->m_wizardRemoveAnnouncementBtn, &QPushButton::released, this, [this] ()
+        {
+            if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo != nullptr )
+            {
+                QMessageBox msgBox;
+                const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
+                msgBox.setText(message);
+                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+                auto reply = msgBox.exec();
+
+                if ( reply == QMessageBox::Ok )
+                {
+                    auto* drive = selectedDriveInWizardTable();
+
+                    if ( drive != nullptr )
+                    {
+                        auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
+                        std::error_code ec;
+                        fs::remove_all( streamFolder, ec );
+                        qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
+
+                        if ( !ec )
+                        {
+                            sirius::drive::ActionList actionList;
+                            auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
+                            actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
+
+                            //
+                            // Start modification
+                            //
+                            auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+                            m_onChainClient->applyDataModification(driveKeyHex, actionList);
+                            drive->updateDriveState(registering);
+                        }
+                    }
+                }
+            }
+        }, Qt::QueuedConnection);
+
 }
 
 QString MainWin::selectedDriveKeyInWizardTable() const
