@@ -2166,7 +2166,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton">
+                 <widget class="QPushButton" name="m_wizardRemoveAnnouncementBtn">
                   <property name="text">
                    <string>Remove Announcement</string>
                   </property>

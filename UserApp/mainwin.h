@@ -156,15 +156,21 @@ private:
     QString selectedDriveKeyInWizardTable() const;
     Drive*  selectedDriveInWizardTable() const;
     Drive*  currentStreamingDrive() const;
+
     void initStreaming();
     void initWizardStreaming();
+
     void connectToStreamingTransactions();
+
     StreamInfo* selectedStreamInfo() const; // could return nullptr
     StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
+
     void updateStreamerTable( const Drive& drive );
     void wizardUpdateStreamerTable( const Drive& drive );
 
     void readStreamingAnnotations( const Drive& );
+    void wizardReadStreamingAnnotations();
+
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
