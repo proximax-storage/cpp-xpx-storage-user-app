@@ -165,6 +165,10 @@ private:
     StreamInfo* selectedStreamInfo() const; // could return nullptr
     StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
 
+    bool checkObsState();
+    bool checkObsProfileState();
+
+
     void updateStreamerTable( const Drive& drive );
     void wizardUpdateStreamerTable( const Drive& drive );
 

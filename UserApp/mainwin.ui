@@ -1990,13 +1990,6 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="m_wizardStartStreamingBtn">
-                  <property name="text">
-                   <string>Start streaming without announcement</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <spacer name="horizontalSpacer_16">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>

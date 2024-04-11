@@ -7,11 +7,13 @@
 #include "./ui_mainwin.h"
 //
 #include "Entities/StreamInfo.h"
+#include "qstandardpaths.h"
 
 void MainWin::initWizardStreaming()
 {
     ui->m_wizardStreamAnnouncementTable->hide();
     ui->m_wizardStartSelectedStreamBtn->hide();
+    ui->m_wizardRemoveAnnouncementBtn->hide();
 
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsRemoved, this
@@ -61,49 +63,28 @@ void MainWin::initWizardStreaming()
             }
         }, Qt::QueuedConnection);
 
-    // Start streaming w/o annoucement
-    connect(ui->m_wizardStartStreamingBtn, &QPushButton::released, this, [this] ()
-        {
-            if(ui->m_driveCBox->count() == 0) {
-                AskDriveWizardDialog dial(ui->m_wizardStartStreamingBtn->text(),
-                                          m_onChainClient, m_model, this);
-                auto rc = dial.exec();
-                if (rc == QMessageBox::Ok)
-                {
-                    AddDriveDialog dialog(m_onChainClient,
-                                          m_model,
-                                          this,
-                                          [this](std::string hash)
-                    {
-                        auto m_wizardAddStreamAnnounceDialog
-                          = new WizardAddStreamAnnounceDialog(m_onChainClient,
-                                                              m_model,
-                                                              hash,
-                                                              this);
-                        m_wizardAddStreamAnnounceDialog->exec();
-                        delete m_wizardAddStreamAnnounceDialog;
-                        m_wizardAddStreamAnnounceDialog = nullptr;
-                    });
-                    dialog.exec();
-                }
-            }
-        }, Qt::QueuedConnection);
 
-    //
     connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
         {
-            std::string driveKey = selectedDriveKeyInWizardTable().toStdString();
-
-            auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
-            if ( rowList.count() == 0 )
+            if( bool isInstalled = checkObsState(); !isInstalled )
             {
-                if ( m_model->getStreams().size() == 0 )
-                {
-                    displayError( "Add stream announcement" );
-                    return;
-                }
+                displayError( "OBS not installed in system" );
+                return;
             }
 
+            if( bool profileExists = checkObsProfileState(); !profileExists )
+            {
+                displayError( "There is no Sirius-stream OBS profile" );
+                return;
+            }
+
+            if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo == nullptr )
+            {
+                displayError( "Select stream!" );
+                return;
+            }
+
+            std::string driveKey = selectedDriveKeyInWizardTable().toStdString();
             auto* drive = m_model->findDrive(driveKey);
             if ( drive == nullptr )
             {
@@ -133,38 +114,42 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardRemoveAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
-            if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo != nullptr )
+            StreamInfo* streamInfo = wizardSelectedStreamInfo();
+            if( streamInfo == nullptr)
             {
-                QMessageBox msgBox;
-                const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
-                msgBox.setText(message);
-                msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-                auto reply = msgBox.exec();
+                displayError( "Select stream!" );
+                return;
+            }
 
-                if ( reply == QMessageBox::Ok )
+            QMessageBox msgBox;
+            const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
+            msgBox.setText(message);
+            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+            auto reply = msgBox.exec();
+
+            if ( reply == QMessageBox::Ok )
+            {
+                auto* drive = selectedDriveInWizardTable();
+
+                if ( drive != nullptr )
                 {
-                    auto* drive = selectedDriveInWizardTable();
+                    auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
+                    std::error_code ec;
+                    fs::remove_all( streamFolder, ec );
+                    qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
 
-                    if ( drive != nullptr )
+                    if ( !ec )
                     {
-                        auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
-                        std::error_code ec;
-                        fs::remove_all( streamFolder, ec );
-                        qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
+                        sirius::drive::ActionList actionList;
+                        auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
+                        actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
 
-                        if ( !ec )
-                        {
-                            sirius::drive::ActionList actionList;
-                            auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
-                            actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
-
-                            //
-                            // Start modification
-                            //
-                            auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                            m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                            drive->updateDriveState(registering);
-                        }
+                        //
+                        // Start modification
+                        //
+                        auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
+                        drive->updateDriveState(registering);
                     }
                 }
             }
@@ -345,7 +330,6 @@ void MainWin::onRowsRemoved()
     else
     {
         ui->m_wizardStreamAnnouncementTable->show();
-        ui->m_wizardStartStreamingBtn->show();
         ui->m_wizardRemoveAnnouncementBtn->show();
     }
 }
@@ -357,3 +341,36 @@ void MainWin::onRowsInserted()
     ui->m_wizardRemoveAnnouncementBtn->show();
 }
 
+bool MainWin::checkObsState()
+{
+    QProcess process;
+    process.start("bash", QStringList() << "-c" << "which obs");
+    process.waitForFinished();
+    QString output = process.readAllStandardOutput();
+
+    if(output.isEmpty())
+    {
+        qDebug() << "OBS is not installed.";
+        return false;
+    }
+
+    qDebug() << "OBS is installed at path: " << output.trimmed();
+    return true;
+}
+
+bool MainWin::checkObsProfileState()
+{
+    QString homeDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    qDebug() << "Home directory of the current user is: " << homeDir;
+    QString dirName = homeDir + "/.config/obs-studio/basic/profiles/Siriusstream";
+    QDir directory(dirName);
+
+    if(!directory.exists())
+    {
+        qDebug() << "The 'Sirius-stream' profile does not exist in OBS.";
+        return false;
+    }
+
+    qDebug() << "The 'Sirius-stream' profile exists in OBS.";
+    return true;
+}
