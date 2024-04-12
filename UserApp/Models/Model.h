@@ -22,11 +22,13 @@
 #include "Entities/CachedReplicator.h"
 #include "Entities/StreamInfo.h"
 #include "Models/DriveContractModel.h"
+#include "Common.h"
 
 namespace fs = std::filesystem;
 
 class Settings;
 struct LocalDriveItem;
+class AddDownloadChannelDialog;
 
 enum ViewerStatus
 {
@@ -159,7 +161,8 @@ class Model : public QObject
         uint64_t lastModificationSize() const;
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
-                                               const std::array<uint8_t,32>& fileHash );
+                                               const std::array<uint8_t,32>& fileHash,
+                                              std::optional<DownloadNotification> = {} );
 
         void                     removeTorrentSync( sirius::drive::InfoHash infoHash );
 
@@ -185,6 +188,9 @@ class Model : public QObject
         //
         // Viewing
         //
+        using FsTreeHandler = std::optional<std::function<void(DownloadChannel&)>>;
+        void                            setAddChannelDialogRef( FsTreeHandler handler ) { m_fsTreeHandler = handler; }
+        void                            resetAddChannelDialogRef() { m_fsTreeHandler.reset(); }
         void                            addStreamRef( const StreamInfo& streamInfo );
         void                            deleteStreamRef( int index );
         const std::vector<StreamInfo>&  streamRefs() const;
@@ -205,6 +211,8 @@ class Model : public QObject
         Settings* m_settings;
         uint64_t m_loadedDrivesCount;
         uint64_t m_outdatedDriveNumber;
+    
+        FsTreeHandler   m_fsTreeHandler = {};
     
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;

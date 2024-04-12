@@ -36,6 +36,7 @@ class Model;
 class Settings;
 class ContractDeploymentData;
 class WizardAddStreamAnnounceDialog;
+class AddDownloadChannelDialog;
 
 struct StreamInfo;
 
@@ -179,8 +180,9 @@ private:
     void updateViewerCBox();
 
     void startViewingStream();
-    void updateCreateChannelStatusForVieweing( const DownloadChannel& channel );
-    void startViewingStream2();
+    void startViewingStream2( const DownloadChannel& channel );
+    bool startViewingApprovedStream( const DownloadChannel& channel );
+    void downloadApprovedChunk( const DownloadChannel& channel, const std::filesystem::path& destFolder, int chunkIndex );
     void cancelViewingStream();
 
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
@@ -298,4 +300,6 @@ private:
 
     // For notification (when drive is created)
     WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
+    
+    AddDownloadChannelDialog*                 m_addChannelDialog = nullptr;
 };

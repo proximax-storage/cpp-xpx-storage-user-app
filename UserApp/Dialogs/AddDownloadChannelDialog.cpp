@@ -15,7 +15,8 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
-    mpModel(model)
+    mpModel(model),
+    m_forStreaming( !driveKey.empty() )
 {
     ui->setupUi(this);
 
@@ -102,7 +103,28 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     }
 
     ui->buttonBox->disconnect(this);
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
+    if ( m_forStreaming )
+    {
+        connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [this]()
+        {
+            startCreateChannel();
+
+            m_channelIsCreatingDailog = new QDialog();
+
+            QLabel label( m_channelIsCreatingDailog );
+            label.setText("Channel is creating...");
+
+            QHBoxLayout layout( m_channelIsCreatingDailog );
+            layout.addWidget(&label);
+
+            m_channelIsCreatingDailog->setWindowTitle("Information");
+            m_channelIsCreatingDailog->exec();
+        });
+    }
+    else
+    {
+        connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
+    }
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDownloadChannelDialog::reject);
     connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDownloadChannelDialog::displayInfo);
 
@@ -128,7 +150,14 @@ AddDownloadChannelDialog::~AddDownloadChannelDialog()
     delete ui;
 }
 
-void AddDownloadChannelDialog::accept() {
+void AddDownloadChannelDialog::onChannelIsCreated()
+{
+    m_channelIsCreatingDailog->reject();
+    QDialog::accept();
+}
+
+void AddDownloadChannelDialog::startCreateChannel()
+{
     std::vector<std::array<uint8_t, 32>> listOfAllowedPublicKeys;
 
     if (listOfAllowedPublicKeys.empty()) {
@@ -153,6 +182,10 @@ void AddDownloadChannelDialog::accept() {
                                         0,
                                         callback); // feedback is unused for now
 
+}
+
+void AddDownloadChannelDialog::accept() {
+    startCreateChannel();
     QDialog::accept();
 }
 

@@ -568,38 +568,240 @@ void MainWin::startViewingStream()
             return;
         }
 
-        AddDownloadChannelDialog dialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
-        connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel );
-        auto rc = dialog.exec();
-        if ( rc )
+        auto connetion = connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel );
+        m_addChannelDialog = new AddDownloadChannelDialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
+        DownloadChannel* channelPtr;
+        m_model->setAddChannelDialogRef( [&] (DownloadChannel& channel) {
+            channelPtr = &channel;
+            m_addChannelDialog->onChannelIsCreated();
+        });
+        auto rc = m_addChannelDialog->exec();
+        disconnect( connetion );
+        m_addChannelDialog = nullptr;
+        if ( rc == QDialog::Accepted )
         {
             m_model->m_viewerStatus = vs_waiting_channel_creation;
+            startViewingStream2( *channelPtr );
         }
         return;
     }
 
     if ( channels.size() > 1 )
     {
-        // select channel
-        return;
+        displayError( "TODO: select channel");
     }
 
-    startViewingStream2();
+    startViewingStream2( channels[0] );
 }
 
-void MainWin::updateCreateChannelStatusForVieweing( const DownloadChannel& channel )
+struct ChunkInfo
 {
-    if ( m_model->m_viewerStatus != vs_waiting_channel_creation ||
-         boost::iequals( m_model->m_currentStreamInfo.m_driveKey, channel.getDriveKey() ) )
+    std::string m_filename;
+};
+static std::vector<ChunkInfo> gChunks;
+
+static std::string parsePlaylist( const fs::path& fsPath )
+{
+    gChunks.clear();
+    
+    std::ifstream fin( fsPath );
+    std::stringstream fPlaylist;
+    fPlaylist << fin.rdbuf();
+    
+    std::string line;
+    
+    if ( ! std::getline( fPlaylist, line ) || memcmp( line.c_str(), "#EXTM3U", 7 ) != 0 )
+    {
+        return std::string("1-st line of playlist must be '#EXTM3U'");
+    }
+    
+    int sequenceNumber = -1;
+    int mediaIndex = 0;
+    
+    for(;;)
+    {
+        if ( ! std::getline( fPlaylist, line ) )
+        {
+            break;
+        }
+
+        if ( line.compare("#EXT-X-VERSION:") == 0 )
+        {
+            int version;
+            try
+            {
+                version = std::stoi( line.substr(15) );
+                //_LOG( "version: " << version )
+            }
+            catch(...)
+            {
+                return std::string("invalid #EXT-X-VERSION: ") + line;
+            }
+            
+            if ( version != 3 && version != 4 )
+            {
+                return std::string("#EXT-X-VERSION: invalid version number: ") + line.substr(15);
+            }
+            continue;
+        }
+
+        if ( line.compare("#EXT-X-TARGETDURATION:") == 0 )
+        {
+            continue;
+        }
+
+        if ( line.compare("#EXT-X-MEDIA-SEQUENCE:") == 0 )
+        {
+            try
+            {
+                sequenceNumber = std::stoi( line.substr(16+6) );
+                //_LOG( "sequenceNumber: " << sequenceNumber )
+            }
+            catch(...)
+            {
+                return std::string("#EXT-X-MEDIA-SEQUENCE: cannot read sequence number: ") + line;
+            }
+        }
+
+        if ( line.compare("#EXTINF:") == 0 )
+        {
+            float duration;
+            try
+            {
+                duration = std::stof( line.substr(8) );
+                //_LOG( "duration: " << duration )
+            }
+            catch(...)
+            {
+                return std::string("#EXTINF: cannot read duration attribute: ") + line;
+            }
+            
+            // Read Filename!!!
+            std::string filename;
+            if ( ! std::getline( fPlaylist, line ) )
+            {
+                break;
+            }
+
+            gChunks.emplace_back( ChunkInfo{filename} );
+            continue;
+        }
+    }
+
+    // no errors
+    return "";
+}
+
+void MainWin::downloadApprovedChunk( const DownloadChannel& channel, const fs::path& savePath, int chunkIndex )
+{
+    if ( chunkIndex >= gChunks.size() )
     {
         return;
     }
+    
+    auto& chunkFilename = gChunks[chunkIndex].m_filename;
+    std::array<uint8_t,32> infoHash{ 0 };
+    xpx_chain_sdk::ParseHexStringIntoContainer( chunkFilename.c_str(), 64, infoHash );
+    
+    auto ltHandle = m_model->downloadFile( channel.getKey(),  infoHash,
+                                     [=,this]( bool                 success,
+                                               const std::array<uint8_t,32>&,
+                                               const fs::path       filePath,
+                                               size_t               downloaded,
+                                               size_t               fileSize,
+                                               const std::string&   errorText )
+                                          
+    {
+        if ( !success )
+        {
+            displayError( "Cannot download chunk", errorText );
+            //TODO: break viewing
+        }
+        
+        downloadApprovedChunk( channel, savePath, chunkIndex+1 );
+    });
+    
+    DownloadInfo downloadInfo;
+    downloadInfo.setHash( infoHash );
+    downloadInfo.setDownloadChannelKey( channel.getKey() );
+    downloadInfo.setFileName( chunkFilename );
+    downloadInfo.setSaveFolder( savePath );
+    downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string() );
+    downloadInfo.setChannelOutdated(false);
+    downloadInfo.setCompleted(false);
+    downloadInfo.setProgress(0);
+    downloadInfo.setHandle(ltHandle);
 
-    startViewingStream2();
+    m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
 }
 
-void MainWin::startViewingStream2()
+
+bool MainWin::startViewingApprovedStream( const DownloadChannel& channel )
 {
+    // check playlist 'obs-stream.m3u8' is not downloaded
+    //TODO:
+
+    sirius::drive::FsTree fsTree = channel.getFsTree();
+    auto& uniqueFolderName = m_model->m_currentStreamInfo.m_uniqueFolderName;
+    fs::path savePath = fs::path(STREAM_ROOT_FOLDER_NAME) / uniqueFolderName / "HLS";
+    auto playlistPath = (savePath / PLAYLIST_FILE_NAME).string();
+    auto* child = fsTree.getEntryPtr( playlistPath );
+    
+    if ( child == nullptr )
+    {
+        return false;
+    }
+    
+    //
+    // download playlist 'obs-stream.m3u8'
+    //
+    auto& playlistInfo = sirius::drive::getFile(*child);
+    assert( sirius::drive::isFile(playlistInfo) );
+
+    auto ltHandle = m_model->downloadFile( channel.getKey(),  playlistInfo.hash().array(),
+                                     [=,this]( bool                 success,
+                                               const std::array<uint8_t,32>&,
+                                               const fs::path       filePath,
+                                               size_t               downloaded,
+                                               size_t               fileSize,
+                                               const std::string&   errorText )
+                                          
+    {
+        if ( !success )
+        {
+            displayError( "Cannot download playlist", errorText );
+            //TODO: break viewing
+        }
+        
+        // parse playlist
+        parsePlaylist( filePath );
+        
+        downloadApprovedChunk( channel, savePath, 0 );
+    });
+    
+    DownloadInfo downloadInfo;
+    downloadInfo.setHash( playlistInfo.hash().array() );
+    downloadInfo.setDownloadChannelKey( channel.getKey() );
+    downloadInfo.setFileName( playlistInfo.name() );
+    downloadInfo.setSaveFolder( playlistPath );
+    downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string() );
+    downloadInfo.setChannelOutdated(false);
+    downloadInfo.setCompleted(false);
+    downloadInfo.setProgress(0);
+    downloadInfo.setHandle(ltHandle);
+
+    m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
+    
+    return true;
+}
+
+void MainWin::startViewingStream2( const DownloadChannel& channel )
+{
+    if ( startViewingApprovedStream( channel ) )
+    {
+        return;
+    }
+    
     m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
                                                                          bool                           isStreaming,
                                                                          const std::array<uint8_t,32>&  streamId )

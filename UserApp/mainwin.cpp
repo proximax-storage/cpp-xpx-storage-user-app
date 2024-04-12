@@ -2022,6 +2022,7 @@ void MainWin::addChannel( const std::string&              channelName,
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
     qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey << " drive key: " << driveKey;
+    
     auto channel = m_model->findChannel( channelKey );
     if ( channel )
     {
@@ -2838,7 +2839,6 @@ void MainWin::updateDownloadChannelStatusOnUi(const DownloadChannel& channel)
 {
     const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channel.getKey())), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
-        updateCreateChannelStatusForVieweing( channel );
         if (channel.isCreating()) {
             ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(creating...)"));
         } else if (channel.isDeleting()) {
@@ -3051,7 +3051,7 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         drive->setDownloadingFsTree(false);
         drive->setRootHash(fsTreeHash);
         drive->setFsTree(fsTree);
-
+        
         if (isCurrentDrive(drive)) {
             calculateDiffAsync([this](auto, auto){
                 updateDiffView();
