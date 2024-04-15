@@ -77,11 +77,10 @@ void MainWin::displayError( const std::string& text, const std::string& informat
     msgBox.setText( QString::fromStdString( text ) );
     if ( !informativeText.empty() )
     {
-        msgBox.setInformativeText( "Press button '+'" );
+        msgBox.setInformativeText( QString::fromStdString(informativeText) );
     }
     msgBox.setStandardButtons(QMessageBox::Ok);
     msgBox.exec();
-
 }
 
 void MainWin::init()

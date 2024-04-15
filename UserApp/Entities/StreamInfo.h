@@ -30,7 +30,7 @@ struct ObsProfileData
         QString homePath = QDir::homePath();
         m_obsPath = homePath.toStdString() + "/.config/obs-studio";
         QSettings my_settings( homePath + "/.config/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
-        m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed().toStdString();
+        m_recordingPath = my_settings.value("AdvOut/RecFilePath", "").toString().trimmed().toStdString();
 #endif
 
     }

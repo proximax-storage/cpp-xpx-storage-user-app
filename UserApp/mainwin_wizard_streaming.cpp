@@ -68,31 +68,33 @@ void MainWin::initWizardStreaming()
         {
             if( !ObsProfileData().isObsInstalled() )
             {
-                displayError( "OBS not installed in system." );
+                displayError( "OBS not found in system (maybe not installed)." );
                 return;
             }
 
             if( !ObsProfileData().isObsProfileAvailable() )
             {
-                displayError( "There is no Sirius-stream OBS profile." );
+                displayError( "There is no 'Sirius-stream' OBS profile." );
                 return;
             }
 
             if( !ObsProfileData().isSiriusProfileSet() )
             {
-                displayError( "The 'Sirius-stream' profile is not set as main profile." );
+                displayError( "The 'Sirius-stream' profile must be set as current OBS profile." );
                 return;
             }
 
             if( !ObsProfileData().isRecordingPathSet() )
             {
-                displayError( "Recording path for stream is not set." );
+                displayError( "'Recording Path' for stream must be set in 'Sirius-stream' profile."
+                             ,"(OBS Settings -> 'Output' tab -> Advanced mode -> "
+                              "'Recording' subtab -> 'Recording Path')");
                 return;
             }
 
             if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo == nullptr )
             {
-                displayError( "Select stream!" );
+                displayError( "Select announcement!" );
                 return;
             }
 
