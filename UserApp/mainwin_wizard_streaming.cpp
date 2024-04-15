@@ -66,15 +66,27 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
         {
-            if( bool isInstalled = checkObsState(); !isInstalled )
+            if( !ObsProfileData().isObsInstalled() )
             {
-                displayError( "OBS not installed in system" );
+                displayError( "OBS not installed in system." );
                 return;
             }
 
-            if( bool profileExists = checkObsProfileState(); !profileExists )
+            if( !ObsProfileData().isObsProfileAvailable() )
             {
-                displayError( "There is no Sirius-stream OBS profile" );
+                displayError( "There is no Sirius-stream OBS profile." );
+                return;
+            }
+
+            if( !ObsProfileData().isSiriusProfileSet() )
+            {
+                displayError( "The 'Sirius-stream' profile is not set as main profile." );
+                return;
+            }
+
+            if( !ObsProfileData().isRecordingPathSet() )
+            {
+                displayError( "Recording path for stream is not set." );
                 return;
             }
 
@@ -339,38 +351,4 @@ void MainWin::onRowsInserted()
     ui->m_wizardStreamAnnouncementTable->show();
     ui->m_wizardStartSelectedStreamBtn->show();
     ui->m_wizardRemoveAnnouncementBtn->show();
-}
-
-bool MainWin::checkObsState()
-{
-    QProcess process;
-    process.start("bash", QStringList() << "-c" << "which obs");
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput();
-
-    if(output.isEmpty())
-    {
-        qDebug() << "OBS is not installed.";
-        return false;
-    }
-
-    qDebug() << "OBS is installed at path: " << output.trimmed();
-    return true;
-}
-
-bool MainWin::checkObsProfileState()
-{
-    QString homeDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    qDebug() << "Home directory of the current user is: " << homeDir;
-    QString dirName = homeDir + "/.config/obs-studio/basic/profiles/Siriusstream";
-    QDir directory(dirName);
-
-    if(!directory.exists())
-    {
-        qDebug() << "The 'Sirius-stream' profile does not exist in OBS.";
-        return false;
-    }
-
-    qDebug() << "The 'Sirius-stream' profile exists in OBS.";
-    return true;
 }
