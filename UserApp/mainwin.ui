@@ -1487,7 +1487,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>3</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -2022,7 +2022,7 @@
                 <item>
                  <widget class="QPushButton" name="m_wizardAddStreamAnnouncementBtn">
                   <property name="text">
-                   <string>Add Stream Announcement</string>
+                   <string>Create Stream Announcement</string>
                   </property>
                  </widget>
                 </item>
@@ -2107,22 +2107,9 @@
                  </widget>
                 </item>
                 <item>
-                 <spacer name="horizontalSpacer_36">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
                  <widget class="QPushButton" name="m_wizardRemoveAnnouncementBtn">
                   <property name="text">
-                   <string>Remove Announcement</string>
+                   <string>-</string>
                   </property>
                  </widget>
                 </item>

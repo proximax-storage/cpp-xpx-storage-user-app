@@ -364,6 +364,7 @@ void MainWin::wizardReadStreamingAnnotations()
                                                });
                         if ( it != streamInfoVector.end() )
                         {
+                            // not needed for archive
                             it->m_streamingStatus = StreamInfo::ss_created;
                         }
                         else
