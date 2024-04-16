@@ -117,7 +117,8 @@ void MainWin::initStreaming()
                 return;
             }
             updateStreamerTable( *drive );
-            wizardUpdateStreamerTable( *drive );
+            wizardUpdateStreamerTable();
+            wizardUpdateArchiveTable();
         }
     }, Qt::QueuedConnection );
 
@@ -417,7 +418,7 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
     });
 
     auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [] (const StreamInfo& streamInfo) {
-        return streamInfo.m_streamingStatus == StreamInfo::ss_regestring;
+        return streamInfo.m_streamingStatus == StreamInfo::ss_registering;
     });
 
     todoShouldBeSync = (it != streamInfoVector.end());
@@ -426,7 +427,8 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
 {
     updateStreamerTable( drive );
-    wizardUpdateStreamerTable( drive );
+    wizardUpdateStreamerTable();
+    wizardUpdateArchiveTable();
 }
 
 void MainWin::updateStreamerTable( const Drive& drive )
@@ -1013,7 +1015,7 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
         //
         // Get 'm3u8StreamFolder' - where OBS saves chancks and playlist
         //
-        auto m3u8StreamFolder = fs::path( ObsProfileData().m_recordingPath );
+        auto m3u8StreamFolder = fs::path( ObsProfileData().m_recordingPath.toStdString() );
 
         if ( m3u8StreamFolder.empty() )
         {

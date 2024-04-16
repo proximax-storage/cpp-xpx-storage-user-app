@@ -1568,7 +1568,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
     bool isPanelVisible =   ( isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1 )
                             || ( ( streamingDrive != nullptr ) &&
                                    ( ui->tabWidget->currentIndex() == 4 &&
-                                     ( ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 )));
+                                   ( ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 )));
 
     // Update drive progress panels
     switch(state)

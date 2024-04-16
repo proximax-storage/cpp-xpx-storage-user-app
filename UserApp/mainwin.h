@@ -168,7 +168,8 @@ private:
     StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
 
     void updateStreamerTable( const Drive& drive );
-    void wizardUpdateStreamerTable( const Drive& drive );
+    void wizardUpdateStreamerTable();
+    void wizardUpdateArchiveTable();
 
     void readStreamingAnnotations( const Drive& );
     void wizardReadStreamingAnnotations();

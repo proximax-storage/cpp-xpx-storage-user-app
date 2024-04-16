@@ -12,8 +12,11 @@
 void MainWin::initWizardStreaming()
 {
     ui->m_wizardStreamAnnouncementTable->hide();
+    // ui->m_wizardArchiveTable->hide();
+
     ui->m_wizardStartSelectedStreamBtn->hide();
     ui->m_wizardRemoveAnnouncementBtn->hide();
+    // ui->m_deleteArchivedStreamBtn->hide();
 
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsRemoved, this
@@ -22,6 +25,14 @@ void MainWin::initWizardStreaming()
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsInserted, this
             , &MainWin::onRowsInserted);
+
+    // connect(ui->m_wizardArchiveTable->model()
+    //         , &QAbstractItemModel::rowsRemoved, this
+    //         , &MainWin::onRowsRemoved);
+
+    // connect(ui->m_wizardArchiveTable->model()
+    //         , &QAbstractItemModel::rowsInserted, this
+    //         , &MainWin::onRowsInserted);
 
     
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
@@ -75,6 +86,14 @@ void MainWin::initWizardStreaming()
             if( !ObsProfileData().isObsProfileAvailable() )
             {
                 displayError( "There is no 'Sirius-stream' OBS profile." );
+                return;
+            }
+
+            if( !ObsProfileData().isOutputModeCorrect() )
+            {
+                displayError( "'Output Mode' in 'Sirius-stream' profile must be set to "
+                                + ObsProfileData().m_outputMode.toStdString()
+                            , "(OBS Settings -> 'Output' tab -> 'Output Mode')" );
                 return;
             }
 
@@ -192,7 +211,7 @@ Drive* MainWin::selectedDriveInWizardTable() const
     return drive;
 }
 
-void MainWin::wizardUpdateStreamerTable( const Drive& drive )
+void MainWin::wizardUpdateStreamerTable()
 {
     wizardReadStreamingAnnotations();
 
@@ -230,6 +249,43 @@ void MainWin::wizardUpdateStreamerTable( const Drive& drive )
     }
 }
 
+void MainWin::wizardUpdateArchiveTable()
+{
+    wizardReadStreamingAnnotations();
+
+    qDebug() << "announcements: " << m_model->getStreams().size();
+
+    while( ui->m_wizardArchiveTable->rowCount() > 0 )
+    {
+        ui->m_wizardArchiveTable->removeRow(0);
+    }
+
+    for( const auto& streamInfo: m_model->getStreams() )
+    {
+        if ( streamInfo.m_streamingStatus != StreamInfo::ss_finished )
+        {
+            continue;
+        }
+
+        size_t rowIndex = ui->m_wizardArchiveTable->rowCount();
+        ui->m_wizardArchiveTable->insertRow( (int)rowIndex );
+        // {
+        //     QDateTime dateTime = QDateTime::currentDateTime();
+        //     dateTime.setSecsSinceEpoch( streamInfo.m_secsSinceEpoch );
+        //     ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
+        // }
+        {
+            auto* item = new QTableWidgetItem();
+            item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
+            ui->m_wizardArchiveTable->setItem( (int)rowIndex, 0, item );
+        }
+        {
+            auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
+            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
+            ui->m_wizardArchiveTable->setItem( (int)rowIndex, 1, item );
+        }
+    }
+}
 
 StreamInfo* MainWin::wizardSelectedStreamInfo() const
 {
@@ -326,7 +382,7 @@ void MainWin::wizardReadStreamingAnnotations()
                   });
 
         auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [] (const StreamInfo& streamInfo) {
-            return streamInfo.m_streamingStatus == StreamInfo::ss_regestring;
+            return streamInfo.m_streamingStatus == StreamInfo::ss_registering;
         });
 
         todoShouldBeSync = (it != streamInfoVector.end());
