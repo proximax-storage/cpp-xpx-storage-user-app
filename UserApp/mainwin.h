@@ -13,6 +13,7 @@
 //#include "OnChainClient.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
+#include "Dialogs/ModalDialog.h"
 #include "drive/FlatDrive.h"
 
 class OnChainClient;
@@ -176,9 +177,9 @@ private:
     void updateViewerCBox();
 
     void startViewingStream();
-    void startViewingStream2( const DownloadChannel& channel );
-    bool startViewingApprovedStream( const DownloadChannel& channel );
-    void downloadApprovedChunk( const DownloadChannel& channel, const std::filesystem::path& destFolder, int chunkIndex );
+    void startViewingStream2( DownloadChannel& channel );
+    bool startViewingApprovedStream( DownloadChannel& channel );
+    void downloadApprovedChunk( std::string dnChannelKey, std::string destFolder, int chunkIndex );
     void cancelViewingStream();
 
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
@@ -297,5 +298,5 @@ private:
     // For notification (when drive is created)
     WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
     
-    AddDownloadChannelDialog*                 m_addChannelDialog = nullptr;
+    ModalDialog*                              m_modalDialog = nullptr;
 };

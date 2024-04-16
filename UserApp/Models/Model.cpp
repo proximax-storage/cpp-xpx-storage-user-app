@@ -625,11 +625,10 @@ void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::d
             channel.second.setFsTreeHash(fsTreeHash);
             channel.second.setDownloadingFsTree(false);
 
-            if ( m_fsTreeHandler )
+            if ( m_channelFsTreeHandler )
             {
-                (*m_fsTreeHandler)( channel.second );
+                (*m_channelFsTreeHandler)( true, channel.second.getKey(), channel.second.getDriveKey() );
             }
-
         }
     }
 }
@@ -655,13 +654,12 @@ uint64_t Model::lastModificationSize() const
 }
 
 sirius::drive::lt_handle Model::downloadFile(const std::string&              channelIdStr,
-                                             const std::array<uint8_t, 32>&  fileHash,
-                                             std::optional<DownloadNotification> notifier )
+                                             const std::array<uint8_t, 32>&  fileHash )
 {
     std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
 
-    return gStorageEngine->downloadFile( channelId, fileHash, notifier );
+    return gStorageEngine->downloadFile( channelId, fileHash );
 }
 
 void Model::calcDiff( Drive& drive )

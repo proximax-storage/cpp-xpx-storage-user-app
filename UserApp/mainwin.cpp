@@ -2036,6 +2036,11 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         addNotification(message);
 
         unlockChannel(channelKey);
+        
+        if ( m_model->channelFsTreeHandler() )
+        {
+            (*m_model->channelFsTreeHandler())( true, channelKey, driveKey );
+        }
     } else
     {
         qWarning() << "MainWin::onChannelCreationConfirmed. Unknown channel " << channelKey;
@@ -2048,12 +2053,17 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
+        if ( m_model->channelFsTreeHandler() )
+        {
+            (*m_model->channelFsTreeHandler())( false, "", channel->getDriveKey() );
+        }
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
         showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
         m_model->removeChannel(channelKey);
+
     } else {
         qWarning() << "MainWin::onChannelCreationFailed. Unknown channel: " << channelKey;
     }

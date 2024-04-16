@@ -103,28 +103,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     }
 
     ui->buttonBox->disconnect(this);
-    if ( m_forStreaming )
-    {
-        connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [this]()
-        {
-            startCreateChannel();
-
-            m_channelIsCreatingDailog = new QDialog();
-
-            QLabel label( m_channelIsCreatingDailog );
-            label.setText("Channel is creating...");
-
-            QHBoxLayout layout( m_channelIsCreatingDailog );
-            layout.addWidget(&label);
-
-            m_channelIsCreatingDailog->setWindowTitle("Information");
-            m_channelIsCreatingDailog->exec();
-        });
-    }
-    else
-    {
-        connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
-    }
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDownloadChannelDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDownloadChannelDialog::reject);
     connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDownloadChannelDialog::displayInfo);
 
@@ -148,12 +127,6 @@ AddDownloadChannelDialog::~AddDownloadChannelDialog()
     }
 
     delete ui;
-}
-
-void AddDownloadChannelDialog::onChannelIsCreated()
-{
-    m_channelIsCreatingDailog->reject();
-    QDialog::accept();
 }
 
 void AddDownloadChannelDialog::startCreateChannel()

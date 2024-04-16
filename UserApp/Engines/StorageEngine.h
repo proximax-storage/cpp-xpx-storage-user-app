@@ -67,8 +67,7 @@ public:
                          const std::array<uint8_t,32>&          fsTreeHash);
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&        channelInfo,
-                                           const std::array<uint8_t,32>&        fileHash,
-                                           std::optional<DownloadNotification>  dnNotification = {} );
+                                           const std::array<uint8_t,32>&        fileHash );
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
     

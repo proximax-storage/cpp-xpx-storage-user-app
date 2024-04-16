@@ -32,8 +32,6 @@ public:
     void reject() override;
     void displayInfo();
     
-    void onChannelIsCreated();
-
 private:
     void startCreateChannel();
     void validate();

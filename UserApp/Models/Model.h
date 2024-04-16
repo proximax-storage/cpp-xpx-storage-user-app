@@ -161,8 +161,7 @@ class Model : public QObject
         uint64_t lastModificationSize() const;
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
-                                               const std::array<uint8_t,32>& fileHash,
-                                              std::optional<DownloadNotification> = {} );
+                                               const std::array<uint8_t,32>& fileHash );
 
         void                     removeTorrentSync( sirius::drive::InfoHash infoHash );
 
@@ -188,9 +187,10 @@ class Model : public QObject
         //
         // Viewing
         //
-        using FsTreeHandler = std::optional<std::function<void(DownloadChannel&)>>;
-        void                            setAddChannelDialogRef( FsTreeHandler handler ) { m_fsTreeHandler = handler; }
-        void                            resetAddChannelDialogRef() { m_fsTreeHandler.reset(); }
+        using FsTreeHandler = std::optional<std::function<void( bool success, const std::string& channelKey, const std::string& driveKey )>>;
+        void                            setChannelFsTreeHandler( FsTreeHandler handler ) { m_channelFsTreeHandler = handler; }
+        void                            resetChannelFsTreeHandler() { m_channelFsTreeHandler.reset(); }
+        FsTreeHandler                   channelFsTreeHandler() { return m_channelFsTreeHandler; }
         void                            addStreamRef( const StreamInfo& streamInfo );
         void                            deleteStreamRef( int index );
         const std::vector<StreamInfo>&  streamRefs() const;
@@ -212,7 +212,7 @@ class Model : public QObject
         uint64_t m_loadedDrivesCount;
         uint64_t m_outdatedDriveNumber;
     
-        FsTreeHandler   m_fsTreeHandler = {};
+        FsTreeHandler   m_channelFsTreeHandler = {};
     
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;

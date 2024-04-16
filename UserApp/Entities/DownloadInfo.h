@@ -4,57 +4,68 @@
 #include <string>
 #include <array>
 #include "drive/ActionList.h"
+#include "Common.h"
 
-class DownloadInfo {
-    public:
-        DownloadInfo();
-        ~DownloadInfo();
 
-    public:
-        std::array<uint8_t,32> getHash() const;
-        void setHash(const std::array<uint8_t,32>& hash);
+class DownloadInfo
+{
+    using DownloadNotification = std::function<void( const DownloadInfo& )>;
 
-        std::string getDownloadChannelKey() const;
-        void setDownloadChannelKey(const std::string& key);
+    std::array<uint8_t,32>   m_hash;
+    std::string              m_channelKey;
+    std::string              m_fileName;
+    std::string              m_saveFolder;
+    std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
+    bool                     m_isCompleted = false;
+    bool                     m_channelIsOutdated = false;
+    int                      m_progress = 0; // m_progress==1001 means completed
+    sirius::drive::lt_handle m_ltHandle;
 
-        std::string getFileName() const;
-        void setFileName(const std::string& name);
+    std::optional<DownloadNotification> m_notification;
+    
+public:
+    DownloadInfo();
+    ~DownloadInfo();
 
-        std::string getSaveFolder() const;
-        void setSaveFolder(const std::string& folder);
+public:
+    std::array<uint8_t,32> getHash() const;
+    void setHash(const std::array<uint8_t,32>& hash);
 
-        std::string getDownloadFolder() const;
-        void setDownloadFolder(const std::string& folder);
+    std::string getDownloadChannelKey() const;
+    void setDownloadChannelKey(const std::string& key);
 
-        int getProgress() const;
-        void setProgress(int progress);
+    std::string getFileName() const;
+    void setFileName(const std::string& name);
 
-        sirius::drive::lt_handle getHandle() const;
-        void setHandle(const sirius::drive::lt_handle& handle);
+    std::string getSaveFolder() const;
+    void setSaveFolder(const std::string& folder);
 
-        bool isCompleted() const;
-        void setCompleted(bool state);
+    std::string getDownloadFolder() const;
+    void setDownloadFolder(const std::string& folder);
 
-        bool isChannelOutdated() const;
-        void setChannelOutdated(bool state);
+    int getProgress() const;
+    void setProgress(int progress);
 
-    public:
-        template<class Archive>
-        void serialize( Archive &ar )
-        {
-            ar( m_hash, m_channelKey, m_fileName, m_saveFolder, m_downloadFolder, m_isCompleted );
-        }
+    sirius::drive::lt_handle getHandle() const;
+    void setHandle(const sirius::drive::lt_handle& handle);
 
-    private:
-        std::array<uint8_t,32>   m_hash;
-        std::string              m_channelKey;
-        std::string              m_fileName;
-        std::string              m_saveFolder;
-        std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
-        bool                     m_isCompleted = false;
-        bool                     m_channelIsOutdated = false;
-        int                      m_progress = 0; // m_progress==1001 means completed
-        sirius::drive::lt_handle m_ltHandle;
+    bool isCompleted() const;
+    void setCompleted(bool state);
+
+    bool isChannelOutdated() const;
+    void setChannelOutdated(bool state);
+    
+    void setNotification( const DownloadNotification& notification ) { m_notification = notification; };
+    auto getNotification() { return m_notification; };
+    
+    bool isForViewing() const { return m_notification.has_value(); }
+
+public:
+    template<class Archive>
+    void serialize( Archive &ar )
+    {
+        ar( m_hash, m_channelKey, m_fileName, m_saveFolder, m_downloadFolder, m_isCompleted );
+    }
 };
 
 
