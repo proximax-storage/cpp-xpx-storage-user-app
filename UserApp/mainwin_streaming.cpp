@@ -1012,124 +1012,131 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             return;
         }
 
-        //
-        // Get 'm3u8StreamFolder' - where OBS saves chancks and playlist
-        //
-        auto m3u8StreamFolder = fs::path( ObsProfileData().m_recordingPath.toStdString() );
-
-        if ( m3u8StreamFolder.empty() )
+        m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(), [streamInfo=streamInfo,this] (xpx_chain_sdk::Drive xpxDrive, bool, std::string, std::string)
         {
-            qCritical() << LOG_SOURCE << "🔴 ! m3u8StreamFolder.empty()";
-            displayError( "Invalid OBS profile 'Sirius-stream'", "'Recording Path' is not set" );
-            return;
-        }
-
-        std::error_code ec;
-        if ( ! fs::exists( m3u8StreamFolder, ec ) )
-        {
-            qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo.m_driveKey;
-            qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << m3u8StreamFolder.string();
-
-            fs::create_directories( m3u8StreamFolder, ec );
-            if ( ec )
-            {
-                qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << m3u8StreamFolder.string() << " error:" << ec.message();
-                displayError( "Cannot create folder: " + m3u8StreamFolder.string(), ec.message() );
-                return;
-            }
-        }
-
-        auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
-
-        //TODO!!! TODO TODO
-        uint64_t  expectedUploadSizeMegabytes = 200; // could be extended
-        uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
-        auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);
-        auto chuncksFolder = uniqueStreamFolder / "HLS";
-        auto torrentsFolder = getSettingsFolder() / driveKey / CLIENT_SANDBOX_FOLDER0;
-
-        if ( ! fs::exists( chuncksFolder, ec ) )
-        {
-            fs::create_directories( chuncksFolder, ec );
-            if ( ec )
-            {
-                qCritical() << LOG_SOURCE << "🔴 ! cannot create chunk folder : " << chuncksFolder.string() << " error:" << ec.message();
-                displayError( "Cannot create chunk folder : " + chuncksFolder.string(), ec.message() );
-                return;
-            }
-        }
-        if ( ! fs::exists( torrentsFolder, ec ) )
-        {
-            fs::create_directories( torrentsFolder, ec );
-            if ( ec )
-            {
-                qCritical() << LOG_SOURCE << "🔴 ! cannot create torrent folder : " << torrentsFolder.string() << " error:" << ec.message();
-                displayError( "Cannot create torrent folder : " + torrentsFolder.string(), ec.message() );
-                return;
-            }
-        }
-
-        endpoint_list endPointList = drive->getEndpointReplicatorList();
-        if ( endPointList.empty() )
-        {
-            qWarning() << LOG_SOURCE << "🔴 ! endPointList.empty() !";
-            displayError( "endPointList.empty()" );
-            return;
-        }
-
-        fs::path m3u8Playlist = fs::path(m3u8StreamFolder.string()) / PLAYLIST_FILE_NAME;
-        sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
-
-        m_model->setCurrentStreamInfo( streamInfo );
-
-//#define OFFCHAIN_DBG
-#ifdef OFFCHAIN_DBG
-        std::array<uint8_t, 32> txHash;
-#else
-        auto callback = [=,model = m_model,this](std::string txHashString)
-        {
-            auto* drive = model->findDrive( driveKey );
+            auto driveKey = streamInfo.m_driveKey;
+            
+            auto* drive = m_model->findDrive( driveKey );
             if ( drive == nullptr )
             {
                 qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
-                displayError( "Internal error: not found drive: " + driveKey );
+                displayError( "not found drive: " + driveKey );
                 return;
             }
 
-            qDebug () << "streamStart: txHashString: " << txHashString.c_str();
-            auto txHash = rawHashFromHex( txHashString.c_str() );
-#endif
+            //
+            // Get 'm3u8StreamFolder' - where OBS saves chuncks and playlist
+            //
+            auto m3u8StreamFolder = fs::path( ObsProfileData().m_recordingPath.toStdString() );
 
-            qDebug() << "🔵 txHash: " << sirius::drive::toString(txHash);
-            qDebug() << "🔵 driveKeyHex: " << sirius::drive::toString(driveKeyHex);
-            qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
-            qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
-            qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
-            for( auto& endpoint : endPointList )
+            if ( m3u8StreamFolder.empty() )
             {
-                std::cout << "🔵 endpoint: " << endpoint << "\n";
+                qCritical() << LOG_SOURCE << "🔴 ! m3u8StreamFolder.empty()";
+                displayError( "Invalid OBS profile 'Sirius-stream'", "'Recording Path' is not set" );
+                return;
+            }
+
+            std::error_code ec;
+            if ( ! fs::exists( m3u8StreamFolder, ec ) )
+            {
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << streamInfo.m_driveKey;
+                qDebug() << LOG_SOURCE << "🔴 Stream folder does not exist" << m3u8StreamFolder.string();
+
+                fs::create_directories( m3u8StreamFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create folder : " << m3u8StreamFolder.string() << " error:" << ec.message();
+                    displayError( "Cannot create folder: " + m3u8StreamFolder.string(), ec.message() );
+                    return;
+                }
+            }
+
+            auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
+
+            auto freeSize = xpxDrive.data.size - xpxDrive.data.usedSizeBytes;
+            
+            uint64_t  expectedUploadSizeMegabytes = ( freeSize > 4*1024*1024*1024) ? 4*1024*1024*1024 : freeSize; // (could be extended)
+            uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
+            auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);
+            auto chuncksFolder = uniqueStreamFolder / "HLS";
+            auto torrentsFolder = getSettingsFolder() / driveKey / CLIENT_SANDBOX_FOLDER0;
+            
+            if ( ! fs::exists( chuncksFolder, ec ) )
+            {
+                fs::create_directories( chuncksFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create chunk folder : " << chuncksFolder.string() << " error:" << ec.message();
+                    displayError( "Cannot create chunk folder : " + chuncksFolder.string(), ec.message() );
+                    return;
+                }
+            }
+            if ( ! fs::exists( torrentsFolder, ec ) )
+            {
+                fs::create_directories( torrentsFolder, ec );
+                if ( ec )
+                {
+                    qCritical() << LOG_SOURCE << "🔴 ! cannot create torrent folder : " << torrentsFolder.string() << " error:" << ec.message();
+                    displayError( "Cannot create torrent folder : " + torrentsFolder.string(), ec.message() );
+                    return;
+                }
             }
             
-            gStorageEngine->startStreaming( txHash,
-                                           streamInfo.m_uniqueFolderName,
-                                           driveKeyHex,
-                                           m3u8Playlist,
-                                           drive->getLocalFolder(),
-                                           torrentsFolder,
-                                           [](const std::string&){},
-                                           endPointList );
-
-            drive->setModificationHash( txHash );
-            drive->setIsStreaming();
-            drive->updateDriveState(registering);
-#ifndef OFFCHAIN_DBG
-            //              drive->updateDriveState(canceled); //todo
-            //              drive->updateDriveState(no_modifications); //todo
-        };
-
-        // Send tx to REST server
-        m_onChainClient->streamStart( driveKeyHex, streamInfo.m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback );
-#endif
+            endpoint_list endPointList = drive->getEndpointReplicatorList();
+            if ( endPointList.empty() )
+            {
+                qWarning() << LOG_SOURCE << "🔴 ! endPointList.empty() !";
+                displayError( "endPointList.empty()" );
+                return;
+            }
+            
+            fs::path m3u8Playlist = fs::path(m3u8StreamFolder.string()) / PLAYLIST_FILE_NAME;
+            sirius::drive::ReplicatorList replicatorList = drive->getReplicators();
+            
+            m_model->setCurrentStreamInfo( streamInfo );
+            
+            auto callback = [=,model = m_model,this](std::string txHashString)
+            {
+                auto* drive = model->findDrive( driveKey );
+                if ( drive == nullptr )
+                {
+                    qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
+                    displayError( "Internal error: not found drive: " + driveKey );
+                    return;
+                }
+                
+                qDebug () << "streamStart: txHashString: " << txHashString.c_str();
+                auto txHash = rawHashFromHex( txHashString.c_str() );
+                
+                qDebug() << "🔵 txHash: " << sirius::drive::toString(txHash);
+                qDebug() << "🔵 driveKeyHex: " << sirius::drive::toString(driveKeyHex);
+                qDebug() << "🔵 m3u8Playlist: " << m3u8Playlist.string();
+                qDebug() << "🔵 chuncksFolder: " << chuncksFolder.string();
+                qDebug() << "🔵 torrentsFolder: " << torrentsFolder.string();
+                for( auto& endpoint : endPointList )
+                {
+                    std::cout << "🔵 endpoint: " << endpoint << "\n";
+                }
+                
+                gStorageEngine->startStreaming( txHash,
+                                               streamInfo.m_uniqueFolderName,
+                                               driveKeyHex,
+                                               m3u8Playlist,
+                                               drive->getLocalFolder(),
+                                               torrentsFolder,
+                                               [](const std::string&){},
+                                               endPointList );
+                
+                drive->setModificationHash( txHash );
+                drive->setIsStreaming();
+                drive->updateDriveState(registering);
+                //              drive->updateDriveState(canceled); //todo
+                //              drive->updateDriveState(no_modifications); //todo
+            };
+            
+            // Send tx to REST server
+            m_onChainClient->streamStart( driveKeyHex, streamInfo.m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback );
+        });
     }
     catch (...) {
         return;
