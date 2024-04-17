@@ -211,9 +211,9 @@ Drive* MainWin::selectedDriveInWizardTable() const
     return drive;
 }
 
-void MainWin::wizardUpdateStreamerTable()
+void MainWin::wizardUpdateStreamAnnouncementTable()
 {
-    wizardReadStreamingAnnotations();
+    wizardReadStreamInfoList();
 
     qDebug() << "announcements: " << m_model->getStreams().size();
 
@@ -224,7 +224,7 @@ void MainWin::wizardUpdateStreamerTable()
 
     for( const auto& streamInfo: m_model->getStreams() )
     {
-        if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
+        if ( streamInfo.m_streamingStatus != StreamInfo::ss_announced )
         {
             continue;
         }
@@ -251,7 +251,7 @@ void MainWin::wizardUpdateStreamerTable()
 
 void MainWin::wizardUpdateArchiveTable()
 {
-    wizardReadStreamingAnnotations();
+    wizardReadStreamInfoList();
 
     qDebug() << "announcements: " << m_model->getStreams().size();
 
@@ -302,9 +302,8 @@ StreamInfo* MainWin::wizardSelectedStreamInfo() const
     return nullptr;
 }
 
-void MainWin::wizardReadStreamingAnnotations()
+void MainWin::wizardReadStreamInfoList()
 {
-    bool todoShouldBeSync = false;
     std::vector<StreamInfo>& streamInfoVector = m_model->getStreams();
 
     streamInfoVector.clear();
@@ -364,29 +363,52 @@ void MainWin::wizardReadStreamingAnnotations()
                                                });
                         if ( it != streamInfoVector.end() )
                         {
-                            // not needed for archive
-                            it->m_streamingStatus = StreamInfo::ss_created;
+                            auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/deleted" );
+                            if ( child!=nullptr )
+                            {
+                                if ( sirius::drive::isFile(*child) )
+                                {
+                                    it->m_streamingStatus = StreamInfo::ss_deleted;
+                                }
+                                else
+                                {
+                                    displayError( "Internal error: " + streamFolder.name() + "'HLS/deleted' is a folder", "Must be a file." );
+                                }
+                            }
+                            else
+                            {
+                                auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
+                                if ( child!=nullptr )
+                                {
+                                    if ( sirius::drive::isFile(*child) )
+                                    {
+                                        it->m_streamingStatus = StreamInfo::ss_finished;
+                                    }
+                                    else
+                                    {
+                                        displayError( "Internal error: " + streamFolder.name() + "'HLS/" PLAYLIST_FILE_NAME "' is a folder", "Must be a file." );
+                                    }
+                                }
+                                else
+                                {
+                                    it->m_streamingStatus = StreamInfo::ss_announced;
+                                }
+                            }
                         }
-                        else
-                        {
-                            todoShouldBeSync = true;
-                        }
+//TODO
+//                        else
+//                        {
+//                            todoShouldBeSync = true;
+//                        }
                     }
                 }
             }
         }
 
-        std::sort( streamInfoVector.begin(), streamInfoVector.end(),
-                  [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
-                  {
-                      return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
-                  });
-
-        auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [] (const StreamInfo& streamInfo) {
-            return streamInfo.m_streamingStatus == StreamInfo::ss_registering;
+        std::sort( streamInfoVector.begin(), streamInfoVector.end(), [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
+        {
+            return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
         });
-
-        todoShouldBeSync = (it != streamInfoVector.end());
     }
 }
 

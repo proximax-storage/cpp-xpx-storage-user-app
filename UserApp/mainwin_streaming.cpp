@@ -117,7 +117,7 @@ void MainWin::initStreaming()
                 return;
             }
             updateStreamerTable( *drive );
-            wizardUpdateStreamerTable();
+            wizardUpdateStreamAnnouncementTable();
             wizardUpdateArchiveTable();
         }
     }, Qt::QueuedConnection );
@@ -344,7 +344,6 @@ void MainWin::initStreaming()
 
 void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 {
-    bool todoShouldBeSync = false;
     std::vector<StreamInfo>& streamInfoVector = m_model->getStreams();
 
     streamInfoVector.clear();
@@ -400,12 +399,12 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
                     });
                     if ( it != streamInfoVector.end() )
                     {
-                        it->m_streamingStatus = StreamInfo::ss_created;
+                        it->m_streamingStatus = StreamInfo::ss_announced;
                     }
-                    else
-                    {
-                        todoShouldBeSync = true;
-                    }
+//                    else
+//                    {
+//                        todoShouldBeSync = true;
+//                    }
                 }
             }
         }
@@ -416,18 +415,12 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
     {
         return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
     });
-
-    auto it = std::find_if( streamInfoVector.begin(), streamInfoVector.end(), [] (const StreamInfo& streamInfo) {
-        return streamInfo.m_streamingStatus == StreamInfo::ss_registering;
-    });
-
-    todoShouldBeSync = (it != streamInfoVector.end());
 }
 
 void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
 {
     updateStreamerTable( drive );
-    wizardUpdateStreamerTable();
+    wizardUpdateStreamAnnouncementTable();
     wizardUpdateArchiveTable();
 }
 

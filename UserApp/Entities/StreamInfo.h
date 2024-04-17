@@ -27,7 +27,7 @@ struct ObsProfileData
         m_obsPath = homePath + "/Library/Application Support/obs-studio";
         QSettings my_settings( homePath + "/Library/Application Support/obs-studio/basic/profiles/Siriusstream/basic.ini", QSettings::IniFormat);
         m_recordingPath = my_settings.value("SimpleOutput/FilePath", "").toString().trimmed();
-        m_outputMode = "Simple"
+        m_outputMode = "Simple";
 #else // LINUX
         QString homePath = QDir::homePath();
         m_obsPath = homePath + "/.config/obs-studio";
@@ -105,20 +105,20 @@ struct ObsProfileData
 
 struct StreamInfo
 {
-    enum StreamingStatus { ss_registering, ss_created, ss_deleting, ss_running, ss_finished };
-    
+    enum StreamingStatus { ss_undefined, ss_announced, ss_finished, ss_deleted  };
+    int m_streamingStatus = ss_undefined;
+
     uint8_t                 m_version = 1;
     std::string             m_driveKey;
     std::string             m_title;
     std::string             m_annotation;
     uint64_t                m_secsSinceEpoch = 0;   // start time
     std::string             m_uniqueFolderName;
-    int                     m_streamingStatus = ss_registering;
     
     uint64_t                m_totalStreamSizeBytes = 0;
     uint64_t                m_totalStreamStreamDurationSeconds = 0;
 
-    StreamInfo() : m_streamingStatus(ss_deleting) {}
+    StreamInfo() : m_streamingStatus(ss_undefined) {}
     StreamInfo( const std::string&  driveKey,
                 const std::string&  title,
                 const std::string&  annotation,
