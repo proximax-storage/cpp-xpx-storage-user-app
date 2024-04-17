@@ -1005,17 +1005,19 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             return;
         }
 
-        m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(), [streamInfo=streamInfo,this] (xpx_chain_sdk::Drive xpxDrive, bool, std::string, std::string)
-        {
-            auto driveKey = streamInfo.m_driveKey;
-            
-            auto* drive = m_model->findDrive( driveKey );
-            if ( drive == nullptr )
-            {
-                qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
-                displayError( "not found drive: " + driveKey );
-                return;
-            }
+//        m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(), [streamInfo=streamInfo,this] (xpx_chain_sdk::Drive xpxDrive, bool, std::string, std::string)
+//        {
+//            auto driveKey = streamInfo.m_driveKey;
+//            
+//            auto* drive = m_model->findDrive( driveKey );
+//            if ( drive == nullptr )
+//            {
+//                qWarning() << LOG_SOURCE << "🔴 ! internal error: not found drive: " << driveKey;
+//                displayError( "not found drive: " + driveKey );
+//                return;
+//            }
+//        auto freeSize = xpxDrive.data.size - xpxDrive.data.usedSizeBytes;
+        auto freeSize = 20*1024*1024;
 
             //
             // Get 'm3u8StreamFolder' - where OBS saves chuncks and playlist
@@ -1046,8 +1048,6 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 
             auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
 
-            auto freeSize = xpxDrive.data.size - xpxDrive.data.usedSizeBytes;
-            
             uint64_t  expectedUploadSizeMegabytes = ( freeSize > 4*1024*1024*1024) ? 4*1024*1024*1024 : freeSize; // (could be extended)
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
             auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);
@@ -1129,7 +1129,7 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             
             // Send tx to REST server
             m_onChainClient->streamStart( driveKeyHex, streamInfo.m_uniqueFolderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback );
-        });
+//        });
     }
     catch (...) {
         return;
