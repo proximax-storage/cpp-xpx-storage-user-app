@@ -304,8 +304,9 @@ void WizardAddStreamAnnounceDialog::onDriveCreated( const Drive* drive )
     ui->m_driveSelection->setEnabled(true);
     ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);
     ui->m_driveSelection->setPlaceholderText("");
-    addDrivesToCBox();
-    mDriveKey = ui->m_driveSelection->itemData(0).toString().toStdString();
+    ui->m_driveSelection->insertItem(0,QString::fromStdString(drive->getName())
+                                , QString::fromStdString(drive->getKey()));
+    mDriveKey = drive->getKey();
 }
 
 void WizardAddStreamAnnounceDialog::addDrivesToCBox()
