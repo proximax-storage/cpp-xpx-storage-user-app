@@ -520,6 +520,7 @@ void MainWin::updateStreamerProgressPanel( int tabIndex )
     }
 }
 
+#pragma mark --startViewingStream--
 void MainWin::startViewingStream()
 {
 //    dbg();
@@ -970,7 +971,7 @@ void MainWin::startFfmpegStreamingProcess(){}
 //    m_ffmpegStreamingProcess->start( program, arguments );
 //}
 
-#pragma mark --Chain-Interface--
+//#pragma mark --Chain-Interface--
 //
 //-- methods OnChainClient
 //std::string streamStart(const std::array<uint8_t, 32>& rawDrivePubKey, const std::string& folderName, uint64_t expectedUploadSizeMegabytes, uint64_t feedbackFeeAmount);
@@ -985,6 +986,7 @@ void MainWin::startFfmpegStreamingProcess(){}
 //void streamPaymentTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
 //
 
+#pragma mark --startStreamingProcess--
 void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 {
     try
@@ -1049,6 +1051,8 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             auto driveKeyHex = rawHashFromHex( driveKey.c_str() );
 
             //TODO: 20 GB
+            //uint64_t  expectedUploadSizeMegabytes = 20*1024*1024*1024;
+            
             uint64_t  expectedUploadSizeMegabytes = ( freeSize > 20*1024) ? 20*1024 : freeSize; // (could be extended)
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
             auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);
@@ -1137,10 +1141,18 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
     }
 }
 
+#pragma mark --finishStreaming--
 void MainWin::finishStreaming()
 {
     auto streamInfo = m_model->currentStreamInfo();
     assert( streamInfo );
+    
+    m_streamingProgressPanel->setApproving();
+
+//    if ( auto drive = m_model->findDrive( streamInfo->m_driveKey ); drive != nullptr )
+//    {
+//        drive->updateDriveState(uploading);
+//    }
     
     auto driveKey = streamInfo->m_driveKey;
 
@@ -1231,6 +1243,8 @@ void MainWin::connectToStreamingTransactions()
     {
         qDebug () << "MainWin::onDataModificationTransactionFailed. Your last modification was declined: '" + rawHashToHex(tx);
         qDebug () << "MainWin::onDataModificationTransactionFailed. errorText: '" << errorText;
+        displayError( "Start stream transaction failed.", errorText.toStdString());
+        
         if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
         {
             drive->updateDriveState(failed);
@@ -1266,6 +1280,11 @@ void MainWin::connectToStreamingTransactions()
     connect( m_onChainClient, &OnChainClient::cancelModificationTransactionFailed, this,
         [this] ( const std::array<uint8_t, 32> &driveId, const QString &modificationId )
     {
+        if ( auto drive = m_model->findDrive( sirius::drive::toString(driveId) ); drive != nullptr )
+        {
+            drive->updateDriveState(failed);
+        }
+        displayError( "Cancel transaction failed.");
         m_model->setCurrentStreamInfo({});
     }, Qt::QueuedConnection);
 
@@ -1273,12 +1292,21 @@ void MainWin::connectToStreamingTransactions()
     connect( m_onChainClient, &OnChainClient::streamFinishTransactionConfirmed, this,
         [this] ( const std::array<uint8_t, 32> &streamId )
     {
+        if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
+        {
+            drive->updateDriveState(approved);
+        }
     }, Qt::QueuedConnection);
 
     // streamFinishTransactionFailed
     connect( m_onChainClient, &OnChainClient::streamFinishTransactionFailed, this,
         [this] ( const std::array<uint8_t, 32> &streamId, const QString& errorText )
     {
+        if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
+        {
+            drive->updateDriveState(failed);
+        }
+        displayError( "Finish stream transaction failed.", errorText.toStdString());
     }, Qt::QueuedConnection);
 }
 
