@@ -44,37 +44,33 @@ void MainWin::initWizardStreaming()
                 auto rc = dial.exec();
                 if (rc == QMessageBox::Ok)
                 {
-                    AddDriveDialog dialog(m_onChainClient,
-                                          m_model,
-                                          this,
-                                          [this](std::string driveHash)
+                    std::string    driveKey;
+                    AddDriveDialog dialog( m_onChainClient,m_model, this, &driveKey );
+                    auto rc = dialog.exec();
+                    if (rc == QDialog::Accepted)
                     {
-                        m_wizardAddStreamAnnounceDialog
-                          = new WizardAddStreamAnnounceDialog(m_onChainClient,
-                                                              m_model,
-                                                              driveHash,
-                                                              this);
-                        m_wizardAddStreamAnnounceDialog->exec();
-                        if(m_wizardAddStreamAnnounceDialog != nullptr)
+                        m_modalDialog = new ModalDialog( "Information", "Drive is creating...", [this]
                         {
-                            delete m_wizardAddStreamAnnounceDialog;
-                            m_wizardAddStreamAnnounceDialog = nullptr;
-                        }
-
-                    });
-                    dialog.exec();
+                            delete m_modalDialog;
+                            m_modalDialog = nullptr;
+                            
+                            WizardAddStreamAnnounceDialog wizardAddStreamAnnounceDialog( m_onChainClient,
+                                                                                         m_model,
+                                                                                         m_model->getDrives().begin()->first,
+                                                                                         this );
+                            wizardAddStreamAnnounceDialog.exec();
+                        });
+                        m_modalDialog->exec();
+                    }
                 }
             }
             else
             {
-                m_wizardAddStreamAnnounceDialog
-                    = new WizardAddStreamAnnounceDialog(m_onChainClient,
-                                                        m_model,
-                                                        m_model->getDrives().begin()->first,
-                                                        this);
-                m_wizardAddStreamAnnounceDialog->exec();
-                delete m_wizardAddStreamAnnounceDialog;
-                m_wizardAddStreamAnnounceDialog = nullptr;
+                WizardAddStreamAnnounceDialog wizardAddStreamAnnounceDialog( m_onChainClient,
+                                                                             m_model,
+                                                                             m_model->getDrives().begin()->first,
+                                                                             this );
+                wizardAddStreamAnnounceDialog.exec();
             }
         }, Qt::QueuedConnection);
 
@@ -115,7 +111,7 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo == nullptr )
+            if ( auto streamInfo = wizardSelectedStreamInfo(); !streamInfo.has_value() )
             {
                 displayError( "Select announcement!" );
                 return;
@@ -137,7 +133,7 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            if ( StreamInfo* streamInfo = wizardSelectedStreamInfo(); streamInfo != nullptr )
+            if ( auto streamInfo = wizardSelectedStreamInfo(); streamInfo )
             {
                 startStreamingProcess( *streamInfo );
             }
@@ -151,8 +147,8 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardRemoveAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
-            StreamInfo* streamInfo = wizardSelectedStreamInfo();
-            if( streamInfo == nullptr)
+            auto streamInfo = wizardSelectedStreamInfo();
+            if( streamInfo )
             {
                 displayError( "Select stream!" );
                 return;
@@ -217,16 +213,16 @@ Drive* MainWin::selectedDriveInWizardTable() const
 
 void MainWin::wizardUpdateStreamAnnouncementTable()
 {
-    wizardReadStreamInfoList();
+    auto streamInfoList = wizardReadStreamInfoList();
 
-    qDebug() << "announcements: " << m_model->getStreams().size();
+    qDebug() << "announcements: " << streamInfoList.size();
 
     while( ui->m_wizardStreamAnnouncementTable->rowCount() > 0 )
     {
         ui->m_wizardStreamAnnouncementTable->removeRow(0);
     }
 
-    for( const auto& streamInfo: m_model->getStreams() )
+    for( const auto& streamInfo: streamInfoList )
     {
         if ( streamInfo.m_streamingStatus != StreamInfo::ss_announced )
         {
@@ -255,16 +251,16 @@ void MainWin::wizardUpdateStreamAnnouncementTable()
 
 void MainWin::wizardUpdateArchiveTable()
 {
-    wizardReadStreamInfoList();
+    auto streamInfoList = wizardReadStreamInfoList();
 
-    qDebug() << "announcements: " << m_model->getStreams().size();
+    qDebug() << "announcements: " << streamInfoList.size();
 
     while( ui->m_wizardArchiveTable->rowCount() > 0 )
     {
         ui->m_wizardArchiveTable->removeRow(0);
     }
 
-    for( const auto& streamInfo: m_model->getStreams() )
+    for( const auto& streamInfo: streamInfoList )
     {
         if ( streamInfo.m_streamingStatus != StreamInfo::ss_finished )
         {
@@ -291,19 +287,20 @@ void MainWin::wizardUpdateArchiveTable()
     }
 }
 
-StreamInfo* MainWin::wizardSelectedStreamInfo() const
+std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo()
 {
     auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
     {
         try
         {
+            auto streamInfoList = wizardReadStreamInfoList();
             int rowIndex = rowList.constFirst().row();
-            return &m_model->getStreams().at(rowIndex);
+            return streamInfoList.at(rowIndex);
         }
         catch (...) {}
     }
-    return nullptr;
+    return {};
 }
 
 std::vector<StreamInfo> MainWin::wizardReadStreamInfoList()

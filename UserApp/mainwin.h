@@ -164,8 +164,8 @@ private:
 
     void connectToStreamingTransactions();
 
-    StreamInfo* selectedStreamInfo() const; // could return nullptr
-    StreamInfo* wizardSelectedStreamInfo() const; // could return nullptr
+    std::optional<StreamInfo> selectedStreamInfo(); // could return nullptr
+    std::optional<StreamInfo> wizardSelectedStreamInfo(); // could return nullptr
 
     void updateStreamerTable( const Drive& drive );
     void wizardUpdateStreamAnnouncementTable();
@@ -297,7 +297,7 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 
     // For notification (when drive is created)
-    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
+    //WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
     
     ModalDialog*                              m_modalDialog = nullptr;
 };

@@ -205,11 +205,11 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
-        <string>Downloads</string>
+        <string>Dbg-Download</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
@@ -515,6 +515,11 @@
          </layout>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Download</string>
+       </attribute>
       </widget>
       <widget class="QWidget" name="m_drivesTab">
        <attribute name="title">
@@ -1487,7 +1492,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">

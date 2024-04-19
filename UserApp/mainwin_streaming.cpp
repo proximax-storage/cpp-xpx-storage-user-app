@@ -60,19 +60,22 @@ Drive* MainWin::currentStreamingDrive() const
     return m_model->currentStreamingDrive();
 }
 
-StreamInfo* MainWin::selectedStreamInfo() const
+std::optional<StreamInfo> MainWin::selectedStreamInfo()
 {
-    auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
+    auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
     {
         try
         {
+            const auto driveKey = ui->m_streamDriveCBox->currentData().toString();
+            Drive* drive = m_model->findDriveByNameOrPublicKey( driveKey.toStdString() );
+            auto streamInfoList = readStreamingAnnotations(*drive);
             int rowIndex = rowList.constFirst().row();
-            return &m_model->getStreams().at(rowIndex);
+            return streamInfoList.at(rowIndex);
         }
         catch (...) {}
     }
-    return nullptr;
+    return {};
 }
 
 void MainWin::initStreaming()
@@ -87,7 +90,7 @@ void MainWin::initStreaming()
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
 
         if (auto drive = currentStreamingDrive();
-            drive && ui->tabWidget->currentIndex() == 4 )
+            drive && ui->tabWidget->currentIndex() == 5 )
             //&& (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 ) )
         {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
@@ -174,7 +177,7 @@ void MainWin::initStreaming()
     // m_delStreamAnnouncementBtn
     connect(ui->m_delStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
     {
-        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
+        if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
             QMessageBox msgBox;
             const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
@@ -214,7 +217,7 @@ void MainWin::initStreaming()
     // m_copyLinkToStreamBtn
     connect(ui->m_copyLinkToStreamBtn, &QPushButton::released, this, [this] ()
     {
-        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
+        if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
             std::string link = streamInfo->getLink();
 
@@ -262,7 +265,7 @@ void MainWin::initStreaming()
                 return;
             }
         }
-        if ( StreamInfo* streamInfo = selectedStreamInfo(); streamInfo != nullptr )
+        if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
 //            drive->setIsStreaming();
 //            m_streamingProgressPanel->updateStreamingMode(drive);
@@ -510,7 +513,7 @@ void MainWin::updateViewerCBox()
 
 void MainWin::updateViewerProgressPanel( int tabIndex )
 {
-    if ( tabIndex != 4 )
+    if ( tabIndex != 6 )
     {
         m_startViewingProgressPanel->setVisible(false);
         return;
@@ -528,7 +531,7 @@ void MainWin::updateViewerProgressPanel( int tabIndex )
 
 void MainWin::updateStreamerProgressPanel( int tabIndex )
 {
-    if ( tabIndex != 4 )
+    if ( tabIndex != 6 )
     {
         m_streamingProgressPanel->setVisible(false);
     }

@@ -451,7 +451,7 @@ void MainWin::init()
         }
 
         // Drives tab
-        if (index == 1) {
+        if (index == 2) {
             if (m_model->getDrives().empty() || !m_model->isDrivesLoaded()) {
                 lockDrive();
             } else {
@@ -461,11 +461,11 @@ void MainWin::init()
 
         //auto drive = m_model->currentDrive();
         auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
-        if (index == 1 && !m_model->getDrives().empty() && drive) {
+        if (index == 2 && !m_model->getDrives().empty() && drive) {
             updateDriveWidgets(drive->getKey(), drive->getState(),false);
         }
         else if (auto drive = m_model->findDriveByNameOrPublicKey(ui->m_streamDriveCBox->currentText().toStdString());
-                 drive && index == 4 && (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2))
+                 drive && index == 5 && (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2))
         {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
@@ -806,10 +806,10 @@ void MainWin::init()
     // }
 
     // Hide contracts
-    ui->tabWidget->setTabVisible( 3, false );
+    ui->tabWidget->setTabVisible( 4, false );
 
     // Hide streaming
-    ui->tabWidget->setTabVisible( 4, true );
+    ui->tabWidget->setTabVisible( 5, true );
 
     doUpdateBalancePeriodically();
 }
@@ -1565,9 +1565,9 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         m_streamingProgressPanel->updateStreamingMode(drive);
     }
 
-    bool isPanelVisible =   ( isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1 )
+    bool isPanelVisible =   ( isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 2 )
                             || ( ( streamingDrive != nullptr ) &&
-                                   ( ui->tabWidget->currentIndex() == 4 &&
+                                   ( ui->tabWidget->currentIndex() == 5 &&
                                    ( ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 )));
 
     // Update drive progress panels
@@ -1642,7 +1642,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 updateDriveView();
             }
 
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1)  {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 2)  {
                 loadBalance();
             }
 
@@ -2079,9 +2079,9 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
         drive->updateDriveState(no_modifications);
         m_model->saveSettings();
 
-        if ( m_wizardAddStreamAnnounceDialog )
+        if ( m_modalDialog )
         {
-            m_wizardAddStreamAnnounceDialog->onDriveCreated(drive);
+            m_modalDialog->closeModal();
         }
 
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
@@ -2872,9 +2872,9 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
 
-            if ( m_wizardAddStreamAnnounceDialog )
+            if ( m_modalDialog )
             {
-                m_wizardAddStreamAnnounceDialog->onDriveCreated( &drive );
+                m_modalDialog->closeModal();
             }
         }
     }
