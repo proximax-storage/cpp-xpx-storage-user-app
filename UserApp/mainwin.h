@@ -172,7 +172,7 @@ private:
     void wizardUpdateArchiveTable();
 
     std::vector<StreamInfo> readStreamingAnnotations( const Drive& );
-    void wizardReadStreamInfoList();
+    std::vector<StreamInfo> wizardReadStreamInfoList();
 
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();

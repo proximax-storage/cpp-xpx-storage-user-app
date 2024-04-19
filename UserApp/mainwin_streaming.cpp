@@ -1077,7 +1077,7 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 
             //TODO: 20 GB
             //uint64_t  expectedUploadSizeMegabytes = 20*1024*1024*1024;
-            
+
             uint64_t  expectedUploadSizeMegabytes = ( freeSize > 20*1024) ? 20*1024 : freeSize; // (could be extended)
             uint64_t feedbackFeeAmount = 100; // now, not used, it is amount of token for replicator
             auto uniqueStreamFolder  = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo.m_uniqueFolderName);

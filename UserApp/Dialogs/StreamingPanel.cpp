@@ -19,6 +19,7 @@ StreamingPanel::StreamingPanel( std::function<void()> cancelStreamingFunc,
     connect( ui->m_finishBtn, &QPushButton::released, this, [this]
     {
         m_finishStreamingFunc();
+
     });
             
 }

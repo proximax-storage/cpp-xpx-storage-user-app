@@ -301,12 +301,15 @@ void WizardAddStreamAnnounceDialog::reject()
 //
 void WizardAddStreamAnnounceDialog::onDriveCreated( const Drive* drive )
 {
-    ui->m_driveSelection->setEnabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);
-    ui->m_driveSelection->setPlaceholderText("");
-    ui->m_driveSelection->insertItem(0,QString::fromStdString(drive->getName())
+    QTimer::singleShot(10, this, [=, this]
+    {
+        ui->m_driveSelection->setEnabled(true);
+        ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);
+        ui->m_driveSelection->setPlaceholderText("");
+        ui->m_driveSelection->insertItem(0,QString::fromStdString(drive->getName())
                                 , QString::fromStdString(drive->getKey()));
-    mDriveKey = drive->getKey();
+        mDriveKey = drive->getKey();
+    });
 }
 
 void WizardAddStreamAnnounceDialog::addDrivesToCBox()

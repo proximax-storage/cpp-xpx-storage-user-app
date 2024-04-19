@@ -55,8 +55,12 @@ void MainWin::initWizardStreaming()
                                                               driveHash,
                                                               this);
                         m_wizardAddStreamAnnounceDialog->exec();
-                        delete m_wizardAddStreamAnnounceDialog;
-                        m_wizardAddStreamAnnounceDialog = nullptr;
+                        if(m_wizardAddStreamAnnounceDialog != nullptr)
+                        {
+                            delete m_wizardAddStreamAnnounceDialog;
+                            m_wizardAddStreamAnnounceDialog = nullptr;
+                        }
+
                     });
                     dialog.exec();
                 }
@@ -302,114 +306,110 @@ StreamInfo* MainWin::wizardSelectedStreamInfo() const
     return nullptr;
 }
 
-void MainWin::wizardReadStreamInfoList()
+std::vector<StreamInfo> MainWin::wizardReadStreamInfoList()
 {
-    std::vector<StreamInfo>& streamInfoVector = m_model->getStreams();
-
-    streamInfoVector.clear();
+    std::vector<StreamInfo> streamInfoVector;
 
     auto drives = m_model->getDrives();
     for( auto& driveInfo : drives )
     {
+    // read from disc (.videos/*/info)
+    {
+        auto path = fs::path( driveInfo.second.getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME);
 
-        // read from disc (.videos/*/info)
+        std::error_code ec;
+        if ( ! fs::is_directory(path,ec) )
         {
-            auto path = fs::path( driveInfo.second.getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME);
+            return streamInfoVector;
+        }
 
-            std::error_code ec;
-            if ( ! fs::is_directory(path,ec) )
+        for( const auto& entry : std::filesystem::directory_iterator( path ) )
+        {
+            const auto entryName = entry.path().filename().string();
+            if ( entry.is_directory() )
             {
-                return;
-            }
-
-            for( const auto& entry : fs::directory_iterator( path ) )
-            {
-                const auto entryName = entry.path().filename().string();
-                if ( entry.is_directory() )
+                auto fileName = fs::path(path.string() + "/" + entryName + "/" + STREAM_INFO_FILE_NAME);
+                try
                 {
-                    auto fileName = fs::path(path.string() + "/" + entryName + "/" + STREAM_INFO_FILE_NAME);
-                    try
-                    {
-                        std::ifstream is( fileName, std::ios::binary );
-                        cereal::PortableBinaryInputArchive iarchive(is);
-                        StreamInfo streamInfo;
-                        iarchive( streamInfo );
-                        streamInfoVector.push_back( streamInfo );
-                    }
-                    catch (...) {
-                        qWarning() << "Internal error: cannot read stream annotation: " << fileName.c_str();
-                    }
+                    std::ifstream is( fileName, std::ios::binary );
+                    cereal::PortableBinaryInputArchive iarchive(is);
+                    StreamInfo streamInfo;
+                    iarchive( streamInfo );
+                    streamInfoVector.push_back( streamInfo );
+                }
+                catch (...) {
+                    qWarning() << "Internal error: cannot read stream annotation: " << fileName.c_str();
                 }
             }
         }
+    }
 
-        // read from FsTree
+    // read from FsTree
+    {
+        auto fsTree = driveInfo.second.getFsTree();
+        auto* folder = fsTree.getFolderPtr( STREAM_ROOT_FOLDER_NAME );
+        if ( folder != nullptr )
         {
-            auto fsTree = driveInfo.second.getFsTree();
-            auto* folder = fsTree.getFolderPtr( STREAM_ROOT_FOLDER_NAME );
-            if ( folder != nullptr )
+            const auto& streamFolders = folder->childs();
+            for( const auto& [key,child] : streamFolders )
             {
-                const auto& streamFolders = folder->childs();
-                for( const auto& [key,child] : streamFolders )
+                if ( sirius::drive::isFolder(child) )
                 {
-                    if ( sirius::drive::isFolder(child) )
+                    const auto& streamFolder = sirius::drive::getFolder( child );
+                    auto it = std::find_if( streamInfoVector.begin()
+                                           , streamInfoVector.end()
+                                           , [&streamFolder] (const StreamInfo& streamInfo)
+                                           {
+                                               return streamFolder.name() == streamInfo.m_uniqueFolderName;
+                                           });
+                    if ( it != streamInfoVector.end() )
                     {
-                        const auto& streamFolder = sirius::drive::getFolder( child );
-                        auto it = std::find_if( streamInfoVector.begin()
-                                               , streamInfoVector.end()
-                                               , [&streamFolder] (const StreamInfo& streamInfo)
-                                               {
-                                                   return streamFolder.name() == streamInfo.m_uniqueFolderName;
-                                               });
-                        if ( it != streamInfoVector.end() )
+                        auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/deleted" );
+                        if ( child!=nullptr )
                         {
-                            auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/deleted" );
+                            if ( sirius::drive::isFile(*child) )
+                            {
+                                it->m_streamingStatus = StreamInfo::ss_deleted;
+                            }
+                            else
+                            {
+                                displayError( "Internal error: " + streamFolder.name() + "'HLS/deleted' is a folder", "Must be a file." );
+                            }
+                        }
+                        else
+                        {
+                            fsTree.dbgPrint();
+                            qDebug() << QString::fromStdString( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
+                            auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
                             if ( child!=nullptr )
                             {
                                 if ( sirius::drive::isFile(*child) )
                                 {
-                                    it->m_streamingStatus = StreamInfo::ss_deleted;
+                                    it->m_streamingStatus = StreamInfo::ss_finished;
                                 }
                                 else
                                 {
-                                    displayError( "Internal error: " + streamFolder.name() + "'HLS/deleted' is a folder", "Must be a file." );
+                                    displayError( "Internal error: " + streamFolder.name() + "'HLS/" PLAYLIST_FILE_NAME "' is a folder", "Must be a file." );
                                 }
                             }
                             else
                             {
-                                auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
-                                if ( child!=nullptr )
-                                {
-                                    if ( sirius::drive::isFile(*child) )
-                                    {
-                                        it->m_streamingStatus = StreamInfo::ss_finished;
-                                    }
-                                    else
-                                    {
-                                        displayError( "Internal error: " + streamFolder.name() + "'HLS/" PLAYLIST_FILE_NAME "' is a folder", "Must be a file." );
-                                    }
-                                }
-                                else
-                                {
-                                    it->m_streamingStatus = StreamInfo::ss_announced;
-                                }
+                                it->m_streamingStatus = StreamInfo::ss_announced;
                             }
                         }
-//TODO
-//                        else
-//                        {
-//                            todoShouldBeSync = true;
-//                        }
                     }
                 }
             }
         }
-
-        std::sort( streamInfoVector.begin(), streamInfoVector.end(), [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
-        {
-            return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
-        });
     }
+
+    std::sort( streamInfoVector.begin(), streamInfoVector.end(),
+              [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
+              {
+                  return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
+              });
+    }
+    return streamInfoVector;
 }
 
 void MainWin::onRowsRemoved()
