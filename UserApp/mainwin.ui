@@ -1487,7 +1487,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -1844,6 +1844,11 @@
                 <column>
                  <property name="text">
                   <string>Title</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Finished</string>
                  </property>
                 </column>
                </widget>

@@ -171,7 +171,7 @@ private:
     void wizardUpdateStreamAnnouncementTable();
     void wizardUpdateArchiveTable();
 
-    void readStreamingAnnotations( const Drive& );
+    std::vector<StreamInfo> readStreamingAnnotations( const Drive& );
     void wizardReadStreamInfoList();
 
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );

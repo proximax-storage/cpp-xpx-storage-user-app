@@ -342,11 +342,9 @@ void MainWin::initStreaming()
     updateViewerCBox();
 }
 
-void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
+std::vector<StreamInfo> MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 {
-    std::vector<StreamInfo>& streamInfoVector = m_model->getStreams();
-
-    streamInfoVector.clear();
+    std::vector<StreamInfo> streamInfoVector;
 
     // read from disc (.videos/*/info)
     {
@@ -355,7 +353,7 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
         std::error_code ec;
         if ( ! fs::is_directory(path,ec) )
         {
-            return;
+            return streamInfoVector;
         }
 
         for( const auto& entry : std::filesystem::directory_iterator( path ) )
@@ -392,19 +390,47 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
                 {
                     const auto& streamFolder = sirius::drive::getFolder( child );
                     auto it = std::find_if( streamInfoVector.begin()
-                                          , streamInfoVector.end()
-                                          , [&streamFolder] (const StreamInfo& streamInfo)
-                    {
-                        return streamFolder.name() == streamInfo.m_uniqueFolderName;
-                    });
+                                           , streamInfoVector.end()
+                                           , [&streamFolder] (const StreamInfo& streamInfo)
+                                           {
+                                               return streamFolder.name() == streamInfo.m_uniqueFolderName;
+                                           });
                     if ( it != streamInfoVector.end() )
                     {
-                        it->m_streamingStatus = StreamInfo::ss_announced;
+                        auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/deleted" );
+                        if ( child!=nullptr )
+                        {
+                            if ( sirius::drive::isFile(*child) )
+                            {
+                                it->m_streamingStatus = StreamInfo::ss_deleted;
+                            }
+                            else
+                            {
+                                displayError( "Internal error: " + streamFolder.name() + "'HLS/deleted' is a folder", "Must be a file." );
+                            }
+                        }
+                        else
+                        {
+                            fsTree.dbgPrint();
+                            qDebug() << QString::fromStdString( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
+                            auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
+                            if ( child!=nullptr )
+                            {
+                                if ( sirius::drive::isFile(*child) )
+                                {
+                                    it->m_streamingStatus = StreamInfo::ss_finished;
+                                }
+                                else
+                                {
+                                    displayError( "Internal error: " + streamFolder.name() + "'HLS/" PLAYLIST_FILE_NAME "' is a folder", "Must be a file." );
+                                }
+                            }
+                            else
+                            {
+                                it->m_streamingStatus = StreamInfo::ss_announced;
+                            }
+                        }
                     }
-//                    else
-//                    {
-//                        todoShouldBeSync = true;
-//                    }
                 }
             }
         }
@@ -415,6 +441,8 @@ void MainWin::readStreamingAnnotations( const Drive&  driveInfo )
     {
         return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
     });
+    
+    return streamInfoVector;
 }
 
 void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
@@ -426,10 +454,9 @@ void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
 
 void MainWin::updateStreamerTable( const Drive& drive )
 {
-    readStreamingAnnotations( drive );
-//    ui->m_streamAnnouncementTable->clearContents();
+    auto streamAnnotations = readStreamingAnnotations( drive );
 
-    qDebug() << "announcements: " << m_model->getStreams().size();
+    qDebug() << "announcements: " << streamAnnotations.size();
 
     auto table = ui->m_streamAnnouncementTable;
     
@@ -438,12 +465,12 @@ void MainWin::updateStreamerTable( const Drive& drive )
         table->removeRow(0);
     }
 
-    for( const auto& streamInfo: m_model->getStreams() )
+    for( const auto& streamInfo: streamAnnotations )
     {
-        if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
-        {
-            continue;
-        }
+//        if ( streamInfo.m_streamingStatus == StreamInfo::ss_finished )
+//        {
+//            continue;
+//        }
 
         size_t rowIndex = table->rowCount();
         table->insertRow( (int)rowIndex );
@@ -453,16 +480,14 @@ void MainWin::updateStreamerTable( const Drive& drive )
             table->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
         }
         {
-            auto* item = new QTableWidgetItem();
-            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
-            table->setItem( (int)rowIndex, 1, item );
+//            auto* item = new QTableWidgetItem();
+//            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_title ) );
+//            table->setItem( (int)rowIndex, 1, item );
+            table->setItem( (int)rowIndex, 1, new QTableWidgetItem( QString::fromStdString(streamInfo.m_title) ) );
         }
         {
             table->setItem( (int)rowIndex, 2, new QTableWidgetItem(
-                                                  QString::fromStdString(
-                                                  //m_model->findDrive(streamInfo.m_driveKey)->getName()
-                                                  streamInfo.m_uniqueFolderName
-            ) ) );
+                            QString::fromStdString( (streamInfo.m_streamingStatus==StreamInfo::ss_finished) ? "finished" : "" )));
         }
     }
 }
@@ -1296,6 +1321,7 @@ void MainWin::connectToStreamingTransactions()
         {
             drive->updateDriveState(approved);
         }
+        updateDiffView();
     }, Qt::QueuedConnection);
 
     // streamFinishTransactionFailed
