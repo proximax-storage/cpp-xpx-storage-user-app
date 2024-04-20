@@ -44,8 +44,7 @@ void MainWin::initWizardStreaming()
                 auto rc = dial.exec();
                 if (rc == QMessageBox::Ok)
                 {
-                    std::string    driveKey;
-                    AddDriveDialog dialog( m_onChainClient,m_model, this, &driveKey );
+                    AddDriveDialog dialog( m_onChainClient,m_model, this );
                     auto rc = dialog.exec();
                     if (rc == QDialog::Accepted)
                     {

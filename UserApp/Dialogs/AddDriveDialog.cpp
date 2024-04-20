@@ -8,14 +8,12 @@
 
 AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
                                 Model* model,
-                                QWidget *parent,
-                                std::string* outDriveKey
+                                QWidget *parent
                                ) :
     QDialog( parent ),
     ui( new Ui::AddDriveDialog() ),
     mp_onChainClient(onChainClient),
-    mp_model(model),
-    m_outDriveKey(outDriveKey)
+    mp_model(model)
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
@@ -191,8 +189,8 @@ void AddDriveDialog::accept()
                      name = ui->m_driveName->text().toStdString(),
                      count = ui->m_replicatorNumber->text().toInt(),
                      size = ui->m_size->text().toInt(),
-                     folder = ui->m_localDriveFolder->text().toStdString(),
-                     outDriveKey = m_outDriveKey ](auto hash) {
+                     folder = ui->m_localDriveFolder->text().toStdString()] (auto hash)
+    {
         Drive drive;
         drive.setName(name);
         drive.setKey(hash);
@@ -207,9 +205,6 @@ void AddDriveDialog::accept()
         auto currentDrive = model->currentDrive();
         if (currentDrive) {
             currentDrive->updateDriveState(creating);
-        }
-        if (outDriveKey == nullptr) {
-            *outDriveKey = hash;
         }
     };
 

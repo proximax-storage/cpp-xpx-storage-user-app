@@ -23,11 +23,11 @@ public:
         layout->addWidget( label );        
     }
     
-    void closeModal()
+    void closeModal( bool success )
     {
         reject();
         
-        if ( m_callback )
+        if ( success && m_callback )
         {
             (*m_callback)();
         }

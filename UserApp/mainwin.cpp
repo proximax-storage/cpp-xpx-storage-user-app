@@ -2079,14 +2079,15 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
         drive->updateDriveState(no_modifications);
         m_model->saveSettings();
 
-        if ( m_modalDialog )
-        {
-            m_modalDialog->closeModal();
-        }
-
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
         showNotification(message);
         addNotification(message);
+
+        if ( m_modalDialog )
+        {
+            m_modalDialog->closeModal( true );
+        }
+
     } else {
         qWarning() << "MainWin::onDriveCreationConfirmed. Unknown drive: " << driveKey;
     }
@@ -2102,6 +2103,12 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
         showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         drive->updateDriveState(unconfirmed);
+
+        if ( m_modalDialog )
+        {
+            m_modalDialog->closeModal( false );
+        }
+
     } else {
         qWarning() << "MainWin::onDriveCreationFailed. Unknown drive: " << driveKey;
     }
@@ -2872,10 +2879,10 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
 
-            if ( m_modalDialog )
-            {
-                m_modalDialog->closeModal();
-            }
+//            if ( m_modalDialog )
+//            {
+//                m_modalDialog->closeModal();
+//            }
         }
     }
 }

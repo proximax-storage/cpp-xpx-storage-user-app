@@ -15,8 +15,7 @@ public:
 public:
     explicit AddDriveDialog( OnChainClient* onChainClient,
                              Model* model,
-                             QWidget *parent = nullptr,
-                             std::string* outDriveKey = nullptr
+                             QWidget *parent = nullptr
                             );
     ~AddDriveDialog() override;
 
@@ -33,5 +32,4 @@ private:
     Model*          mp_model;
     OnChainClient*  mp_onChainClient;
     QMessageBox*    helpMessageBox = nullptr;
-    std::string*    m_outDriveKey;
 };
