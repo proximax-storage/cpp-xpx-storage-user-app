@@ -62,7 +62,7 @@ Drive* MainWin::currentStreamingDrive() const
 
 std::optional<StreamInfo> MainWin::selectedStreamInfo()
 {
-    auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+    auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
     {
         try
@@ -282,10 +282,10 @@ void MainWin::initStreaming()
         }
 
         std::string link = clipboard->text( QClipboard::Clipboard ).toStdString();
-        if ( clipboard->supportsSelection() ) {
-            link = clipboard->text( QClipboard::Selection ).toStdString();
-        }
-
+//        if ( clipboard->supportsSelection() ) {
+//            link = clipboard->text( QClipboard::Selection ).toStdString();
+//        }
+        
         StreamInfo streamInfo;
         try
         {
