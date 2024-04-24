@@ -212,7 +212,13 @@ Drive* MainWin::selectedDriveInWizardTable(QTableWidget* table) const
 
 void MainWin::wizardUpdateStreamAnnouncementTable()
 {
-    auto streamInfoList = wizardReadStreamInfoList();
+    auto drives = m_model->getDrives();
+    std::vector<StreamInfo> streamInfoList;
+    for( auto& driveInfo : drives )
+    {
+        auto list = readStreamInfoList(driveInfo.second);
+        streamInfoList.insert( streamInfoList.end(), list.begin(), list.end() );
+    }
 
     qDebug() << "announcements: " << streamInfoList.size();
 
