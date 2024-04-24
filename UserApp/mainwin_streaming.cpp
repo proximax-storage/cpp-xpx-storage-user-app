@@ -131,8 +131,6 @@ void MainWin::initStreaming()
     //
     ui->m_streamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_streamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
-    ui->m_wizardStreamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
-    ui->m_wizardStreamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
 
     connect( ui->m_streamAnnouncementTable, &QTableView::pressed, this, [this] (const QModelIndex &index)
     {
@@ -1201,7 +1199,6 @@ void MainWin::finishStreaming()
                                            actionListHash.array() );
         });
     });
-
     m_streamingPanel->hidePanel();
 }
 

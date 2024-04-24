@@ -11,29 +11,21 @@
 
 void MainWin::initWizardStreaming()
 {
+    ui->m_wizardStreamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
+    ui->m_wizardStreamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
+
     ui->m_wizardStreamAnnouncementTable->hide();
-    // ui->m_wizardArchiveTable->hide();
 
     ui->m_wizardStartSelectedStreamBtn->hide();
     ui->m_wizardRemoveAnnouncementBtn->hide();
-    // ui->m_deleteArchivedStreamBtn->hide();
 
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsRemoved, this
-            , &MainWin::onRowsRemoved);
+            , &MainWin::onRowsRemovedAnnouncements);
 
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsInserted, this
-            , &MainWin::onRowsInserted);
-
-    // connect(ui->m_wizardArchiveTable->model()
-    //         , &QAbstractItemModel::rowsRemoved, this
-    //         , &MainWin::onRowsRemoved);
-
-    // connect(ui->m_wizardArchiveTable->model()
-    //         , &QAbstractItemModel::rowsInserted, this
-    //         , &MainWin::onRowsInserted);
-
+            , &MainWin::onRowsInsertedAnnouncements);
     
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
@@ -73,7 +65,6 @@ void MainWin::initWizardStreaming()
             }
         }, Qt::QueuedConnection);
 
-
     connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
         {
             if( !ObsProfileData().isObsInstalled() )
@@ -110,13 +101,13 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            if ( auto streamInfo = wizardSelectedStreamInfo(); !streamInfo.has_value() )
+            if ( auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable); !streamInfo.has_value() )
             {
                 displayError( "Select announcement!" );
                 return;
             }
 
-            std::string driveKey = selectedDriveKeyInWizardTable().toStdString();
+            std::string driveKey = selectedDriveKeyInWizardTable(ui->m_wizardStreamAnnouncementTable).toStdString();
             auto* drive = m_model->findDrive(driveKey);
             if ( drive == nullptr )
             {
@@ -132,7 +123,7 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            if ( auto streamInfo = wizardSelectedStreamInfo(); streamInfo )
+            if ( auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable); streamInfo )
             {
                 startStreamingProcess( *streamInfo );
             }
@@ -146,8 +137,8 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardRemoveAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
-            auto streamInfo = wizardSelectedStreamInfo();
-            if( streamInfo )
+            auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable);
+            if( !streamInfo )
             {
                 displayError( "Select stream!" );
                 return;
@@ -161,7 +152,7 @@ void MainWin::initWizardStreaming()
 
             if ( reply == QMessageBox::Ok )
             {
-                auto* drive = selectedDriveInWizardTable();
+                auto* drive = selectedDriveInWizardTable(ui->m_wizardStreamAnnouncementTable);
 
                 if ( drive != nullptr )
                 {
@@ -186,22 +177,31 @@ void MainWin::initWizardStreaming()
                 }
             }
         }, Qt::QueuedConnection);
-
 }
 
-QString MainWin::selectedDriveKeyInWizardTable() const
+QString MainWin::selectedDriveKeyInWizardTable(QTableWidget* table) const
 {
-    auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+    auto rowList = table->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
     {
-        return ui->m_wizardStreamAnnouncementTable->item( rowList.first().row(), 2 )->data(Qt::UserRole).toString();
+        int columnCount = table->columnCount();
+        int driveColumn = 0;
+        for (int column = 0; column < columnCount; ++column)
+        {
+            QTableWidgetItem* headerItem = table->horizontalHeaderItem(column);
+            if (headerItem && headerItem->text() == "Drive")
+            {
+                driveColumn = column;
+            }
+        }
+        return table->item( rowList.first().row(), driveColumn )->data(Qt::UserRole).toString();
     }
     return "";
 }
 
-Drive* MainWin::selectedDriveInWizardTable() const
+Drive* MainWin::selectedDriveInWizardTable(QTableWidget* table) const
 {
-    auto driveKey = selectedDriveKeyInWizardTable().toStdString();
+    auto driveKey = selectedDriveKeyInWizardTable(table).toStdString();
     Drive* drive = m_model->findDrive( driveKey );
     if ( drive == nullptr && (ui->m_streamDriveCBox->count() == 0) )
     {
@@ -248,54 +248,25 @@ void MainWin::wizardUpdateStreamAnnouncementTable()
     }
 }
 
-void MainWin::wizardUpdateArchiveTable()
+std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo(QTableWidget* table)
 {
-    auto streamInfoList = wizardReadStreamInfoList();
-
-    qDebug() << "announcements: " << streamInfoList.size();
-
-    while( ui->m_wizardArchiveTable->rowCount() > 0 )
-    {
-        ui->m_wizardArchiveTable->removeRow(0);
-    }
-
-    for( const auto& streamInfo: streamInfoList )
-    {
-        if ( streamInfo.m_streamingStatus != StreamInfo::ss_finished )
-        {
-            continue;
-        }
-
-        size_t rowIndex = ui->m_wizardArchiveTable->rowCount();
-        ui->m_wizardArchiveTable->insertRow( (int)rowIndex );
-        // {
-        //     QDateTime dateTime = QDateTime::currentDateTime();
-        //     dateTime.setSecsSinceEpoch( streamInfo.m_secsSinceEpoch );
-        //     ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 0, new QTableWidgetItem( dateTime.toString() ) );
-        // }
-        {
-            auto* item = new QTableWidgetItem();
-            item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
-            ui->m_wizardArchiveTable->setItem( (int)rowIndex, 0, item );
-        }
-        {
-            auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
-            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
-            ui->m_wizardArchiveTable->setItem( (int)rowIndex, 1, item );
-        }
-    }
-}
-
-std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo()
-{
-    auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+    auto rowList = table->selectionModel()->selectedRows();
     if ( rowList.count() > 0 )
     {
         try
         {
-            auto streamInfoList = wizardReadStreamInfoList();
             int rowIndex = rowList.constFirst().row();
-            return streamInfoList.at(rowIndex);
+            QString streamTitle = table->item(rowIndex, 0)->text(); // stream name
+            auto streamInfoList = wizardReadStreamInfoList();
+            for(auto& e : streamInfoList)
+            {
+                if(e.m_title == streamTitle.toStdString())
+                {
+                    return e;
+                }
+            }
+            // int rowIndex = rowList.constFirst().row();
+            // return streamInfoList.at(rowIndex);
         }
         catch (...) {}
     }
@@ -408,7 +379,7 @@ std::vector<StreamInfo> MainWin::wizardReadStreamInfoList()
     return streamInfoVector;
 }
 
-void MainWin::onRowsRemoved()
+void MainWin::onRowsRemovedAnnouncements()
 {
     if (ui->m_wizardStreamAnnouncementTable->rowCount() == 0)
     {
@@ -423,7 +394,7 @@ void MainWin::onRowsRemoved()
     }
 }
 
-void MainWin::onRowsInserted()
+void MainWin::onRowsInsertedAnnouncements()
 {
     ui->m_wizardStreamAnnouncementTable->show();
     ui->m_wizardStartSelectedStreamBtn->show();

@@ -155,17 +155,18 @@ private:
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     QString selectedDriveKeyInTable() const;
     Drive*  selectedDriveInTable() const;
-    QString selectedDriveKeyInWizardTable() const;
-    Drive*  selectedDriveInWizardTable() const;
+    QString selectedDriveKeyInWizardTable(QTableWidget* table) const;
+    Drive*  selectedDriveInWizardTable(QTableWidget* table) const;
     Drive*  currentStreamingDrive() const;
 
     void initStreaming();
     void initWizardStreaming();
+    void initWizardArchiveStreaming();
 
     void connectToStreamingTransactions();
 
     std::optional<StreamInfo> selectedStreamInfo(); // could return nullptr
-    std::optional<StreamInfo> wizardSelectedStreamInfo(); // could return nullptr
+    std::optional<StreamInfo> wizardSelectedStreamInfo(QTableWidget* table); // could return nullptr
 
     void updateStreamerTable( const Drive& drive );
     void wizardUpdateStreamAnnouncementTable();
@@ -252,8 +253,10 @@ private slots:
                                         const std::string &error);
     //void on_m_wizardAddStreamAnnouncementBtn_clicked();
 
-    void onRowsRemoved();
-    void onRowsInserted();
+    void onRowsRemovedAnnouncements();
+    void onRowsRemovedArchive();
+    void onRowsInsertedAnnouncements();
+    void onRowsInsertedArchive();
 
 public:
     // if private key is not set it will be 'true'

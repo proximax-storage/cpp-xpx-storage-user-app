@@ -798,6 +798,7 @@ void MainWin::init()
 
     initStreaming();
     initWizardStreaming();
+    initWizardArchiveStreaming();
 
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
@@ -1678,6 +1679,8 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                     else
                     {
                         m_streamingProgressPanel->setApproved();
+                        wizardUpdateStreamAnnouncementTable();
+                        wizardUpdateArchiveTable();
                     }
                 }
 
