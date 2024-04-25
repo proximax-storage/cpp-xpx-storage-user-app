@@ -21,6 +21,8 @@ public:
         QLabel*      label  = new QLabel( QString::fromStdString(text), this );
         QHBoxLayout* layout = new QHBoxLayout( this );
         layout->addWidget( label );        
+
+        resize(320, 200);
     }
     
     void closeModal( bool success )
