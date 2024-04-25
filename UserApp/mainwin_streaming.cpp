@@ -69,7 +69,7 @@ std::optional<StreamInfo> MainWin::selectedStreamInfo()
         {
             const auto driveKey = ui->m_streamDriveCBox->currentData().toString();
             Drive* drive = m_model->findDriveByNameOrPublicKey( driveKey.toStdString() );
-            auto streamInfoList = readStreamInfoList(*drive);
+            auto streamInfoList = readStreamingAnnotations(*drive);
             int rowIndex = rowList.constFirst().row();
             return streamInfoList.at(rowIndex);
         }
@@ -343,7 +343,7 @@ void MainWin::initStreaming()
     updateViewerCBox();
 }
 
-std::vector<StreamInfo> MainWin::readStreamInfoList( const Drive&  driveInfo )
+std::vector<StreamInfo> MainWin::readStreamingAnnotations( const Drive&  driveInfo )
 {
     std::vector<StreamInfo> streamInfoVector;
 
@@ -455,7 +455,7 @@ void MainWin::onFsTreeReceivedForStreamAnnotations( const Drive& drive )
 
 void MainWin::updateStreamerTable( const Drive& drive )
 {
-    auto streamAnnotations = readStreamInfoList( drive );
+    auto streamAnnotations = readStreamingAnnotations( drive );
 
     qDebug() << "announcements: " << streamAnnotations.size();
 
