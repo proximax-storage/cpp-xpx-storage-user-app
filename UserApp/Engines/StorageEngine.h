@@ -29,6 +29,7 @@ class Model;
 struct StreamInfo;
 
 using StreamStatusResponseHandler = std::function<void( const sirius::drive::DriveKey&  driveKey,
+                                                        const sirius::Key&              streamerKey,
                                                         bool                            isStreaming,
                                                         const std::array<uint8_t,32>&   streamId )>;
 
@@ -74,6 +75,11 @@ public:
     void requestStreamStatus( const std::array<uint8_t,32>& driveKey,
                               const sirius::drive::ReplicatorList&,
                               StreamStatusResponseHandler streamStatusResponseHandler );
+    
+    std::shared_ptr<sirius::drive::ViewerSession>  getViewerSession()
+    {
+        return m_session;
+    }
 
     void init(const sirius::crypto::KeyPair&  keyPair,
               const std::string&              address,

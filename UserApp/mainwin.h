@@ -184,7 +184,9 @@ private:
     void downloadApprovedChunk( std::string dnChannelKey, std::string destFolder, int chunkIndex );
     void cancelViewingStream();
 
+    void waitStream();
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
+                                 const sirius::Key&             streamerKey,
                                  bool                           isStreaming,
                                  const std::array<uint8_t,32>&  streamId );
 

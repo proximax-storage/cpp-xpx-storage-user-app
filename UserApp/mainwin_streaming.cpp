@@ -10,8 +10,12 @@
 #include "Dialogs/StreamingView.h"
 #include "Dialogs/StreamingPanel.h"
 #include "Dialogs/ModalDialog.h"
+#include "Dialogs/CheckReplicatorEndpointDialog.h"
 #include "Engines/StorageEngine.h"
 #include "Entities/Account.h"
+
+#include "drive/ViewerSession.h"
+
 #include <qdebug.h>
 #include <QFileIconProvider>
 #include <QScreen>
@@ -832,42 +836,69 @@ bool MainWin::startViewingApprovedStream( DownloadChannel& channel )
 
 void MainWin::startViewingStream2( DownloadChannel& channel )
 {
+    if ( ! CheckReplicatorEndpointDialog::check( channel.getReplicators() ) )
+    {
+        return;
+    }
+    
     if ( startViewingApprovedStream( channel ) )
     {
         return;
     }
     
-    m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
-                                                                         bool                           isStreaming,
-                                                                         const std::array<uint8_t,32>&  streamId )
-    {
-        onStreamStatusResponse( driveKey, isStreaming, streamId );
-    });
-
+    m_model->m_currentStreamInfo.m_channelKey = channel.getKey();
     m_model->m_viewerStatus = vs_waiting_stream_start;
     m_startViewingProgressPanel->setWaitingStreamStart();
     m_startViewingProgressPanel->setVisible( true );
+    
+    waitStream();
+}
 
-    QTimer::singleShot(10, this, [this]
+void MainWin::waitStream()
+{
+    if ( m_model->m_viewerStatus == vs_waiting_stream_start )
     {
-        if ( m_model->m_viewerStatus == vs_waiting_stream_start )
+        m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
+                                                                             const sirius::Key&             streamerKey,
+                                                                             bool                           isStreaming,
+                                                                             const std::array<uint8_t,32>&  streamId )
         {
-            m_model->requestStreamStatus( m_model->m_currentStreamInfo, [this] ( const sirius::drive::DriveKey& driveKey,
-                                                                                 bool                           isStreaming,
-                                                                                 const std::array<uint8_t,32>&  streamId )
-            {
-                qWarning() << "timer: ";
-                onStreamStatusResponse( driveKey, isStreaming, streamId );
-            });
-        }
-    });
+            qWarning() << "timer: ";
+            onStreamStatusResponse( driveKey, streamerKey, isStreaming, streamId );
+        });
+    }
 }
 
 void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
+                                      const sirius::Key&             streamerKey,
                                       bool                           isStreaming,
                                       const std::array<uint8_t,32>&  streamId )
 {
+    if ( isStreaming )
+    {
+        auto* drive = m_model->findDrive( m_model->m_currentStreamInfo.m_driveKey );
+        if ( drive == nullptr )
+        {
+            displayError("Internal error: onStreamStatusResponse: drive == nullptr");
+            return;
+        }
+        
+        auto replicators = drive->getReplicators();
+        if ( !replicators.empty() )
+        {
+            std::array<uint8_t, 32> channelKey{};
+            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), channelKey.size(), channelKey );
+            
+            auto viewerSession = gStorageEngine->getViewerSession();
+            viewerSession->startWatchingLiveStream( streamId, streamerKey, driveKey, channelKey, replicators,
+                                                   fs::path("/streamRootFolder"), fs::path("/workFolder"),
+                                                   []( std::string addr ){}, {},
+                                                   []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
+            return;
+        }
+    }
 
+    QTimer::singleShot(10, this, [this] { waitStream(); });
 }
 
 void MainWin::cancelViewingStream()
@@ -1032,6 +1063,12 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
             displayError( "not found drive: " + driveKey );
             return;
         }
+        
+        if ( ! CheckReplicatorEndpointDialog::check( drive->getReplicators() ) )
+        {
+            return;
+        }
+
 
         m_onChainClient->getBlockchainEngine()->getDriveById( drive->getKey(), [streamInfo=streamInfo,this] (xpx_chain_sdk::Drive xpxDrive, bool, std::string, std::string)
         {

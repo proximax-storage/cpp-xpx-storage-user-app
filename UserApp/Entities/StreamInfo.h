@@ -114,6 +114,7 @@ struct StreamInfo
     std::string             m_annotation;
     uint64_t                m_secsSinceEpoch = 0;   // start time
     std::string             m_uniqueFolderName;
+    std::string             m_channelKey;
     
     uint64_t                m_totalStreamSizeBytes = 0;
     uint64_t                m_totalStreamStreamDurationSeconds = 0;

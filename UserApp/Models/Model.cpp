@@ -304,6 +304,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
             // update valid channel
             it->second.setCreating(false);
             it->second.setDeleting(false);
+            it->second.setReplicators(remoteChannel.data.shardReplicators);
             validChannels.insert({ it->first, it->second });
         }
     }
