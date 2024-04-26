@@ -43,7 +43,7 @@ class TransactionsEngine : public QObject
                                    const std::vector<xpx_chain_sdk::Address>& addresses,
                                    const std::vector<std::string>& replicators,
                                    const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
-        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, const QString& nodeBootPrivateKey, uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
         std::array<uint8_t, 32> getLatestModificationId(const std::array<uint8_t, 32> &driveId);
