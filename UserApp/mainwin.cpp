@@ -3402,5 +3402,9 @@ void MainWin::onRunContract() {
 //}
 
 
-
+void MainWin::on_m_streamingTabView_currentChanged(int index)
+{
+    wizardUpdateStreamAnnouncementTable();
+    wizardUpdateArchiveTable();
+}
 

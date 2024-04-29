@@ -1492,7 +1492,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -2120,6 +2120,13 @@
                  <widget class="QPushButton" name="m_wizardRemoveAnnouncementBtn">
                   <property name="text">
                    <string>-</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_wizardCopyStreamLinkBtn">
+                  <property name="text">
+                   <string>Copy Stream Link</string>
                   </property>
                  </widget>
                 </item>

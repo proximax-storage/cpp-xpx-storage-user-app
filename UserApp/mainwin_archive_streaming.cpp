@@ -28,7 +28,6 @@ void MainWin::initWizardArchiveStreaming()
     connect(ui->m_deleteArchivedStreamBtn, &QPushButton::released, this, [this] ()
         {
             auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardArchiveTable);
-            qDebug() << "CCCP" << streamInfo->m_title;
             if( !streamInfo )
             {
                 displayError( "Select stream!" );

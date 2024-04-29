@@ -382,7 +382,8 @@ std::vector<StreamInfo> MainWin::readStreamInfoList( const Drive&  driveInfo )
         }
     }
 
-    // read from FsTree
+    // read from FsTree: emit fsTreeReceived(driveId, infoHash.array(), fsTree);
+
     {
         auto fsTree = driveInfo.getFsTree();
         auto* folder = fsTree.getFolderPtr( STREAM_ROOT_FOLDER_NAME );

@@ -7,17 +7,13 @@
 #include "./ui_mainwin.h"
 //
 #include "Entities/StreamInfo.h"
-#include "qstandardpaths.h"
+#include "qclipboard.h"
 
 void MainWin::initWizardStreaming()
 {
     ui->m_wizardStreamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_wizardStreamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
-
-    ui->m_wizardStreamAnnouncementTable->hide();
-
-    ui->m_wizardStartSelectedStreamBtn->hide();
-    ui->m_wizardRemoveAnnouncementBtn->hide();
+    hideWizardUi();
 
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsRemoved, this
@@ -177,6 +173,26 @@ void MainWin::initWizardStreaming()
                 }
             }
         }, Qt::QueuedConnection);
+
+    connect(ui->m_wizardCopyStreamLinkBtn, &QPushButton::released, this, [this] ()
+        {
+            if ( auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable); streamInfo )
+            {
+                std::string link = streamInfo->getLink();
+
+                QClipboard* clipboard = QApplication::clipboard();
+                if ( !clipboard ) {
+                    qWarning() << LOG_SOURCE << "bad clipboard";
+                    return;
+                }
+
+                clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+                if ( clipboard->supportsSelection() ) {
+                    clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
+                }
+            }
+        }, Qt::QueuedConnection);
+
 }
 
 QString MainWin::selectedDriveKeyInWizardTable(QTableWidget* table) const
@@ -262,7 +278,16 @@ std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo(QTableWidget* table)
         try
         {
             int rowIndex = rowList.constFirst().row();
-            QString streamTitle = table->item(rowIndex, 0)->text(); // stream name
+            int columnIndex = -1;
+            for (int i = 0; i < ui->m_wizardStreamAnnouncementTable->columnCount(); ++i) {
+                QString columnName = ui->m_wizardStreamAnnouncementTable->horizontalHeaderItem(i)->text();
+                if (columnName == "Stream Title") {
+                    columnIndex = i;
+                    break;
+                }
+            }
+
+            QString streamTitle = table->item(rowIndex, columnIndex)->text(); // stream name
             auto streamInfoList = wizardReadStreamInfoList();
             for(auto& e : streamInfoList)
             {
@@ -286,117 +311,29 @@ std::vector<StreamInfo> MainWin::wizardReadStreamInfoList()
     auto drives = m_model->getDrives();
     for( auto& driveInfo : drives )
     {
-    // read from disc (.videos/*/info)
-    {
-        auto path = fs::path( driveInfo.second.getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME);
-
-        std::error_code ec;
-        if ( ! fs::is_directory(path,ec) )
-        {
-            return streamInfoVector;
-        }
-
-        for( const auto& entry : std::filesystem::directory_iterator( path ) )
-        {
-            const auto entryName = entry.path().filename().string();
-            if ( entry.is_directory() )
-            {
-                auto fileName = fs::path(path.string() + "/" + entryName + "/" + STREAM_INFO_FILE_NAME);
-                try
-                {
-                    std::ifstream is( fileName, std::ios::binary );
-                    cereal::PortableBinaryInputArchive iarchive(is);
-                    StreamInfo streamInfo;
-                    iarchive( streamInfo );
-                    streamInfoVector.push_back( streamInfo );
-                }
-                catch (...) {
-                    qWarning() << "Internal error: cannot read stream annotation: " << fileName.c_str();
-                }
-            }
-        }
-    }
-
-    // read from FsTree
-    {
-        auto fsTree = driveInfo.second.getFsTree();
-        auto* folder = fsTree.getFolderPtr( STREAM_ROOT_FOLDER_NAME );
-        if ( folder != nullptr )
-        {
-            const auto& streamFolders = folder->childs();
-            for( const auto& [key,child] : streamFolders )
-            {
-                if ( sirius::drive::isFolder(child) )
-                {
-                    const auto& streamFolder = sirius::drive::getFolder( child );
-                    auto it = std::find_if( streamInfoVector.begin()
-                                           , streamInfoVector.end()
-                                           , [&streamFolder] (const StreamInfo& streamInfo)
-                                           {
-                                               return streamFolder.name() == streamInfo.m_uniqueFolderName;
-                                           });
-                    if ( it != streamInfoVector.end() )
-                    {
-                        auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/deleted" );
-                        if ( child!=nullptr )
-                        {
-                            if ( sirius::drive::isFile(*child) )
-                            {
-                                it->m_streamingStatus = StreamInfo::ss_deleted;
-                            }
-                            else
-                            {
-                                displayError( "Internal error: " + streamFolder.name() + "'HLS/deleted' is a folder", "Must be a file." );
-                            }
-                        }
-                        else
-                        {
-                            fsTree.dbgPrint();
-                            qDebug() << QString::fromStdString( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
-                            auto* child = fsTree.getEntryPtr( STREAM_ROOT_FOLDER_NAME "/" + streamFolder.name() + "/HLS/" PLAYLIST_FILE_NAME );
-                            if ( child!=nullptr )
-                            {
-                                if ( sirius::drive::isFile(*child) )
-                                {
-                                    it->m_streamingStatus = StreamInfo::ss_finished;
-                                }
-                                else
-                                {
-                                    displayError( "Internal error: " + streamFolder.name() + "'HLS/" PLAYLIST_FILE_NAME "' is a folder", "Must be a file." );
-                                }
-                            }
-                            else
-                            {
-                                it->m_streamingStatus = StreamInfo::ss_announced;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    std::sort( streamInfoVector.begin(), streamInfoVector.end(),
-              [] ( const StreamInfo& a, const StreamInfo& b ) -> bool
-              {
-                  return a.m_secsSinceEpoch > b.m_secsSinceEpoch;
-              });
+        auto infoVector = readStreamInfoList(driveInfo.second);
+        streamInfoVector.insert(streamInfoVector.end(), infoVector.begin(), infoVector.end());
     }
     return streamInfoVector;
+}
+
+void MainWin::hideWizardUi()
+{
+    ui->m_wizardStreamAnnouncementTable->hide();
+    ui->m_wizardStartSelectedStreamBtn->hide();
+    ui->m_wizardRemoveAnnouncementBtn->hide();
+    ui->m_wizardCopyStreamLinkBtn->hide();
 }
 
 void MainWin::onRowsRemovedAnnouncements()
 {
     if (ui->m_wizardStreamAnnouncementTable->rowCount() == 0)
     {
-        ui->m_wizardStreamAnnouncementTable->hide();
-        ui->m_wizardStartSelectedStreamBtn->hide();
-        ui->m_wizardRemoveAnnouncementBtn->hide();
+        hideWizardUi();
     }
     else
     {
-        ui->m_wizardStreamAnnouncementTable->show();
-        ui->m_wizardRemoveAnnouncementBtn->show();
+        onRowsInsertedAnnouncements();
     }
 }
 
@@ -405,4 +342,5 @@ void MainWin::onRowsInsertedAnnouncements()
     ui->m_wizardStreamAnnouncementTable->show();
     ui->m_wizardStartSelectedStreamBtn->show();
     ui->m_wizardRemoveAnnouncementBtn->show();
+    ui->m_wizardCopyStreamLinkBtn->show();
 }

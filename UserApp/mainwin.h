@@ -259,6 +259,9 @@ private slots:
     void onRowsRemovedArchive();
     void onRowsInsertedAnnouncements();
     void onRowsInsertedArchive();
+    void hideWizardUi();
+
+    void on_m_streamingTabView_currentChanged(int index);
 
 public:
     // if private key is not set it will be 'true'
