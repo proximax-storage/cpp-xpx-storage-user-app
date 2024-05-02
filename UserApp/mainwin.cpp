@@ -833,7 +833,7 @@ void MainWin::drivesInitialized()
         addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
         addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
         if (boost::iequals(key, m_model->currentDriveKey()) ) {
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+            ui->m_drivePath->setText( "Path: /" );
             updateDriveWidgets(drive.getKey(), drive.getState(), false);
         }
     }
@@ -843,7 +843,7 @@ void MainWin::drivesInitialized()
         m_model->setCurrentDriveKey(driveKey);
         setCurrentDriveOnUi(driveKey);
         const auto drive = m_model->getDrives()[driveKey];
-        ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+        ui->m_drivePath->setText( "Path: /" );
         updateDriveWidgets(drive.getKey(), drive.getState(), false);
     } else if (!m_model->getDrives().empty()) {
         setCurrentDriveOnUi(m_model->currentDriveKey());
@@ -1109,7 +1109,7 @@ void MainWin::setupDriveFsTable()
         if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr )
         {
             drivePtr->setLastOpenedPath(m_driveTableModel->currentPath());
-            std::string path = drivePtr->getLocalFolder();
+            std::string path = "";
             if(drivePtr->getLastOpenedPath().size() > 1)
             {
                 for(int i = 1; i < drivePtr->getLastOpenedPath().size(); ++i)
@@ -1830,7 +1830,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 setCurrentDriveOnUi(drive->getKey());
                 updateDriveStatusOnUi(*drive);
 
-                ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
+                ui->m_drivePath->setText( "Path: /" );
                 lockDrive();
 
                 updateDriveView();
@@ -1921,7 +1921,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
 
                 if (m_model->getDrives().empty()) {
                     lockDrive();
-                    ui->m_drivePath->setText("Path:");
+                    ui->m_drivePath->setText( "Path: /" );
 
                     if (m_settings->m_isDriveStructureAsTree) {
                         m_driveTreeModel->updateModel(false);
@@ -2516,7 +2516,7 @@ void MainWin::onCurrentDriveChanged( int index )
             updateDriveWidgets(drive->getKey(), drive->getState(), false);
             updateDriveView();
             updateDiffView();
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
+            ui->m_drivePath->setText( "Path: /" );
         } else {
             qWarning() << "MainWin::onCurrentDriveChanged. Drive not found (Invalid pointer to drive)";
             m_driveTableModel->setFsTree({}, {} );
@@ -2657,7 +2657,7 @@ void MainWin::setupDrivesTab()
                         driveInfo->setLocalFolderExists(true);
                         updateDriveWidgets(driveInfo->getKey(), driveInfo->getState(), false);
                         m_model->saveSettings();
-                        ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
+                        ui->m_drivePath->setText( "Path: /" );
                     }
                 }
             }
