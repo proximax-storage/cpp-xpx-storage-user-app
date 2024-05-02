@@ -1,4 +1,4 @@
-#include "Dialogs/AddDriveDialog.h"
+#include "Dialogs/AddDriveStreamDialog.h"
 #include "Dialogs/AskDriveWizardDialog.h"
 #include "Dialogs/WizardAddStreamAnnounceDialog.h"
 #include "Entities/Account.h"
@@ -32,7 +32,7 @@ void MainWin::initWizardStreaming()
                 auto rc = dial.exec();
                 if (rc == QMessageBox::Ok)
                 {
-                    AddDriveDialog dialog( m_onChainClient,m_model, this );
+                    AddDriveStreamDialog dialog( m_onChainClient,m_model, this );
                     auto rc = dialog.exec();
                     if (rc == QDialog::Accepted)
                     {
@@ -103,6 +103,13 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
+            if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+                 rowList.count() == 0 )
+            {
+                displayError( "No announcements!" );
+                return;
+            }
+
             std::string driveKey = selectedDriveKeyInWizardTable(ui->m_wizardStreamAnnouncementTable).toStdString();
             auto* drive = m_model->findDrive(driveKey);
             if ( drive == nullptr )
@@ -134,9 +141,16 @@ void MainWin::initWizardStreaming()
     connect(ui->m_wizardRemoveAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
             auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable);
-            if( !streamInfo )
+            if (!streamInfo.has_value() )
             {
-                displayError( "Select stream!" );
+                displayError( "Select announcement!" );
+                return;
+            }
+
+            if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+                rowList.count() == 0 )
+            {
+                displayError( "No announcements!" );
                 return;
             }
 
@@ -176,21 +190,32 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardCopyStreamLinkBtn, &QPushButton::released, this, [this] ()
         {
-            if ( auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable); streamInfo )
+            auto streamInfo = wizardSelectedStreamInfo(ui->m_wizardStreamAnnouncementTable);
+            if (!streamInfo.has_value() )
             {
-                std::string link = streamInfo->getLink();
-
-                QClipboard* clipboard = QApplication::clipboard();
-                if ( !clipboard ) {
-                    qWarning() << LOG_SOURCE << "bad clipboard";
-                    return;
-                }
-
-                clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
-                if ( clipboard->supportsSelection() ) {
-                    clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
-                }
+                displayError( "Select announcement!" );
+                return;
             }
+
+            if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+                rowList.count() == 0 )
+            {
+                displayError( "No announcements!" );
+                return;
+            }
+
+            std::string link = streamInfo->getLink();
+            QClipboard* clipboard = QApplication::clipboard();
+            if ( !clipboard ) {
+                qWarning() << LOG_SOURCE << "bad clipboard";
+                return;
+            }
+
+            clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+            if ( clipboard->supportsSelection() ) {
+                clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
+            }
+
         }, Qt::QueuedConnection);
 
 }
@@ -279,8 +304,8 @@ std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo(QTableWidget* table)
         {
             int rowIndex = rowList.constFirst().row();
             int columnIndex = -1;
-            for (int i = 0; i < ui->m_wizardStreamAnnouncementTable->columnCount(); ++i) {
-                QString columnName = ui->m_wizardStreamAnnouncementTable->horizontalHeaderItem(i)->text();
+            for (int i = 0; i < table->columnCount(); ++i) {
+                QString columnName = table->horizontalHeaderItem(i)->text();
                 if (columnName == "Stream Title") {
                     columnIndex = i;
                     break;
@@ -296,8 +321,6 @@ std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo(QTableWidget* table)
                     return e;
                 }
             }
-            // int rowIndex = rowList.constFirst().row();
-            // return streamInfoList.at(rowIndex);
         }
         catch (...) {}
     }

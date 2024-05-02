@@ -1,13 +1,10 @@
 #include "Dialogs/AddDriveDialog.h"
-#include "Dialogs/AskDriveWizardDialog.h"
-#include "Dialogs/WizardAddStreamAnnounceDialog.h"
 #include "Entities/Account.h"
 #include "Models/Model.h"
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 #include <QDebug>
 #include "Entities/StreamInfo.h"
-#include "qstandardpaths.h"
 
 void MainWin::initWizardArchiveStreaming()
 {
@@ -34,6 +31,13 @@ void MainWin::initWizardArchiveStreaming()
                 return;
             }
 
+            if ( auto rowList = ui->m_wizardArchiveTable->selectionModel()->selectedRows();
+                rowList.count() == 0 )
+            {
+                displayError( "No announcements!" );
+                return;
+            }
+
             QMessageBox msgBox;
             const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
             msgBox.setText(message);
@@ -56,7 +60,6 @@ void MainWin::initWizardArchiveStreaming()
                         sirius::drive::ActionList actionList;
                         auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
-
                         //
                         // Start modification
                         //

@@ -1109,6 +1109,16 @@ void MainWin::setupDriveFsTable()
         if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr )
         {
             drivePtr->setLastOpenedPath(m_driveTableModel->currentPath());
+            std::string path = drivePtr->getLocalFolder();
+            if(drivePtr->getLastOpenedPath().size() > 1)
+            {
+                for(int i = 1; i < drivePtr->getLastOpenedPath().size(); ++i)
+                {
+                    path = path + "/" + drivePtr->getLastOpenedPath()[i];
+                }
+            }
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(path) );
+
             qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << drivePtr->getLastOpenedPath();
         }
     }, Qt::QueuedConnection);
