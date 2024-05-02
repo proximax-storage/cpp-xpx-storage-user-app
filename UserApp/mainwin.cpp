@@ -1110,15 +1110,16 @@ void MainWin::setupDriveFsTable()
         {
             drivePtr->setLastOpenedPath(m_driveTableModel->currentPath());
             std::string path = "";
-            if( drivePtr->getLastOpenedPath().size() <= 1 )
+            auto pathVector = m_driveTableModel->currentPath();
+            if ( pathVector.size() <= 1 )
             {
                 path = "/";
             }
             else
             {
-                for(int i = 1; i < drivePtr->getLastOpenedPath().size(); ++i)
+                for( size_t i=1;  i<pathVector.size(); i++ )
                 {
-                    path = path + "/" + drivePtr->getLastOpenedPath()[i];
+                    path = path + "/" + pathVector[i];
                 }
             }
             ui->m_drivePath->setText( "Path: " + QString::fromStdString(path) );
