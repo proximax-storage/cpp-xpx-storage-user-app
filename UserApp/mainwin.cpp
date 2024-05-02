@@ -1103,8 +1103,13 @@ void MainWin::setupDriveFsTable()
         if (!index.isValid()) {
             return;
         }
+        
+        if ( index.row()==0 && m_driveTableModel->currentPath().size()==1 )
+        {
+            return;
+        }
 
-        int toBeSelectedRow = m_driveTableModel->onDoubleClick(index.row() );
+        int toBeSelectedRow = m_driveTableModel->onDoubleClick( index.row() );
         ui->m_driveFsTableView->selectRow( toBeSelectedRow );
         if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr )
         {
