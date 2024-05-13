@@ -1562,14 +1562,14 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
         qCritical() << "TransactionsEngine::streamFinish::addStatusNotifiers: " << errorCode.message().c_str();
     });
 
-    streamFinishNotifier.set([this, hash, streamId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
+    streamFinishNotifier.set([this, hash, driveKeyHex, streamId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
         if (boost::iequals(notification.meta.hash, hash)) {
             qInfo() << "TransactionsEngine::streamFinish:: confirmed streamFinishTransaction, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
 
-            emit streamFinishConfirmed(streamId);
+            emit streamFinishConfirmed(driveKeyHex, streamId);
         }
     });
 

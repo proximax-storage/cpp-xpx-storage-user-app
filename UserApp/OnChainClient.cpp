@@ -449,8 +449,20 @@ void OnChainClient::initConnects() {
         emit streamStartTransactionFailed(streamId, errorText);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishConfirmed, this, [this](auto streamId) {
+    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishConfirmed, this, [this](auto driveId, auto streamId) {
         emit streamFinishTransactionConfirmed(streamId);
+
+        mpBlockchainEngine->getDriveById(driveId.toStdString(),[this, driveId](auto drive, auto isSuccess, auto message, auto code)
+        {
+            if (!isSuccess)
+            {
+                qWarning() << "OnChainClient::streamFinishConfirmed. Drive key: " << drive.data.multisig.c_str() << " Message: " << message.c_str() << " code: " << code.c_str();
+                emit newError(ErrorType::Network, message.c_str());
+                return;
+            }
+
+            emit downloadFsTreeDirect(driveId.toStdString(), drive.data.rootHash);
+        });
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::streamFinishFailed, this, [this](auto streamId, auto errorText) {
