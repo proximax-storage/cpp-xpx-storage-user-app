@@ -885,14 +885,19 @@ void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
         }
         
         auto replicators = drive->getReplicators();
-        if ( !replicators.empty() )
+        if ( replicators.empty() )
+        {
+            //TODO
+            displayError("TODO: replicators.empty()");
+        }
+        else
         {
             std::array<uint8_t, 32> channelKey{};
-            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), channelKey.size(), channelKey );
+            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), 2*channelKey.size(), channelKey );
             
             auto viewerSession = gStorageEngine->getViewerSession();
             viewerSession->startWatchingLiveStream( streamId, streamerKey, driveKey, channelKey, replicators,
-                                                   fs::path("/streamRootFolder"), fs::path("/workFolder"),
+                                                   fs::path("/Users/alex/000/000-Downloads/streamRootFolder"), fs::path("todo_streamFolder"),
                                                    []( std::string addr ){}, {},
                                                    []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
             return;
