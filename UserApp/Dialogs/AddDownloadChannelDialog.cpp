@@ -15,7 +15,8 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
-    mpModel(model)
+    mpModel(model),
+    m_forStreaming( !driveKey.empty() )
 {
     ui->setupUi(this);
 
@@ -128,7 +129,8 @@ AddDownloadChannelDialog::~AddDownloadChannelDialog()
     delete ui;
 }
 
-void AddDownloadChannelDialog::accept() {
+void AddDownloadChannelDialog::startCreateChannel()
+{
     std::vector<std::array<uint8_t, 32>> listOfAllowedPublicKeys;
 
     if (listOfAllowedPublicKeys.empty()) {
@@ -153,6 +155,10 @@ void AddDownloadChannelDialog::accept() {
                                         0,
                                         callback); // feedback is unused for now
 
+}
+
+void AddDownloadChannelDialog::accept() {
+    startCreateChannel();
     QDialog::accept();
 }
 

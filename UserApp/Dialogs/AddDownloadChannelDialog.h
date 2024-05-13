@@ -31,8 +31,9 @@ public:
     void accept() override;
     void reject() override;
     void displayInfo();
-
+    
 private:
+    void startCreateChannel();
     void validate();
 
 private:
@@ -42,6 +43,8 @@ private:
     Model*                          mpModel;
     QMessageBox*                    helpMessageBox = nullptr;
 
+    bool                            m_forStreaming = false;
+    QDialog*                        m_channelIsCreatingDailog = nullptr;
 };
 
 #endif // ADDDOWNLOADCHANNELDIALOG_H

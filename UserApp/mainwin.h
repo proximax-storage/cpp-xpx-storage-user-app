@@ -8,10 +8,12 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QProcess>
+#include <QTableWidget>
 //#include "Worker.h"
 //#include "OnChainClient.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
+#include "Dialogs/ModalDialog.h"
 #include "drive/FlatDrive.h"
 
 class OnChainClient;
@@ -35,6 +37,7 @@ class Model;
 class Settings;
 class ContractDeploymentData;
 class WizardAddStreamAnnounceDialog;
+class AddDownloadChannelDialog;
 
 struct StreamInfo;
 
@@ -56,6 +59,8 @@ public:
     static MainWin* instance() { return m_instance; }
     
     void init();
+    
+    void displayError(  const std::string& text, const std::string& informativeText = "" );
 
     void addChannel( const std::string&              channelName,
                      const std::string&              channelKey,
@@ -148,23 +153,40 @@ private:
     void onDeployContractTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
     void onDeployContractApprovalTransactionFailed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
-    QString currentStreamingDriveKey() const;
-    Drive* currentStreamingDrive() const;
+    QString selectedDriveKeyInTable() const;
+    Drive*  selectedDriveInTable() const;
+    QString selectedDriveKeyInWizardTable(QTableWidget* table) const;
+    Drive*  selectedDriveInWizardTable(QTableWidget* table) const;
+    Drive*  currentStreamingDrive() const;
+
     void initStreaming();
     void initWizardStreaming();
+    void initWizardArchiveStreaming();
+
     void connectToStreamingTransactions();
-    StreamInfo* selectedStreamInfo() const; // could return nullptr
-    void updateStreamerTable( Drive& );
-    void readStreamingAnnotations( const Drive& );
+
+    std::optional<StreamInfo> selectedStreamInfo(); // could return nullptr
+    std::optional<StreamInfo> wizardSelectedStreamInfo(QTableWidget* table); // could return nullptr
+
+    void updateStreamerTable( const Drive& drive );
+    void wizardUpdateStreamAnnouncementTable();
+    void wizardUpdateArchiveTable();
+
+    std::vector<StreamInfo> readStreamInfoList( const Drive& );
+    std::vector<StreamInfo> wizardReadStreamInfoList();
+
     void onFsTreeReceivedForStreamAnnotations( const Drive& drive );
     void updateViewerCBox();
 
     void startViewingStream();
-    void updateCreateChannelStatusForVieweing( const DownloadChannel& channel );
-    void startViewingStream2();
+    void startViewingStream2( DownloadChannel& channel );
+    bool startViewingApprovedStream( DownloadChannel& channel );
+    void downloadApprovedChunk( std::string dnChannelKey, std::string destFolder, int chunkIndex );
     void cancelViewingStream();
 
+    void waitStream();
     void onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
+                                 const sirius::Key&             streamerKey,
                                  bool                           isStreaming,
                                  const std::array<uint8_t,32>&  streamId );
 
@@ -231,7 +253,15 @@ private slots:
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
-    void on_m_wizardAddStreamAnnouncementBtn_clicked();
+    //void on_m_wizardAddStreamAnnouncementBtn_clicked();
+
+    void onRowsRemovedAnnouncements();
+    void onRowsRemovedArchive();
+    void onRowsInsertedAnnouncements();
+    void onRowsInsertedArchive();
+    void hideWizardUi();
+
+    void on_m_streamingTabView_currentChanged(int index);
 
 public:
     // if private key is not set it will be 'true'
@@ -274,5 +304,8 @@ private:
     std::shared_ptr<CustomLogsRedirector>     mpCustomCerrorStream;
     std::shared_ptr<CustomLogsRedirector>     mpCustomClogStream;
 
-    WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog;
+    // For notification (when drive is created)
+    //WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
+    
+    ModalDialog*                              m_modalDialog = nullptr;
 };

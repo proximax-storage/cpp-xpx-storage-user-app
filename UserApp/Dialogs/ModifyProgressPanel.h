@@ -11,10 +11,12 @@ namespace Ui {
     class Frame;
 }
 
+class Drive;
+
 class ModifyProgressPanel : public QFrame
 {
 public:
-    enum Mode { drive_modification, streaming };
+    enum Mode { drive_modification, create_announcement, is_streaming };
     
 public:
 
@@ -29,6 +31,8 @@ public:
     void setCanceling();
     void setCanceled();
     void setWaitingStreamStart();
+
+    void updateStreamingMode( Drive* );
 
     void updateUploadedDataAmount(const uint64_t amount, uint64_t replicatorNumber);
 

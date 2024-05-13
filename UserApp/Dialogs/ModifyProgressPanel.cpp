@@ -44,7 +44,7 @@ ModifyProgressPanel::ModifyProgressPanel( Model* model, int x, int y, QWidget* p
 
     connect( ui->m_cancel, &QPushButton::released, this, [this]
     {
-        if ( m_mode == drive_modification )
+        if ( m_mode == drive_modification || m_mode == create_announcement || m_mode == is_streaming )
         {
             auto drive = mp_model->currentDrive();
             if (drive) {
@@ -99,7 +99,11 @@ void ModifyProgressPanel::setRegistering()
     {
         ui->m_statusLabel->setText( "Modification is registering ");
     }
-    else
+    else if ( m_mode == create_announcement )
+    {
+        ui->m_statusLabel->setText( "Announcement is registering ");
+    }
+    else if ( m_mode == is_streaming )
     {
         ui->m_statusLabel->setText( "Stream is registering ");
     }
@@ -107,7 +111,7 @@ void ModifyProgressPanel::setRegistering()
     ui->m_statusIcon->setScaledContents(true);
     ui->m_statusIcon->setMovie(m_loading);
     ui->m_cancel->setText("Cancel");
-    ui->m_cancel->setEnabled(m_mode == streaming ); //todo always 'false'
+    ui->m_cancel->setEnabled(false);
     m_loading->start();
     ui->m_statusLabel->adjustSize();
     adjustSize();
@@ -119,10 +123,13 @@ void ModifyProgressPanel::setUploading()
     {
         ui->m_statusLabel->setText( "Modification is uploading ");
     }
-    else
+    else if ( m_mode == create_announcement )
     {
-        ui->m_statusLabel->setText( "Is streaming ...");
-        ui->m_cancel->setText("Finish streaming");
+        ui->m_statusLabel->setText( "Announcement is uploading ");
+    }
+    else if ( m_mode == is_streaming )
+    {
+        ui->m_statusLabel->setText( "Stream is running ...");
     }
 
     ui->m_cancel->setEnabled(true);
@@ -139,9 +146,15 @@ void ModifyProgressPanel::setApproving()
         ui->m_requestedSize->setText("100%");
         m_lastUploadedDataAmount = 100;
     }
-    else
+    else if ( m_mode == create_announcement )
     {
-        ui->m_statusLabel->setText( "Stream is finishing...");
+        ui->m_statusLabel->setText( "Announcement is completing ");
+        ui->m_requestedSize->setText("100%");
+        m_lastUploadedDataAmount = 100;
+    }
+    else if ( m_mode == is_streaming )
+    {
+        ui->m_statusLabel->setText( "Finish stream is completing ");
     }
 
     ui->m_cancel->setEnabled(false);
@@ -156,7 +169,11 @@ void ModifyProgressPanel::setApproved()
     {
         ui->m_statusLabel->setText("Modification completed!");
     }
-    else
+    else if ( m_mode == create_announcement )
+    {
+        ui->m_statusLabel->setText("Announcement is created!");
+    }
+    else if ( m_mode == is_streaming )
     {
         ui->m_statusLabel->setText("Stream completed!");
     }
@@ -175,9 +192,13 @@ void ModifyProgressPanel::setFailed()
     {
         ui->m_statusLabel->setText( "Modification failed!");
     }
-    else
+    else if ( m_mode == create_announcement )
     {
-        ui->m_statusLabel->setText( "Stream failed!");
+        ui->m_statusLabel->setText("Announcement failed!");
+    }
+    else if ( m_mode == is_streaming )
+    {
+        ui->m_statusLabel->setText("Finish stream failed!");
     }
     ui->m_cancel->setText("Close");
     ui->m_statusIcon->clear();
@@ -194,9 +215,13 @@ void ModifyProgressPanel::setCanceling()
     {
         ui->m_statusLabel->setText( "Modification is canceling ");
     }
-    else
+    else if ( m_mode == create_announcement )
     {
-        ui->m_statusLabel->setText( "Stream is canceling...");
+        ui->m_statusLabel->setText("Announcement is canceling ");
+    }
+    else if ( m_mode == is_streaming )
+    {
+        ui->m_statusLabel->setText("Stream  is canceling ");
     }
     ui->m_statusIcon->clear();
     ui->m_statusIcon->setScaledContents(true);
@@ -214,9 +239,13 @@ void ModifyProgressPanel::setCanceled()
     {
         ui->m_statusLabel->setText("Modification canceled!");
     }
-    else
+    else if ( m_mode == create_announcement )
     {
-        ui->m_statusLabel->setText("Stream canceled!");
+        ui->m_statusLabel->setText("Announcement canceled ");
+    }
+    else if ( m_mode == is_streaming )
+    {
+        ui->m_statusLabel->setText("Stream canceled ");
     }
     ui->m_cancel->setText("Ok");
     ui->m_statusIcon->clear();
@@ -237,6 +266,18 @@ void ModifyProgressPanel::setWaitingStreamStart()
     ui->m_cancel->setEnabled(true);
     m_loading->start();
     adjustSize();
+}
+
+void ModifyProgressPanel::updateStreamingMode( Drive* drive )
+{
+    if ( drive->getStreamingStatus() == Drive::ss_creating_announce )
+    {
+        m_mode = create_announcement;
+    }
+    if ( drive->getStreamingStatus() == Drive::ss_streaming )
+    {
+        m_mode = is_streaming;
+    }
 }
 
 void ModifyProgressPanel::updateUploadedDataAmount(const uint64_t amount, uint64_t replicatorNumber)

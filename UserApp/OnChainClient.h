@@ -53,7 +53,7 @@ class OnChainClient : public QObject
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);
-        void replicatorOnBoarding(const QString& replicatorPrivateKey, uint64_t capacityMB, bool isExists);
+        void replicatorOnBoarding(const QString& replicatorPrivateKey, const QString& nodeBootPrivateKey, uint64_t capacityMB, bool isExists);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey);
 
         void calculateUsedSpaceOfReplicator(const QString& publicKey, std::function<void(uint64_t index, uint64_t usedSpace)> callback);

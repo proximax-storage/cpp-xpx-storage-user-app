@@ -10,6 +10,7 @@
 #include "drive/FsTree.h"
 #include "drive/ActionList.h"
 #include "types.h"
+#include "Common.h"
 
 //#define USE_CLIENT_SESSION
 
@@ -28,6 +29,7 @@ class Model;
 struct StreamInfo;
 
 using StreamStatusResponseHandler = std::function<void( const sirius::drive::DriveKey&  driveKey,
+                                                        const sirius::Key&              streamerKey,
                                                         bool                            isStreaming,
                                                         const std::array<uint8_t,32>&   streamId )>;
 
@@ -65,14 +67,19 @@ public:
                          const std::string&                     dnChannelId,
                          const std::array<uint8_t,32>&          fsTreeHash);
 
-    sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&  channelInfo,
-                                           const std::array<uint8_t,32>&  fileHash);
+    sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&        channelInfo,
+                                           const std::array<uint8_t,32>&        fileHash );
 
     void removeTorrentSync( sirius::drive::InfoHash infoHash );
     
     void requestStreamStatus( const std::array<uint8_t,32>& driveKey,
                               const sirius::drive::ReplicatorList&,
                               StreamStatusResponseHandler streamStatusResponseHandler );
+    
+    std::shared_ptr<sirius::drive::ViewerSession>  getViewerSession()
+    {
+        return m_session;
+    }
 
     void init(const sirius::crypto::KeyPair&  keyPair,
               const std::string&              address,

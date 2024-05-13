@@ -305,6 +305,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
             }
         }
 
+        //TODO: semaphore
         for( auto& dnInfo: downloads )
         {
             if ( dnInfo.getHandle() == handle )
@@ -330,6 +331,33 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     message.append(ec.message().c_str());
                     message.append(")");
                     emit downloadError(message);
+                }
+                
+                if ( dnInfo.isForViewing() )
+                {
+                    fs::rename( srcPath, destPath, ec );
+                    
+                    if ( ec )
+                    {
+                        qWarning() << "onDownloadCompleted: Cannot save viewing file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+
+                        QString message;
+                        message.append("Cannot save viewing file: ");
+                        message.append(destPath.filename().string().c_str());
+                        message.append(" (");
+                        message.append(ec.message().c_str());
+                        message.append(")");
+                        emit downloadError(message);
+                    }
+
+                    dnInfo.setCompleted(true);
+
+                    if ( dnInfo.getNotification() )
+                    {
+                        (*dnInfo.getNotification())( dnInfo );
+                    }
+
+                    return;
                 }
 
                 int index = 0;
@@ -383,7 +411,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                     qDebug() << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     fs::copy( srcPath, destPath, ec );
                 }
-
+                
                 if ( ec )
                 {
                     qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();

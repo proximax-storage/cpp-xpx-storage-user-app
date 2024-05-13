@@ -6,7 +6,7 @@
 
 namespace Ui { class WizardAddStreamAnnounceDialog; }
 
-class WizardAddStreamAnnounceDialog : public QDialog
+class  WizardAddStreamAnnounceDialog : public QDialog
 {
 public:
     Q_OBJECT
@@ -23,6 +23,11 @@ public:
     void reject() override;
 
     std::string streamFolderName() const { return mUniqueFolderName; };
+    void onDriveCreated( const Drive* drive );
+    void addDrivesToCBox();
+
+private slots:
+    void on_m_driveSelection_activated(int index);
 
 private:
     void validate();

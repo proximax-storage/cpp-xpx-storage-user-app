@@ -137,7 +137,7 @@ void ReplicatorOnBoardingDialog::accept() {
     mpModel->addMyReplicator(r);
     mpModel->saveSettings();
 
-    mpOnChainClient->replicatorOnBoarding(ui->replicatorKey->text(), ui->capacity->text().toLongLong(), isReplicatorExists());
+    mpOnChainClient->replicatorOnBoarding(ui->replicatorKey->text(), ui->nodeBootKey->text(), ui->capacity->text().toLongLong(), isReplicatorExists());
     QDialog::accept();
 }
 

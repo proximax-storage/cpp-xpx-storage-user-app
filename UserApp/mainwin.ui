@@ -205,11 +205,11 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
-        <string>Downloads</string>
+        <string>Dbg-Download</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
@@ -515,6 +515,11 @@
          </layout>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Download</string>
+       </attribute>
       </widget>
       <widget class="QWidget" name="m_drivesTab">
        <attribute name="title">
@@ -1487,7 +1492,7 @@
         <item>
          <widget class="QTabWidget" name="m_streamingTabView">
           <property name="currentIndex">
-           <number>2</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="viewerTab">
            <attribute name="title">
@@ -1846,6 +1851,11 @@
                   <string>Title</string>
                  </property>
                 </column>
+                <column>
+                 <property name="text">
+                  <string>Finished</string>
+                 </property>
+                </column>
                </widget>
               </item>
               <item>
@@ -1962,14 +1972,14 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
-               <spacer name="verticalSpacer_6">
+               <spacer name="horizontalSpacer_33">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
-                  <width>20</width>
-                  <height>40</height>
+                  <width>40</width>
+                  <height>20</height>
                  </size>
                 </property>
                </spacer>
@@ -1989,15 +1999,25 @@
                   </property>
                  </spacer>
                 </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_32">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_30">
                 <item>
-                 <widget class="QPushButton" name="m_wizardStartStreamingBtn">
-                  <property name="text">
-                   <string>Start streaming without announcement</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_16">
+                 <spacer name="horizontalSpacer_29">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
@@ -2012,7 +2032,192 @@
                 <item>
                  <widget class="QPushButton" name="m_wizardAddStreamAnnouncementBtn">
                   <property name="text">
-                   <string>Add Stream Announcement</string>
+                   <string>Create Stream Announcement</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_31">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_34">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QTableWidget" name="m_wizardStreamAnnouncementTable">
+                <property name="showGrid">
+                 <bool>true</bool>
+                </property>
+                <attribute name="horizontalHeaderVisible">
+                 <bool>true</bool>
+                </attribute>
+                <attribute name="horizontalHeaderCascadingSectionResizes">
+                 <bool>false</bool>
+                </attribute>
+                <attribute name="horizontalHeaderDefaultSectionSize">
+                 <number>300</number>
+                </attribute>
+                <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+                 <bool>false</bool>
+                </attribute>
+                <attribute name="horizontalHeaderStretchLastSection">
+                 <bool>false</bool>
+                </attribute>
+                <attribute name="verticalHeaderCascadingSectionResizes">
+                 <bool>false</bool>
+                </attribute>
+                <attribute name="verticalHeaderStretchLastSection">
+                 <bool>false</bool>
+                </attribute>
+                <column>
+                 <property name="text">
+                  <string>Planned Start Time</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Stream Title</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Drive</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_31">
+                <item>
+                 <widget class="QPushButton" name="m_wizardStartSelectedStreamBtn">
+                  <property name="text">
+                   <string>Start Streaming</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_wizardRemoveAnnouncementBtn">
+                  <property name="text">
+                   <string>-</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_wizardCopyStreamLinkBtn">
+                  <property name="text">
+                   <string>Copy Stream Link</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_35">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="ArchiveTab">
+           <attribute name="title">
+            <string>Stream Archive</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_20">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_18">
+              <item>
+               <spacer name="verticalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>30</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QTableWidget" name="m_wizardArchiveTable">
+                <attribute name="horizontalHeaderDefaultSectionSize">
+                 <number>200</number>
+                </attribute>
+                <column>
+                 <property name="text">
+                  <string>Stream Title</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Drive</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_38">
+                <item>
+                 <spacer name="horizontalSpacer_16">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="m_deleteArchivedStreamBtn">
+                  <property name="text">
+                   <string>Delete Stream</string>
                   </property>
                  </widget>
                 </item>
@@ -2032,26 +2237,7 @@
                </layout>
               </item>
               <item>
-               <spacer name="verticalSpacer_5">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::MinimumExpanding</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>10</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QTableWidget" name="tableWidget"/>
-              </item>
-              <item>
-               <spacer name="verticalSpacer">
+               <spacer name="verticalSpacer_6">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>

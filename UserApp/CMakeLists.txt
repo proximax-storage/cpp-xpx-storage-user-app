@@ -16,6 +16,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 
+option(CLIENT_APP "hides dht_pkt logs" ON)
+
 if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "-pthread -fno-strict-aliasing")
 endif ()

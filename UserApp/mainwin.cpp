@@ -3,6 +3,7 @@
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
+#include "Dialogs/WizardAddStreamAnnounceDialog.h"
 #include "Entities/Settings.h"
 #include "Models/Model.h"
 #include "Models/FsTreeTableModel.h"
@@ -47,6 +48,7 @@
 #include <QToolTip>
 #include <QTcpServer>
 #include <QFileDialog>
+#include <QStyledItemDelegate>
 #include <filesystem>
 
 #include <boost/algorithm/string.hpp>
@@ -67,6 +69,18 @@ MainWin::MainWin(QWidget *parent)
 {
     ui->setupUi(this);
     m_instance = this;
+}
+
+void MainWin::displayError( const std::string& text, const std::string& informativeText )
+{
+    QMessageBox msgBox;
+    msgBox.setText( QString::fromStdString( text ) );
+    if ( !informativeText.empty() )
+    {
+        msgBox.setInformativeText( QString::fromStdString(informativeText) );
+    }
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.exec();
 }
 
 void MainWin::init()
@@ -414,7 +428,7 @@ void MainWin::init()
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
-    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::streaming );
+    m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::create_announcement );
     m_streamingProgressPanel->setVisible(false);
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
@@ -437,7 +451,7 @@ void MainWin::init()
         }
 
         // Drives tab
-        if (index == 1) {
+        if (index == 2) {
             if (m_model->getDrives().empty() || !m_model->isDrivesLoaded()) {
                 lockDrive();
             } else {
@@ -447,11 +461,11 @@ void MainWin::init()
 
         //auto drive = m_model->currentDrive();
         auto* drive = m_model->findDriveByNameOrPublicKey( ui->m_driveCBox->currentText().toStdString() );
-        if (index == 1 && !m_model->getDrives().empty() && drive) {
+        if (index == 2 && !m_model->getDrives().empty() && drive) {
             updateDriveWidgets(drive->getKey(), drive->getState(),false);
         }
         else if (auto drive = m_model->findDriveByNameOrPublicKey(ui->m_streamDriveCBox->currentText().toStdString());
-                 drive && index == 4 && ui->m_streamingTabView->currentIndex() == 1 )
+                 drive && index == 5 && (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2))
         {
             updateDriveWidgets( drive->getKey(), drive->getState(), false );
         }
@@ -784,6 +798,7 @@ void MainWin::init()
 
     initStreaming();
     initWizardStreaming();
+    initWizardArchiveStreaming();
 
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
@@ -792,10 +807,10 @@ void MainWin::init()
     // }
 
     // Hide contracts
-    ui->tabWidget->setTabVisible( 3, false );
+    ui->tabWidget->setTabVisible( 4, false );
 
     // Hide streaming
-    ui->tabWidget->setTabVisible( 4, false );
+    ui->tabWidget->setTabVisible( 5, true );
 
     doUpdateBalancePeriodically();
 }
@@ -818,7 +833,7 @@ void MainWin::drivesInitialized()
         addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
         addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
         if (boost::iequals(key, m_model->currentDriveKey()) ) {
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+            ui->m_drivePath->setText( "Path: /" );
             updateDriveWidgets(drive.getKey(), drive.getState(), false);
         }
     }
@@ -828,7 +843,7 @@ void MainWin::drivesInitialized()
         m_model->setCurrentDriveKey(driveKey);
         setCurrentDriveOnUi(driveKey);
         const auto drive = m_model->getDrives()[driveKey];
-        ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive.getLocalFolder()));
+        ui->m_drivePath->setText( "Path: /" );
         updateDriveWidgets(drive.getKey(), drive.getState(), false);
     } else if (!m_model->getDrives().empty()) {
         setCurrentDriveOnUi(m_model->currentDriveKey());
@@ -1088,12 +1103,32 @@ void MainWin::setupDriveFsTable()
         if (!index.isValid()) {
             return;
         }
+        
+        if ( index.row()==0 && m_driveTableModel->currentPath().size()==1 )
+        {
+            return;
+        }
 
-        int toBeSelectedRow = m_driveTableModel->onDoubleClick(index.row() );
+        int toBeSelectedRow = m_driveTableModel->onDoubleClick( index.row() );
         ui->m_driveFsTableView->selectRow( toBeSelectedRow );
         if ( auto* drivePtr = m_model->currentDrive(); drivePtr != nullptr )
         {
             drivePtr->setLastOpenedPath(m_driveTableModel->currentPath());
+            std::string path = "";
+            auto pathVector = m_driveTableModel->currentPath();
+            if ( pathVector.size() <= 1 )
+            {
+                path = "/";
+            }
+            else
+            {
+                for( size_t i=1;  i<pathVector.size(); i++ )
+                {
+                    path = path + "/" + pathVector[i];
+                }
+            }
+            ui->m_drivePath->setText( "Path: " + QString::fromStdString(path) );
+
             qDebug() << LOG_SOURCE << "m_lastOpenedPath: " << drivePtr->getLastOpenedPath();
         }
     }, Qt::QueuedConnection);
@@ -1533,6 +1568,8 @@ void MainWin::setCurrentDriveOnUi(const std::string& driveKey)
 
 void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState)
 {
+    qInfo() << ">> MainWin::onDriveStateChanged. Drive key: " << driveKey << " state: " << getPrettyDriveState(state);
+
     auto drive = m_model->findDrive(driveKey);
     if (!drive) {
         qWarning() << "MainWin::onDriveStateChanged. Drive not found!";
@@ -1546,8 +1583,14 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
     if ( boost::iequals( driveKey, ui->m_streamDriveCBox->currentData().toString().toStdString() ) )
     {
         streamingDrive = drive;
+        m_streamingProgressPanel->updateStreamingMode(drive);
     }
-    
+
+    bool isPanelVisible =   ( isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 2 )
+                            || ( ( streamingDrive != nullptr ) &&
+                                   ( ui->tabWidget->currentIndex() == 5 &&
+                                   ( ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 )));
+
     // Update drive progress panels
     switch(state)
     {
@@ -1558,9 +1601,13 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case canceled:
         case uploading:
         {
-            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
-                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) ) {
-
+            if ( !isPanelVisible )
+            {
+                m_modifyProgressPanel->setVisible(false);
+                m_streamingProgressPanel->setVisible(false);
+            }
+            else
+            {
                 if ( !drive->isStreaming() )
                 {
                     m_modifyProgressPanel->setVisible(true);
@@ -1570,7 +1617,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 else
                 {
                     m_modifyProgressPanel->setVisible(false);
-                    m_streamingProgressPanel->setVisible( state==registering ); // todo 'true'
+                    m_streamingProgressPanel->setVisible( true );
                 }
                 
                 switch(state)
@@ -1583,12 +1630,6 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                         unlockDrive();
                 }
             }
-            else
-            {
-                m_modifyProgressPanel->setVisible(false);
-                m_streamingProgressPanel->setVisible(false);
-            }
-
             break;
         }
         case no_modifications:
@@ -1598,13 +1639,12 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case deleted:
         default:
         {
-            if ( (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1) ||
-                (ui->tabWidget->currentIndex() == 4 && ui->m_streamingTabView->currentIndex() == 1 && streamingDrive != nullptr) )
+            if ( !isPanelVisible )
             {
                 m_modifyProgressPanel->setVisible(false);
                 m_streamingProgressPanel->setVisible(false);
-                unlockDrive();
             }
+            unlockDrive();
         }
     }
 
@@ -1613,6 +1653,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
         case no_modifications:
         {
             updateDriveStatusOnUi(*drive);
+            drive->resetStreamingStatus();
 
             if (isCurrentDrive(drive)) {
                 calculateDiffAsync([this](auto, auto){
@@ -1622,7 +1663,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 updateDriveView();
             }
 
-            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 1)  {
+            if (isCurrentDrive(drive) && ui->tabWidget->currentIndex() == 2)  {
                 loadBalance();
             }
 
@@ -1658,6 +1699,8 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                     else
                     {
                         m_streamingProgressPanel->setApproved();
+                        wizardUpdateStreamAnnouncementTable();
+                        wizardUpdateArchiveTable();
                     }
                 }
 
@@ -1669,17 +1712,17 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
 
                 if ( itIsNewState )
                 {
-                    if ( !drive->isStreaming() )
+                    if ( drive->getStreamingStatus() == Drive::ss_streaming )
                     {
                         QString message;
-                        message.append("Your modification was applied. Drive: ");
+                        message.append("Your streaming was applied. Drive: ");
                         message.append(drive->getName().c_str());
                         addNotification(message);
                     }
                     else
                     {
                         QString message;
-                        message.append("Your streaming was applied. Drive: ");
+                        message.append("Your modification was applied. Drive: ");
                         message.append(drive->getName().c_str());
                         addNotification(message);
                     }
@@ -1797,7 +1840,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                 setCurrentDriveOnUi(drive->getKey());
                 updateDriveStatusOnUi(*drive);
 
-                ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
+                ui->m_drivePath->setText( "Path: /" );
                 lockDrive();
 
                 updateDriveView();
@@ -1888,7 +1931,7 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
 
                 if (m_model->getDrives().empty()) {
                     lockDrive();
-                    ui->m_drivePath->setText("Path:");
+                    ui->m_drivePath->setText( "Path: /" );
 
                     if (m_settings->m_isDriveStructureAsTree) {
                         m_driveTreeModel->updateModel(false);
@@ -2001,6 +2044,7 @@ void MainWin::addChannel( const std::string&              channelName,
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
     qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey << " drive key: " << driveKey;
+    
     auto channel = m_model->findChannel( channelKey );
     if ( channel )
     {
@@ -2015,6 +2059,11 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         addNotification(message);
 
         unlockChannel(channelKey);
+        
+        if ( m_model->channelFsTreeHandler() )
+        {
+            (*m_model->channelFsTreeHandler())( true, channelKey, driveKey );
+        }
     } else
     {
         qWarning() << "MainWin::onChannelCreationConfirmed. Unknown channel " << channelKey;
@@ -2027,12 +2076,17 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
+        if ( m_model->channelFsTreeHandler() )
+        {
+            (*m_model->channelFsTreeHandler())( false, "", channel->getDriveKey() );
+        }
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
         showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         unlockChannel(channelKey);
         removeEntityFromUi(ui->m_channels, channelKey);
         m_model->removeChannel(channelKey);
+
     } else {
         qWarning() << "MainWin::onChannelCreationFailed. Unknown channel: " << channelKey;
     }
@@ -2051,6 +2105,12 @@ void MainWin::onDriveCreationConfirmed( const std::string &driveKey )
         const QString message = QString::fromStdString("Drive '" + drive->getName() + "' created successfully.");
         showNotification(message);
         addNotification(message);
+
+        if ( m_modalDialog )
+        {
+            m_modalDialog->closeModal( true );
+        }
+
     } else {
         qWarning() << "MainWin::onDriveCreationConfirmed. Unknown drive: " << driveKey;
     }
@@ -2066,6 +2126,12 @@ void MainWin::onDriveCreationFailed(const std::string& driveKey, const std::stri
         showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
         addNotification(message);
         drive->updateDriveState(unconfirmed);
+
+        if ( m_modalDialog )
+        {
+            m_modalDialog->closeModal( false );
+        }
+
     } else {
         qWarning() << "MainWin::onDriveCreationFailed. Unknown drive: " << driveKey;
     }
@@ -2460,7 +2526,7 @@ void MainWin::onCurrentDriveChanged( int index )
             updateDriveWidgets(drive->getKey(), drive->getState(), false);
             updateDriveView();
             updateDiffView();
-            ui->m_drivePath->setText( "Path: " + QString::fromStdString(drive->getLocalFolder()));
+            ui->m_drivePath->setText( "Path: /" );
         } else {
             qWarning() << "MainWin::onCurrentDriveChanged. Drive not found (Invalid pointer to drive)";
             m_driveTableModel->setFsTree({}, {} );
@@ -2547,8 +2613,7 @@ void MainWin::setupDrivesTab()
     ui->m_diffTableView->horizontalHeader()->hide();
     ui->m_diffTableView->horizontalHeader()->setStretchLastSection(true);
     ui->m_diffTableView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-
-
+    
     auto menu = new PopupMenu(ui->m_moreDrivesBtn, this);
     auto renameAction = new QAction("Rename", this);
     menu->addAction(renameAction);
@@ -2602,7 +2667,7 @@ void MainWin::setupDrivesTab()
                         driveInfo->setLocalFolderExists(true);
                         updateDriveWidgets(driveInfo->getKey(), driveInfo->getState(), false);
                         m_model->saveSettings();
-                        ui->m_drivePath->setText( "Path: " + QString::fromStdString(driveInfo->getLocalFolder()));
+                        ui->m_drivePath->setText( "Path: /" );
                     }
                 }
             }
@@ -2813,7 +2878,6 @@ void MainWin::updateDownloadChannelStatusOnUi(const DownloadChannel& channel)
 {
     const int index = ui->m_channels->findData(QVariant::fromValue(QString::fromStdString(channel.getKey())), Qt::UserRole, Qt::MatchFixedString);
     if (index != -1) {
-        updateCreateChannelStatusForVieweing( channel );
         if (channel.isCreating()) {
             ui->m_channels->setItemText(index, QString::fromStdString(channel.getName() + "(creating...)"));
         } else if (channel.isDeleting()) {
@@ -2837,10 +2901,11 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
         } else if (drive.getState() == no_modifications) {
             ui->m_driveCBox->setItemText(index, QString::fromStdString(drive.getName()));
             ui->m_streamDriveCBox->setItemText(index, QString::fromStdString(drive.getName()));
-            if(m_wizardAddStreamAnnounceDialog)
-            {
-                // m_wizardAddStreamAnnounceDialog.onDriveCreated(drive.getKey());
-            }
+
+//            if ( m_modalDialog )
+//            {
+//                m_modalDialog->closeModal();
+//            }
         }
     }
 }
@@ -3025,7 +3090,7 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         drive->setDownloadingFsTree(false);
         drive->setRootHash(fsTreeHash);
         drive->setFsTree(fsTree);
-
+        
         if (isCurrentDrive(drive)) {
             calculateDiffAsync([this](auto, auto){
                 updateDiffView();
@@ -3357,8 +3422,9 @@ void MainWin::onRunContract() {
 //}
 
 
-void MainWin::on_m_wizardAddStreamAnnouncementBtn_clicked()
+void MainWin::on_m_streamingTabView_currentChanged(int index)
 {
-
+    wizardUpdateStreamAnnouncementTable();
+    wizardUpdateArchiveTable();
 }
 

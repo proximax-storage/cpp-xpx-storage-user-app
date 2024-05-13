@@ -1,17 +1,18 @@
+//#include "Dialogs/ui_AddDriveStreamDialog.h"
 #include "Models/Model.h"
-#include "AddDriveDialog.h"
-#include "./ui_AddDriveDialog.h"
+#include "AddDriveStreamDialog.h"
+#include "./ui_AddDriveStreamDialog.h"
 
 #include <QFileDialog>
 #include <QRegularExpression>
 #include <QToolTip>
 
-AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
+AddDriveStreamDialog::AddDriveStreamDialog( OnChainClient* onChainClient,
                                 Model* model,
                                 QWidget *parent
                                ) :
     QDialog( parent ),
-    ui( new Ui::AddDriveDialog() ),
+    ui( new Ui::AddDriveStreamDialog() ),
     mp_onChainClient(onChainClient),
     mp_model(model)
 {
@@ -66,9 +67,17 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 
     connect(ui->m_localDriveFolder, &QLineEdit::textChanged, this, [this](auto text){
         bool isDirExists = QDir(text).exists();
-        if (text.trimmed().isEmpty() || !isDirExists) {
+        bool isDirEmpty = QDir(text).isEmpty();
+        if (text.trimmed().isEmpty() || !isDirExists || !isDirEmpty) {
 #ifndef __APPLE__
             QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exist!"), nullptr, {}, 3000);
+            if(!isDirEmpty)
+            {
+                QMessageBox msgBox;
+                msgBox.setText( "Folder must be empty!" );
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.exec();
+            }
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 #endif
             ui->m_localDriveFolder->setProperty("is_valid", true);
@@ -90,14 +99,14 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     });
 
     ui->buttonBox->disconnect(this);
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDriveDialog::accept);
-    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveDialog::reject);
-    connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDriveDialog  ::displayInfo);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AddDriveStreamDialog::accept);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AddDriveStreamDialog::reject);
+    connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDriveStreamDialog::displayInfo);
 
 
     bool isDriveExists = mp_model->isDriveWithNameExists(ui->m_driveName->text());
     if (!nameTemplate.match(ui->m_driveName->text()).hasMatch()) {
-        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr(isDriveExists ? "Drive with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
+        QToolTip::showText(ui->m_driveName->mapToGlobal(QPoint(0, 15)), tr(isDriveExists ? "Drive with the same name already exists!" : "Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_driveName->setProperty("is_valid", false);
     } else {
@@ -128,9 +137,20 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
 
     bool isDirExists = QDir(ui->m_localDriveFolder->text().trimmed()).exists();
     if (ui->m_localDriveFolder->text().trimmed().isEmpty() || !isDirExists) {
-        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exists!"), nullptr, {}, 3000);
+        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirExists ? "Invalid path!" : "Folder does not exist!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_localDriveFolder->setProperty("is_valid", true);
+    } else {
+        QToolTip::hideText();
+        ui->m_localDriveFolder->setProperty("is_valid", true);
+        validate();
+    }
+
+    bool isDirEmpty = QDir(ui->m_localDriveFolder->text().trimmed()).isEmpty();
+    if (ui->m_localDriveFolder->text().trimmed().isEmpty() || !isDirEmpty) {
+        QToolTip::showText(ui->m_localDriveFolder->mapToGlobal(QPoint(0, 15)), tr(isDirEmpty ? "Invalid folder!" : "Folder is not empty!"), nullptr, {}, 3000);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_localDriveFolder->setProperty("is_valid", false);
     } else {
         QToolTip::hideText();
         ui->m_localDriveFolder->setProperty("is_valid", true);
@@ -148,7 +168,7 @@ AddDriveDialog::AddDriveDialog( OnChainClient* onChainClient,
     setTabOrder(ui->m_localFolderBtn, ui->buttonBox);
 }
 
-AddDriveDialog::~AddDriveDialog()
+AddDriveStreamDialog::~AddDriveStreamDialog()
 {
     if(helpMessageBox) {
         helpMessageBox->hide();
@@ -158,7 +178,7 @@ AddDriveDialog::~AddDriveDialog()
     delete ui;
 }
 
-void AddDriveDialog::validate() {
+void AddDriveStreamDialog::validate() {
     if (ui->m_driveName->property("is_valid").toBool() &&
         ui->m_replicatorNumber->property("is_valid").toBool() &&
         ui->m_size->property("is_valid").toBool() &&
@@ -169,7 +189,7 @@ void AddDriveDialog::validate() {
     }
 }
 
-void AddDriveDialog::accept()
+void AddDriveStreamDialog::accept()
 {
     const auto path = ui->m_localDriveFolder->text();
     if ( path.isEmpty() )
@@ -212,12 +232,12 @@ void AddDriveDialog::accept()
     QDialog::accept();
 }
 
-void AddDriveDialog::reject()
+void AddDriveStreamDialog::reject()
 {
     QDialog::reject();
 }
 
-void AddDriveDialog::displayInfo()
+void AddDriveStreamDialog::displayInfo()
 {
     if(helpMessageBox) {
         helpMessageBox->hide();
@@ -232,6 +252,7 @@ void AddDriveDialog::displayInfo()
                       "You can't sore more data than that. <br><br>"
                       "<b>Local Drive folder</b> is the folder associated with the drive. "
                       "Changes in this folder are reflected in the Drives tab (right panel)."
+                      "Make sure your local folder is <b>empty</b> when creating a drive."
                       "</html>";
     helpMessageBox = new QMessageBox(this);
     helpMessageBox->setWindowTitle("Help");

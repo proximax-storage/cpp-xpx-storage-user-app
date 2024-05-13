@@ -103,7 +103,7 @@
       <item>
        <widget class="QPushButton" name="m_finishBtn">
         <property name="text">
-         <string>FinishStreming</string>
+         <string>Finish Streaming</string>
         </property>
        </widget>
       </item>

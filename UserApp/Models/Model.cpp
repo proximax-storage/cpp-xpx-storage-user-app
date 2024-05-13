@@ -304,6 +304,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
             // update valid channel
             it->second.setCreating(false);
             it->second.setDeleting(false);
+            it->second.setReplicators(remoteChannel.data.shardReplicators);
             validChannels.insert({ it->first, it->second });
         }
     }
@@ -404,6 +405,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             auto lastModificationId = remoteDrive.data.activeDataModifications[lastModificationIndex - 1].dataModification.id;
 
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId ));
+            currentDrive.setIsStreaming();
             currentDrive.updateDriveState(registering);
             currentDrive.updateDriveState(uploading);
         }
@@ -623,6 +625,11 @@ void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::d
             channel.second.setFsTree(fsTree);
             channel.second.setFsTreeHash(fsTreeHash);
             channel.second.setDownloadingFsTree(false);
+
+            if ( m_channelFsTreeHandler )
+            {
+                (*m_channelFsTreeHandler)( true, channel.second.getKey(), channel.second.getDriveKey() );
+            }
         }
     }
 }
@@ -647,8 +654,8 @@ uint64_t Model::lastModificationSize() const
     return gStorageEngine->m_lastModifySize;
 }
 
-sirius::drive::lt_handle Model::downloadFile(const std::string &channelIdStr,
-                                             const std::array<uint8_t, 32> &fileHash)
+sirius::drive::lt_handle Model::downloadFile(const std::string&              channelIdStr,
+                                             const std::array<uint8_t, 32>&  fileHash )
 {
     std::array<uint8_t,32> channelId{ 0 };
     sirius::utils::ParseHexStringIntoContainer( channelIdStr.c_str(), 64, channelId );
@@ -675,6 +682,7 @@ void Model::calcDiff( Drive& drive )
         Diff::calcLocalDriveInfoR( *localDrive, drive.getLocalFolder(), true, &driveKey );
         sirius::drive::ActionList actionList;
         Diff diff( *localDrive, drive.getLocalFolder(), drive.getFsTree(), actionList);
+        drive.getFsTree().dbgPrint();
 
         drive.setActionsList(actionList);
         drive.setLocalDriveItem(std::move(localDrive));
@@ -698,9 +706,21 @@ const std::vector<StreamInfo>& Model::streamerAnnouncements() const
     return m_settings->config().m_streams;
 }
 
-std::vector<StreamInfo>& Model::streamerAnnouncements()
+std::vector<StreamInfo>& Model::getStreams()
 {
     return m_settings->config().m_streams;
+}
+
+Drive* Model::currentStreamingDrive() const
+{
+    for( auto& [key,drive] : m_settings->config().m_drives )
+    {
+        if ( drive.isStreaming() )
+        {
+            return &drive;
+        }
+    }
+    return nullptr;
 }
 
 void Model::addStreamRef( const StreamInfo& streamInfo )

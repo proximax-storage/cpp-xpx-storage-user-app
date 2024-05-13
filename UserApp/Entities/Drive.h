@@ -75,7 +75,7 @@ class Drive
         void setActionsList(const sirius::drive::ActionList& actions);
 
         std::array<uint8_t, 32> getModificationHash() const;
-        void setModificationHash(const std::array<uint8_t, 32>& modificationHash, bool isStreaming = false );
+        void setModificationHash(const std::array<uint8_t, 32>& modificationHash );
 
         DriveState getState() const;
 
@@ -86,8 +86,11 @@ class Drive
     
         endpoint_list getEndpointReplicatorList() const;
 
-        bool isStreaming() const { return m_isStreaming; }
-        void setIsStreaming( bool isStreaming ) { m_isStreaming = isStreaming; }
+        bool isStreaming() const { return m_streamStatus != ss_no_stream; }
+        void setCreatingStreamAnnouncement() { m_streamStatus = ss_creating_announce; }
+        void setIsStreaming() { m_streamStatus = ss_streaming; }
+        void resetStreamingStatus() { m_streamStatus = ss_no_stream; }
+        auto getStreamingStatus() const { return m_streamStatus; }
 
         void updateDriveState(DriveState state);
 
@@ -121,8 +124,12 @@ class Drive
         std::shared_ptr<LocalDriveItem> m_localDrive;
         sirius::drive::ActionList m_actionList;
         std::array<uint8_t, 32> m_currentModificationHash;
-        bool m_isStreaming = false;
         DriveState m_driveState;
+
+public:
+        enum StreamStatus { ss_no_stream, ss_creating_announce, ss_streaming };
+private:
+        StreamStatus m_streamStatus = ss_no_stream;
 };
 
 

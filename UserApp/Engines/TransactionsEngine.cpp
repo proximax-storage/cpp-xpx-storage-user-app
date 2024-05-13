@@ -7,6 +7,7 @@
 #include <QDirIterator>
 #include <drive/ModificationStatus.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <random>
 
 TransactionsEngine::TransactionsEngine(std::shared_ptr<xpx_chain_sdk::IClient> client,
                                        std::shared_ptr<xpx_chain_sdk::Account> account,
@@ -727,17 +728,34 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         unsubscribeFromReplicators(replicators, approvalNotifierId, statusNotifierId); });
 }
 
-void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKey, const QString& nodeBootPrivateKey, const uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
     auto replicatorAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = replicatorPrivateKey.toStdString()](auto reason, auto param) {
         xpx_chain_sdk::Key key;
         ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
         return xpx_chain_sdk::PrivateKey(key.data(), key.size());
     }, mpChainClient->getConfig().NetworkId);
 
+    auto nodeAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey = nodeBootPrivateKey.toStdString()](auto reason, auto param) {
+        xpx_chain_sdk::Key key;
+        ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
+        return xpx_chain_sdk::PrivateKey(key.data(), key.size());
+    }, mpChainClient->getConfig().NetworkId);
+
+	std::random_device   dev;
+	std::seed_seq        seed({dev(), dev(), dev(), dev()});
+	std::mt19937         rng(seed);
+	auto message = xpx_chain_sdk::Hash256();
+	std::generate( message.begin(), message.end(), [&rng]{
+		return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
+	});
+	xpx_chain_sdk::Ed25519 builder;
+	builder.add(xpx_chain_sdk::RawBuffer(message));
+	auto messageSignature = builder.sign(nodeAccount->keyPair());
+
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> onBoardingNotifier;
 
-    auto replicatorOnBoardingTransaction = xpx_chain_sdk::CreateReplicatorOnboardingTransaction(xpx_chain_sdk::Amount(capacityMB),
+    auto replicatorOnBoardingTransaction = xpx_chain_sdk::CreateReplicatorOnboardingTransaction(xpx_chain_sdk::Amount(capacityMB), nodeAccount->publicKey(), message, messageSignature,
                                                                                                 std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     replicatorAccount->signTransaction(replicatorOnBoardingTransaction.get());
 
@@ -772,7 +790,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
     });
 
     const std::string hash = rawHashToHex(replicatorOnBoardingTransaction->hash()).toStdString();
-    qInfo() << "TransactionsEngine::replicatorOnBoarding. Replicator private key: " << replicatorPrivateKey << " capacity(MB): " << capacityMB << " transaction id: " << hash;
+    qInfo() << "TransactionsEngine::replicatorOnBoarding. capacity(MB): " << capacityMB << " transaction id: " << hash;
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(replicatorAccount->address(), { onBoardingNotifier },
                                                                [this, data = replicatorOnBoardingTransaction->binary()]() { announceTransaction(data); },

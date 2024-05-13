@@ -192,7 +192,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
 }
 
 sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,32>& channelId,
-                                                      const std::array<uint8_t,32>& fileHash)
+                                                      const std::array<uint8_t,32>& fileHash )
 {
     qDebug() << LOG_SOURCE << "downloadFile(): " << sirius::drive::toString(fileHash).c_str();
 
@@ -218,12 +218,12 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
     auto handle = m_session->download( sirius::drive::DownloadContext(
                                     sirius::drive::DownloadContext::file_from_drive,
 
-                                    []( sirius::drive::download_status::code code,
+                                    [=]( sirius::drive::download_status::code code,
                                         const sirius::drive::InfoHash& infoHash,
                                         const std::filesystem::path filePath,
                                         size_t downloaded,
                                         size_t fileSize,
-                                        const std::string& /*errorText*/)
+                                        const std::string& errorText )
                                     {
 //                                        qDebug() << LOG_SOURCE << "file downloaded: " << downloaded << "/" << fileSize << " " << std::string(filePath).c_str();
 //                                        QMetaObject::invokeMethod( &MainWin::instanse(), "onDownloadCompleted", Qt::QueuedConnection,

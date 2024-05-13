@@ -231,7 +231,7 @@ void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, uint64_t capacityMB, bool isExists) {
+void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, const QString& nodeBootPrivateKey, uint64_t capacityMB, bool isExists) {
     auto keyPair = sirius::crypto::KeyPair::FromPrivate(sirius::crypto::PrivateKey::FromString(replicatorPrivateKey.toStdString()));
     auto publicKey = rawHashToHex(keyPair.publicKey().array());
     if (isExists) {
@@ -255,8 +255,8 @@ void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, ui
         });
     } else {
 
-        auto deadlineCallback = [this, replicatorPrivateKey, capacityMB](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-            mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, capacityMB, deadline);
+        auto deadlineCallback = [this, replicatorPrivateKey, nodeBootPrivateKey, capacityMB](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->replicatorOnBoarding(replicatorPrivateKey, nodeBootPrivateKey, capacityMB, deadline);
         };
 
         mpBlockchainEngine->getTransactionDeadline(deadlineCallback);

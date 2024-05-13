@@ -22,11 +22,13 @@
 #include "Entities/CachedReplicator.h"
 #include "Entities/StreamInfo.h"
 #include "Models/DriveContractModel.h"
+#include "Common.h"
 
 namespace fs = std::filesystem;
 
 class Settings;
 struct LocalDriveItem;
+class AddDownloadChannelDialog;
 
 enum ViewerStatus
 {
@@ -178,11 +180,17 @@ class Model : public QObject
         // Streaming
         //
         const std::vector<StreamInfo>&  streamerAnnouncements() const;
-        std::vector<StreamInfo>&        streamerAnnouncements();
+        std::vector<StreamInfo>&        getStreams();
+    
+        Drive*                          currentStreamingDrive() const;
 
         //
         // Viewing
         //
+        using FsTreeHandler = std::optional<std::function<void( bool success, const std::string& channelKey, const std::string& driveKey )>>;
+        void                            setChannelFsTreeHandler( FsTreeHandler handler ) { m_channelFsTreeHandler = handler; }
+        void                            resetChannelFsTreeHandler() { m_channelFsTreeHandler.reset(); }
+        FsTreeHandler                   channelFsTreeHandler() { return m_channelFsTreeHandler; }
         void                            addStreamRef( const StreamInfo& streamInfo );
         void                            deleteStreamRef( int index );
         const std::vector<StreamInfo>&  streamRefs() const;
@@ -203,6 +211,8 @@ class Model : public QObject
         Settings* m_settings;
         uint64_t m_loadedDrivesCount;
         uint64_t m_outdatedDriveNumber;
+    
+        FsTreeHandler   m_channelFsTreeHandler = {};
     
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;

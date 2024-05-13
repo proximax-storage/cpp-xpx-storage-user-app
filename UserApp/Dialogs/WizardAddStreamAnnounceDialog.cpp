@@ -21,13 +21,39 @@ WizardAddStreamAnnounceDialog::WizardAddStreamAnnounceDialog( OnChainClient* onC
     m_model(model),
     mDriveKey(driveKey)
 {
+    if ( m_model->currentStreamingDrive() != nullptr )
+    {
+        QMessageBox msgBox;
+        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        msgBox.setText(message);
+        msgBox.setStandardButtons( QMessageBox::Close );
+        msgBox.exec();
+        return;
+    }
+
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
     setModal(true);
+    if(auto currentDrive = model->findDrive(driveKey); currentDrive->getState() == DriveState::creating)
+    {
+        ui->m_driveSelection->setEnabled(false);
+        ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(false);
+        ui->m_driveSelection->setPlaceholderText("drive creating...");
+    }
+    else
+    {
+        addDrivesToCBox();
+        // ui->m_driveSelection->setCurrentIndex(
+        //     ui->m_driveSelection->findData(QVariant::fromValue(mDriveKey))
+        //     );
+        //mDriveKey = ui->m_driveSelection->itemData(0).toString().toStdString();
+    }
 
     ui->m_errorText->setText("");
 
     ui->m_dateTime->setDateTime( QDateTime::currentDateTime().addSecs(180) );
+
+
 
     // Title
     connect(ui->m_title, &QLineEdit::textChanged, this, [this](auto text){
@@ -160,6 +186,16 @@ void WizardAddStreamAnnounceDialog::validate()
 
 void WizardAddStreamAnnounceDialog::accept()
 {
+    if ( m_model->currentStreamingDrive() != nullptr )
+    {
+        QMessageBox msgBox;
+        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        msgBox.setText(message);
+        msgBox.setStandardButtons( QMessageBox::Close );
+        msgBox.exec();
+        return;
+    }
+    
     auto* drive = m_model->findDrive( mDriveKey );
     if ( drive == nullptr )
     {
@@ -250,6 +286,7 @@ void WizardAddStreamAnnounceDialog::accept()
     //
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
     mp_onChainClient->applyDataModification(driveKeyHex, actionList);
+    drive->setCreatingStreamAnnouncement();
     drive->updateDriveState(registering);
     
     QDialog::accept();
@@ -259,3 +296,41 @@ void WizardAddStreamAnnounceDialog::reject()
 {
     QDialog::reject();
 }
+
+// used when drive is created from wizard
+//
+void WizardAddStreamAnnounceDialog::onDriveCreated( const Drive* drive )
+{
+    QTimer::singleShot(10, this, [=, this]
+    {
+        ui->m_driveSelection->setEnabled(true);
+        ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);
+        ui->m_driveSelection->setPlaceholderText("");
+        ui->m_driveSelection->insertItem(0,QString::fromStdString(drive->getName())
+                                , QString::fromStdString(drive->getKey()));
+        mDriveKey = drive->getKey();
+    });
+}
+
+void WizardAddStreamAnnounceDialog::addDrivesToCBox()
+{
+    for (const auto& [key, drive] : m_model->getDrives())
+    {
+        int index = ui->m_driveSelection->findData(QVariant::fromValue(QString::fromStdString(key))
+                                                  , Qt::UserRole
+                                                  , Qt::MatchFixedString);
+        if (index == -1)
+        {
+            ui->m_driveSelection->addItem(QString::fromStdString(drive.getName())
+                                        , QString::fromStdString(drive.getKey()));
+            ui->m_driveSelection->model()->sort(0);
+        }
+    }
+}
+
+void WizardAddStreamAnnounceDialog::on_m_driveSelection_activated(int index)
+{
+    QVariant driveKey = ui->m_driveSelection->itemData(index);
+    mDriveKey = driveKey.toString().toStdString();
+}
+
