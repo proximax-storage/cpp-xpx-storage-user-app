@@ -122,7 +122,7 @@ class TransactionsEngine : public QObject
 
         void streamStartConfirmed(const std::array<uint8_t, 32> &streamId);
         void streamStartFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
-        void streamFinishConfirmed(const QString& driveId, const std::array<uint8_t, 32> &streamId);
+        void streamFinishConfirmed(const QString& driveId, const std::array<uint8_t, 32> &streamId, const QString& streamStructureCdi);
         void streamFinishFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
         void streamPaymentConfirmed(const std::array<uint8_t, 32> &streamId);
         void streamPaymentFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
