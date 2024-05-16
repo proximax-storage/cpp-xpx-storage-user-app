@@ -183,17 +183,21 @@ void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveI
 }
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
-                                          const sirius::drive::ActionList &actions) {
+                                          const sirius::drive::ActionList &actions)
+{
     mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
                                      [this, driveId, actions]
-                                     (auto drive, auto isSuccess, auto message, auto code) {
-        if (!isSuccess) {
+                                     (auto drive, auto isSuccess, auto message, auto code)
+    {
+        if (!isSuccess)
+        {
             qWarning() << "OnChainClient::applyDataModification. Message: " << message.c_str() << " code: " << code.c_str();
             emit newError(ErrorType::Network, message.c_str());
             return;
         }
 
-        if (drive.data.replicators.empty()) {
+        if (drive.data.replicators.empty())
+        {
             emit dataModificationTransactionFailed(driveId, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, " received empty replicators list");
             emit newError(ErrorType::InvalidData, "OnChainClient::applyDataModification. Empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
             return;
@@ -201,13 +205,15 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
 
         std::vector<xpx_chain_sdk::Address> addresses;
         addresses.reserve(drive.data.replicators.size());
-        for (const auto& replicator : drive.data.replicators) {
+        for (const auto& replicator : drive.data.replicators)
+        {
             xpx_chain_sdk::Key key;
             xpx_chain_sdk::ParseHexStringIntoContainer(replicator.c_str(), replicator.size(), key);
             addresses.emplace_back(key);
         }
 
-        auto deadlineCallback = [this, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        auto deadlineCallback = [this, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
+        {
             mpTransactionsEngine->applyDataModification(driveId, actions, addresses, replicators, deadline);
         };
 
@@ -215,16 +221,20 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
     });
 }
 
-void OnChainClient::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t amount) {
-    auto deadlineCallback = [this, channelId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+void OnChainClient::downloadPayment(const std::array<uint8_t, 32> &channelId, uint64_t amount)
+{
+    auto deadlineCallback = [this, channelId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
+    {
         mpTransactionsEngine->downloadPayment(channelId, amount, deadline);
     };
 
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t &amount) {
-    auto deadlineCallback = [this, driveId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+void OnChainClient::storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t &amount)
+{
+    auto deadlineCallback = [this, driveId, amount](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
+    {
         mpTransactionsEngine->storagePayment(driveId, amount, deadline);
     };
 
@@ -426,10 +436,14 @@ void OnChainClient::initConnects() {
              } );
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
-            [this](auto driveId, auto fileStructureCdi) {
+            [this](auto driveId, auto fileStructureCdi, auto isStream) {
                 const QString driveKey = rawHashToHex(driveId);
                 qInfo() << "TransactionsEngine::dataModificationApprovalConfirmed. Drive key: " << driveKey << " fileStructureCdi: " << fileStructureCdi.c_str();
-                emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
+                if (!isStream)
+                {
+                    emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
+                }
+
                 emit downloadFsTreeDirect(driveKey.toStdString(), fileStructureCdi);
     }, Qt::QueuedConnection);
 
@@ -449,9 +463,8 @@ void OnChainClient::initConnects() {
         emit streamStartTransactionFailed(streamId, errorText);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishConfirmed, this, [this](auto driveId, auto streamId, auto streamCdi) {
+    connect(mpTransactionsEngine, &TransactionsEngine::streamFinishConfirmed, this, [this](auto streamId) {
         emit streamFinishTransactionConfirmed(streamId);
-        emit downloadFsTreeDirect(driveId.toStdString(), streamCdi.toStdString());
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::streamFinishFailed, this, [this](auto streamId, auto errorText) {
@@ -651,12 +664,42 @@ void OnChainClient::streamStart(const std::array<uint8_t, 32> &rawDrivePubKey,
 void OnChainClient::streamFinish(const std::array<uint8_t, 32> &rawDrivePubKey,
                                  const std::array<uint8_t, 32> &streamId,
                                  uint64_t actualUploadSizeMegabytes,
-                                 const std::array<uint8_t, 32> &streamStructureCdi) {
-    auto deadlineCallback = [this, rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-        mpTransactionsEngine->streamFinish(rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi, deadline);
-    };
+                                 const std::array<uint8_t, 32> &streamStructureCdi)
+{
+    mpBlockchainEngine->getDriveById(rawHashToHex(rawDrivePubKey).toStdString(),
+    [this, rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi]
+    (auto drive, auto isSuccess, auto message, auto code)
+    {
+        if (!isSuccess)
+        {
+            qWarning() << "OnChainClient::streamFinish. Message: " << message.c_str() << " code: " << code.c_str();
+            emit newError(ErrorType::Network, message.c_str());
+            return;
+        }
 
-    mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
+        if (drive.data.replicators.empty())
+        {
+            emit dataModificationTransactionFailed(rawDrivePubKey, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, " received empty replicators list");
+            emit newError(ErrorType::InvalidData, "OnChainClient::streamFinish. Empty replicators list received for the drive: " + QString::fromStdString(drive.data.multisig));
+            return;
+        }
+
+        std::vector<xpx_chain_sdk::Address> addresses;
+        addresses.reserve(drive.data.replicators.size());
+        for (const auto& replicator : drive.data.replicators)
+        {
+            xpx_chain_sdk::Key key;
+            xpx_chain_sdk::ParseHexStringIntoContainer(replicator.c_str(), replicator.size(), key);
+            addresses.emplace_back(key);
+        }
+
+        auto deadlineCallback = [this, rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi, addresses](auto deadline)
+        {
+            mpTransactionsEngine->streamFinish(rawDrivePubKey, streamId, actualUploadSizeMegabytes, streamStructureCdi, deadline, addresses);
+        };
+
+        mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
+    });
 }
 
 void OnChainClient::streamPayment(const std::array<uint8_t, 32> &rawDrivePubKey,

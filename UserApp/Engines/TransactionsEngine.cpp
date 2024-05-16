@@ -435,31 +435,38 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
     emit addActions(actions, driveId, pathToSandbox, replicators, callback);
 }
 
-bool TransactionsEngine::isValidHash(const std::array<uint8_t, 32> &hash) {
+bool TransactionsEngine::isValidHash(const std::array<uint8_t, 32> &hash)
+{
     bool result = true;
-    if (hash.empty()) {
+    if (hash.empty())
+    {
         result = false;
     }
 
     int counter = 0;
-    for (const auto& c : hash) {
-        if (c == 0) {
+    for (const auto& c : hash)
+    {
+        if (c == 0)
+        {
             counter++;
         }
     }
 
-    if (counter == hash.size()) {
+    if (counter == hash.size())
+    {
         result = false;
     }
 
     return result;
 }
 
-std::array<uint8_t, 32> TransactionsEngine::getLatestModificationId(const std::array<uint8_t, 32> &driveId) {
+std::array<uint8_t, 32> TransactionsEngine::getLatestModificationId(const std::array<uint8_t, 32> &driveId)
+{
     return mDataModifications[driveId][mDataModifications[driveId].size() - 1].id;
 }
 
-bool TransactionsEngine::isModificationsPresent(const std::array<uint8_t, 32> &driveId) {
+bool TransactionsEngine::isModificationsPresent(const std::array<uint8_t, 32> &driveId)
+{
     return !mDataModifications[driveId].empty();
 }
 
@@ -468,7 +475,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                           const sirius::drive::ActionList& actions,
                                           const uint64_t totalModifyDataSize,
                                           const std::vector<xpx_chain_sdk::Address>& replicators,
-                                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+                                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline)
+{
     const QString actionListFileName = rawHashToHex(infoHash);
     qInfo() << "TransactionsEngine::sendModification. action list downloadDataCDI: " << actionListFileName;
 
@@ -678,7 +686,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
                     mDataModificationApprovals[driveId].insert(modificationId);
 
-                    emit dataModificationApprovalConfirmed(driveId, dataModificationApprovalTransaction->fileStructureCdi);
+                    emit dataModificationApprovalConfirmed(driveId, dataModificationApprovalTransaction->fileStructureCdi, false);
                     break;
                 }
 
@@ -951,8 +959,10 @@ void TransactionsEngine::removeFile(const QString& path) {
 void TransactionsEngine::subscribeOnReplicators(
         const std::vector<xpx_chain_sdk::Address>& addresses,
         const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification>& notifier,
-        const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification>& statusNotifier) {
-    for (const auto& address : addresses) {
+        const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification>& statusNotifier)
+{
+    for (const auto& address : addresses)
+    {
         mpChainClient->notifications()->addStatusNotifiers(address, { statusNotifier }, {}, [](auto errorCode) { qCritical() << "TransactionsEngine::subscribeOnReplicators: " << errorCode.message().c_str(); });
         mpChainClient->notifications()->addConfirmedAddedNotifiers(address, { notifier }, {}, [](auto errorCode) { qCritical() << "TransactionsEngine::subscribeOnReplicators: " << errorCode.message().c_str(); });
     }
@@ -1521,7 +1531,9 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
                                       const std::array<uint8_t, 32>& streamId,
                                       uint64_t actualUploadSizeMegabytes,
                                       const std::array<uint8_t, 32>& streamStructureCdi,
-                                      const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+                                      const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                      const std::vector<xpx_chain_sdk::Address>& replicatorAddresses)
+{
     const QString driveKeyHex = rawHashToHex(rawDrivePubKey);
     xpx_chain_sdk::Key driveKey;
     xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKey);
@@ -1546,13 +1558,27 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> streamFinishNotifier;
 
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> replicatorsStatusNotifier;
+    replicatorsStatusNotifier.set([](const auto&, const xpx_chain_sdk::TransactionStatusNotification& n)
+    {
+        qInfo() << "TransactionsEngine::streamFinish. (replicators) transaction status notification is received : " << n.status.c_str() << n.hash.c_str();
+    });
+
+    xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationApprovalTransactionNotifier;
+
     const std::string hash = rawHashToHex(streamFinishTransaction->hash()).toStdString();
-    statusNotifier.set([this, hash, streamFinishNotifierId = streamFinishNotifier.getId(), streamId](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
-        if (boost::iequals(notification.hash, hash)) {
+    statusNotifier.set([this, hash, streamId, replicatorAddresses,
+                           replicatorsStatusNotifierId = replicatorsStatusNotifier.getId(),
+                           streamFinishNotifierId = streamFinishNotifier.getId(),
+                           approvalNotifierId = dataModificationApprovalTransactionNotifier.getId()] (const auto& id, const auto& notification)
+    {
+        if (boost::iequals(notification.hash, hash))
+        {
             qWarning() << "TransactionsEngine::streamFinish::statusNotifier: " << notification.status.c_str() << " hash: " << notification.hash.c_str();
 
             removeConfirmedAddedNotifier(mpChainAccount->address(), streamFinishNotifierId);
             removeStatusNotifier(mpChainAccount->address(), id);
+            unsubscribeFromReplicators(replicatorAddresses, approvalNotifierId, replicatorsStatusNotifierId);
 
             emit streamFinishFailed(streamId, notification.status.c_str());
         }
@@ -1562,16 +1588,131 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
         qCritical() << "TransactionsEngine::streamFinish::addStatusNotifiers: " << errorCode.message().c_str();
     });
 
-    streamFinishNotifier.set([this, hash, driveKeyHex, streamStructureCdiHex, streamId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
-        if (boost::iequals(notification.meta.hash, hash)) {
+    streamFinishNotifier.set([this, hash, streamId, statusNotifierId = statusNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionNotification& notification) {
+        if (boost::iequals(notification.meta.hash, hash))
+        {
             qInfo() << "TransactionsEngine::streamFinish:: confirmed streamFinishTransaction, hash: " << hash.c_str();
 
             removeStatusNotifier(mpChainAccount->address(), statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
 
-            emit streamFinishConfirmed(driveKeyHex, streamId, streamStructureCdiHex);
+            emit streamFinishConfirmed(streamId);
         }
     });
+
+    std::array<uint8_t, 32> modificationId = rawHashFromHex(hash.c_str());
+
+    dataModificationApprovalTransactionNotifier.set([
+            this, modificationId, rawDrivePubKey, replicatorAddresses, statusNotifierId = replicatorsStatusNotifier.getId()](
+            const auto& id,
+            const xpx_chain_sdk::TransactionNotification& notification)
+    {
+        if (xpx_chain_sdk::TransactionType::Data_Modification_Approval != notification.data.type)
+        {
+            qInfo() << "TransactionsEngine::streamFinish. other transactions confirmed (skip!) : " << rawHashToHex(modificationId);
+            return;
+        }
+
+        qInfo() << "TransactionsEngine::streamFinish. Confirmed DataModificationApproval transaction hash: " << notification.meta.hash.c_str();
+        if (!mDataModificationApprovals.contains(rawDrivePubKey))
+        {
+            mDataModificationApprovals.insert({ rawDrivePubKey, {} });
+        }
+
+        if (mDataModificationApprovals[rawDrivePubKey].contains(modificationId))
+        {
+            qWarning() << "TransactionsEngine::streamFinish. ModificationId already exists (skip!) : " << rawHashToHex(modificationId);
+            return;
+        }
+
+        qInfo() << "TransactionsEngine::streamFinish. Confirmed data modification approval transaction, hash: " << notification.meta.hash;
+
+        mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
+                                               notification.meta.hash,
+                                               [this, rawDrivePubKey, modificationId, notification,
+                                                       id, replicatorAddresses, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code)
+        {
+            if (!isSuccess) {
+                //emit dataModificationApprovalFailed(driveId, {}, -1);
+                qWarning() << "TransactionsEngine::streamFinish. message: " << message.c_str() << " code: " << code.c_str();
+                return;
+            }
+
+            if (!transaction) {
+                //emit dataModificationApprovalFailed(driveId, {}, -1);
+                qWarning() << "TransactionsEngine::streamFinish. Bad pointer to dataModificationApprovalTransaction info";
+                return;
+            }
+
+            auto dataModificationApprovalTransaction = dynamic_cast<xpx_chain_sdk::transactions_info::DataModificationApprovalTransaction*>(transaction.get());
+            if (!dataModificationApprovalTransaction) {
+                //emit dataModificationApprovalFailed(driveId, {}, -1);
+                qWarning() << "TransactionsEngine::streamFinish. Bad pointer to dataModificationApprovalTransaction";
+                return;
+            }
+
+            if ( ! boost::iequals(dataModificationApprovalTransaction->driveKey, rawHashToHex(rawDrivePubKey).toStdString())) {
+                qInfo() << "TransactionsEngine::streamFinish. DataModificationApprovalTransaction is received for another drive: " << dataModificationApprovalTransaction->driveKey.c_str();
+                return;
+            }
+
+            if ( ! boost::iequals(dataModificationApprovalTransaction->dataModificationId, rawHashToHex(modificationId).toStdString())) {
+                qInfo() << "TransactionsEngine::streamFinish. Other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
+                return;
+            }
+
+            switch (dataModificationApprovalTransaction->modificationStatus)
+            {
+                case (uint8_t)sirius::drive::ModificationStatus::SUCCESS:
+                {
+                    qInfo() << "TransactionsEngine::streamFinish. Data modification approval success. Code: " << dataModificationApprovalTransaction->modificationStatus;
+                    qInfo() << "TransactionsEngine::streamFinish. Confirmed dataModificationApprovalTransaction hash: "
+                            << notification.meta.hash.c_str() << " modificationId: "
+                            << rawHashToHex(modificationId) << " fileStructureCdi: "
+                            << dataModificationApprovalTransaction->fileStructureCdi.c_str();
+
+                    mDataModificationApprovals[rawDrivePubKey].insert(modificationId);
+
+                    emit dataModificationApprovalConfirmed(rawDrivePubKey, dataModificationApprovalTransaction->fileStructureCdi, true);
+                    break;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::ACTION_LIST_IS_ABSENT:
+                {
+                    //emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << "TransactionsEngine::sendModification. Data modification approval failed: ACTION_LIST_IS_ABSENT";
+                    break;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::DOWNLOAD_FAILED:
+                {
+                    //emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << "TransactionsEngine::streamFinish. Data modification approval failed: DOWNLOAD_FAILED";
+                    break;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::INVALID_ACTION_LIST:
+                {
+                    //emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << "TransactionsEngine::streamFinish. Data modification approval failed: INVALID_ACTION_LIST";
+                    break;
+                }
+
+                case (uint8_t)sirius::drive::ModificationStatus::NOT_ENOUGH_SPACE:
+                {
+                    //emit dataModificationApprovalFailed(driveId, dataModificationApprovalTransaction->fileStructureCdi, dataModificationApprovalTransaction->modificationStatus);
+                    qWarning() << "TransactionsEngine::streamFinish. Data modification approval failed: NOT_ENOUGH_SPACE";
+                    break;
+                }
+            }
+
+            unsubscribeFromReplicators(replicatorAddresses, id, statusNotifierId);
+            removeConfirmedAddedNotifier(mpChainAccount->address(), id);
+            //removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+        });
+    });
+
+    subscribeOnReplicators(replicatorAddresses, dataModificationApprovalTransactionNotifier, replicatorsStatusNotifier);
 
     mpChainClient->notifications()->addConfirmedAddedNotifiers(mpChainAccount->address(), { streamFinishNotifier },
                                                                [this, data = streamFinishTransaction->binary()]() { announceTransaction(data); },

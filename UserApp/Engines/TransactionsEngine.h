@@ -69,7 +69,8 @@ class TransactionsEngine : public QObject
                           const std::array<uint8_t, 32>& streamId,
                           uint64_t actualUploadSizeMegabytes,
                           const std::array<uint8_t, 32>& streamStructureCdi,
-                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                          const std::vector<xpx_chain_sdk::Address>& replicatorAddresses);
 
         void streamPayment(const std::array<uint8_t, 32>& rawDrivePubKey,
                            const std::array<uint8_t, 32>& streamId,
@@ -96,7 +97,7 @@ class TransactionsEngine : public QObject
                         const std::vector<std::string>& replicators,
                         std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
-        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
+        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, bool isStream);
         void dataModificationApprovalFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t errorCode);
         void dataModificationConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
         void dataModificationFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId, const QString& errorText);
@@ -122,7 +123,7 @@ class TransactionsEngine : public QObject
 
         void streamStartConfirmed(const std::array<uint8_t, 32> &streamId);
         void streamStartFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
-        void streamFinishConfirmed(const QString& driveId, const std::array<uint8_t, 32> &streamId, const QString& streamStructureCdi);
+        void streamFinishConfirmed(const std::array<uint8_t, 32> &streamId);
         void streamFinishFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
         void streamPaymentConfirmed(const std::array<uint8_t, 32> &streamId);
         void streamPaymentFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
