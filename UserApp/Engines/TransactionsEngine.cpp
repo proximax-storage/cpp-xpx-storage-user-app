@@ -1656,11 +1656,6 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
                 return;
             }
 
-            if ( ! boost::iequals(dataModificationApprovalTransaction->dataModificationId, rawHashToHex(modificationId).toStdString())) {
-                qInfo() << "TransactionsEngine::streamFinish. Other dataModificationApprovalTransaction hash: " << rawHashToHex(modificationId);
-                return;
-            }
-
             switch (dataModificationApprovalTransaction->modificationStatus)
             {
                 case (uint8_t)sirius::drive::ModificationStatus::SUCCESS:
