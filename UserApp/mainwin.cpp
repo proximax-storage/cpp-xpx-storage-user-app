@@ -2055,7 +2055,10 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         updateDownloadChannelData(channel);
 
         const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
-        showNotification(message);
+        if ( ! m_model->channelFsTreeHandler() )
+        {
+            showNotification(message);
+        }
         addNotification(message);
 
         unlockChannel(channelKey);
