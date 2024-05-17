@@ -596,7 +596,7 @@ void MainWin::startViewingStream()
             return;
         }
 
-        auto connection = connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel );
+        auto connection = connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
         AddDownloadChannelDialog addChannelDialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
         auto rc = addChannelDialog.exec();
 
@@ -621,8 +621,6 @@ void MainWin::startViewingStream()
                     return;
                 }
                 
-                disconnect( connection );
-
                 auto* channel = m_model->findChannel(channelKey);
                 if ( channel != nullptr && channel->isCreating() )
                 {
@@ -885,16 +883,36 @@ void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
         }
         
         auto replicators = drive->getReplicators();
-        if ( !replicators.empty() )
+        if ( replicators.empty() )
+        {
+            //TODO
+            displayError("TODO: replicators.empty()");
+        }
+        else
         {
             std::array<uint8_t, 32> channelKey{};
-            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), channelKey.size(), channelKey );
+            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), 2*channelKey.size(), channelKey );
             
             auto viewerSession = gStorageEngine->getViewerSession();
-            viewerSession->startWatchingLiveStream( streamId, streamerKey, driveKey, channelKey, replicators,
-                                                   fs::path("/streamRootFolder"), fs::path("/workFolder"),
-                                                   []( std::string addr ){}, {},
-                                                   []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
+            viewerSession->startWatchingLiveStream( 
+                streamId, streamerKey, driveKey, channelKey, replicators,
+                fs::path("/Users/alex/000/000-Downloads/streamRootFolder"), fs::path("todo_streamFolder"),
+                []( std::string addr )
+                {
+#if defined _WIN32
+#elif defined __APPLE__
+                    //QProcess process;
+                    //open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC
+                    //process.start( "/Users/alex/Applications/VLC.app/Contents/MacOS/VLC", QStringList() << QString::fromStdString(addr) );
+                    auto cmd = std::string( "open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC " + addr + "");
+                    system( cmd.c_str() );
+#else // LINUX
+                    auto cmd = std::string( "vlc " + addr + "");
+                    system( cmd.c_str() );
+#endif
+
+                },
+                {}, []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
             return;
         }
     }
