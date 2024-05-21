@@ -481,6 +481,16 @@ void MainWin::init()
         showNotification(message);
     }, Qt::QueuedConnection);
 
+    m_contextMenu = new QMenu(this);
+    QAction *customAction = new QAction("Copy Link", this);
+    connect(customAction, &QAction::triggered, this, [&] {
+        QMessageBox::information(this, "Action Triggered", "Copy Link Action Triggered");
+    });
+    m_contextMenu->addAction(customAction);
+
+    ui->m_driveFsTableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->m_driveFsTableView, &QTableView::customContextMenuRequested, this, &MainWin::onCustomContextMenuRequested);
+
     if (m_settings->m_isDriveStructureAsTree) {
         ui->m_driveFsTableView->hide();
         ui->m_diffTableView->hide();
@@ -3429,5 +3439,12 @@ void MainWin::on_m_streamingTabView_currentChanged(int index)
 {
     wizardUpdateStreamAnnouncementTable();
     wizardUpdateArchiveTable();
+}
+
+void MainWin::onCustomContextMenuRequested(const QPoint &pos) {
+    QModelIndex index = ui->m_driveFsTableView->indexAt(pos);
+    if (index.isValid()) {
+        m_contextMenu->exec(ui->m_driveFsTableView->viewport()->mapToGlobal(pos));
+    }
 }
 
