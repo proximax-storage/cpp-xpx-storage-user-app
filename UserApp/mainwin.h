@@ -262,7 +262,6 @@ private slots:
     void hideWizardUi();
 
     void on_m_streamingTabView_currentChanged(int index);
-    void onCustomContextMenuRequested(const QPoint &pos);
 
 public:
     // if private key is not set it will be 'true'
@@ -309,5 +308,4 @@ private:
     //WizardAddStreamAnnounceDialog*            m_wizardAddStreamAnnounceDialog = nullptr;
     
     ModalDialog*                              m_modalDialog = nullptr;
-    QMenu*                                    m_contextMenu;
 };

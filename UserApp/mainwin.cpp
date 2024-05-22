@@ -359,6 +359,14 @@ void MainWin::init()
         addNotification(notification);
     }, Qt::QueuedConnection);
 
+    connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this](){
+        QMessageBox::information(this, "m_copyLinkToDataBtn", "");
+    });
+
+    connect(ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this](){
+        QMessageBox::information(this, "m_downloadDataByLinkBtn", "");
+    });
+
     setupDownloadsTab();
     setupDrivesTab();
     setupMyReplicatorTab();
@@ -480,16 +488,6 @@ void MainWin::init()
         addNotification(message);
         showNotification(message);
     }, Qt::QueuedConnection);
-
-    m_contextMenu = new QMenu(this);
-    QAction *customAction = new QAction("Copy Link", this);
-    connect(customAction, &QAction::triggered, this, [&] {
-        QMessageBox::information(this, "Action Triggered", "Copy Link Action Triggered");
-    });
-    m_contextMenu->addAction(customAction);
-
-    ui->m_driveFsTableView->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->m_driveFsTableView, &QTableView::customContextMenuRequested, this, &MainWin::onCustomContextMenuRequested);
 
     if (m_settings->m_isDriveStructureAsTree) {
         ui->m_driveFsTableView->hide();
@@ -3441,10 +3439,4 @@ void MainWin::on_m_streamingTabView_currentChanged(int index)
     wizardUpdateArchiveTable();
 }
 
-void MainWin::onCustomContextMenuRequested(const QPoint &pos) {
-    QModelIndex index = ui->m_driveFsTableView->indexAt(pos);
-    if (index.isValid()) {
-        m_contextMenu->exec(ui->m_driveFsTableView->viewport()->mapToGlobal(pos));
-    }
-}
 
