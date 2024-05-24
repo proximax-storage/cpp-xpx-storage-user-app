@@ -282,7 +282,7 @@ int DownloadsTableModel::onDoubleClick( int row )
     else
     {
         m_allRows.emplace_back( row, m_rows );
-        const auto childs = m_rows[row].m_chailds;
+        const auto childs = m_rows[row].m_children;
         m_rows = childs;
     }
 

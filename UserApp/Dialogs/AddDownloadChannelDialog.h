@@ -37,10 +37,10 @@ private:
     void validate();
 
 private:
-    std::string                     mCurrentDriveKey;
+    std::string                     m_currentDriveKey;
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
-    Model*                          mpModel;
+    Model*                          m_model;
     QMessageBox*                    helpMessageBox = nullptr;
 
     bool                            m_forStreaming = false;

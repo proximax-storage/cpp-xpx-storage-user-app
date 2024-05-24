@@ -392,7 +392,7 @@ void FsTreeTableModel::readFolder(const sirius::drive::Folder& folder, std::vect
         if ( sirius::drive::isFolder(child.second) )
         {
             rows.emplace_back(Row{ true, sirius::drive::getFolder(child.second).name(), "", i, {}, {}});
-            readFolder(sirius::drive::getFolder(child.second), rows[rows.size() - 1].m_chailds);
+            readFolder(sirius::drive::getFolder(child.second), rows[rows.size() - 1].m_children);
         }
         else
         {
@@ -414,7 +414,7 @@ void FsTreeTableModel::readFolder(const Row& parentRow, std::vector<Row>& rows, 
 
         if (row.m_isFolder)
         {
-            readFolder(row, row.m_chailds, result);
+            readFolder(row, row.m_children, result);
         }
         else
         {
@@ -438,7 +438,7 @@ std::vector<FsTreeTableModel::Row> FsTreeTableModel::getSelectedRows(bool isSkip
             // Return files only (if isSkipFolders = true)
             if (row.m_isFolder && isSkipFolders)
             {
-                readFolder(row, row.m_chailds, rows);
+                readFolder(row, row.m_children, rows);
             }
             else
             {
@@ -456,7 +456,7 @@ FsTreeTableModel::Row::Row(bool isFolder, const std::string& name, const std::st
     , m_path(path)
     , m_size(size)
     , m_hash(hash)
-    , m_chailds(chailds)
+    , m_children(chailds)
 {
 }
 
@@ -466,7 +466,7 @@ FsTreeTableModel::Row::Row(const FsTreeTableModel::Row &row) {
     m_path = row.m_path;
     m_size = row.m_size;
     m_hash = row.m_hash;
-    m_chailds = row.m_chailds;
+    m_children = row.m_children;
 }
 
 FsTreeTableModel::Row &FsTreeTableModel::Row::operator=(const FsTreeTableModel::Row& row) {
@@ -479,7 +479,7 @@ FsTreeTableModel::Row &FsTreeTableModel::Row::operator=(const FsTreeTableModel::
     m_path = row.m_path;
     m_size = row.m_size;
     m_hash = row.m_hash;
-    m_chailds = row.m_chailds;
+    m_children = row.m_children;
 
     return *this;
 }

@@ -22,6 +22,7 @@
 #include "Dialogs/CloseDriveDialog.h"
 #include "Dialogs/DownloadPaymentDialog.h"
 #include "Dialogs/StoragePaymentDialog.h"
+#include "Dialogs/PasteLinkDialog.h"
 #include "ReplicatorTreeItem.h"
 #include "Models/ReplicatorTreeModel.h"
 #include "Dialogs/ReplicatorOnBoardingDialog.h"
@@ -359,13 +360,6 @@ void MainWin::init()
         addNotification(notification);
     }, Qt::QueuedConnection);
 
-    connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this](){
-        QMessageBox::information(this, "m_copyLinkToDataBtn", "");
-    });
-
-    connect(ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this](){
-        QMessageBox::information(this, "m_downloadDataByLinkBtn", "");
-    });
 
     setupDownloadsTab();
     setupDrivesTab();
@@ -1049,6 +1043,43 @@ void MainWin::setupDownloadsTab()
     {
         QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( m_settings->downloadFolder().string() )));
     });
+
+    connect(ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
+    {
+        PasteLinkDialog dialog(m_onChainClient, m_model, this);
+        dialog.exec();
+    }, Qt::QueuedConnection);
+
+    connect(ui->m_deleteDownloadedDataBtn, &QPushButton::released, this, [this]
+    {
+        auto rows = ui->m_downloadedDataTable->selectionModel()->selectedRows();
+        if ( rows.empty() )
+        {
+            return;
+        }
+
+        int rowIndex = rows.begin()->row();
+        auto& downloads = m_model->downloads();
+
+        if ( rowIndex >= 0 && rowIndex < downloads.size() )
+        {
+            DownloadInfo dnInfo = downloads[rowIndex];
+
+            QMessageBox msgBox;
+            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
+            msgBox.setText(message);
+            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+            auto reply = msgBox.exec();
+
+            if ( reply == QMessageBox::Ok )
+            {
+                m_model->removeFromDownloads( rowIndex );
+                addNotification(message);
+                m_model->saveSettings();
+            }
+        }
+    }, Qt::QueuedConnection);
+
 }
 
 void MainWin::setupChannelFsTable()
@@ -1287,7 +1318,7 @@ void MainWin::setupDownloadsTable()
         int rowIndex = rows.begin()->row();
         auto& downloads = m_model->downloads();
 
-        if ( ! rows.empty() && rowIndex >= 0 && rowIndex < downloads.size() )
+        if ( rowIndex >= 0 && rowIndex < downloads.size() )
         {
             DownloadInfo dnInfo = downloads[rowIndex];
 
@@ -2578,6 +2609,33 @@ void MainWin::setupDrivesTab()
             qDebug() << "TRY OPEN " << driveInfo->getLocalFolder();
             QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
 #endif
+        }
+    });
+
+    connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this](){
+        auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
+        if ( rowList.count() > 0 )
+        {
+            try
+            {
+                // copy link to clipboard
+
+                //     QClipboard* clipboard = QApplication::clipboard();
+                //     if ( !clipboard ) {
+                //         qWarning() << LOG_SOURCE << "bad clipboard";
+                //         return;
+                //     }
+
+                //     clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+            }
+            catch (...) {}
+        }
+        else
+        {
+            QMessageBox msgBox;
+            msgBox.setText( "Select file or folder!" );
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.exec();
         }
     });
 

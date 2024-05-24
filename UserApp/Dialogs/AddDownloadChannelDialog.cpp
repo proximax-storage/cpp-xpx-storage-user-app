@@ -15,7 +15,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
-    mpModel(model),
+    m_model(model),
     m_forStreaming( !driveKey.empty() )
 {
     ui->setupUi(this);
@@ -26,9 +26,9 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
     connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
-        bool isChannelExists = mpModel->isChannelWithNameExists(text);
+        bool isChannelExists = m_model->isChannelWithNameExists(text);
         if (!nameTemplate.match(text).hasMatch() || isChannelExists) {
-            QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
+            QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name already exists!" : "Invalid name!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->name->setProperty("is_valid", false);
         } else {
@@ -39,9 +39,9 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     });
 
 
-    bool isChannelExists = mpModel->isChannelWithNameExists(ui->name->text());
+    bool isChannelExists = m_model->isChannelWithNameExists(ui->name->text());
     if (!nameTemplate.match(ui->name->text()).hasMatch()) {
-        QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name is exists!" : "Invalid name!"), nullptr, {}, 3000);
+        QToolTip::showText(ui->name->mapToGlobal(QPoint(0, 15)), tr(isChannelExists ? "Channel with the same name already exists!" : "Invalid name!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->name->setProperty("is_valid", false);
     } else {
@@ -57,11 +57,11 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                     QToolTip::showText(ui->driveKey->mapToGlobal(QPoint(0, 15)), tr("Invalid key!"), nullptr, {}, 3000);
                     ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
                     ui->driveKey->setProperty("is_valid", false);
-                    mCurrentDriveKey.clear();
+                    m_currentDriveKey.clear();
                 } else {
                     QToolTip::hideText();
                     ui->driveKey->setProperty("is_valid", true);
-                    mCurrentDriveKey = ui->driveKey->text().toStdString();
+                    m_currentDriveKey = ui->driveKey->text().toStdString();
                     validate();
                 }
             });
@@ -143,18 +143,17 @@ void AddDownloadChannelDialog::startCreateChannel()
     }
 
     const auto channelName = ui->name->text().toStdString();
-    auto callback = [client = mpOnChainClient, channelName, currDriveKey = mCurrentDriveKey, publicKeys](std::string hash) {
+    auto callback = [client = mpOnChainClient, channelName, currDriveKey = m_currentDriveKey, publicKeys](std::string hash) {
         hash = QString::fromStdString(hash).toUpper().toStdString();
         qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
         emit client->getDialogSignalsEmitter()->addDownloadChannel(channelName, hash, currDriveKey, publicKeys);
     };
 
     mpOnChainClient->addDownloadChannel(ui->name->text().toStdString(),
-                                        listOfAllowedPublicKeys,rawHashFromHex(mCurrentDriveKey.c_str()),
+                                        listOfAllowedPublicKeys,rawHashFromHex(m_currentDriveKey.c_str()),
                                         ui->prepaidAmountLine->text().toULongLong(),
                                         0,
                                         callback); // feedback is unused for now
-
 }
 
 void AddDownloadChannelDialog::accept() {

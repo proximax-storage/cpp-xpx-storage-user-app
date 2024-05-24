@@ -47,7 +47,7 @@ public:
         std::string m_path;
         size_t      m_size;
         std::array<uint8_t,32> m_hash;
-        std::vector<Row> m_chailds;
+        std::vector<Row> m_children;
     };
 
     std::vector<Row> getSelectedRows(bool isSkipFolders = true);
