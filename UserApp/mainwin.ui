@@ -1769,10 +1769,10 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="m_tmpStreamFolder"/>
+               <widget class="QLineEdit" name="m_streamFolder"/>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_2">
+               <widget class="QPushButton" name="m_streamFolderBtn">
                 <property name="text">
                  <string>Browse</string>
                 </property>

@@ -31,6 +31,7 @@ public:
     void setCanceling();
     void setCanceled();
     void setWaitingStreamStart();
+    void setStreamIsDownloading();
 
     void updateStreamingMode( Drive* );
 

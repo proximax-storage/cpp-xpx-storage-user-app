@@ -12,7 +12,9 @@
 #include <functional>
 
 #include "CheckReplicatorEndpointDialog.h"
+#include "Entities/DownloadChannel.h"
 #include "Engines/StorageEngine.h"
+#include "Models/Model.h"
 #include "drive/ViewerSession.h"
 
 bool CheckReplicatorEndpointDialog::check( const sirius::drive::ReplicatorList& replicatorList )
@@ -26,10 +28,35 @@ bool CheckReplicatorEndpointDialog::check( const sirius::drive::ReplicatorList& 
     }
     return false;
 }
-    
+
+bool CheckReplicatorEndpointDialog::check( Model* model, const std::string& channelKey )
+{
+    CheckReplicatorEndpointDialog modalDialog( model, channelKey );
+    modalDialog.show();
+    modalDialog.hide();
+    if ( modalDialog.exec() == QDialog::Accepted )
+    {
+        return true;
+    }
+    return false;
+}
+
 CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( const sirius::drive::ReplicatorList&     replicatorList )
     :   QDialog(),
         m_replicatorList(replicatorList)
+{
+    init();
+}
+
+CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( Model* model, const std::string& channelKey )
+    :   QDialog(),
+        m_channelKey(channelKey),
+        m_model(model)
+{
+    init();
+}
+
+void CheckReplicatorEndpointDialog::init()
 {
     setWindowTitle( "Waiting replicator endpoints" );
 
@@ -49,11 +76,29 @@ CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( const sirius::driv
         checkEndpoints();
     });
 }
-    
+
 void CheckReplicatorEndpointDialog::checkEndpoints()
 {
+    sirius::drive::ReplicatorList list;
+    
+    if ( m_channelKey.empty() )
+    {
+        list = m_replicatorList;
+    }
+    else
+    {
+        DownloadChannel* channel = m_model->findChannel( m_channelKey );
+        if ( channel == nullptr )
+        {
+            QDialog::reject();
+            return;
+        }
+        list = channel->getReplicators();
+        qDebug() << "DownloadChannel: " << channel << " " << list.size();
+    }
+    
     int counter = 0;
-    for( auto& replicatorKey : m_replicatorList )
+    for( auto& replicatorKey : list )
     {
         auto endpoint = gStorageEngine->getViewerSession()->session()->getEndpoint( replicatorKey );
         if ( endpoint )
@@ -62,11 +107,11 @@ void CheckReplicatorEndpointDialog::checkEndpoints()
         }
     }
     qDebug() << "checkEndpoints: " << counter;
-
+    
     if ( counter < (2*m_replicatorList.size())/3+1 )
     {
         show();
-        QTimer::singleShot( 1, this, [this]
+        QTimer::singleShot( 100, this, [this]
         {
             checkEndpoints();
         });

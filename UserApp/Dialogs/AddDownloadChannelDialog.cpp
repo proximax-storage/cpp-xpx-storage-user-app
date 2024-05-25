@@ -11,7 +11,8 @@
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                                                    Model* model,
                                                    QWidget *parent,
-                                                   std::string driveKey ) :
+                                                   std::string driveKey,
+                                                   std::string defaultChannelName ) :
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
@@ -23,7 +24,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Confirm");
     ui->buttonBox->button(QDialogButtonBox::Help)->setText("Help");
 
-    QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
+    QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_: ]{1,40})")));
     connect(ui->name, &QLineEdit::textChanged, this, [this, nameTemplate] (auto text)
     {
         bool isChannelExists = m_model->isChannelWithNameExists(text);
@@ -109,6 +110,11 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
 
     
     ui->driveKey->setText( QString::fromStdString( driveKey ) );
+    if ( ! defaultChannelName.empty() )
+    {
+        ui->name->setText( QString::fromStdString( defaultChannelName ) );
+        QTimer::singleShot( 0, this, [this] { ui->prepaidAmountLine->setFocus(); });
+    }
 
     setWindowTitle("Add new download channel");
     setFocus();

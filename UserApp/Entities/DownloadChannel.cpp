@@ -1,5 +1,6 @@
 #include "DownloadChannel.h"
 #include "utils/HexParser.h"
+#include <qdebug.h>
 
 DownloadChannel::DownloadChannel()
     : m_name("")
@@ -113,6 +114,7 @@ sirius::drive::ReplicatorList DownloadChannel::getReplicators() const {
 }
 
 void DownloadChannel::setReplicators(const std::vector<std::string>& replicators) {
+    qDebug() << "setReplicators: " << this << " size: " << replicators.size();
     m_shardReplicators.clear();
     for( const auto& key : replicators )
     {

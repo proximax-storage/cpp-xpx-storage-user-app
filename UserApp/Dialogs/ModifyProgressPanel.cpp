@@ -268,6 +268,19 @@ void ModifyProgressPanel::setWaitingStreamStart()
     adjustSize();
 }
 
+void ModifyProgressPanel::setStreamIsDownloading()
+{
+    ui->m_statusLabel->setText( "Stream is downloading...");
+    ui->m_statusIcon->clear();
+    ui->m_statusIcon->setScaledContents(true);
+    ui->m_statusIcon->setMovie(m_loading);
+    ui->m_cancel->setText("Cancel");
+    ui->m_cancel->setEnabled(true);
+    m_loading->start();
+    adjustSize();
+
+}
+
 void ModifyProgressPanel::updateStreamingMode( Drive* drive )
 {
     if ( drive->getStreamingStatus() == Drive::ss_creating_announce )

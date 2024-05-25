@@ -12,6 +12,7 @@
 #include "Dialogs/ModalDialog.h"
 #include "Dialogs/CheckReplicatorEndpointDialog.h"
 #include "Engines/StorageEngine.h"
+#include "Entities/Settings.h"
 #include "Entities/Account.h"
 
 #include "drive/ViewerSession.h"
@@ -86,13 +87,13 @@ void MainWin::initStreaming()
 {
     //todo remove streamerAnnouncements from serializing
     m_model->getStreams().clear();
-
+    
     // m_streamingTabView
     connect(ui->m_streamingTabView, &QTabWidget::currentChanged, this, [this](int index)
-    {
+            {
         updateViewerProgressPanel( ui->tabWidget->currentIndex() );
         updateStreamerProgressPanel( ui->tabWidget->currentIndex() );
-
+        
         if (auto drive = currentStreamingDrive();
             drive && ui->tabWidget->currentIndex() == 5 )
             //&& (ui->m_streamingTabView->currentIndex() == 1 || ui->m_streamingTabView->currentIndex() == 2 ) )
@@ -105,16 +106,16 @@ void MainWin::initStreaming()
             m_streamingProgressPanel->setVisible(false);
         }
     });
-
-//    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
-//    header->setSectionResizeMode(0,QHeaderView::Stretch);
-//    header->setSectionResizeMode(1,QHeaderView::Stretch);
-//    header->setSectionResizeMode(2,QHeaderView::Stretch);
-
-
+    
+    //    QHeaderView* header = ui->m_streamAnnouncementTable->horizontalHeader();
+    //    header->setSectionResizeMode(0,QHeaderView::Stretch);
+    //    header->setSectionResizeMode(1,QHeaderView::Stretch);
+    //    header->setSectionResizeMode(2,QHeaderView::Stretch);
+    
+    
     // m_streamDriveCBox
     connect( ui->m_streamDriveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, [this](int index)
-    {
+            {
         if ( index >= 0 )
         {
             const auto driveKey = ui->m_streamDriveCBox->currentData().toString();
@@ -128,33 +129,33 @@ void MainWin::initStreaming()
             wizardUpdateArchiveTable();
         }
     }, Qt::QueuedConnection );
-
-
+    
+    
     //
     // m_streamAnnouncementTable
     //
     ui->m_streamAnnouncementTable->setSelectionBehavior( QAbstractItemView::SelectRows );
     ui->m_streamAnnouncementTable->setSelectionMode( QAbstractItemView::SingleSelection );
-
+    
     connect( ui->m_streamAnnouncementTable, &QTableView::pressed, this, [this] (const QModelIndex &index)
-    {
+            {
         if (index.isValid()) {
             ui->m_streamAnnouncementTable->selectRow( index.row() );
         }
     }, Qt::QueuedConnection);
-
+    
     connect( ui->m_streamAnnouncementTable, &QTableView::clicked, this, [this] (const QModelIndex &index)
-    {
+            {
         if (index.isValid()) {
             ui->m_streamAnnouncementTable->selectRow( index.row() );
         }
     }, Qt::QueuedConnection);
-
+    
     // m_addStreamAnnouncementBtn
     connect(ui->m_addStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
-    {
+            {
         std::string driveKey = selectedDriveKeyInTable().toStdString();
-
+        
         auto* drive = m_model->findDrive(driveKey);
         if ( drive == nullptr )
         {
@@ -167,7 +168,7 @@ void MainWin::initStreaming()
             qWarning() << LOG_SOURCE << "drive already 'is streaming'";
             return;
         }
-
+        
         AddStreamAnnouncementDialog dialog(m_onChainClient, m_model, driveKey, this);
         auto rc = dialog.exec();
         if (rc == QDialog::Accepted)
@@ -175,10 +176,10 @@ void MainWin::initStreaming()
             drive->setCreatingStreamAnnouncement();
         }
     }, Qt::QueuedConnection);
-
+    
     // m_delStreamAnnouncementBtn
     connect(ui->m_delStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
-    {
+            {
         if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
             QMessageBox msgBox;
@@ -186,24 +187,24 @@ void MainWin::initStreaming()
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
-
+            
             if ( reply == QMessageBox::Ok )
             {
                 auto* drive = selectedDriveInTable();
-
+                
                 if ( drive != nullptr )
                 {
                     auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
                     std::error_code ec;
                     fs::remove_all( streamFolder, ec );
                     qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
-
+                    
                     if ( !ec )
                     {
                         sirius::drive::ActionList actionList;
                         auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
-
+                        
                         //
                         // Start modification
                         //
@@ -215,32 +216,32 @@ void MainWin::initStreaming()
             }
         }
     }, Qt::QueuedConnection);
-
+    
     // m_copyLinkToStreamBtn
     connect(ui->m_copyLinkToStreamBtn, &QPushButton::released, this, [this] ()
-    {
+            {
         if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
             std::string link = streamInfo->getLink();
-
+            
             QClipboard* clipboard = QApplication::clipboard();
             if ( !clipboard ) {
                 qWarning() << LOG_SOURCE << "bad clipboard";
                 return;
             }
-
+            
             clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
             if ( clipboard->supportsSelection() ) {
                 clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
             }
         }
     }, Qt::QueuedConnection);
-
+    
     // m_startStreamingBtn
     connect(ui->m_startStreamingBtn, &QPushButton::released, this, [this] ()
-    {
+            {
         std::string driveKey = selectedDriveKeyInTable().toStdString();
-
+        
         auto* drive = m_model->findDrive(driveKey);
         if ( drive == nullptr )
         {
@@ -253,7 +254,7 @@ void MainWin::initStreaming()
             qWarning() << LOG_SOURCE << "drive already 'is streaming'";
             return;
         }
-
+        
         auto rowList = ui->m_streamAnnouncementTable->selectionModel()->selectedRows();
         if ( rowList.count() == 0 )
         {
@@ -269,14 +270,14 @@ void MainWin::initStreaming()
         }
         if ( auto streamInfo = selectedStreamInfo(); streamInfo )
         {
-//            drive->setIsStreaming();
-//            m_streamingProgressPanel->updateStreamingMode(drive);
-//            m_streamingProgressPanel->setRegistering();
-//            m_streamingProgressPanel->setVisible(true);
+            //            drive->setIsStreaming();
+            //            m_streamingProgressPanel->updateStreamingMode(drive);
+            //            m_streamingProgressPanel->setRegistering();
+            //            m_streamingProgressPanel->setVisible(true);
             startStreamingProcess( *streamInfo );
         }
     }, Qt::QueuedConnection);
-
+    
     //m_addStreamRefBtn
     connect(ui->m_addStreamRefBtn, &QPushButton::released, this, [this] () {
         QClipboard* clipboard = QApplication::clipboard();
@@ -284,11 +285,11 @@ void MainWin::initStreaming()
             qWarning() << LOG_SOURCE << "bad clipboard";
             return;
         }
-
+        
         std::string link = clipboard->text( QClipboard::Clipboard ).toStdString();
-//        if ( clipboard->supportsSelection() ) {
-//            link = clipboard->text( QClipboard::Selection ).toStdString();
-//        }
+        //        if ( clipboard->supportsSelection() ) {
+        //            link = clipboard->text( QClipboard::Selection ).toStdString();
+        //        }
         
         StreamInfo streamInfo;
         try
@@ -302,7 +303,7 @@ void MainWin::initStreaming()
             qWarning() << "bad stream link: " << link;
         }
     }, Qt::QueuedConnection);
-
+    
     // m_delStreamRefBtn
     connect(ui->m_delStreamRefBtn, &QPushButton::released, this, [this] () {
         auto rowIndex = ui->m_streamRefCBox->currentIndex();
@@ -314,13 +315,13 @@ void MainWin::initStreaming()
             } catch (...) {
                 return;
             }
-
+            
             QMessageBox msgBox;
             const QString message = QString::fromStdString("'" + streamTitle + "' will be removed.");
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
-
+            
             if ( reply == QMessageBox::Ok )
             {
                 m_model->deleteStreamRef( rowIndex );
@@ -328,23 +329,46 @@ void MainWin::initStreaming()
             }
         }
     }, Qt::QueuedConnection);
-
+    
     // m_startViewingBtn
     connect(ui->m_startViewingBtn, &QPushButton::released, this, [this] () {
         startViewingStream();
     }, Qt::QueuedConnection);
-
+    
     connectToStreamingTransactions();
-
-//    void streamFinishTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
-//    void streamFinishTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
-
+    
+    //    void streamFinishTransactionConfirmed(const std::array<uint8_t, 32> &streamId);
+    //    void streamFinishTransactionFailed(const std::array<uint8_t, 32> &streamId, const QString& errorText);
+    
     m_streamingPanel = new StreamingPanel( [this]{cancelStreaming();}, [this]{finishStreaming();}, this );
     m_streamingPanel->setWindowModality(Qt::WindowModal);
     m_streamingPanel->setVisible(false);
     connect( this, &MainWin::updateStreamingStatus, m_streamingPanel, &StreamingPanel::onUpdateStatus, Qt::QueuedConnection );
-
+    
     updateViewerCBox();
+    
+    if ( m_settings->config().m_streamFolder.empty() )
+    {
+        fs::path homePath = QDir::homePath().toStdString();
+        m_settings->config().m_streamFolder = std::string( homePath / "sirius-movies" );
+        m_settings->save();
+    }
+    
+    ui->m_streamFolder->setReadOnly(true);
+    ui->m_streamFolder->setText( QString::fromStdString(m_settings->config().m_streamFolder) );
+    
+    connect(ui->m_streamFolderBtn, &QPushButton::released, this, [this]()
+    {
+        QFlags<QFileDialog::Option> options = QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks;
+#ifdef Q_OS_LINUX
+        options |= QFileDialog::DontUseNativeDialog;
+#endif
+        const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
+        ui->m_streamFolder->setText(path.trimmed());
+
+        m_settings->config().m_streamFolder = ui->m_streamFolder->text().toStdString();
+        m_settings->save();
+    });
 }
 
 std::vector<StreamInfo> MainWin::readStreamInfoList( const Drive&  driveInfo )
@@ -597,7 +621,7 @@ void MainWin::startViewingStream()
         }
 
         auto connection = connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
-        AddDownloadChannelDialog addChannelDialog( m_onChainClient, m_model, this, streamInfo->m_driveKey );
+        AddDownloadChannelDialog addChannelDialog( m_onChainClient, m_model, this, streamInfo->m_driveKey, "stream: " + streamInfo->m_title );
         auto rc = addChannelDialog.exec();
 
         if ( rc != QDialog::Accepted )
@@ -835,7 +859,7 @@ bool MainWin::startViewingApprovedStream( DownloadChannel& channel )
 
 void MainWin::startViewingStream2( DownloadChannel& channel )
 {
-    if ( ! CheckReplicatorEndpointDialog::check( channel.getReplicators() ) )
+    if ( ! CheckReplicatorEndpointDialog::check( m_model, channel.getKey() ) )
     {
         return;
     }
@@ -873,51 +897,72 @@ void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
                                       bool                           isStreaming,
                                       const std::array<uint8_t,32>&  streamId )
 {
-    if ( isStreaming )
+    if ( ! isStreaming )
     {
-        auto* drive = m_model->findDrive( m_model->m_currentStreamInfo.m_driveKey );
-        if ( drive == nullptr )
+        QTimer::singleShot(10, this, [this] { waitStream(); });
+        return;
+    }
+    
+    auto* drive = m_model->findDrive( m_model->m_currentStreamInfo.m_driveKey );
+    if ( drive == nullptr )
+    {
+        displayError("Internal error: onStreamStatusResponse: drive == nullptr");
+        return;
+    }
+    
+    auto replicators = drive->getReplicators();
+    if ( replicators.empty() )
+    {
+        //TODO
+        displayError("TODO: replicators.empty()");
+    }
+    else
+    {
+        std::array<uint8_t, 32> channelKey{};
+        xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), 2*channelKey.size(), channelKey );
+        
+        auto streamFolder = fs::path( m_settings->config().m_streamFolder );
+        std::error_code ec;
+        if ( ! fs::is_directory( streamFolder, ec ) )
         {
-            displayError("Internal error: onStreamStatusResponse: drive == nullptr");
-            return;
+            if ( !ec )
+            {
+                fs::create_directories( streamFolder, ec );
+            }
+            if ( ec )
+            {
+                displayError( "Can't create stream folder: " + m_settings->config().m_streamFolder, ec.message() );
+                return;
+            }
         }
         
-        auto replicators = drive->getReplicators();
-        if ( replicators.empty() )
-        {
-            //TODO
-            displayError("TODO: replicators.empty()");
-        }
-        else
-        {
-            std::array<uint8_t, 32> channelKey{};
-            xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), 2*channelKey.size(), channelKey );
-            
-            auto viewerSession = gStorageEngine->getViewerSession();
-            viewerSession->startWatchingLiveStream( 
-                streamId, streamerKey, driveKey, channelKey, replicators,
-                fs::path("/Users/alex/000/000-Downloads/streamRootFolder"), fs::path("todo_streamFolder"),
-                []( std::string addr )
-                {
+        auto viewerSession = gStorageEngine->getViewerSession();
+        viewerSession->startWatchingLiveStream(
+            streamId, streamerKey, driveKey, channelKey, replicators,
+            fs::path( streamFolder ), fs::path(m_model->m_currentStreamInfo.m_uniqueFolderName),
+            [this]( std::string addr )
+            {
+                //m_model->m_currentStreamInfo.m_channelKey = channel.getKey();
+                m_model->m_viewerStatus = vs_viewing;
+                m_startViewingProgressPanel->setStreamIsDownloading();
+                m_startViewingProgressPanel->setVisible( true );
+
 #if defined _WIN32
 #elif defined __APPLE__
-                    //QProcess process;
-                    //open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC
-                    //process.start( "/Users/alex/Applications/VLC.app/Contents/MacOS/VLC", QStringList() << QString::fromStdString(addr) );
-                    auto cmd = std::string( "open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC " + addr + "");
-                    system( cmd.c_str() );
+                //QProcess process;
+                //open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC
+                //process.start( "/Users/alex/Applications/VLC.app/Contents/MacOS/VLC", QStringList() << QString::fromStdString(addr) );
+                auto cmd = std::string( "open -a /Users/alex/Applications/VLC.app/Contents/MacOS/VLC " + addr + "");
+                system( cmd.c_str() );
 #else // LINUX
-                    auto cmd = std::string( "vlc " + addr + "");
-                    system( cmd.c_str() );
+                auto cmd = std::string( "vlc " + addr + "");
+                system( cmd.c_str() );
 #endif
 
-                },
-                {}, []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
-            return;
-        }
+            },
+            {}, []( std::string playListPath, int chunkIndex, int chunkNumber, std::string error ){} );
+        return;
     }
-
-    QTimer::singleShot(10, this, [this] { waitStream(); });
 }
 
 void MainWin::cancelViewingStream()
