@@ -11,6 +11,7 @@
 #include <QTableWidget>
 //#include "Worker.h"
 //#include "OnChainClient.h"
+#include "Entities/DataInfo.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
 #include "Dialogs/ModalDialog.h"
@@ -158,6 +159,9 @@ private:
     QString selectedDriveKeyInWizardTable(QTableWidget* table) const;
     Drive*  selectedDriveInWizardTable(QTableWidget* table) const;
     Drive*  currentStreamingDrive() const;
+
+    std::optional<DataInfo> selectedDataInfo();
+    std::vector<DataInfo> readDataInfoList();
 
     void initStreaming();
     void initWizardStreaming();

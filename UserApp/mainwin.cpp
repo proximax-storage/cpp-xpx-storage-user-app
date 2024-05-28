@@ -2576,6 +2576,44 @@ void MainWin::onCurrentDriveChanged( int index )
     }
 }
 
+std::vector<DataInfo> MainWin::readDataInfoList() //wizardReadStreamInfoList
+{
+    std::vector<DataInfo> dataInfoVector;
+    // Drive* drive = m_model->currentDrive();
+    // drive.
+    // for( auto& driveInfo : drives )
+    // {
+    //     auto infoVector = readStreamInfoList(driveInfo.second);
+    //     streamInfoVector.insert(streamInfoVector.end(), infoVector.begin(), infoVector.end());
+    // }
+    return dataInfoVector;
+}
+
+std::optional<DataInfo> MainWin::selectedDataInfo() // wizardSelectedStreamInfo
+{
+    // auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
+    // if ( rowList.count() > 0 )
+    // {
+    //     try
+    //     {
+    //         int rowIndex = rowList.constFirst().row();
+    //         // ?????????
+    //         std::string driveKey = m_model->currentDriveKey();
+    //         auto path= ui->m_driveFsTableView->
+    //         auto dataInfoList = readDataInfoList();
+    //         for(auto& e : dataInfoList)
+    //         {
+    //             if(e.m_title == dataTitle.toStdString())
+    //             {
+    //                 return e;
+    //             }
+    //         }
+    //     }
+    //     catch (...) {}
+    // }
+    return {};
+}
+
 void MainWin::setupDrivesTab()
 {
     ui->m_driveCBox->addItem( "Loading..." );
@@ -2613,30 +2651,63 @@ void MainWin::setupDrivesTab()
     });
 
     connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this](){
-        auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
-        if ( rowList.count() > 0 )
-        {
-            try
-            {
-                // copy link to clipboard
 
-                //     QClipboard* clipboard = QApplication::clipboard();
-                //     if ( !clipboard ) {
-                //         qWarning() << LOG_SOURCE << "bad clipboard";
-                //         return;
-                //     }
-
-                //     clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
-            }
-            catch (...) {}
-        }
-        else
+        auto dataInfo = selectedDataInfo();
+        if (!dataInfo.has_value() )
         {
-            QMessageBox msgBox;
-            msgBox.setText( "Select file or folder!" );
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.exec();
+            displayError( "Select announcement!" );
+            return;
         }
+
+        if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+            rowList.count() == 0 )
+        {
+            displayError( "No announcements!" );
+            return;
+        }
+
+        std::string link = dataInfo->getLink();
+        QClipboard* clipboard = QApplication::clipboard();
+        if ( !clipboard ) {
+            qWarning() << LOG_SOURCE << "bad clipboard";
+            return;
+        }
+
+        clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+        if ( clipboard->supportsSelection() )
+        {
+            clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
+        }
+
+
+
+
+        // auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
+        // if ( rowList.count() > 0 )
+        // {
+        //     try
+        //     {
+        //         // copy link to clipboard
+
+        //         QClipboard* clipboard = QApplication::clipboard();
+        //         if ( !clipboard ) {
+        //             qWarning() << LOG_SOURCE << "bad clipboard";
+        //             return;
+        //         }
+        //         std::string link;
+        //         //rowList.begin()
+
+        //         clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+        //     }
+        //     catch (...) {}
+        // }
+        // else
+        // {
+        //     QMessageBox msgBox;
+        //     msgBox.setText( "Select file or folder!" );
+        //     msgBox.setStandardButtons(QMessageBox::Ok);
+        //     msgBox.exec();
+        // }
     });
 
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
