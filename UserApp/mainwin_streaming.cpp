@@ -1116,6 +1116,8 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 
 //        QString::fromStdString(streamInfo.m_driveKey).toUpper().toStdString();
         auto driveKey = streamInfo.m_driveKey;
+        
+        m_streamingPanel->setStreamLink( streamInfo.getLink() );
 
         //
         // Get 'drive'

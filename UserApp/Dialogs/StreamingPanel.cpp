@@ -1,5 +1,6 @@
 #include "StreamingPanel.h"
 #include "ui_StreamingPanel.h"
+#include <QClipboard>
 
 StreamingPanel::StreamingPanel( std::function<void()> cancelStreamingFunc,
                                 std::function<void()> finishStreamingFunc,
@@ -19,9 +20,21 @@ StreamingPanel::StreamingPanel( std::function<void()> cancelStreamingFunc,
     connect( ui->m_finishBtn, &QPushButton::released, this, [this]
     {
         m_finishStreamingFunc();
-
     });
             
+    connect( ui->m_copyLinkBtn, &QPushButton::released, this, [this]
+    {
+        QClipboard* clipboard = QApplication::clipboard();
+        if ( !clipboard ) {
+            qWarning() << "StreamingPanel: bad clipboard";
+            return;
+        }
+
+        clipboard->setText( QString::fromStdString(m_streamLink), QClipboard::Clipboard );
+        if ( clipboard->supportsSelection() ) {
+            clipboard->setText( QString::fromStdString(m_streamLink), QClipboard::Selection );
+        }
+    });
 }
 
 StreamingPanel::~StreamingPanel()
@@ -51,6 +64,7 @@ void StreamingPanel::setVisible( bool value )
     if ( value )
     {
         QDialog::setVisible(true);
+        ui->m_finishBtn->setFocus();
     }
     else
     {
