@@ -162,6 +162,9 @@ private:
 
     std::optional<DataInfo> selectedDataInfo();
     std::vector<DataInfo> readDataInfoList();
+public:
+    void startEasyDownload( const DataInfo& dataInfo );
+private:
 
     void initStreaming();
     void initWizardStreaming();

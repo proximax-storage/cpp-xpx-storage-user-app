@@ -1046,7 +1046,7 @@ void MainWin::setupDownloadsTab()
 
     connect(ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
     {
-        PasteLinkDialog dialog(m_onChainClient, m_model, this);
+        PasteLinkDialog dialog(this);
         dialog.exec();
     }, Qt::QueuedConnection);
 
@@ -3569,3 +3569,7 @@ void MainWin::on_m_streamingTabView_currentChanged(int index)
 }
 
 
+void MainWin::startEasyDownload( const DataInfo& dataInfo )
+{
+    // 'max_metadata_size' should be extended (now it is 30 MB)
+}

@@ -1,16 +1,13 @@
 #include "PasteLinkDialog.h"
-#include "qclipboard.h"
-#include "qmessagebox.h"
-#include "qpushbutton.h"
+#include "mainwin.h"
+#include <QClipboard>
+#include <QMessageBox>
+#include <QPushButton>
 #include "ui_PasteLinkDialog.h"
 
-PasteLinkDialog::PasteLinkDialog(OnChainClient* onChainClient,
-                                 Model* model,
-                                 QWidget *parent)
+PasteLinkDialog::PasteLinkDialog( MainWin* parent )
     : QDialog( parent )
-    , ui( new Ui::PasteLinkDialog() )
-    , m_onChainClient(onChainClient)
-    , m_model(model)
+    , ui( new Ui::PasteLinkDialog() ), m_mainwin(parent)
 {
     ui->setupUi(this);
     setModal(true);
@@ -28,6 +25,7 @@ PasteLinkDialog::PasteLinkDialog(OnChainClient* onChainClient,
             ui->m_linkEdit->setEnabled(true);
             ui->m_linkEdit->setStyleSheet("");
             ui->m_linkEdit->setText(clipboard->text());
+            m_dataInfo = DataInfo::parseLink( clipboard->text().toStdString() );
         }
         else
         {
@@ -53,6 +51,13 @@ PasteLinkDialog::~PasteLinkDialog()
 void PasteLinkDialog::accept()
 {
     // initiate download
+    if ( m_dataInfo )
+    {
+        QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=*m_dataInfo]
+        {
+            mainwin->startEasyDownload( dataInfo );
+        });
+    }
 }
 
 

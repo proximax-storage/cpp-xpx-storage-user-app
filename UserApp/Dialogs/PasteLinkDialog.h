@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OnChainClient.h"
+#include "Entities/DataInfo.h"
 #include <QDialog>
 
 namespace Ui
@@ -8,14 +9,14 @@ namespace Ui
 class PasteLinkDialog;
 }
 
+class MainWin;
+
 class PasteLinkDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit PasteLinkDialog(OnChainClient* onChainClient,
-                             Model* model,
-                             QWidget *parent = nullptr);
+    explicit PasteLinkDialog( MainWin* parent = nullptr );
     ~PasteLinkDialog();
 
 public:
@@ -26,8 +27,7 @@ public:
 
 private:
     Ui::PasteLinkDialog     *ui;
-    Model*                  m_model;
-    OnChainClient*          m_onChainClient;
+    MainWin*                m_mainwin;
     QPushButton*            m_pasteLinkButton;
-    // QMessageBox*            helpMessageBox = nullptr;
+    std::optional<DataInfo> m_dataInfo;
 };

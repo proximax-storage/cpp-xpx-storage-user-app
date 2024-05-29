@@ -24,6 +24,8 @@ struct DataInfo
     {
     }
 
+    static DataInfo parseLink( const std::string& link);
+
     template<class Archive>
     void serialize( Archive &ar )
     {
@@ -32,6 +34,5 @@ struct DataInfo
 
     std::string getLink() const;
 
-    void parseLink( const std::string& link);
 };
 
