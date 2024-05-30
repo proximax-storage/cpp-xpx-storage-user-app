@@ -2589,31 +2589,6 @@ std::vector<DataInfo> MainWin::readDataInfoList() //wizardReadStreamInfoList
     return dataInfoVector;
 }
 
-std::optional<DataInfo> MainWin::selectedDataInfo() // wizardSelectedStreamInfo
-{
-    // auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
-    // if ( rowList.count() > 0 )
-    // {
-    //     try
-    //     {
-    //         int rowIndex = rowList.constFirst().row();
-    //         // ?????????
-    //         std::string driveKey = m_model->currentDriveKey();
-    //         auto path= ui->m_driveFsTableView->
-    //         auto dataInfoList = readDataInfoList();
-    //         for(auto& e : dataInfoList)
-    //         {
-    //             if(e.m_title == dataTitle.toStdString())
-    //             {
-    //                 return e;
-    //             }
-    //         }
-    //     }
-    //     catch (...) {}
-    // }
-    return {};
-}
-
 void MainWin::setupDrivesTab()
 {
     ui->m_driveCBox->addItem( "Loading..." );
@@ -2650,23 +2625,43 @@ void MainWin::setupDrivesTab()
         }
     });
 
-    connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this](){
-
-        auto dataInfo = selectedDataInfo();
-        if (!dataInfo.has_value() )
+    connect(ui->m_copyLinkToDataBtn,&QPushButton::released, this, [this]()
+    {
+        std::string             path;
+        std::string             itemName;
+        sirius::drive::Folder*  folder = nullptr;
+        
+        auto rows = ui->m_driveFsTableView->selectionModel()->selectedRows();
+        if ( rows.size() == 0 )
         {
-            displayError( "Select announcement!" );
-            return;
+            folder = m_driveTableModel->currentSelectedItem( -1, path, itemName );
+        }
+        else
+        {
+            folder = m_driveTableModel->currentSelectedItem( rows.at(0).row(), path, itemName );
         }
 
-        if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
-            rowList.count() == 0 )
-        {
-            displayError( "No announcements!" );
-            return;
-        }
 
-        std::string link = dataInfo->getLink();
+        qDebug() << "copyLinkToData: key: " << m_model->currentDrive()->getKey().c_str();
+        qDebug() << "copyLinkToData: path: " << path.c_str();
+        
+        auto dataInfo =  DataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path );
+        
+        
+//        if (!dataInfo.has_value() )
+//        {
+//            displayError( "Select announcement!" );
+//            return;
+//        }
+//
+//        if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
+//            rowList.count() == 0 )
+//        {
+//            displayError( "No announcements!" );
+//            return;
+//        }
+
+        std::string link = dataInfo.getLink();
         QClipboard* clipboard = QApplication::clipboard();
         if ( !clipboard ) {
             qWarning() << LOG_SOURCE << "bad clipboard";

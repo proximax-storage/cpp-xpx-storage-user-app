@@ -85,6 +85,43 @@ void FsTreeTableModel::updateRows()
     endResetModel();
 }
 
+sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, std::string& outPath, std::string& outItemName  )
+{
+    outItemName = "";
+    outPath = "";
+    auto pathVector = currentPath();
+    if ( pathVector.size() <= 1 )
+    {
+        outPath = "/";
+    }
+    else
+    {
+        for( size_t i=1;  i<pathVector.size(); i++ )
+        {
+            outPath = outPath + "/" + pathVector[i];
+        }
+    }
+    
+    if ( row > 0 && row < m_rows.size() )
+    {
+        outItemName = m_rows[row].m_name;
+        if ( outPath == "/" )
+        {
+            outPath = outPath + outItemName;
+        }
+        else
+        {
+            outPath = outPath + "/" + outItemName;
+        }
+    }
+
+    if ( m_currentPath.size() > 0 )
+    {
+        return m_currentPath.back();
+    }
+    return nullptr;
+}
+
 int FsTreeTableModel::onDoubleClick( int row )
 {
     if ( row == 0 )

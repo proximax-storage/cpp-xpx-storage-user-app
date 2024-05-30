@@ -160,7 +160,6 @@ private:
     Drive*  selectedDriveInWizardTable(QTableWidget* table) const;
     Drive*  currentStreamingDrive() const;
 
-    std::optional<DataInfo> selectedDataInfo();
     std::vector<DataInfo> readDataInfoList();
 public:
     void startEasyDownload( const DataInfo& dataInfo );

@@ -17,6 +17,11 @@ public:
     int onDoubleClick( int row );
     std::string currentPathString() const;
     std::vector<std::string> currentPath() const;
+    
+    sirius::drive::Folder* currentSelectedItem( int         row,        // index in table-view
+                                               std::string& outPath,    // path in FsTree
+                                               std::string& outItemName // name of folder or file
+                                               );
 
     int rowCount(const QModelIndex& index = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent) const override;
