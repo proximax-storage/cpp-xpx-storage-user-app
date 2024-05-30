@@ -89,19 +89,24 @@ sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, std::stri
 {
     outItemName = "";
     outPath = "";
-    auto pathVector = currentPath();
-    if ( pathVector.size() <= 1 )
+    auto pathVector = m_currentPath;
+    if ( m_currentFolder != nullptr )
+    {
+        pathVector.push_back( m_currentFolder );
+    }
+    for( size_t i=0;  i<pathVector.size(); i++ )
+    {
+        if ( pathVector[i]->name() != "/" )
+        {
+            outPath = outPath + "/" + pathVector[i]->name();
+        }
+    }
+    if ( outPath.empty() )
     {
         outPath = "/";
     }
-    else
-    {
-        for( size_t i=1;  i<pathVector.size(); i++ )
-        {
-            outPath = outPath + "/" + pathVector[i];
-        }
-    }
-    
+
+    // skip '..' and overindex
     if ( row > 0 && row < m_rows.size() )
     {
         outItemName = m_rows[row].m_name;
@@ -115,11 +120,7 @@ sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, std::stri
         }
     }
 
-    if ( m_currentPath.size() > 0 )
-    {
-        return m_currentPath.back();
-    }
-    return nullptr;
+    return m_currentFolder;
 }
 
 int FsTreeTableModel::onDoubleClick( int row )

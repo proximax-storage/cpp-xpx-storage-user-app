@@ -25,7 +25,8 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent )
             ui->m_linkEdit->setEnabled(true);
             ui->m_linkEdit->setStyleSheet("");
             ui->m_linkEdit->setText(clipboard->text());
-            m_dataInfo = DataInfo::parseLink( clipboard->text().toStdString() );
+            m_dataInfo.parseLink( clipboard->text().toStdString() );
+            m_dataInfoIsNotSet = false;
         }
         else
         {
@@ -51,9 +52,9 @@ PasteLinkDialog::~PasteLinkDialog()
 void PasteLinkDialog::accept()
 {
     // initiate download
-    if ( m_dataInfo )
+    if ( m_dataInfoIsNotSet )
     {
-        QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=*m_dataInfo]
+        QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=m_dataInfo]
         {
             mainwin->startEasyDownload( dataInfo );
         });

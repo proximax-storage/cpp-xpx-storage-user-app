@@ -14,23 +14,23 @@
 
 struct DataInfo
 {
-    std::array<uint8_t, 32> m_driveKey;
+    uint8_t                 m_version = 0;
+    std::array<uint8_t, 32> m_driveKey = {};
     std::string             m_path;
+    uint64_t                m_totalSize;
 
+    DataInfo() = default;
+    
     DataInfo( const std::array<uint8_t, 32>& driveKey,
-              const std::string& path )
-        :m_driveKey(driveKey)
-        ,m_path(path)
+              const std::string&             path,
+              uint64_t                       totalSize )
+        : m_driveKey(driveKey)
+        , m_path(path)
+        , m_totalSize(totalSize)
     {
     }
 
-    static DataInfo parseLink( const std::string& link);
-
-    template<class Archive>
-    void serialize( Archive &ar )
-    {
-        ar( m_driveKey, m_path );
-    }
+    void parseLink( const std::string& link);
 
     std::string getLink() const;
 

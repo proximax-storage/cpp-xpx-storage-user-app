@@ -29,5 +29,6 @@ private:
     Ui::PasteLinkDialog     *ui;
     MainWin*                m_mainwin;
     QPushButton*            m_pasteLinkButton;
-    std::optional<DataInfo> m_dataInfo;
+    DataInfo                m_dataInfo;
+    bool                    m_dataInfoIsNotSet = true;
 };

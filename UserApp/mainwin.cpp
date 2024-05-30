@@ -2641,25 +2641,51 @@ void MainWin::setupDrivesTab()
             folder = m_driveTableModel->currentSelectedItem( rows.at(0).row(), path, itemName );
         }
 
-
         qDebug() << "copyLinkToData: key: " << m_model->currentDrive()->getKey().c_str();
         qDebug() << "copyLinkToData: path: " << path.c_str();
+        qDebug() << "copyLinkToData: itemName: " << itemName.c_str();
+
+        auto fsTree = m_model->currentDrive()->getFsTree();
+        if ( folder == nullptr )
+        {
+            folder = &fsTree;
+        }
         
-        auto dataInfo =  DataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path );
+        size_t dataSize = 0;
+
+        if ( ! itemName.empty() )
+        {
+            auto* child = folder->findChild( itemName );
+            if ( child == nullptr )
+            {
+                qWarning() << "CopyLink: Internal error: child == nullptr";
+                return;
+            }
+            if ( sirius::drive::isFolder(*child) )
+            {
+                folder = &sirius::drive::getFolder(*child);
+            }
+            else
+            {
+                const auto* file = &sirius::drive::getFile(*child);
+                dataSize = file->getSize();
+            }
+        }
+
+        if ( dataSize == 0 )
+        {
+            folder->iterate( [&dataSize] (const auto& file ) -> bool
+                            {
+                //qDebug() << "iterate: " << file.getSize() << " " << file.name().c_str();
+                dataSize += file.getSize();
+            });
+        }
+        qDebug() << "copyLinkToData: dataSize: " << dataSize;
+
+        DataInfo dataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
         
-        
-//        if (!dataInfo.has_value() )
-//        {
-//            displayError( "Select announcement!" );
-//            return;
-//        }
-//
-//        if ( auto rowList = ui->m_wizardStreamAnnouncementTable->selectionModel()->selectedRows();
-//            rowList.count() == 0 )
-//        {
-//            displayError( "No announcements!" );
-//            return;
-//        }
+
+        // DIALOG
 
         std::string link = dataInfo.getLink();
         QClipboard* clipboard = QApplication::clipboard();
@@ -2673,36 +2699,6 @@ void MainWin::setupDrivesTab()
         {
             clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
         }
-
-
-
-
-        // auto rowList = ui->m_driveFsTableView->selectionModel()->selectedRows();
-        // if ( rowList.count() > 0 )
-        // {
-        //     try
-        //     {
-        //         // copy link to clipboard
-
-        //         QClipboard* clipboard = QApplication::clipboard();
-        //         if ( !clipboard ) {
-        //             qWarning() << LOG_SOURCE << "bad clipboard";
-        //             return;
-        //         }
-        //         std::string link;
-        //         //rowList.begin()
-
-        //         clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
-        //     }
-        //     catch (...) {}
-        // }
-        // else
-        // {
-        //     QMessageBox msgBox;
-        //     msgBox.setText( "Select file or folder!" );
-        //     msgBox.setStandardButtons(QMessageBox::Ok);
-        //     msgBox.exec();
-        // }
     });
 
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]

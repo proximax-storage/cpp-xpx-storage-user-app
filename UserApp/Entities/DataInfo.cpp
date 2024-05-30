@@ -15,8 +15,7 @@ std::string DataInfo::getLink() const
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
 
-    archive( m_driveKey );
-    archive( m_path);
+    archive( m_version, m_driveKey, m_path, m_totalSize );
 
     auto rawString = os.str();
 
@@ -41,7 +40,7 @@ std::string DataInfo::getLink() const
     return std::string( &link[0], link.size() );
 }
 
-DataInfo DataInfo::parseLink( const std::string& linkString )
+void DataInfo::parseLink( const std::string& linkString )
 {
     qDebug() << "linkString: " << QString::fromStdString( linkString );
 
@@ -65,10 +64,5 @@ DataInfo DataInfo::parseLink( const std::string& linkString )
     std::istringstream is( linkStr, std::ios::binary );
     cereal::PortableBinaryInputArchive iarchive( is );
 
-    std::array<uint8_t, 32> driveKey;
-    std::string             path;
-    iarchive( driveKey );
-    iarchive( path);
-    
-    return DataInfo( driveKey, path );
+    iarchive( m_version, m_driveKey, m_path, m_totalSize );
 }
