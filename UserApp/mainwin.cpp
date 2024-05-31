@@ -2669,7 +2669,7 @@ void MainWin::setupDrivesTab()
             else
             {
                 const auto* file = &sirius::drive::getFile(*child);
-                dataSize = file->size();
+                dataSize += file->size();
             }
         }
 
