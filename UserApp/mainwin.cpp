@@ -2669,6 +2669,7 @@ void MainWin::setupDrivesTab()
             else
             {
                 const auto* file = &sirius::drive::getFile(*child);
+                qDebug() << "copyLinkToData: iterate0: " << file->size() << " " << file->name().c_str();
                 dataSize += file->size();
             }
         }
@@ -2677,7 +2678,7 @@ void MainWin::setupDrivesTab()
         {
             folder->iterate( [&dataSize] (const auto& file ) -> bool
                             {
-                //qDebug() << "iterate: " << file.getSize() << " " << file.name().c_str();
+                qDebug() << "copyLinkToData: iterate: " << file.size() << " " << file.name().c_str();
                 dataSize += file.size();
             });
         }

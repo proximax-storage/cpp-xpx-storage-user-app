@@ -1,6 +1,7 @@
 #include "ComfirmLinkDialog.h"
 #include "Dialogs/ui_ComfirmLinkDialog.h"
 #include "Utils.h"
+#include "drive/Utils.h"
 #include "qclipboard.h"
 #include "qpushbutton.h"
 #include "ui_ComfirmLinkDialog.h"
@@ -17,11 +18,11 @@ ComfirmLinkDialog::ComfirmLinkDialog( QWidget *parent
         okButton->setText("Copy Link To Clipboard");
     }
 
-    std::string str(m_dataInfo.m_driveKey.begin(), m_dataInfo.m_driveKey.end());
+    std::string str = sirius::drive::toString(m_dataInfo.m_driveKey);
 
     ui->m_driveKeyConfirmLabel->setText(QString::fromStdString(str));
-    ui->m_pathConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_path));
-    ui->m_dataSizeConfirmEdit->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
+    ui->m_pathConfirmationLabel->setText(QString::fromStdString(m_dataInfo.m_path));
+    ui->m_dataSizeConfirmationLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
 }
 
 ComfirmLinkDialog::~ComfirmLinkDialog()

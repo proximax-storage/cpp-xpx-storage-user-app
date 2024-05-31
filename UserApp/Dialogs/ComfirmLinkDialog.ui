@@ -49,16 +49,6 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="2">
-     <widget class="QLineEdit" name="m_pathConfirmEdit">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>35</height>
-       </size>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="minimumSize">
@@ -91,16 +81,6 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="2">
-     <widget class="QLineEdit" name="m_dataSizeConfirmEdit">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>35</height>
-       </size>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="2">
      <widget class="QLabel" name="m_driveKeyConfirmLabel">
       <property name="text">
@@ -108,6 +88,20 @@
       </property>
       <property name="wordWrap">
        <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="m_pathConfirmationLabel">
+      <property name="text">
+       <string>Path Here</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QLabel" name="m_dataSizeConfirmationLabel">
+      <property name="text">
+       <string>Data Here</string>
       </property>
      </widget>
     </item>
