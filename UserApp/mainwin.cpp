@@ -23,6 +23,7 @@
 #include "Dialogs/DownloadPaymentDialog.h"
 #include "Dialogs/StoragePaymentDialog.h"
 #include "Dialogs/PasteLinkDialog.h"
+#include "Dialogs/ComfirmLinkDialog.h"
 #include "ReplicatorTreeItem.h"
 #include "Models/ReplicatorTreeModel.h"
 #include "Dialogs/ReplicatorOnBoardingDialog.h"
@@ -2668,7 +2669,7 @@ void MainWin::setupDrivesTab()
             else
             {
                 const auto* file = &sirius::drive::getFile(*child);
-                dataSize = file->getSize();
+                dataSize = file->size();
             }
         }
 
@@ -2677,28 +2678,15 @@ void MainWin::setupDrivesTab()
             folder->iterate( [&dataSize] (const auto& file ) -> bool
                             {
                 //qDebug() << "iterate: " << file.getSize() << " " << file.name().c_str();
-                dataSize += file.getSize();
+                dataSize += file.size();
             });
         }
         qDebug() << "copyLinkToData: dataSize: " << dataSize;
 
         DataInfo dataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
-        
 
-        // DIALOG
-
-        std::string link = dataInfo.getLink();
-        QClipboard* clipboard = QApplication::clipboard();
-        if ( !clipboard ) {
-            qWarning() << LOG_SOURCE << "bad clipboard";
-            return;
-        }
-
-        clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
-        if ( clipboard->supportsSelection() )
-        {
-            clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
-        }
+        ComfirmLinkDialog dialog(this, dataInfo);
+        dialog.exec();
     });
 
     connect( ui->m_calcDiffBtn, &QPushButton::released, this, [this]
