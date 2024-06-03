@@ -51,7 +51,6 @@ PasteLinkDialog::~PasteLinkDialog()
 
 void PasteLinkDialog::accept()
 {
-    // initiate download
     if ( m_dataInfoIsNotSet )
     {
         QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=m_dataInfo]

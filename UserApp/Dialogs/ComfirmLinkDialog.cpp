@@ -43,6 +43,7 @@ void ComfirmLinkDialog::accept()
     {
         clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
     }
+    reject();
 }
 
 void ComfirmLinkDialog::reject()
