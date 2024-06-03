@@ -23,7 +23,7 @@
 #include "Dialogs/DownloadPaymentDialog.h"
 #include "Dialogs/StoragePaymentDialog.h"
 #include "Dialogs/PasteLinkDialog.h"
-#include "Dialogs/ComfirmLinkDialog.h"
+#include "Dialogs/ConfirmLinkDialog.h"
 #include "ReplicatorTreeItem.h"
 #include "Models/ReplicatorTreeModel.h"
 #include "Dialogs/ReplicatorOnBoardingDialog.h"
@@ -2686,8 +2686,8 @@ void MainWin::setupDrivesTab()
         qDebug() << "copyLinkToData: dataSize: " << dataSize;
 
         DataInfo dataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
-
-        ComfirmLinkDialog dialog(this, dataInfo);
+        
+        ConfirmLinkDialog dialog(this, dataInfo);
         dialog.exec();
     });
 

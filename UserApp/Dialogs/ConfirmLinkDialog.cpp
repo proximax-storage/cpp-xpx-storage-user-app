@@ -1,15 +1,15 @@
-#include "ComfirmLinkDialog.h"
-#include "Dialogs/ui_ComfirmLinkDialog.h"
+#include "ConfirmLinkDialog.h"
+#include "Dialogs/ui_ConfirmLinkDialog.h"
 #include "Utils.h"
 #include "drive/Utils.h"
 #include "qclipboard.h"
 #include "qpushbutton.h"
-#include "ui_ComfirmLinkDialog.h"
+#include "ui_ConfirmLinkDialog.h"
 
-ComfirmLinkDialog::ComfirmLinkDialog( QWidget *parent
+ConfirmLinkDialog::ConfirmLinkDialog( QWidget *parent
                                     , DataInfo dataInfo)
     : QDialog(parent)
-    , ui(new Ui::ComfirmLinkDialog)
+    , ui(new Ui::ConfirmLinkDialog)
     , m_dataInfo(dataInfo)
 {
     ui->setupUi(this);
@@ -25,12 +25,12 @@ ComfirmLinkDialog::ComfirmLinkDialog( QWidget *parent
     ui->m_dataSizeConfirmationLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
 }
 
-ComfirmLinkDialog::~ComfirmLinkDialog()
+ConfirmLinkDialog::~ConfirmLinkDialog()
 {
     delete ui;
 }
 
-void ComfirmLinkDialog::accept()
+void ConfirmLinkDialog::accept()
 {
     std::string link = m_dataInfo.getLink();
     QClipboard* clipboard = QApplication::clipboard();
@@ -46,7 +46,7 @@ void ComfirmLinkDialog::accept()
     reject();
 }
 
-void ComfirmLinkDialog::reject()
+void ConfirmLinkDialog::reject()
 {
     QDialog::reject();
 }

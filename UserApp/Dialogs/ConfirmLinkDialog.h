@@ -5,22 +5,22 @@
 
 namespace Ui
 {
-class ComfirmLinkDialog;
+class ConfirmLinkDialog;
 }
 
-class ComfirmLinkDialog : public QDialog
+class ConfirmLinkDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ComfirmLinkDialog( QWidget *parent   = nullptr
+    explicit ConfirmLinkDialog( QWidget *parent   = nullptr
                               , DataInfo dataInfo = {} );
-    ~ComfirmLinkDialog();
+    ~ConfirmLinkDialog();
 
     void accept() override;
     void reject() override;
 
 private:
-    Ui::ComfirmLinkDialog*  ui;
+    Ui::ConfirmLinkDialog*  ui;
     DataInfo                m_dataInfo;
 };

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ComfirmLinkDialog</class>
- <widget class="QDialog" name="ComfirmLinkDialog">
+ <class>ConfirmLinkDialog</class>
+ <widget class="QDialog" name="ConfirmLinkDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -113,7 +113,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>ComfirmLinkDialog</receiver>
+   <receiver>ConfirmLinkDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -129,7 +129,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>ComfirmLinkDialog</receiver>
+   <receiver>ConfirmLinkDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
