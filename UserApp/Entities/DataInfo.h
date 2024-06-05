@@ -15,16 +15,19 @@
 struct DataInfo
 {
     uint8_t                 m_version = 0;
+    std::string             m_itemName;
     std::array<uint8_t, 32> m_driveKey = {};
     std::string             m_path;
     uint64_t                m_totalSize;
 
     DataInfo() = default;
     
-    DataInfo( const std::array<uint8_t, 32>& driveKey,
+    DataInfo( const std::string&             itemName,
+              const std::array<uint8_t, 32>& driveKey,
               const std::string&             path,
               uint64_t                       totalSize )
-        : m_driveKey(driveKey)
+        : m_itemName(itemName)
+        , m_driveKey(driveKey)
         , m_path(path)
         , m_totalSize(totalSize)
     {

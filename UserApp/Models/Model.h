@@ -30,6 +30,8 @@ class Settings;
 struct LocalDriveItem;
 class AddDownloadChannelDialog;
 
+struct EasyDownloadInfo;
+
 enum ViewerStatus
 {
     vs_no_viewing,
@@ -200,6 +202,12 @@ class Model : public QObject
         StreamInfo*                     getStreamRef( int index );
 
         void                            requestStreamStatus( const StreamInfo& streamInfo, StreamStatusResponseHandler );
+    
+        //
+        // EasyDownloads
+        //
+        const std::vector<EasyDownloadInfo>&    easyDownloads() const;
+        std::vector<EasyDownloadInfo>&          easyDownloads();
 
     signals:
         void addTorrentFileToStorageSession(const std::string &torrentFilename,

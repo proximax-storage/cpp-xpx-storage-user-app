@@ -70,7 +70,7 @@ fs::path Model::getDownloadFolder()
 }
 
 std::string Model::getAccountName() {
-    return m_settings->config().m_accountName;
+    return m_settings->accountConfig().m_accountName;
 }
 
 std::string Model::getBootstrapReplicator() {
@@ -104,7 +104,7 @@ double Model::getFeeMultiplier() {
 }
 
 const sirius::crypto::KeyPair& Model::getKeyPair() {
-    return m_settings->config().m_keyPair.value();
+    return m_settings->accountConfig().m_keyPair.value();
 }
 
 void Model::onDownloadCompleted(lt::torrent_handle handle) {
@@ -112,33 +112,33 @@ void Model::onDownloadCompleted(lt::torrent_handle handle) {
 }
 
 void Model::addDownloadChannel(const DownloadChannel &channel) {
-    m_settings->config().m_dnChannels.insert({ channel.getKey(), channel });
+    m_settings->accountConfig().m_dnChannels.insert({ channel.getKey(), channel });
 }
 
 std::map<std::string, DownloadChannel>&  Model::getDownloadChannels()
 {
-    return m_settings->config().m_dnChannels;
+    return m_settings->accountConfig().m_dnChannels;
 }
 
 void Model::setCurrentDownloadChannelKey(const std::string& channelKey)
 {
-    m_settings->config().m_currentDownloadChannelKey = channelKey;
+    m_settings->accountConfig().m_currentDownloadChannelKey = channelKey;
 }
 
 std::string Model::currentDownloadChannelKey()
 {
-    return m_settings->config().m_currentDownloadChannelKey;
+    return m_settings->accountConfig().m_currentDownloadChannelKey;
 }
 
 std::vector<DownloadInfo>& Model::downloads()
 {
-    return m_settings->config().m_downloads;
+    return m_settings->accountConfig().m_downloads;
 }
 
 void Model::markChannelsForDelete(const std::string& driveId, bool state) {
     auto drive = findDrive(driveId);
     if (drive) {
-        auto& channels = m_settings->config().m_dnChannels;
+        auto& channels = m_settings->accountConfig().m_dnChannels;
         for (auto& [key, channel] : channels) {
             if (boost::iequals( channel.getDriveKey(), drive->getKey() )) {
                 channel.setDeleting(state);
@@ -148,41 +148,41 @@ void Model::markChannelsForDelete(const std::string& driveId, bool state) {
 }
 
 bool Model::isDownloadChannelsLoaded() {
-    return m_settings->config().m_channelsLoaded;
+    return m_settings->accountConfig().m_channelsLoaded;
 }
 
 void Model::setDownloadChannelsLoaded(bool state) {
-    m_settings->config().m_channelsLoaded = state;
+    m_settings->accountConfig().m_channelsLoaded = state;
 }
 
 std::map<std::string, CachedReplicator> Model::getMyReplicators() const {
-    return m_settings->config().m_myReplicators;
+    return m_settings->accountConfig().m_myReplicators;
 }
 
 void Model::addMyReplicator(const CachedReplicator& replicator) {
-    m_settings->config().m_myReplicators.insert_or_assign(replicator.getPrivateKey(), replicator);
+    m_settings->accountConfig().m_myReplicators.insert_or_assign(replicator.getPrivateKey(), replicator);
 }
 
 void Model::removeMyReplicator(const std::string& replicatorKey) {
-    m_settings->config().m_myReplicators.erase(replicatorKey);
+    m_settings->accountConfig().m_myReplicators.erase(replicatorKey);
 }
 
 void Model::setCurrentDriveKey( const std::string& driveKey )
 {
     const auto driveKyeUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
-    if ( !m_settings->config().m_drives.contains(driveKyeUpperCase) )
+    if ( !m_settings->accountConfig().m_drives.contains(driveKyeUpperCase) )
     {
         qWarning() << "Model::setCurrentDriveKey: invalid drive key: " << driveKyeUpperCase;
     }
     else
     {
-        m_settings->config().m_currentDriveKey = driveKyeUpperCase;
+        m_settings->accountConfig().m_currentDriveKey = driveKyeUpperCase;
     }
 }
 
 std::string Model::currentDriveKey()
 {
-    return m_settings->config().m_currentDriveKey;
+    return m_settings->accountConfig().m_currentDriveKey;
 }
 
 bool Model::isDriveWithNameExists(const QString& driveName) const
@@ -191,11 +191,11 @@ bool Model::isDriveWithNameExists(const QString& driveName) const
         return false;
     }
 
-    auto it = std::find_if( m_settings->config().m_drives.begin(), m_settings->config().m_drives.end(), [&driveName] (const auto& iterator) {
+    auto it = std::find_if( m_settings->accountConfig().m_drives.begin(), m_settings->accountConfig().m_drives.end(), [&driveName] (const auto& iterator) {
         return boost::iequals(iterator.second.getName(), driveName.toStdString());
     });
 
-    return !(it == m_settings->config().m_drives.end());
+    return !(it == m_settings->accountConfig().m_drives.end());
 }
 
 bool Model::isChannelWithNameExists(const QString& channelName) const
@@ -204,11 +204,11 @@ bool Model::isChannelWithNameExists(const QString& channelName) const
         return false;
     }
 
-    auto it = std::find_if( m_settings->config().m_dnChannels.begin(), m_settings->config().m_dnChannels.end(), [&channelName] (const auto& iterator) {
+    auto it = std::find_if( m_settings->accountConfig().m_dnChannels.begin(), m_settings->accountConfig().m_dnChannels.end(), [&channelName] (const auto& iterator) {
         return boost::iequals(iterator.second.getName(), channelName.toStdString());
     });
 
-    return !(it == m_settings->config().m_dnChannels.end());
+    return !(it == m_settings->accountConfig().m_dnChannels.end());
 }
 
 bool Model::isReplicatorWithNameExists(const QString& replicatorName) const
@@ -217,11 +217,11 @@ bool Model::isReplicatorWithNameExists(const QString& replicatorName) const
         return false;
     }
 
-    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [&replicatorName] (const auto& iterator) {
+    auto it = std::find_if( m_settings->accountConfig().m_myReplicators.begin(), m_settings->accountConfig().m_myReplicators.end(), [&replicatorName] (const auto& iterator) {
         return boost::iequals(iterator.second.getName(), replicatorName.toStdString());
     });
 
-    return !(it == m_settings->config().m_myReplicators.end());
+    return !(it == m_settings->accountConfig().m_myReplicators.end());
 }
 
 QRect Model::getWindowGeometry() const {
@@ -237,19 +237,19 @@ void Model::initForTests() {
 }
 
 std::string Model::getClientPublicKey() {
-    return m_settings->config().m_publicKeyStr;
+    return m_settings->accountConfig().m_publicKeyStr;
 }
 
 std::string Model::getClientPrivateKey() {
-    return m_settings->config().m_privateKeyStr;
+    return m_settings->accountConfig().m_privateKeyStr;
 }
 
 bool Model::isDrivesLoaded() {
-    return m_settings->config().m_drivesLoaded;
+    return m_settings->accountConfig().m_drivesLoaded;
 }
 
 void Model::setDrivesLoaded(bool state) {
-    m_settings->config().m_drivesLoaded = state;
+    m_settings->accountConfig().m_drivesLoaded = state;
 }
 
 void Model::setLoadedDrivesCount(uint64_t count) {
@@ -269,7 +269,7 @@ uint64_t Model::getOutdatedDriveNumber() const {
 }
 
 void Model::addDrive(const Drive& drive) {
-    m_settings->config().m_drives.insert({ drive.getKey(), drive });
+    m_settings->accountConfig().m_drives.insert({ drive.getKey(), drive });
 }
 
 void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& channelsPages )
@@ -279,7 +279,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
         std::copy(page.data.channels.begin(), page.data.channels.end(), std::back_inserter(remoteChannels));
     }
 
-    auto& localChannels = m_settings->config().m_dnChannels;
+    auto& localChannels = m_settings->accountConfig().m_dnChannels;
     std::map<std::string, DownloadChannel>  validChannels;
     for (auto &remoteChannel : remoteChannels) {
         std::string hash = remoteChannel.data.id;
@@ -310,7 +310,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
     }
 
     // remove closed channels from saved
-    m_settings->config().m_dnChannels = validChannels;
+    m_settings->accountConfig().m_dnChannels = validChannels;
     m_settings->save();
 }
 
@@ -320,7 +320,7 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
         std::copy(page.data.channels.begin(), page.data.channels.end(), std::back_inserter(remoteChannels));
     }
 
-    auto& localChannels = m_settings->config().m_dnChannels;
+    auto& localChannels = m_settings->accountConfig().m_dnChannels;
     for (auto &remoteChannel : remoteChannels) {
         std::string hash = remoteChannel.data.id;
         auto it = std::find_if(localChannels.begin(), localChannels.end(), [&hash](const auto &channel) {
@@ -339,7 +339,7 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
             channel.setDeleting(false);
             auto creationTime = std::chrono::steady_clock::now();
             channel.setCreatingTimePoint(creationTime);
-            m_settings->config().m_dnChannels.insert({ channel.getKey(), channel });
+            m_settings->accountConfig().m_dnChannels.insert({ channel.getKey(), channel });
         }
     }
 
@@ -354,7 +354,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
     }
 
     qDebug() << "Model::onDrivesLoaded: " << remoteDrives.size();
-    auto& drives = m_settings->config().m_drives;
+    auto& drives = m_settings->accountConfig().m_drives;
 
     for( auto& remoteDrive : remoteDrives )
     {
@@ -473,14 +473,14 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 
 std::map<std::string, Drive>& Model::getDrives()
 {
-    return m_settings->config().m_drives;
+    return m_settings->accountConfig().m_drives;
 }
 
 Drive* Model::currentDrive()
 {
-    if (m_settings->config().m_drives.contains(m_settings->config().m_currentDriveKey))
+    if (m_settings->accountConfig().m_drives.contains(m_settings->accountConfig().m_currentDriveKey))
     {
-        return &m_settings->config().m_drives[m_settings->config().m_currentDriveKey];
+        return &m_settings->accountConfig().m_drives[m_settings->accountConfig().m_currentDriveKey];
     }
 
     return nullptr;
@@ -489,7 +489,7 @@ Drive* Model::currentDrive()
 Drive* Model::findDrive( const std::string& driveKey )
 {
     const auto driveKeyUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
-    auto& drives = m_settings->config().m_drives;
+    auto& drives = m_settings->accountConfig().m_drives;
     if (drives.contains(driveKeyUpperCase)) {
         return &drives[driveKeyUpperCase];
     }
@@ -499,7 +499,7 @@ Drive* Model::findDrive( const std::string& driveKey )
 
 Drive* Model::findDriveByNameOrPublicKey( const std::string& value )
 {
-    auto& drives = m_settings->config().m_drives;
+    auto& drives = m_settings->accountConfig().m_drives;
     for (auto& drive : drives) {
         if (drive.second.getName() == value || boost::iequals(drive.second.getKey(), value)) {
             return &drive.second;
@@ -511,7 +511,7 @@ Drive* Model::findDriveByNameOrPublicKey( const std::string& value )
 
 CachedReplicator Model::findReplicatorByNameOrPublicKey( const std::string& value )
 {
-    for (const auto& replicator : m_settings->config().m_myReplicators) {
+    for (const auto& replicator : m_settings->accountConfig().m_myReplicators) {
         if (replicator.second.getName() == value || boost::iequals(replicator.second.getPublicKey(), value)) {
             return replicator.second;
         }
@@ -522,7 +522,7 @@ CachedReplicator Model::findReplicatorByNameOrPublicKey( const std::string& valu
 
 Drive* Model::findDriveByModificationId( const std::array<uint8_t, 32>& modificationId )
 {
-    auto& drives = m_settings->config().m_drives;
+    auto& drives = m_settings->accountConfig().m_drives;
     auto it = std::find_if( drives.begin(), drives.end(), [&modificationId] (const auto& iterator) {
         return iterator.second.getModificationHash() == modificationId;
     });
@@ -533,14 +533,14 @@ Drive* Model::findDriveByModificationId( const std::array<uint8_t, 32>& modifica
 void Model::removeDrive( const std::string& driveKey )
 {
     const auto driveKeyUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
-    auto& drives = m_settings->config().m_drives;
+    auto& drives = m_settings->accountConfig().m_drives;
     drives.erase(driveKeyUpperCase);
 
     m_settings->save();
 }
 
 void Model::removeChannelsByDriveKey(const std::string &driveKey) {
-    auto& channels = m_settings->config().m_dnChannels;
+    auto& channels = m_settings->accountConfig().m_dnChannels;
     auto begin = channels.begin();
     while(begin != channels.end()) {
         if (boost::iequals( begin->second.getDriveKey(), driveKey )) {
@@ -558,9 +558,9 @@ void Model::removeFromDownloads( int rowIndex )
 
 DownloadChannel* Model::currentDownloadChannel()
 {
-    if (m_settings->config().m_dnChannels.contains(m_settings->config().m_currentDownloadChannelKey))
+    if (m_settings->accountConfig().m_dnChannels.contains(m_settings->accountConfig().m_currentDownloadChannelKey))
     {
-        return &m_settings->config().m_dnChannels[m_settings->config().m_currentDownloadChannelKey];
+        return &m_settings->accountConfig().m_dnChannels[m_settings->accountConfig().m_currentDownloadChannelKey];
     }
 
     return nullptr;
@@ -568,7 +568,7 @@ DownloadChannel* Model::currentDownloadChannel()
 
 DownloadChannel* Model::findChannel( const std::string& channelKey )
 {
-    auto& channels = m_settings->config().m_dnChannels;
+    auto& channels = m_settings->accountConfig().m_dnChannels;
     auto it = std::find_if( channels.begin(), channels.end(), [channelKey] (const auto& channelInfo)
     {
         return boost::iequals( channelKey, channelInfo.first );
@@ -578,21 +578,21 @@ DownloadChannel* Model::findChannel( const std::string& channelKey )
 }
 
 CachedReplicator Model::findReplicatorByPublicKey(const std::string& replicatorPublicKey) const {
-    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
+    auto it = std::find_if( m_settings->accountConfig().m_myReplicators.begin(), m_settings->accountConfig().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
     {
         return boost::iequals( replicatorPublicKey, r.second.getPublicKey() );
     });
 
-    return it == m_settings->config().m_myReplicators.end() ? CachedReplicator() : it->second;
+    return it == m_settings->accountConfig().m_myReplicators.end() ? CachedReplicator() : it->second;
 }
 
 void Model::updateReplicatorAlias(const std::string& replicatorPublicKey, const std::string& alias) const {
-    auto it = std::find_if( m_settings->config().m_myReplicators.begin(), m_settings->config().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
+    auto it = std::find_if( m_settings->accountConfig().m_myReplicators.begin(), m_settings->accountConfig().m_myReplicators.end(), [replicatorPublicKey] (const auto& r)
     {
         return boost::iequals( replicatorPublicKey, r.second.getPublicKey() );
     });
 
-    if (it != m_settings->config().m_myReplicators.end()) {
+    if (it != m_settings->accountConfig().m_myReplicators.end()) {
         it->second.setName(alias);
     }
 }
@@ -600,14 +600,14 @@ void Model::updateReplicatorAlias(const std::string& replicatorPublicKey, const 
 void Model::removeChannel( const std::string& channelKey )
 {
     const auto channelKeyUpperCase = QString::fromStdString(channelKey).toUpper().toStdString();
-    auto& channels = m_settings->config().m_dnChannels;
+    auto& channels = m_settings->accountConfig().m_dnChannels;
     channels.erase(channelKeyUpperCase);
 
     m_settings->save();
 }
 
 void Model::applyForChannels(const std::string &driveKey, std::function<void(DownloadChannel &)> callback) {
-    for( auto& channel : m_settings->config().m_dnChannels )
+    for( auto& channel : m_settings->accountConfig().m_dnChannels )
     {
         if ( boost::iequals( channel.second.getDriveKey(), driveKey ) )
         {
@@ -618,7 +618,7 @@ void Model::applyForChannels(const std::string &driveKey, std::function<void(Dow
 
 void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::drive::FsTree& fsTree, const std::array<uint8_t, 32>& fsTreeHash )
 {
-    for( auto& channel : m_settings->config().m_dnChannels )
+    for( auto& channel : m_settings->accountConfig().m_dnChannels )
     {
         if ( boost::iequals( channel.second.getDriveKey(), driveKey ) )
         {
@@ -703,17 +703,17 @@ void Model::removeTorrentSync( sirius::drive::InfoHash infoHash )
 
 const std::vector<StreamInfo>& Model::streamerAnnouncements() const
 {
-    return m_settings->config().m_streams;
+    return m_settings->accountConfig().m_streams;
 }
 
 std::vector<StreamInfo>& Model::getStreams()
 {
-    return m_settings->config().m_streams;
+    return m_settings->accountConfig().m_streams;
 }
 
 Drive* Model::currentStreamingDrive() const
 {
-    for( auto& [key,drive] : m_settings->config().m_drives )
+    for( auto& [key,drive] : m_settings->accountConfig().m_drives )
     {
         if ( drive.isStreaming() )
         {
@@ -725,7 +725,7 @@ Drive* Model::currentStreamingDrive() const
 
 void Model::addStreamRef( const StreamInfo& streamInfo )
 {
-    auto& streams = m_settings->config().m_streamRefs;
+    auto& streams = m_settings->accountConfig().m_streamRefs;
     streams.push_back( streamInfo );
     std::sort( streams.begin(), streams.end(), [] (const auto& s1, const auto& s2) ->bool {
         return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
@@ -736,40 +736,40 @@ void Model::addStreamRef( const StreamInfo& streamInfo )
 
 void Model::deleteStreamRef( int index )
 {
-    auto& streams = m_settings->config().m_streamRefs;
+    auto& streams = m_settings->accountConfig().m_streamRefs;
     streams.erase( streams.begin() + index );
     m_settings->save();
 }
 
 const std::vector<StreamInfo>& Model::streamRefs() const
 {
-    return m_settings->config().m_streamRefs;
+    return m_settings->accountConfig().m_streamRefs;
 }
 
 void Model::setCurrentStreamInfo( std::optional<StreamInfo> info )
 {
-    m_settings->config().m_currentStreamInfo = info;
+    m_settings->accountConfig().m_currentStreamInfo = info;
 }
 
 std::optional<StreamInfo> Model::currentStreamInfo() const
 {
-    return m_settings->config().m_currentStreamInfo;
+    return m_settings->accountConfig().m_currentStreamInfo;
 }
 
 const StreamInfo*  Model::getStreamRef( int index ) const
 {
-    if ( index >= 0 && index < m_settings->config().m_streamRefs.size() )
+    if ( index >= 0 && index < m_settings->accountConfig().m_streamRefs.size() )
     {
-        return &m_settings->config().m_streamRefs[index];
+        return &m_settings->accountConfig().m_streamRefs[index];
     }
     return nullptr;
 }
 
 StreamInfo*  Model::getStreamRef( int index )
 {
-    if ( index >= 0 && index < m_settings->config().m_streamRefs.size() )
+    if ( index >= 0 && index < m_settings->accountConfig().m_streamRefs.size() )
     {
-        return &m_settings->config().m_streamRefs[index];
+        return &m_settings->accountConfig().m_streamRefs[index];
     }
     return nullptr;
 }
@@ -788,7 +788,7 @@ void Model::setModificationStatusResponseHandler( ModificationStatusResponseHand
 }
 
 DriveContractModel& Model::driveContractModel() {
-    return m_settings->config().m_driveContractModel;
+    return m_settings->accountConfig().m_driveContractModel;
 };
 
 void Model::requestModificationStatus(  const std::string&     replicatorKey,
@@ -815,3 +815,12 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
 //    }
 }
 
+const std::vector<EasyDownloadInfo>& Model::easyDownloads() const
+{
+    return m_settings->accountConfig().m_easyDownloads;
+}
+
+std::vector<EasyDownloadInfo>& Model::easyDownloads()
+{
+    return m_settings->accountConfig().m_easyDownloads;
+}

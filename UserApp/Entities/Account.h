@@ -14,6 +14,7 @@
 #include "CachedReplicator.h"
 #include "drive/Utils.h"
 #include "Models/DriveContractModel.h"
+#include "Entities/EasyDownloadInfo.h"
 
 #define STREAM_ROOT_FOLDER_NAME "video"
 #define STREAM_INFO_FILE_NAME   "info"
@@ -22,6 +23,7 @@ const  uint32_t MIN_SETTINGS_VERSION = 1;
 const  uint32_t MAX_SETTINGS_VERSION = 2;
 inline uint32_t gSettingsVersion = 0;
 
+struct EasyDownloadInfo;
 
 class Account
 {
@@ -83,6 +85,8 @@ class Account
         std::vector<StreamInfo>     m_streamRefs; // viewer part
     
         std::string                 m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
+    
+        std::vector<EasyDownloadInfo> m_easyDownloads;
 
         int                     m_currentStreamIndex = -1; // unused
         int                     m_currentStreamRefIndex = -1; // unused

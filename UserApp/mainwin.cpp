@@ -8,6 +8,7 @@
 #include "Models/Model.h"
 #include "Models/FsTreeTableModel.h"
 #include "Models/DownloadsTableModel.h"
+#include "Models/EasyDownloadTableModel.h"
 #include "Models/DriveTreeModel.h"
 #include "Models/DiffTableModel.h"
 #include "QtGui/qclipboard.h"
@@ -856,7 +857,7 @@ void MainWin::drivesInitialized()
 
     connect(this, &MainWin::driveStateChangedSignal, this, [this](const std::string& driveKey, int state, bool itIsNewState )
     {
-        m_settings->config().m_driveContractModel.onDriveStateChanged( driveKey, state );
+        m_settings->accountConfig().m_driveContractModel.onDriveStateChanged( driveKey, state );
         MainWin::updateDriveWidgets( driveKey, state, itIsNewState);
     }, Qt::QueuedConnection);
 
@@ -945,10 +946,11 @@ void MainWin::setupIcons() {
 
 void MainWin::setupDownloadsTab()
 {
+    setupEasyDownloads();
     setupChannelFsTable();
     setupDownloadsTable();
 
-    ui->m_downloadsPath->setText(static_cast<QLatin1StringView>("Path: " + m_settings->config().m_downloadFolder));
+    ui->m_downloadsPath->setText(static_cast<QLatin1StringView>("Path: " + m_settings->accountConfig().m_downloadFolder));
     ui->m_channels->addItem( "Loading..." );
 
     connect( ui->m_downloadBtn, &QPushButton::released, this, &MainWin::onDownloadBtn, Qt::QueuedConnection);
@@ -1044,42 +1046,6 @@ void MainWin::setupDownloadsTab()
     {
         QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( m_settings->downloadFolder().string() )));
     });
-
-    connect(ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
-    {
-        PasteLinkDialog dialog(this);
-        dialog.exec();
-    }, Qt::QueuedConnection);
-
-    connect(ui->m_deleteDownloadedDataBtn, &QPushButton::released, this, [this]
-    {
-        auto rows = ui->m_downloadedDataTable->selectionModel()->selectedRows();
-        if ( rows.empty() )
-        {
-            return;
-        }
-
-        int rowIndex = rows.begin()->row();
-        auto& downloads = m_model->downloads();
-
-        if ( rowIndex >= 0 && rowIndex < downloads.size() )
-        {
-            DownloadInfo dnInfo = downloads[rowIndex];
-
-            QMessageBox msgBox;
-            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
-            msgBox.setText(message);
-            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-            auto reply = msgBox.exec();
-
-            if ( reply == QMessageBox::Ok )
-            {
-                m_model->removeFromDownloads( rowIndex );
-                addNotification(message);
-                m_model->saveSettings();
-            }
-        }
-    }, Qt::QueuedConnection);
 
 }
 
@@ -1268,6 +1234,65 @@ void MainWin::onDownloadBtn()
 
     updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
+
+void MainWin::setupEasyDownloads()
+{
+    m_easyDownloadTableModel = new EasyDownloadTableModel(m_model, this);
+    ui->m_easyDownloadTable->setModel( m_easyDownloadTableModel );
+
+    ui->m_easyDownloadTable->setColumnWidth(0,300);
+    ui->m_easyDownloadTable->horizontalHeader()->setStretchLastSection(true);
+    ui->m_easyDownloadTable->horizontalHeader()->hide();
+    ui->m_easyDownloadTable->setGridStyle( Qt::NoPen );
+    ui->m_easyDownloadTable->update();
+    
+    connect( ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
+    {
+//        PasteLinkDialog dialog(this);
+//        dialog.exec();
+
+        DataInfo testData{ "test-data", {} , "/f", 256 };
+        
+        m_easyDownloadTableModel->beginResetModel();
+        m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo(testData) );
+        
+        m_easyDownloadTableModel->endResetModel();
+    });
+    
+    
+    connect( ui->m_deleteDownloadedDataBtn, &QPushButton::released, this, [this]
+    {
+//        auto rows = ui->m_downloadedDataTable->selectionModel()->selectedRows();
+//        if ( rows.empty() )
+//        {
+//            return;
+//        }
+//
+//        int rowIndex = rows.begin()->row();
+//        auto& downloads = m_model->downloads();
+//
+//        if ( rowIndex >= 0 && rowIndex < downloads.size() )
+//        {
+//            DownloadInfo dnInfo = downloads[rowIndex];
+//
+//            QMessageBox msgBox;
+//            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
+//            msgBox.setText(message);
+//            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+//            auto reply = msgBox.exec();
+//
+//            if ( reply == QMessageBox::Ok )
+//            {
+//                m_model->removeFromDownloads( rowIndex );
+//                addNotification(message);
+//                m_model->saveSettings();
+//            }
+//        }
+    }, Qt::QueuedConnection);
+
+
+}
+
 
 void MainWin::setupDownloadsTable()
 {
@@ -2685,7 +2710,7 @@ void MainWin::setupDrivesTab()
         }
         qDebug() << "copyLinkToData: dataSize: " << dataSize;
 
-        DataInfo dataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
+        DataInfo dataInfo( "todo-item-name", Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
         
         ConfirmLinkDialog dialog(this, dataInfo);
         dialog.exec();
@@ -2843,7 +2868,7 @@ void MainWin::setupMyReplicatorTab() {
     ui->m_myReplicators->setModel(m_myReplicatorsModel);
     ui->m_myReplicators->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    for (const auto& r : m_settings->config().m_myReplicators) {
+    for (const auto& r : m_settings->accountConfig().m_myReplicators) {
         m_onChainClient->getBlockchainEngine()->getReplicatorById(r.second.getPublicKey(), [this, r] (auto replicator, auto isSuccess, auto message, auto code ) {
             if (!isSuccess) {
                 qWarning() << "MainWin::setupMyReplicatorTab::getReplicatorById. Error: " << message.c_str() << " : " << code.c_str();
@@ -3550,7 +3575,161 @@ void MainWin::on_m_streamingTabView_currentChanged(int index)
 }
 
 
-void MainWin::startEasyDownload( const DataInfo& dataInfo )
+std::string str_toupper(std::string s)
+{
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
+    return s;
+}
+
+void MainWin::startEasyDownload( const DataInfo& dataInfo0 )
 {
     // 'max_metadata_size' should be extended (now it is 30 MB)
+    
+    // TODO
+    std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
+    std::string             path = "/";
+    uint64_t                totalSize = 33554477;
+
+    DataInfo dataInfo( "todo", driveKeyHash, path, totalSize );
+    std::string driveKeyStr = str_toupper(sirius::drive::toString( dataInfo.m_driveKey ));
+    
+    //
+    // create channel
+    //
+    connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
+
+    const auto channelName = "download-channel"; //TODO
+    auto callback = [client = m_onChainClient, channelName, driveKeyStr = driveKeyStr] (std::string hash)
+    {
+        hash = QString::fromStdString(hash).toUpper().toStdString();
+        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
+        emit client->getDialogSignalsEmitter()->addDownloadChannel( channelName, hash, driveKeyStr, {});
+    };
+    
+    uint64_t prepaidSizeMB = 2 * (dataInfo.m_totalSize + (1024*1024-1)) / (1024*1024);
+
+    m_onChainClient->addDownloadChannel( channelName,
+                                        {}, dataInfo.m_driveKey,
+                                        prepaidSizeMB,
+                                        0,
+                                        callback); // feedback is unused for now
+
+    m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
+    
+    m_model->m_viewerStatus = vs_waiting_channel_creation;
+    
+    m_model->setChannelFsTreeHandler( [=,this] ( bool success, const std::string& channelKey, const std::string& driveKey )
+    {
+        if ( !success || driveKey != driveKeyStr )
+        {
+            if ( !success )
+            {
+                qDebug() << "Channel creation faled: driveKey: " << driveKey.c_str();
+            }
+            return;
+        }
+        
+        auto* channel = m_model->findChannel(channelKey);
+        if ( channel != nullptr && channel->isCreating() )
+        {
+            // waiting creation (may be old fsTree received)
+            return;
+        }
+
+        m_model->resetChannelFsTreeHandler();
+        m_modalDialog->reject();
+        delete m_modalDialog;
+        m_modalDialog = nullptr;
+        
+        if ( channel != nullptr )
+        {
+            continueEasyDownload( dataInfo, channel );
+        }
+        else
+        {
+            displayError( "Internal error: channel not found" );
+        }
+    });
+
+    m_modalDialog->exec();
 }
+
+void MainWin::continueEasyDownload( const DataInfo& dataInfo, DownloadChannel* channel )
+{
+//    //
+//    // Get download item
+//    //
+//    m_easyDownloadFsTree = channel->getFsTree();
+//    sirius::drive::Folder::Child* downloadItem = nullptr;
+//    
+//    if ( dataInfo.m_path == "" || dataInfo.m_path == "/" || dataInfo.m_path == "\\" )
+//    {
+//        downloadItem = &m_easyDownloadFsTree;
+//    }
+//    else
+//    {
+//        downloadItem = m_easyDownloadFsTree.getEntryPtr( dataInfo.m_path );
+//    }
+//    
+//    if ( downloadItem == nullptr )
+//    {
+//        displayError( "Invalid data link: item not found", dataInfo.m_path );
+//        return;
+//    }
+//    
+//    //
+//    // Check item size
+//    //
+//    size_t totalSize = 0;
+//    if ( sirius::drive::isFolder(downloadItem) )
+//    {
+//        m_easyDownloadFsTree.iterate( [&] (const sirius::drive::File& file) -> bool
+//                                     {
+//            totalSize += file.size();
+//            return false;
+//        });
+//        
+//        if ( dataInfo.m_totalSize < totalSize )
+//        {
+//            displayError( "Invalid data link: wrong data size" );
+//            return;
+//        }
+//    }
+//    
+//    sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
+//    qDebug() << "replicatorList: " << replicatorList.size();
+//
+//    updateReplicatorsForChannel( channel->getKey(), [this, channel]()
+//    {
+////        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows(false))
+////        {
+////            m_downloadsTableModel->addRow(selectedRow);
+////        }
+////
+////        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
+////        {
+////            QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
+////
+////            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
+////
+////            DownloadInfo downloadInfo;
+////            downloadInfo.setHash(selectedRow.m_hash);
+////            downloadInfo.setDownloadChannelKey(channel->getKey());
+////            downloadInfo.setFileName(selectedRow.m_name);
+////            downloadInfo.setSaveFolder(selectedRow.m_path);
+////            downloadInfo.setDownloadFolder(m_model->getDownloadFolder().string());
+////            downloadInfo.setChannelOutdated(false);
+////            downloadInfo.setCompleted(false);
+////            downloadInfo.setProgress(0);
+////            downloadInfo.setHandle(ltHandle);
+////
+////            m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
+////            m_model->saveSettings();
+////        }
+//    });
+//
+//    displayError( "todo: continueEasyDownload" );
+}
+
+
+//

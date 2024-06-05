@@ -28,6 +28,7 @@ class FsTreeTableModel;
 class DownloadChannel;
 class Drive;
 class DownloadsTableModel;
+class EasyDownloadTableModel;
 class ReplicatorTreeModel;
 class DriveTreeModel;
 class DiffTableModel;
@@ -94,6 +95,8 @@ private:
     void setupDownloadsTab();
     void setupDownloadsTable();
     void onDownloadBtn();
+
+    void setupEasyDownloads();
 
     void setupChannelFsTable();
     void selectChannelFsItem( int index );
@@ -163,6 +166,10 @@ private:
     std::vector<DataInfo> readDataInfoList();
 public:
     void startEasyDownload( const DataInfo& dataInfo );
+    void continueEasyDownload( const DataInfo& dataInfo, DownloadChannel* channel );
+private:
+    sirius::drive::FsTree m_easyDownloadFsTree;
+    
 private:
 
     void initStreaming();
@@ -282,6 +289,7 @@ private:
     FsTreeTableModel*       m_channelFsTreeTableModel;
     DownloadsTableModel*    m_downloadsTableModel;
     ReplicatorTreeModel*    m_myReplicatorsModel;
+    EasyDownloadTableModel* m_easyDownloadTableModel;
     Settings*               m_settings;
     Model*                  m_model;
 

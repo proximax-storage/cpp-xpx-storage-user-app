@@ -347,15 +347,15 @@ void MainWin::initStreaming()
     
     updateViewerCBox();
     
-    if ( m_settings->config().m_streamFolder.empty() )
+    if ( m_settings->accountConfig().m_streamFolder.empty() )
     {
         fs::path homePath = QDir::homePath().toStdString();
-        m_settings->config().m_streamFolder = std::string( homePath / "sirius-movies" );
+        m_settings->accountConfig().m_streamFolder = std::string( homePath / "sirius-movies" );
         m_settings->save();
     }
     
     ui->m_streamFolder->setReadOnly(true);
-    ui->m_streamFolder->setText( QString::fromStdString(m_settings->config().m_streamFolder) );
+    ui->m_streamFolder->setText( QString::fromStdString(m_settings->accountConfig().m_streamFolder) );
     
     connect(ui->m_streamFolderBtn, &QPushButton::released, this, [this]()
     {
@@ -366,7 +366,7 @@ void MainWin::initStreaming()
         const QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"), "/", options);
         ui->m_streamFolder->setText(path.trimmed());
 
-        m_settings->config().m_streamFolder = ui->m_streamFolder->text().toStdString();
+        m_settings->accountConfig().m_streamFolder = ui->m_streamFolder->text().toStdString();
         m_settings->save();
     });
 }
@@ -921,7 +921,7 @@ void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
         std::array<uint8_t, 32> channelKey{};
         xpx_chain_sdk::ParseHexStringIntoContainer( m_model->m_currentStreamInfo.m_channelKey.c_str(), 2*channelKey.size(), channelKey );
         
-        auto streamFolder = fs::path( m_settings->config().m_streamFolder );
+        auto streamFolder = fs::path( m_settings->accountConfig().m_streamFolder );
         std::error_code ec;
         if ( ! fs::is_directory( streamFolder, ec ) )
         {
@@ -931,7 +931,7 @@ void MainWin::onStreamStatusResponse( const sirius::drive::DriveKey& driveKey,
             }
             if ( ec )
             {
-                displayError( "Can't create stream folder: " + m_settings->config().m_streamFolder, ec.message() );
+                displayError( "Can't create stream folder: " + m_settings->accountConfig().m_streamFolder, ec.message() );
                 return;
             }
         }

@@ -79,9 +79,9 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         if ( mpSettingsDraft->accountList().size() > size_t(index) )
         {
             mpSettingsDraft->setCurrentAccountIndex(index);
-            qDebug() << "SettingsDialog::SettingsDialog. Selected name: " << QString::fromStdString( mpSettingsDraft->config().m_accountName );
-            qDebug() << "SettingsDialog::SettingsDialog. Selected key: " << QString::fromStdString( mpSettingsDraft->config().m_publicKeyStr );
-            qDebug() << "SettingsDialog::SettingsDialog. Selected privateKey: " << QString::fromStdString( mpSettingsDraft->config().m_privateKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected name: " << QString::fromStdString( mpSettingsDraft->accountConfig().m_accountName );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected key: " << QString::fromStdString( mpSettingsDraft->accountConfig().m_publicKeyStr );
+            qDebug() << "SettingsDialog::SettingsDialog. Selected privateKey: " << QString::fromStdString( mpSettingsDraft->accountConfig().m_privateKeyStr );
             updateAccountFields();
         }
     });
@@ -117,7 +117,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
             return;
         }
 
-        const QString publicKey = mpSettingsDraft->config().m_publicKeyStr.c_str();
+        const QString publicKey = mpSettingsDraft->accountConfig().m_publicKeyStr.c_str();
         clipboard->setText(publicKey, QClipboard::Clipboard);
         if (clipboard->supportsSelection()) {
             clipboard->setText(publicKey, QClipboard::Selection);
@@ -132,7 +132,7 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         }
 
         xpx_chain_sdk::Key publicKey;
-        xpx_chain_sdk::ParseHexStringIntoContainer(mpSettingsDraft->config().m_publicKeyStr.c_str(), mpSettingsDraft->config().m_publicKeyStr.size(), publicKey);
+        xpx_chain_sdk::ParseHexStringIntoContainer(mpSettingsDraft->accountConfig().m_publicKeyStr.c_str(), mpSettingsDraft->accountConfig().m_publicKeyStr.size(), publicKey);
         xpx_chain_sdk::PublicAccount publicAccount(publicKey, xpx_chain_sdk::GetConfig().NetworkId);
 
         clipboard->setText(publicAccount.address().encoded().c_str(), QClipboard::Clipboard);
@@ -265,11 +265,11 @@ void SettingsDialog::accept()
     mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
     mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
-    mpSettingsDraft->config().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
+    mpSettingsDraft->accountConfig().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
 
     bool ltSessionMustRestart = ( mpSettings->m_replicatorBootstrap           !=   mpSettingsDraft->m_replicatorBootstrap )
                                 ||  ( mpSettings->m_udpPort                   !=   mpSettingsDraft->m_udpPort )
-                                ||  ( mpSettings->config().m_privateKeyStr    !=   mpSettingsDraft->config().m_privateKeyStr );
+                                ||  ( mpSettings->accountConfig().m_privateKeyStr    !=   mpSettingsDraft->accountConfig().m_privateKeyStr );
 
     if ( ltSessionMustRestart && mpSettings->loaded() )
     {
@@ -286,15 +286,15 @@ void SettingsDialog::accept()
 
     mpSettings->m_restBootstrap           = mpSettingsDraft->m_restBootstrap;
     mpSettings->m_replicatorBootstrap     = mpSettingsDraft->m_replicatorBootstrap;
-    mpSettings->config().m_downloadFolder = mpSettingsDraft->config().m_downloadFolder;
+    mpSettings->accountConfig().m_downloadFolder = mpSettingsDraft->accountConfig().m_downloadFolder;
     mpSettings->m_accounts                = mpSettingsDraft->m_accounts;
     mpSettings->m_isDriveStructureAsTree  = mpSettingsDraft->m_isDriveStructureAsTree;
     mpSettings->setCurrentAccountIndex( mpSettingsDraft->m_currentAccountIndex );
     mpSettings->save();
 
-    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( mpSettings->config().m_accountName );
-    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->config().m_publicKeyStr );
-    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( mpSettings->config().m_privateKeyStr );
+    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( mpSettings->accountConfig().m_accountName );
+    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->accountConfig().m_publicKeyStr );
+    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( mpSettings->accountConfig().m_privateKeyStr );
 
     emit closeLibtorrentPorts();
     QDialog::accept();
@@ -309,7 +309,7 @@ void SettingsDialog::fillAccountCbox( bool initSettings )
 {
     if ( initSettings )
     {
-        auto name = mpSettingsDraft->config().m_accountName;
+        auto name = mpSettingsDraft->accountConfig().m_accountName;
         ui->m_accountCbox->addItem( QString::fromStdString(name) );
     }
     else
@@ -332,7 +332,7 @@ void SettingsDialog::onNewAccount()
     auto pKeyDialog = new PrivKeyDialog( mpSettingsDraft, this );
 
     connect(pKeyDialog, &PrivKeyDialog::accepted, this, [this](){
-        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->config().m_accountName ));
+        ui->m_accountCbox->addItem( QString::fromStdString( mpSettingsDraft->accountConfig().m_accountName ));
         int index = mpSettingsDraft->m_currentAccountIndex;
         ui->m_accountCbox->setCurrentIndex(index);
         ui->m_removeAccount->setEnabled(true);

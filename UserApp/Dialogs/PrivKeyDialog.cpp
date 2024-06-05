@@ -224,7 +224,7 @@ void PrivKeyDialog::accept()
     qDebug() << LOG_SOURCE << "mp_settings->m_accounts.size()-1: " << (int)mp_settings->m_accounts.size() - 1;
 
     mp_settings->setCurrentAccountIndex( (int)mp_settings->m_accounts.size() - 1 );
-    mp_settings->config().initAccount( accountName, privateKeyStr );
+    mp_settings->accountConfig().initAccount( accountName, privateKeyStr );
 
     QDialog::accept();
 }

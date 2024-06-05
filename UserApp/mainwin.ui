@@ -205,7 +205,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="m_downloadsTab">
        <attribute name="title">
@@ -531,24 +531,7 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_21">
          <item>
-          <widget class="QTableWidget" name="m_downloadedDataTable">
-           <property name="maximumSize">
-            <size>
-             <width>1000</width>
-             <height>400</height>
-            </size>
-           </property>
-           <column>
-            <property name="text">
-             <string>Name</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Drive</string>
-            </property>
-           </column>
-          </widget>
+          <widget class="QTableView" name="m_easyDownloadTable"/>
          </item>
         </layout>
        </widget>

@@ -62,18 +62,18 @@ void Settings::initForTests()
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_DA", "3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B" );
-        config().m_downloadFolder = "/Users/alex/000-Downloads";
+        accountConfig().initAccount( "test_staging_DA", "3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B" );
+        accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_FA", "FEB6F12EEF165E0BF19B8A1D02A2C3BEF5DA6B88897E241C3A47B12A6E2FC153" );
-        config().m_downloadFolder = "/Users/alex/000-Downloads";
+        accountConfig().initAccount( "test_staging_FA", "FEB6F12EEF165E0BF19B8A1D02A2C3BEF5DA6B88897E241C3A47B12A6E2FC153" );
+        accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        config().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
-        config().m_downloadFolder = "/Users/alex/000-Downloads";
+        accountConfig().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
+        accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
     }
 }
 
@@ -174,7 +174,7 @@ bool Settings::load( const std::string& pwd )
             qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
 
-        qDebug() << "Settings::load. Current account public key: " << QString::fromStdString(config().m_publicKeyStr).toUpper();
+        qDebug() << "Settings::load. Current account public key: " << QString::fromStdString(accountConfig().m_publicKeyStr).toUpper();
         qDebug() << "/*****************************************************************************************/.";
     }
     catch( std::runtime_error& err )
@@ -271,7 +271,7 @@ std::vector<std::string> Settings::accountList()
     return list;
 }
 
-Account& Settings::config()
+Account& Settings::accountConfig()
 {
     ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() );
     return m_accounts[m_currentAccountIndex];
@@ -279,7 +279,7 @@ Account& Settings::config()
 
 fs::path Settings::downloadFolder()
 {
-    return config().m_downloadFolder;
+    return accountConfig().m_downloadFolder;
 }
 
 void Settings::setCurrentAccountIndex( int currentAccountIndex )
@@ -293,7 +293,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 {
     std::thread( [ this, handle ]
     {
-        auto& downloads = config().m_downloads;
+        auto& downloads = accountConfig().m_downloads;
 
         int counter = 0;
 
@@ -434,7 +434,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
 
 void Settings::removeFromDownloads( int index )
 {
-    auto& downloads = config().m_downloads;
+    auto& downloads = accountConfig().m_downloads;
 
     if ( index < 0 || index >= downloads.size() )
     {
@@ -490,5 +490,5 @@ void Settings::removeFromDownloads( int index )
         }
     }
 
-    config().m_downloads.erase( config().m_downloads.begin()+index );
+    accountConfig().m_downloads.erase( accountConfig().m_downloads.begin()+index );
 }

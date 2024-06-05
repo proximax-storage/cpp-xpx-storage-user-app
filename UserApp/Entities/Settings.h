@@ -44,7 +44,7 @@ class Settings : public QObject
         void save();
         bool loaded() const;
         std::vector<std::string> accountList();
-        Account& config();
+        Account& accountConfig();
         fs::path downloadFolder();
         void setCurrentAccountIndex( int currentAccountIndex );
         void onDownloadCompleted( lt::torrent_handle handle );
