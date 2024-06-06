@@ -89,6 +89,7 @@ class Account
         std::vector<EasyDownloadInfo> m_easyDownloads;
         uint64_t                      m_lastUniqueIdOfEasyDownload = 0;
 
+    
         int                     m_currentStreamIndex = -1; // unused
         int                     m_currentStreamRefIndex = -1; // unused
         uint64_t                m_lastUniqueStreamIndex = 0; // unused
