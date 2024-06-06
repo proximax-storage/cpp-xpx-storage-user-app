@@ -87,6 +87,7 @@ class Account
         std::string                 m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
     
         std::vector<EasyDownloadInfo> m_easyDownloads;
+        uint64_t                      m_lastUniqueIdOfEasyDownload = 0;
 
         int                     m_currentStreamIndex = -1; // unused
         int                     m_currentStreamRefIndex = -1; // unused

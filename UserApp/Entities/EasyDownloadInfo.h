@@ -51,6 +51,7 @@ struct EasyDownloadInfo
         ar( m_fsTree, m_itemPath, m_isCompleted );
     }
 
+    uint64_t                m_uniqueId;
     sirius::drive::FsTree   m_fsTree;
     std::array<uint8_t,32>  m_driveKey;
     std::string             m_name;     // item name
@@ -68,26 +69,28 @@ struct EasyDownloadInfo
     
     std::vector<EasyDownloadChildInfo> m_childs;
 
-    EasyDownloadInfo( const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
-        : m_driveKey(driveKey)
+    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
+        : m_uniqueId(uniqueId)
+        , m_driveKey(driveKey)
         , m_name(itemPath)
         , m_itemPath(itemPath)
         , m_size(totalSize)
         {}
     
-    EasyDownloadInfo( const DataInfo& dataInfo )
+    EasyDownloadInfo( uint64_t uniqueId, const DataInfo& dataInfo )
         : m_driveKey( dataInfo.m_driveKey )
         , m_name( dataInfo.m_itemName )
         , m_itemPath( dataInfo.m_path )
         , m_size( dataInfo.m_totalSize )
         {}
     
-    void init( sirius::drive::FsTree fsTree )
+    void init( const sirius::drive::FsTree& fsTree )
     {
         m_fsTree = fsTree;
         init();
     }
     
+    // It will be used after deserialization
     void init()
     {
         if ( m_itemPath == "" || m_itemPath == "/" || m_itemPath == "\\" )
@@ -108,12 +111,15 @@ struct EasyDownloadInfo
             if ( sirius::drive::isFolder(*child) )
             {
                 m_isFolder = true;
-                m_downloadingFolder = &sirius::drive::getFolder(*child);                
+                m_downloadingFolder = &sirius::drive::getFolder(*child);
+                m_size = 0;
+
                 m_downloadingFolder->iterate( [this] (const auto& file) -> bool
                 {
                     m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
                                                                     file.name(),
                                                                     file.size() } );
+                    m_size += file.size();
                     return false;
                 });
             }
@@ -126,6 +132,7 @@ struct EasyDownloadInfo
                 m_childs.emplace_back( EasyDownloadChildInfo {  m_downloadingFile->hash().array(),
                                                                 m_downloadingFile->name(),
                                                                 m_downloadingFile->size() } );
+                m_size += m_downloadingFile->size();
             }
         }
         

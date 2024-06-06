@@ -1251,12 +1251,15 @@ void MainWin::setupEasyDownloads()
 //        PasteLinkDialog dialog(this);
 //        dialog.exec();
 
-        DataInfo testData{ "test-data", {} , "/f", 256 };
-        
-        m_easyDownloadTableModel->beginResetModel();
-        m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo(testData) );
-        
-        m_easyDownloadTableModel->endResetModel();
+#ifdef __APPLE__
+        std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
+        std::string             path = "/";
+        uint64_t                totalSize = 33554477;
+
+        DataInfo testData( "todo", driveKeyHash, path, totalSize );
+
+        startEasyDownload( testData );
+#endif
     });
     
     
@@ -3581,16 +3584,19 @@ std::string str_toupper(std::string s)
     return s;
 }
 
-void MainWin::startEasyDownload( const DataInfo& dataInfo0 )
+void MainWin::startEasyDownload( const DataInfo& dataInfo )
 {
     // 'max_metadata_size' should be extended (now it is 30 MB)
     
-    // TODO
-    std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
-    std::string             path = "/";
-    uint64_t                totalSize = 33554477;
+    //
+    // Add easyDownload to table
+    //
+    m_easyDownloadTableModel->beginResetModel();
+    m_model->lastUniqueIdOfEasyDownload()++;
+    uint64_t downloadId = m_model->lastUniqueIdOfEasyDownload();
+    auto it = m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo( downloadId, dataInfo) );
+    m_easyDownloadTableModel->endResetModel();
 
-    DataInfo dataInfo( "todo", driveKeyHash, path, totalSize );
     std::string driveKeyStr = str_toupper(sirius::drive::toString( dataInfo.m_driveKey ));
     
     //
@@ -3643,7 +3649,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo0 )
         
         if ( channel != nullptr )
         {
-            continueEasyDownload( dataInfo, channel );
+            continueEasyDownload( downloadId, dataInfo, channel );
         }
         else
         {
@@ -3654,48 +3660,40 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo0 )
     m_modalDialog->exec();
 }
 
-void MainWin::continueEasyDownload( const DataInfo& dataInfo, DownloadChannel* channel )
+void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, DownloadChannel* channel )
 {
-//    //
-//    // Get download item
-//    //
-//    m_easyDownloadFsTree = channel->getFsTree();
-//    sirius::drive::Folder::Child* downloadItem = nullptr;
-//    
-//    if ( dataInfo.m_path == "" || dataInfo.m_path == "/" || dataInfo.m_path == "\\" )
-//    {
-//        downloadItem = &m_easyDownloadFsTree;
-//    }
-//    else
-//    {
-//        downloadItem = m_easyDownloadFsTree.getEntryPtr( dataInfo.m_path );
-//    }
-//    
-//    if ( downloadItem == nullptr )
-//    {
-//        displayError( "Invalid data link: item not found", dataInfo.m_path );
-//        return;
-//    }
-//    
-//    //
-//    // Check item size
-//    //
-//    size_t totalSize = 0;
-//    if ( sirius::drive::isFolder(downloadItem) )
-//    {
-//        m_easyDownloadFsTree.iterate( [&] (const sirius::drive::File& file) -> bool
-//                                     {
-//            totalSize += file.size();
-//            return false;
-//        });
-//        
-//        if ( dataInfo.m_totalSize < totalSize )
-//        {
-//            displayError( "Invalid data link: wrong data size" );
-//            return;
-//        }
-//    }
-//    
+    auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
+    {
+        return downloadInfo.m_uniqueId == downloadId;
+    });
+    
+    if ( downloadIt == m_model->easyDownloads().end() )
+    {
+        qDebug() << "continueEasyDownload: easyDownloadInfo not found: downloadId = " << downloadId;
+        return;
+    }
+    
+    downloadIt->init( channel->getFsTree() );
+
+    //
+    // Check info
+    //
+    if ( downloadIt->m_downloadingFolder == nullptr && downloadIt->m_downloadingFile == nullptr )
+    {
+        displayError( "Invalid data link: item not found: " + dataInfo.m_itemName , dataInfo.m_path );
+        return;
+    }
+    
+    //
+    // Check item size
+    //
+    if ( dataInfo.m_totalSize < downloadIt->m_size )
+    {
+        displayError( "Invalid data link: data size is more than stated in link" );
+        return;
+    }
+    
+//
 //    sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
 //    qDebug() << "replicatorList: " << replicatorList.size();
 //

@@ -23,7 +23,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget *parent
     ui->m_driveNameConfirmLabel->setText(QString::fromStdString(str));
     ui->m_pathConfirmLabel->setText(QString::fromStdString(m_dataInfo.m_path));
     ui->m_dataSizeConfirmLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
-    ui->m_dataNameConfirmLabel->setText();
+    ui->m_dataNameConfirmLabel->setText("");
 }
 
 ConfirmLinkDialog::~ConfirmLinkDialog()

@@ -824,3 +824,8 @@ std::vector<EasyDownloadInfo>& Model::easyDownloads()
 {
     return m_settings->accountConfig().m_easyDownloads;
 }
+
+uint64_t& Model::lastUniqueIdOfEasyDownload()
+{
+    return m_settings->accountConfig().m_lastUniqueIdOfEasyDownload;
+}

@@ -35,27 +35,14 @@
      <x>10</x>
      <y>10</y>
      <width>851</width>
-     <height>171</height>
+     <height>176</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="2">
-     <widget class="QLabel" name="m_driveNameConfirmLabel">
+    <item row="1" column="2">
+     <widget class="QLabel" name="m_pathConfirmLabel">
       <property name="text">
-       <string>Drive Name Here</string>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="label_3">
-      <property name="text">
-       <string>Path:</string>
-      </property>
-      <property name="margin">
-       <number>10</number>
+       <string>Path Here</string>
       </property>
      </widget>
     </item>
@@ -69,22 +56,18 @@
       </property>
       <property name="maximumSize">
        <size>
-        <width>90</width>
+        <width>190</width>
         <height>16777215</height>
        </size>
       </property>
       <property name="text">
        <string>Drive Name:</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
       <property name="margin">
        <number>10</number>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2">
-     <widget class="QLabel" name="m_pathConfirmLabel">
-      <property name="text">
-       <string>Path Here</string>
       </property>
      </widget>
     </item>
@@ -92,6 +75,32 @@
      <widget class="QLabel" name="label_4">
       <property name="text">
        <string>Data Size:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="margin">
+       <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="m_driveNameConfirmLabel">
+      <property name="text">
+       <string>Drive Name Here</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Save File/Folder Name:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
       <property name="margin">
        <number>10</number>
@@ -105,22 +114,21 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="2">
-     <widget class="QLabel" name="m_dataNameConfirmLabel">
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>Name Here</string>
+       <string>Path:</string>
       </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>Name:</string>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
       <property name="margin">
        <number>10</number>
       </property>
      </widget>
+    </item>
+    <item row="3" column="2">
+     <widget class="QLineEdit" name="m_dataNameConfirmLabel"/>
     </item>
    </layout>
   </widget>

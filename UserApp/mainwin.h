@@ -42,6 +42,7 @@ class WizardAddStreamAnnounceDialog;
 class AddDownloadChannelDialog;
 
 struct StreamInfo;
+struct EasyDownloadInfo;
 
 namespace sirius { namespace drive
 {
@@ -166,7 +167,7 @@ private:
     std::vector<DataInfo> readDataInfoList();
 public:
     void startEasyDownload( const DataInfo& dataInfo );
-    void continueEasyDownload( const DataInfo& dataInfo, DownloadChannel* channel );
+    void continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, DownloadChannel* channel );
 private:
     sirius::drive::FsTree m_easyDownloadFsTree;
     

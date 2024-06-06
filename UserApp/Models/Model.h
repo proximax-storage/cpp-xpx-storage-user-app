@@ -208,6 +208,7 @@ class Model : public QObject
         //
         const std::vector<EasyDownloadInfo>&    easyDownloads() const;
         std::vector<EasyDownloadInfo>&          easyDownloads();
+        uint64_t&                               lastUniqueIdOfEasyDownload();
 
     signals:
         void addTorrentFileToStorageSession(const std::string &torrentFilename,
