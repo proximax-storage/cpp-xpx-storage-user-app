@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>861</width>
-    <height>182</height>
+    <width>868</width>
+    <height>246</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>130</y>
+     <x>30</x>
+     <y>200</y>
      <width>811</width>
      <height>41</height>
     </rect>
@@ -32,13 +32,23 @@
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>8</y>
+     <x>10</x>
+     <y>10</y>
      <width>851</width>
-     <height>120</height>
+     <height>171</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="2">
+     <widget class="QLabel" name="m_driveNameConfirmLabel">
+      <property name="text">
+       <string>Drive Name Here</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
@@ -53,7 +63,7 @@
      <widget class="QLabel" name="label">
       <property name="minimumSize">
        <size>
-        <width>90</width>
+        <width>100</width>
         <height>0</height>
        </size>
       </property>
@@ -64,10 +74,17 @@
        </size>
       </property>
       <property name="text">
-       <string>Drive Key:</string>
+       <string>Drive Name:</string>
       </property>
       <property name="margin">
        <number>10</number>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="m_pathConfirmLabel">
+      <property name="text">
+       <string>Path Here</string>
       </property>
      </widget>
     </item>
@@ -81,27 +98,27 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="2">
-     <widget class="QLabel" name="m_driveKeyConfirmLabel">
-      <property name="text">
-       <string>Drive Key Here</string>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2">
-     <widget class="QLabel" name="m_pathConfirmationLabel">
-      <property name="text">
-       <string>Path Here</string>
-      </property>
-     </widget>
-    </item>
     <item row="2" column="2">
-     <widget class="QLabel" name="m_dataSizeConfirmationLabel">
+     <widget class="QLabel" name="m_dataSizeConfirmLabel">
       <property name="text">
        <string>Data Here</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="2">
+     <widget class="QLabel" name="m_dataNameConfirmLabel">
+      <property name="text">
+       <string>Name Here</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Name:</string>
+      </property>
+      <property name="margin">
+       <number>10</number>
       </property>
      </widget>
     </item>

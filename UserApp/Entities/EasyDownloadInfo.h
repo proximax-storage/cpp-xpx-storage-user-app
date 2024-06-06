@@ -108,8 +108,7 @@ struct EasyDownloadInfo
             if ( sirius::drive::isFolder(*child) )
             {
                 m_isFolder = true;
-                m_downloadingFolder = &sirius::drive::getFolder(*child);
-                
+                m_downloadingFolder = &sirius::drive::getFolder(*child);                
                 m_downloadingFolder->iterate( [this] (const auto& file) -> bool
                 {
                     m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
@@ -122,7 +121,8 @@ struct EasyDownloadInfo
             {
                 m_isFolder = false;
                 m_downloadingFile = &sirius::drive::getFile(*child);
-                
+                // m_name = m_downloadingFile->name();
+
                 m_childs.emplace_back( EasyDownloadChildInfo {  m_downloadingFile->hash().array(),
                                                                 m_downloadingFile->name(),
                                                                 m_downloadingFile->size() } );

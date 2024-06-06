@@ -20,9 +20,10 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget *parent
 
     std::string str = sirius::drive::toString(m_dataInfo.m_driveKey);
 
-    ui->m_driveKeyConfirmLabel->setText(QString::fromStdString(str));
-    ui->m_pathConfirmationLabel->setText(QString::fromStdString(m_dataInfo.m_path));
-    ui->m_dataSizeConfirmationLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
+    ui->m_driveNameConfirmLabel->setText(QString::fromStdString(str));
+    ui->m_pathConfirmLabel->setText(QString::fromStdString(m_dataInfo.m_path));
+    ui->m_dataSizeConfirmLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
+    ui->m_dataNameConfirmLabel->setText();
 }
 
 ConfirmLinkDialog::~ConfirmLinkDialog()

@@ -17,6 +17,7 @@ struct DataInfo
     uint8_t                 m_version = 0;
     std::string             m_itemName;
     std::array<uint8_t, 32> m_driveKey = {};
+    // std::string             m_driveName;
     std::string             m_path;
     uint64_t                m_totalSize;
 
