@@ -1248,8 +1248,8 @@ void MainWin::setupEasyDownloads()
     
     connect( ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
     {
-//        PasteLinkDialog dialog(this);
-//        dialog.exec();
+       PasteLinkDialog dialog(this);
+       dialog.exec();
 
 #ifdef __APPLE__
         std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
@@ -2671,6 +2671,7 @@ void MainWin::setupDrivesTab()
         }
 
         qDebug() << "copyLinkToData: key: " << m_model->currentDrive()->getKey().c_str();
+        qDebug() << "copyLinkToData: driveName: " << m_model->currentDrive()->getName();
         qDebug() << "copyLinkToData: path: " << path.c_str();
         qDebug() << "copyLinkToData: itemName: " << itemName.c_str();
 
@@ -2713,7 +2714,11 @@ void MainWin::setupDrivesTab()
         }
         qDebug() << "copyLinkToData: dataSize: " << dataSize;
 
-        DataInfo dataInfo( "todo-item-name", Model::hexStringToHash(m_model->currentDrive()->getKey()), path, dataSize );
+        DataInfo dataInfo( itemName
+                          , Model::hexStringToHash(m_model->currentDrive()->getKey())
+                          , m_model->currentDrive()->getName()
+                          , path
+                          , dataSize );
         
         ConfirmLinkDialog dialog(this, dataInfo);
         dialog.exec();
