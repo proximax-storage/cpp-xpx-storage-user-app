@@ -68,9 +68,21 @@ void PasteLinkDialog::reject()
 
 bool PasteLinkDialog:: validate(QClipboard* clipboard)
 {
-    // TODO
+    // archive( m_version, m_driveKey, m_path, m_totalSize );
+    // m_version = 2, m_driveKey = 64, m_path = 2 ('/')
 
-    QString text = clipboard->text();
-    return !text.isEmpty();
-    // return false;
+    std::string text = clipboard->text().toStdString();
+    if(text.length() < 68)
+    {
+        return false;
+    }
+    for(auto c : text)
+    {
+        if ( c < 'A' || c > 'P')
+        {
+            return false;
+        }
+    }
+    return true;
+
 }
