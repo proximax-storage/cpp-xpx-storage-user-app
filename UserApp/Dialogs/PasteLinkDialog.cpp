@@ -20,7 +20,7 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent )
             qWarning() << LOG_SOURCE << "bad clipboard";
             return;
         }
-        if(validate(clipboard))
+        try
         {
             ui->m_linkEdit->setEnabled(true);
             ui->m_linkEdit->setStyleSheet("");
@@ -28,7 +28,7 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent )
             m_dataInfo.parseLink( clipboard->text().toStdString() );
             m_dataInfoIsNotSet = false;
         }
-        else
+        catch(...)
         {
             QMessageBox msgBox;
             msgBox.setText("Incorrect link");
@@ -64,25 +64,4 @@ void PasteLinkDialog::accept()
 void PasteLinkDialog::reject()
 {
     QDialog::reject();
-}
-
-bool PasteLinkDialog:: validate(QClipboard* clipboard)
-{
-    // archive( m_version, m_driveKey, m_path, m_totalSize );
-    // m_version = 2, m_driveKey = 64, m_path = 2 ('/')
-
-    std::string text = clipboard->text().toStdString();
-    if(text.length() < 68)
-    {
-        return false;
-    }
-    for(auto c : text)
-    {
-        if ( c < 'A' || c > 'P')
-        {
-            return false;
-        }
-    }
-    return true;
-
 }

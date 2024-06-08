@@ -23,4 +23,5 @@ public:
 private:
     Ui::ConfirmLinkDialog*  ui;
     DataInfo                m_dataInfo;
+    bool                    m_itemNameChanged = false;
 };

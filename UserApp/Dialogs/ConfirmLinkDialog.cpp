@@ -4,9 +4,8 @@
 #include "drive/Utils.h"
 #include "qclipboard.h"
 #include "qpushbutton.h"
-#include "ui_ConfirmLinkDialog.h"
 
-ConfirmLinkDialog::ConfirmLinkDialog( QWidget *parent
+ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
                                     , DataInfo dataInfo)
     : QDialog(parent)
     , ui(new Ui::ConfirmLinkDialog)
@@ -23,7 +22,17 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget *parent
     ui->m_driveNameConfirmLabel->setText(QString::fromStdString(m_dataInfo.m_driveName));
     ui->m_pathConfirmLabel->setText(QString::fromStdString(m_dataInfo.m_path));
     ui->m_dataSizeConfirmLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
-    ui->m_dataNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_itemName));
+    ui->m_dataNameConfirmEdit->setText("");
+    if(m_dataInfo.m_path == "/")
+    {
+        ui->m_dataNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_driveName));
+        m_itemNameChanged = true;
+    }
+    else
+    {
+        ui->folderNameForSaving->hide();
+        ui->m_dataNameConfirmEdit->hide();
+    }
 }
 
 ConfirmLinkDialog::~ConfirmLinkDialog()
@@ -33,6 +42,10 @@ ConfirmLinkDialog::~ConfirmLinkDialog()
 
 void ConfirmLinkDialog::accept()
 {
+    if(m_itemNameChanged)
+    {
+        m_dataInfo.m_itemName = ui->m_dataNameConfirmEdit->text().toStdString();
+    }
     std::string link = m_dataInfo.getLink();
     QClipboard* clipboard = QApplication::clipboard();
     if ( !clipboard ) {

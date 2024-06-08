@@ -22,8 +22,6 @@ public:
 public:
     void accept() override;
     void reject() override;
-    bool validate(QClipboard* clipboard);
-
 
 private:
     Ui::PasteLinkDialog     *ui;
