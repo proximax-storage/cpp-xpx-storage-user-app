@@ -23,13 +23,11 @@ struct DataInfo
 
     DataInfo() = default;
     
-    DataInfo( const std::string&             itemName,
-              const std::array<uint8_t, 32>& driveKey,
+    DataInfo( const std::array<uint8_t, 32>& driveKey,
               std::string                    driveName,
               const std::string&             path,
               uint64_t                       totalSize )
-        : m_itemName(itemName)
-        , m_driveKey(driveKey)
+        : m_driveKey(driveKey)
         , m_driveName(driveName)
         , m_path(path)
         , m_totalSize(totalSize)

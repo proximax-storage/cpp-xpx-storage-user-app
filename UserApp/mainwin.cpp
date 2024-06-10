@@ -2714,8 +2714,7 @@ void MainWin::setupDrivesTab()
         }
         qDebug() << "copyLinkToData: dataSize: " << dataSize;
 
-        DataInfo dataInfo( itemName
-                          , Model::hexStringToHash(m_model->currentDrive()->getKey())
+        DataInfo dataInfo( Model::hexStringToHash(m_model->currentDrive()->getKey())
                           , m_model->currentDrive()->getName()
                           , path
                           , dataSize );

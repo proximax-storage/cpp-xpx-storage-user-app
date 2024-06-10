@@ -15,8 +15,7 @@ std::string DataInfo::getLink() const
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
 
-    archive( m_version, m_driveKey, m_path, m_totalSize );
-
+    archive( m_version, m_driveKey, m_path, m_itemName, m_totalSize );
     auto rawString = os.str();
 
     qDebug() << "rawString.size: " << rawString.size();
@@ -64,5 +63,5 @@ void DataInfo::parseLink( const std::string& linkString )
     std::istringstream is( linkStr, std::ios::binary );
     cereal::PortableBinaryInputArchive iarchive( is );
 
-    iarchive( m_version, m_driveKey, m_path, m_totalSize );
+    iarchive( m_version, m_driveKey, m_path, m_itemName, m_totalSize );
 }

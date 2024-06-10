@@ -13,7 +13,6 @@ class ConfirmLinkDialog : public QDialog
 
 private:
     DataInfo                m_dataInfo;
-    bool                    m_itemNameChanged = false;
 
     QGridLayout*            m_layout;
     QLabel*                 driveName;

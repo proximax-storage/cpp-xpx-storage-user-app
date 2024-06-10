@@ -40,6 +40,7 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent )
     });
     ui->m_linkEdit->setPlainText("Link will be pasted here.");
     ui->buttonBox->disconnect(this);
+    // ok changes to Download
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &PasteLinkDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &PasteLinkDialog::reject);
 }

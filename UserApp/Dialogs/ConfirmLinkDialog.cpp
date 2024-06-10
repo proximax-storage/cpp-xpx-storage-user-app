@@ -38,8 +38,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     {
         m_layout->addWidget(folderNameForSaving, 3, 0, Qt::AlignRight);
         m_layout->addWidget(m_dataNameConfirmEdit, 3, 1);
-        m_dataNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_driveName));
-        m_itemNameChanged = true;
+        m_dataNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_driveName));  
     }
 }
 
@@ -49,10 +48,7 @@ ConfirmLinkDialog::~ConfirmLinkDialog()
 
 void ConfirmLinkDialog::accept()
 {
-    if(m_itemNameChanged)
-    {
-        m_dataInfo.m_itemName = m_dataNameConfirmEdit->text().toStdString();
-    }
+    m_dataInfo.m_itemName = m_dataNameConfirmEdit->text().toStdString();
     std::string link = m_dataInfo.getLink();
     QClipboard* clipboard = QApplication::clipboard();
     if ( !clipboard ) {
