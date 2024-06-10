@@ -11,14 +11,6 @@ class ConfirmLinkDialog : public QDialog
 {
     Q_OBJECT
 
-public:
-    explicit ConfirmLinkDialog( QWidget *parent   = nullptr
-                              , DataInfo dataInfo = {} );
-    ~ConfirmLinkDialog();
-
-    void accept() override;
-    void reject() override;
-
 private:
     DataInfo                m_dataInfo;
     bool                    m_itemNameChanged = false;
@@ -37,4 +29,12 @@ private:
 private:
     void setFontAndSize();
     void setLayout();
+
+public:
+    explicit ConfirmLinkDialog( QWidget *parent   = nullptr
+                              , DataInfo dataInfo = {} );
+    ~ConfirmLinkDialog();
+
+    void accept() override;
+    void reject() override;
 };
