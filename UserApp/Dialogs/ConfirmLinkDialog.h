@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Entities/DataInfo.h"
+#include "qdialogbuttonbox.h"
+#include "qgridlayout.h"
+#include <QLabel>
+#include <QLineEdit>
 #include <QDialog>
-
-namespace Ui
-{
-class ConfirmLinkDialog;
-}
 
 class ConfirmLinkDialog : public QDialog
 {
@@ -21,7 +20,21 @@ public:
     void reject() override;
 
 private:
-    Ui::ConfirmLinkDialog*  ui;
     DataInfo                m_dataInfo;
     bool                    m_itemNameChanged = false;
+
+    QGridLayout*            m_layout;
+    QLabel*                 driveName;
+    QLabel*                 path;
+    QLabel*                 dataSize;
+    QLabel*                 folderNameForSaving;
+    QLabel*                 m_driveNameConfirmLabel;
+    QLabel*                 m_pathConfirmLabel;
+    QLabel*                 m_dataSizeConfirmLabel;
+    QLineEdit*              m_dataNameConfirmEdit;
+    QDialogButtonBox*       buttonBox;
+
+private:
+    void setFontAndSize();
+    void setLayout();
 };
