@@ -1248,7 +1248,7 @@ void MainWin::setupEasyDownloads()
     
     connect( ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
     {
-       PasteLinkDialog dialog(this);
+       PasteLinkDialog dialog(this, m_model);
        dialog.exec();
 
 #ifdef __APPLE__

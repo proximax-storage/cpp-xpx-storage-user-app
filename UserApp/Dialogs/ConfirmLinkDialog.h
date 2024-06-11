@@ -12,7 +12,7 @@ class ConfirmLinkDialog : public QDialog
     Q_OBJECT
 
 private:
-    DataInfo                m_dataInfo;
+    DataInfo               m_dataInfo;
 
     QGridLayout*            m_layout;
     QLabel*                 driveName;
@@ -31,7 +31,7 @@ private:
 
 public:
     explicit ConfirmLinkDialog( QWidget *parent   = nullptr
-                              , DataInfo dataInfo = {} );
+                              , DataInfo dataInfo = {});
     ~ConfirmLinkDialog();
 
     void accept() override;

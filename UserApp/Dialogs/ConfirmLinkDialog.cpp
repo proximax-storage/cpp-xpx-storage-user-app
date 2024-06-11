@@ -9,6 +9,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     : QDialog(parent)
     , m_dataInfo(dataInfo)
 {
+    // setModal(true);
     m_layout = new QGridLayout(this);
 
     driveName = new QLabel("Drive Name:");
@@ -19,7 +20,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     m_driveNameConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_driveName));
     m_pathConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_path));
     m_dataSizeConfirmLabel = new QLabel(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
-    m_dataNameConfirmEdit = new QLineEdit;
+    m_dataNameConfirmEdit = new QLineEdit("");
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     QPushButton *okButton = buttonBox->button(QDialogButtonBox::Ok);
@@ -31,7 +32,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
 
     setFontAndSize();
     setLayout();
-    // just in case:
+    // just in case if you want to display drive key in UI:
     // std::string str = sirius::drive::toString(m_dataInfo.m_driveKey);
 
     if(m_dataInfo.m_path == "/")
