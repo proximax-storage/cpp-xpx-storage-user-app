@@ -22,12 +22,14 @@ private:
     QLabel*                 m_driveNameConfirmLabel;
     QLabel*                 m_pathConfirmLabel;
     QLabel*                 m_dataSizeConfirmLabel;
-    QLineEdit*              m_dataNameConfirmEdit;
+    QLineEdit*              m_folderNameConfirmEdit;
     QDialogButtonBox*       buttonBox;
 
 private:
     void setFontAndSize();
     void setLayout();
+    bool isValidFolderName(const std::string& filename);
+    bool contains_invalid_chars(const std::string& filename, const std::string& invalid_chars);
 
 public:
     explicit ConfirmLinkDialog( QWidget *parent   = nullptr

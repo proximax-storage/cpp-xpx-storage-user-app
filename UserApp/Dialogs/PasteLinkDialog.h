@@ -20,7 +20,6 @@ class PasteLinkDialog : public QDialog
     Q_OBJECT
 
 private:
-    // Ui::PasteLinkDialog     *ui;
     MainWin*                m_mainwin;
     Model*                  m_model;
     QPushButton*            m_pasteLinkButton;
@@ -29,11 +28,9 @@ private:
 
     QGridLayout*            m_layout;
     QTextEdit*              m_linkEdit;
-    QLabel*                 driveName;
     QLabel*                 path;
     QLabel*                 dataSize;
     QLabel*                 folderName;
-    QLabel*                 m_driveNameLabel;
     QLabel*                 m_pathLabel;
     QLabel*                 m_dataSizeLabel;
     QLabel*                 m_folderNameLabel;
