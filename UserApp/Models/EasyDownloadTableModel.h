@@ -4,6 +4,8 @@
 #include "Models/Model.h"
 #include "Entities/EasyDownloadInfo.h"
 
+class QItemSelectionModel;
+
 class EasyDownloadTableModel : public QAbstractListModel
 {
 public:
@@ -28,7 +30,7 @@ public:
 
     void updateRows();
 
-    //void updateProgress();
+    void updateProgress( QItemSelectionModel* );
 
 private:
 //    std::string generateUniqueName(const FsTreeTableModel::Row& row);

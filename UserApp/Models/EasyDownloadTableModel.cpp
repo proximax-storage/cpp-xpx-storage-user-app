@@ -21,7 +21,7 @@ int EasyDownloadTableModel::rowCount(const QModelIndex& index) const
 
 int EasyDownloadTableModel::columnCount(const QModelIndex &parent) const
 {
-    return 2;
+    return 3;
 }
 
 QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
@@ -30,16 +30,16 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
         return {};
     }
 
-    if (index.column() == 0 && role == Qt::CheckStateRole)
-    {
-        return m_checkList.contains(index) ? Qt::Checked : Qt::Unchecked;
-    }
+//    if (index.column() == 0 && role == Qt::CheckStateRole)
+//    {
+//        return m_checkList.contains(index) ? Qt::Checked : Qt::Unchecked;
+//    }
 
     switch ( role )
     {
         case Qt::TextAlignmentRole:
         {
-            if ( index.column() == 1 )
+            if ( index.column() == 3 )
             {
                 return Qt::AlignRight;
             }
@@ -47,13 +47,6 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
         }
         case Qt::DecorationRole:
         {
-            {
-                auto channelInfo = mp_model->currentDownloadChannel();
-                if ( channelInfo == nullptr || channelInfo->isDownloadingFsTree() || !mp_model->isDownloadChannelsLoaded() )
-                {
-                    return {};
-                }
-            }
             if ( index.column() == 0 )
             {
                 if ( mp_model->easyDownloads()[index.row()].m_isFolder )
@@ -98,19 +91,8 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                 }
                 case 1:
                 {
-                    auto channelInfo = mp_model->currentDownloadChannel();
-                    if ( channelInfo == nullptr || channelInfo->isDownloadingFsTree()  || !mp_model->isDownloadChannelsLoaded() )
-                    {
-                        return QString("");
-                    }
-
                     const auto& row = mp_model->easyDownloads()[index.row()];
-                    if ( row.m_isFolder )
-                    {
-                        return QString();
-                    }
-
-                    return QString::fromStdString( std::to_string( row.m_size) );
+                    return QString::fromStdString( std::to_string( row.m_size ) + " (" +std::to_string( row.m_progress) + "%)" );
                 }
             }
         }
@@ -256,42 +238,65 @@ int EasyDownloadTableModel::onDoubleClick( int row )
 //    return result;
 }
 
-//void EasyDownloadTableModel::updateProgress()
-//{
-//    auto& downloads = mp_model->downloads();
-//    beginResetModel();
-//    {
-//        for( auto& dnInfo: downloads )
-//        {
-//            if ( dnInfo.isCompleted() || ! dnInfo.getHandle().is_valid() )
-//            {
-//                continue;
-//            }
-//
-//            std::vector<int64_t> fp = dnInfo.getHandle().file_progress();
-//
-//            uint64_t dnBytes = 0;
-//            uint64_t totalBytes = 0;
-//
-//            //qDebug() << LOG_SOURCE << "fp.size(): " << fp.size();
-//            for( uint32_t i=0; i<fp.size(); i++ )
-//            {
-//                //qDebug() << LOG_SOURCE << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
-//                auto fsize = dnInfo.getHandle().torrent_file()->files().file_size(i);
-//                dnBytes    += fp[i];
-//                totalBytes += fsize;
-//            }
-//
-//
-//            double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
-//            //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
-//            dnInfo.setProgress((int)progress);
-//
-//            if ( totalBytes>0 && totalBytes==dnBytes )
-//            {
-//                dnInfo.setCompleted(true);
-//            }
-//        }
-//    }
-//    endResetModel();
-//}
+void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel )
+{
+    QList<QModelIndex> selectedIndixes = selectionModel->selectedIndexes();
+    
+    auto& downloads = mp_model->easyDownloads();
+    
+    beginResetModel();
+    {
+        for( auto& info: downloads )
+        {
+            uint64_t dnBytes = 0;
+            uint64_t totalBytes = 0;
+            
+            for( const auto& dnInfo: info.m_childs )
+            {
+                bool isCompleted = false;
+                if ( dnInfo.m_isCompleted || ! dnInfo.m_ltHandle.is_valid() )
+                {
+                    isCompleted = true;
+                }
+                else
+                {
+                    //                torrent_status status(status_flags_t flags = status_flags_t::all()) const;
+                    auto ltStatus = dnInfo.m_ltHandle.status();// lt::status_flags_t::file_progress_flags_t );
+                    
+                    if ( ltStatus.state  == lt::torrent_status::finished )
+                    {
+                        isCompleted = true;
+                    }
+                }
+                
+                if ( isCompleted )
+                {
+                    dnBytes     += dnInfo.m_size;
+                    totalBytes  += dnInfo.m_size;
+                    continue;
+                }
+
+                std::vector<int64_t> fp = dnInfo.m_ltHandle.file_progress();
+                
+                //qDebug() << LOG_SOURCE << "fp.size(): " << fp.size();
+                for( uint32_t i=0; i<fp.size(); i++ )
+                {
+                    //qDebug() << LOG_SOURCE << "file_name: " << std::string( dnInfo.m_ltHandle.torrent_file()->files().file_name(i) ).c_str();
+                    auto fsize = dnInfo.m_ltHandle.torrent_file()->files().file_size(i);
+                    dnBytes    += fp[i];
+                    totalBytes += fsize;
+                }
+                
+                double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
+                //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
+                info.m_progress = progress;
+            }
+        }
+    }
+    endResetModel();
+    
+    for( auto& index: selectedIndixes )
+    {
+        selectionModel->select( index, QItemSelectionModel::Select );
+    }
+}

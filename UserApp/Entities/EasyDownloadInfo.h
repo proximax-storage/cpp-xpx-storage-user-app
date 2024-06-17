@@ -14,14 +14,15 @@ struct EasyDownloadChildInfo
     //using DownloadNotification = std::function<void( const EasyDownloadInfo& )>;
 
     EasyDownloadChildInfo( const std::array<uint8_t,32>&  hash,
+                           std::string                    path,
                            std::string                    fileName,
                            size_t                         size )
-    : m_hash(hash), m_fileName(fileName), m_size(size) {}
+    : m_hash(hash), m_path(path), m_fileName(fileName), m_size(size) {}
     
     std::array<uint8_t,32>   m_hash;
+    std::string              m_path;
     std::string              m_fileName;
     size_t                   m_size;
-    std::string              m_saveFolder;
     std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
     bool                     m_isCompleted = false;
     bool                     m_channelIsOutdated = false;
@@ -39,7 +40,7 @@ public:
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_hash, m_fileName, m_size, m_saveFolder, m_downloadFolder, m_isCompleted );
+        ar( m_hash, m_path, m_fileName, m_size, m_downloadFolder, m_isCompleted );
     }
 };
 
@@ -57,6 +58,7 @@ struct EasyDownloadInfo
     std::string             m_name;     // item name
     std::string             m_itemPath; // path into fsTree
     size_t                  m_size;     // total size
+    std::string             m_channelKey;
     bool                    m_isCompleted = false;
 
     
@@ -69,20 +71,30 @@ struct EasyDownloadInfo
     
     std::vector<EasyDownloadChildInfo> m_childs;
 
-    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
-        : m_uniqueId(uniqueId)
-        , m_driveKey(driveKey)
-        , m_name(itemPath)
-        , m_itemPath(itemPath)
-        , m_size(totalSize)
-        {}
+//    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
+//        : m_uniqueId(uniqueId)
+//        , m_driveKey(driveKey)
+//        , m_name(itemPath)
+//        , m_itemPath(itemPath)
+//        , m_size(totalSize)
+//    {
+//    }
     
     EasyDownloadInfo( uint64_t uniqueId, const DataInfo& dataInfo )
-        : m_driveKey( dataInfo.m_driveKey )
-        , m_name( dataInfo.m_itemName )
+        : m_uniqueId(uniqueId)
+        , m_driveKey( dataInfo.m_driveKey )
         , m_itemPath( dataInfo.m_path )
         , m_size( dataInfo.m_totalSize )
-        {}
+    {
+        if ( dataInfo.m_itemName.empty() )
+        {
+            m_name = std::filesystem::path(dataInfo.m_path).filename();
+        }
+        else
+        {
+            m_name = dataInfo.m_itemName;
+        }
+    }
     
     void init( const sirius::drive::FsTree& fsTree )
     {
@@ -93,6 +105,7 @@ struct EasyDownloadInfo
     // It will be used after deserialization
     void init()
     {
+        m_size = 0;
         if ( m_itemPath == "" || m_itemPath == "/" || m_itemPath == "\\" )
         {
             m_isFolder = true;
@@ -112,11 +125,12 @@ struct EasyDownloadInfo
             {
                 m_isFolder = true;
                 m_downloadingFolder = &sirius::drive::getFolder(*child);
-                m_size = 0;
 
-                m_downloadingFolder->iterate( [this] (const auto& file) -> bool
+                std::filesystem::path path;
+                m_downloadingFolder->iterate( path, [this] ( const std::filesystem::path& path, const auto& file) -> bool
                 {
                     m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
+                                                                    path.string(),
                                                                     file.name(),
                                                                     file.size() } );
                     m_size += file.size();
@@ -127,17 +141,14 @@ struct EasyDownloadInfo
             {
                 m_isFolder = false;
                 m_downloadingFile = &sirius::drive::getFile(*child);
-                // m_name = m_downloadingFile->name();
 
                 m_childs.emplace_back( EasyDownloadChildInfo {  m_downloadingFile->hash().array(),
+                                                                "",
                                                                 m_downloadingFile->name(),
                                                                 m_downloadingFile->size() } );
                 m_size += m_downloadingFile->size();
             }
         }
-        
-        
-        
     }
 
 };

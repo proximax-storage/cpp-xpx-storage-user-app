@@ -634,7 +634,7 @@ void MainWin::startViewingStream()
             
             m_model->m_viewerStatus = vs_waiting_channel_creation;
             
-            m_model->setChannelFsTreeHandler( [connection,driveKey0=streamInfo->m_driveKey,this] ( bool success, const std::string& channelKey, const std::string& driveKey )
+            m_model->setViewingFsTreeHandler( [connection,driveKey0=streamInfo->m_driveKey,this] ( bool success, const std::string& channelKey, const std::string& driveKey )
             {
                 if ( !success || driveKey != driveKey0 )
                 {
@@ -642,17 +642,16 @@ void MainWin::startViewingStream()
                     {
                         qDebug() << "Channel creation faled: driveKey: " << driveKey.c_str();
                     }
-                    return;
+                    return false;
                 }
                 
                 auto* channel = m_model->findChannel(channelKey);
                 if ( channel != nullptr && channel->isCreating() )
                 {
                     // waiting creation (may be old fsTree received)
-                    return;
+                    return false;
                 }
 
-                m_model->resetChannelFsTreeHandler();
                 m_modalDialog->reject();
                 delete m_modalDialog;
                 m_modalDialog = nullptr;
@@ -665,6 +664,9 @@ void MainWin::startViewingStream()
                 {
                     displayError( "Internal error: channel not found" );
                 }
+                
+                m_model->resetViewingFsTreeHandler();
+                return false;
             });
 
             m_modalDialog->exec();

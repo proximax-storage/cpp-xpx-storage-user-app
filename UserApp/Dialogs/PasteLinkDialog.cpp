@@ -95,6 +95,7 @@ void PasteLinkDialog::accept()
         {
             mainwin->startEasyDownload( dataInfo );
         });
+        QDialog::accept();
     }
 }
 

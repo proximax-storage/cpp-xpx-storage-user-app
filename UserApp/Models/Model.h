@@ -189,10 +189,14 @@ class Model : public QObject
         //
         // Viewing
         //
-        using FsTreeHandler = std::optional<std::function<void( bool success, const std::string& channelKey, const std::string& driveKey )>>;
-        void                            setChannelFsTreeHandler( FsTreeHandler handler ) { m_channelFsTreeHandler = handler; }
-        void                            resetChannelFsTreeHandler() { m_channelFsTreeHandler.reset(); }
-        FsTreeHandler                   channelFsTreeHandler() { return m_channelFsTreeHandler; }
+        using ViewingFsTreeHandler = std::optional<std::function<void( bool success, const std::string& channelKey, const std::string& driveKey )>>;
+        void                            setViewingFsTreeHandler( ViewingFsTreeHandler handler ) { m_viewingFsTreeHandler = handler; }
+        void                            resetViewingFsTreeHandler() { m_viewingFsTreeHandler.reset(); }
+        ViewingFsTreeHandler&           viewingFsTreeHandler() { return m_viewingFsTreeHandler; }
+        using FsTreeHandler = std::function<bool( bool success, const std::string& channelKey, const std::string& driveKey )>;
+        void                            addChannelFsTreeHandler( FsTreeHandler handler ) { m_channelFsTreeHandler.push_front(handler); }
+        std::list<FsTreeHandler>&       channelFsTreeHandler() { return m_channelFsTreeHandler; }
+       
         void                            addStreamRef( const StreamInfo& streamInfo );
         void                            deleteStreamRef( int index );
         const std::vector<StreamInfo>&  streamRefs() const;
@@ -221,8 +225,9 @@ class Model : public QObject
         uint64_t m_loadedDrivesCount;
         uint64_t m_outdatedDriveNumber;
     
-        FsTreeHandler   m_channelFsTreeHandler = {};
-    
+        ViewingFsTreeHandler                m_viewingFsTreeHandler;
+        std::list<FsTreeHandler>            m_channelFsTreeHandler;
+
     public:
         ViewerStatus    m_viewerStatus   = vs_no_viewing;
         StreamInfo      m_currentStreamInfo;

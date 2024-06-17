@@ -626,10 +626,23 @@ void Model::applyFsTreeForChannels( const std::string& driveKey, const sirius::d
             channel.second.setFsTreeHash(fsTreeHash);
             channel.second.setDownloadingFsTree(false);
 
-            if ( m_channelFsTreeHandler )
+            if ( m_viewingFsTreeHandler )
             {
-                (*m_channelFsTreeHandler)( true, channel.second.getKey(), channel.second.getDriveKey() );
+                (*m_viewingFsTreeHandler)( true, channel.second.getKey(), channel.second.getDriveKey() );
             }
+            
+            for( auto it = m_channelFsTreeHandler.begin(); it != m_channelFsTreeHandler.end(); )
+            {
+                if ( (*it)( true, channel.second.getKey(), channel.second.getDriveKey() ) )
+                {
+                    it = m_channelFsTreeHandler.erase(it);
+                }
+                else
+                {
+                    it++;
+                }
+            }
+
         }
     }
 }

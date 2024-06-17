@@ -381,6 +381,8 @@ void MainWin::init()
         }
         ui->m_removeDownloadBtn->setEnabled( ! selectedIndexes.empty() );
 
+        this->m_easyDownloadTableModel->updateProgress( ui->m_easyDownloadTable->selectionModel() );
+        
     }, Qt::QueuedConnection);
 
     m_downloadUpdateTimer->start(500); // 2 times per second
@@ -1216,6 +1218,8 @@ void MainWin::onDownloadBtn()
 
             auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
 
+            qDebug() << "childIt->m_path(2): " << selectedRow.m_path.c_str() << " : " << selectedRow.m_name.c_str() << " : " << m_model->getDownloadFolder();
+
             DownloadInfo downloadInfo;
             downloadInfo.setHash(selectedRow.m_hash);
             downloadInfo.setDownloadChannelKey(channel->getKey());
@@ -1251,15 +1255,15 @@ void MainWin::setupEasyDownloads()
        PasteLinkDialog dialog(this, m_model);
        dialog.exec();
 
-#ifdef __APPLE__
-        std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
-        std::string             path = "/";
-        uint64_t                totalSize = 33554477;
-
-        DataInfo testData( "todo", driveKeyHash, path, totalSize );
-
-        startEasyDownload( testData );
-#endif
+//#ifdef __APPLE__
+//        std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
+//        std::string             path = "/";
+//        uint64_t                totalSize = 33554477;
+//
+//        DataInfo testData( "todo", driveKeyHash, path, totalSize );
+//
+//        startEasyDownload( testData );
+//#endif
     });
     
     
@@ -2123,19 +2127,15 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         updateDownloadChannelData(channel);
 
         const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
-        if ( ! m_model->channelFsTreeHandler() )
+        if ( ! m_model->viewingFsTreeHandler() )
         {
             showNotification(message);
         }
         addNotification(message);
 
         unlockChannel(channelKey);
-        
-        if ( m_model->channelFsTreeHandler() )
-        {
-            (*m_model->channelFsTreeHandler())( true, channelKey, driveKey );
-        }
-    } else
+    }
+    else
     {
         qWarning() << "MainWin::onChannelCreationConfirmed. Unknown channel " << channelKey;
     }
@@ -2147,9 +2147,9 @@ void MainWin::onChannelCreationFailed( const std::string& channelKey, const std:
 
     auto channel = m_model->findChannel( channelKey );
     if (channel) {
-        if ( m_model->channelFsTreeHandler() )
+        if ( m_model->viewingFsTreeHandler() )
         {
-            (*m_model->channelFsTreeHandler())( false, "", channel->getDriveKey() );
+            (*m_model->viewingFsTreeHandler())( false, "", channel->getDriveKey() );
         }
         const QString message = QString::fromStdString( "Channel creation failed (" + channel->getName() + ")");
         showNotification(message, gErrorCodeTranslator.translate(errorText).c_str());
@@ -3596,10 +3596,12 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     // Add easyDownload to table
     //
     m_easyDownloadTableModel->beginResetModel();
-    m_model->lastUniqueIdOfEasyDownload()++;
-    uint64_t downloadId = m_model->lastUniqueIdOfEasyDownload();
-    auto it = m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo( downloadId, dataInfo) );
+    uint64_t& downloadIdRef = m_model->lastUniqueIdOfEasyDownload();
+    downloadIdRef++;
+    uint64_t downloadId = downloadIdRef;
+    auto it = m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo( downloadIdRef, dataInfo) );
     m_easyDownloadTableModel->endResetModel();
+    return;
 
     std::string driveKeyStr = str_toupper(sirius::drive::toString( dataInfo.m_driveKey ));
     
@@ -3608,12 +3610,74 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     //
     connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
 
-    const auto channelName = "download-channel"; //TODO
-    auto callback = [client = m_onChainClient, channelName, driveKeyStr = driveKeyStr] (std::string hash)
+    const auto channelName = "download-channel7"; //TODO
+    
+    // this callback receives channel key (tx)
+    //
+    auto callback = [client=m_onChainClient, downloadId, dataInfo, channelName, driveKeyStr = driveKeyStr,this] (std::string channelKey)
     {
-        hash = QString::fromStdString(hash).toUpper().toStdString();
-        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
-        emit client->getDialogSignalsEmitter()->addDownloadChannel( channelName, hash, driveKeyStr, {});
+        channelKey = QString::fromStdString(channelKey).toUpper().toStdString();
+        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << channelKey.c_str();
+
+        //
+        // Save channelKey into EasyDownloadInfo
+        //
+        auto it = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&downloadId](auto& info) {
+            return info.m_uniqueId = downloadId;
+        });
+        assert( it != m_model->easyDownloads().end() );
+        it->m_channelKey = channelKey;
+        
+        //
+        // Send tx and wait confirmation of channel creation
+        //
+        m_model->addChannelFsTreeHandler( [key=channelKey,downloadId,dataInfo,this] ( bool success, const std::string& channelKey, const std::string& driveKey ) -> bool
+        {
+            qDebug() << "startEasyDownload(callback): downloadId = " << downloadId;
+
+            if ( channelKey != key  )
+            {
+                qDebug() << "Skip other channels: " <<  channelKey.c_str() << " != " << channelKey.c_str();
+                return false;
+            }
+            
+            if ( !success )
+            {
+                qDebug() << "Channel creation faled: driveKey: " << driveKey.c_str();
+                displayError( "Channel creation faled: todo" );
+                
+                // true - remove handler
+                return true;
+            }
+            
+            auto* channel = m_model->findChannel(channelKey);
+            assert( channel );
+            if ( channel->isCreating() )
+            {
+                displayError( "channel->isCreating(): todo" );
+                qDebug() << "channel->isCreating(): " <<  channelKey.c_str() << " != " << channelKey.c_str();
+                return false;
+            }
+
+            m_modalDialog->reject();
+            delete m_modalDialog;
+            m_modalDialog = nullptr;
+            
+            if ( channel != nullptr )
+            {
+                continueEasyDownload( downloadId, dataInfo, channelKey );
+            }
+            else
+            {
+                displayError( "Internal error: channel not found" );
+            }
+            
+            // true - remove handler
+            return true;
+        });
+
+        
+        emit client->getDialogSignalsEmitter()->addDownloadChannel( channelName, channelKey, driveKeyStr, {});
     };
     
     uint64_t prepaidSizeMB = 2 * (dataInfo.m_totalSize + (1024*1024-1)) / (1024*1024);
@@ -3626,48 +3690,14 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
 
     m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
     
-    m_model->m_viewerStatus = vs_waiting_channel_creation;
-    
-    m_model->setChannelFsTreeHandler( [=,this] ( bool success, const std::string& channelKey, const std::string& driveKey )
-    {
-        if ( !success || driveKey != driveKeyStr )
-        {
-            if ( !success )
-            {
-                qDebug() << "Channel creation faled: driveKey: " << driveKey.c_str();
-            }
-            return;
-        }
-        
-        auto* channel = m_model->findChannel(channelKey);
-        if ( channel != nullptr && channel->isCreating() )
-        {
-            // waiting creation (may be old fsTree received)
-            return;
-        }
-
-        m_model->resetChannelFsTreeHandler();
-        m_modalDialog->reject();
-        delete m_modalDialog;
-        m_modalDialog = nullptr;
-        
-        if ( channel != nullptr )
-        {
-            continueEasyDownload( downloadId, dataInfo, channel );
-        }
-        else
-        {
-            displayError( "Internal error: channel not found" );
-        }
-    });
-
     m_modalDialog->exec();
 }
 
-void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, DownloadChannel* channel )
+void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, const std::string& channelKey )
 {
     auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
     {
+        qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
         return downloadInfo.m_uniqueId == downloadId;
     });
     
@@ -3677,6 +3707,10 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
         return;
     }
     
+    auto* channel = m_model->findChannel(channelKey);
+    assert( channel != nullptr );
+
+    channel->getFsTree().dbgPrint();
     downloadIt->init( channel->getFsTree() );
 
     //
@@ -3697,40 +3731,52 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
         return;
     }
     
-//
-//    sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
-//    qDebug() << "replicatorList: " << replicatorList.size();
-//
-//    updateReplicatorsForChannel( channel->getKey(), [this, channel]()
-//    {
-////        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows(false))
-////        {
-////            m_downloadsTableModel->addRow(selectedRow);
-////        }
-////
-////        for (const auto& selectedRow : m_channelFsTreeTableModel->getSelectedRows())
-////        {
-////            QDir().mkpath(QString::fromStdString(m_model->getDownloadFolder().string() + selectedRow.m_path));
-////
-////            auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
-////
-////            DownloadInfo downloadInfo;
-////            downloadInfo.setHash(selectedRow.m_hash);
-////            downloadInfo.setDownloadChannelKey(channel->getKey());
-////            downloadInfo.setFileName(selectedRow.m_name);
-////            downloadInfo.setSaveFolder(selectedRow.m_path);
-////            downloadInfo.setDownloadFolder(m_model->getDownloadFolder().string());
-////            downloadInfo.setChannelOutdated(false);
-////            downloadInfo.setCompleted(false);
-////            downloadInfo.setProgress(0);
-////            downloadInfo.setHandle(ltHandle);
-////
-////            m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
-////            m_model->saveSettings();
-////        }
-//    });
-//
-//    displayError( "todo: continueEasyDownload" );
+
+    sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
+    qDebug() << "replicatorList: " << replicatorList.size();
+
+    // Request replicator list
+    //
+    updateReplicatorsForChannel( channel->getKey(), [this, channelKey, downloadId]()
+    {
+        // Continue download
+        //
+        auto* channel = m_model->findChannel(channelKey);
+        assert( channel != nullptr );
+
+        sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
+        qDebug() << "replicatorList2: " << replicatorList.size();
+
+        auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
+        {
+            qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
+            return downloadInfo.m_uniqueId == downloadId;
+        });
+        
+        assert( downloadIt != m_model->easyDownloads().end() );
+        
+        for( auto childIt = downloadIt->m_childs.begin(); childIt != downloadIt->m_childs.end(); childIt++ )
+        {
+            qDebug() << "childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder();
+            QDir().mkpath(QString::fromStdString( m_model->getDownloadFolder().string() + childIt->m_path ));
+
+            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash );
+
+            DownloadInfo downloadInfo;
+            downloadInfo.setHash( childIt->m_hash );
+            downloadInfo.setDownloadChannelKey( channel->getKey() );
+            downloadInfo.setFileName( childIt->m_fileName );
+            downloadInfo.setSaveFolder( childIt->m_path );
+            downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string() );
+            downloadInfo.setChannelOutdated(false);
+            downloadInfo.setCompleted(false);
+            downloadInfo.setProgress(0);
+            downloadInfo.setHandle( childIt->m_ltHandle );
+
+            m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
+        }
+        m_model->saveSettings();
+    });
 }
 
 
