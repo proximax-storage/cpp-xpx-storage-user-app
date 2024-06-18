@@ -55,15 +55,15 @@ void StreamInfo::parseLink( const std::string& linkString )
     for( size_t i=0; i<linkString.size()-1;)
     {
         uint8_t b1 = charToInt(linkString[i]);
-        qDebug() << "c1: " << linkString[i];
+//        qDebug() << "c1: " << linkString[i];
         i++;
         uint8_t b2 = charToInt(linkString[i]) << 4;
-        qDebug() << "c2: " << linkString[i];
+//        qDebug() << "c2: " << linkString[i];
         i++;
         rawLink.push_back(b1|b2);
-        qDebug() << "rawLink.size: " << b2 << " " << b1;
+//        qDebug() << "rawLink.size: " << b2 << " " << b1;
     }
-    qDebug() << "rawLink.size: " << rawLink.size();
+//    qDebug() << "rawLink.size: " << rawLink.size();
 
     std::string linkStr( (char*)&rawLink[0], rawLink.size() );
 

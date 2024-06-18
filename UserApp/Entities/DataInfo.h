@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <filesystem>
 
 #include <QSettings>
 #include <QDir>
@@ -38,5 +39,19 @@ struct DataInfo
 
     std::string getLink() const;
 
+    std::string savingName() const
+    {
+        std::string name;
+        
+        if ( m_itemName.empty() )
+        {
+            name = std::filesystem::path(m_path).filename().string();
+        }
+        else
+        {
+            name = m_itemName;
+        }
+        return name;
+    }
 };
 

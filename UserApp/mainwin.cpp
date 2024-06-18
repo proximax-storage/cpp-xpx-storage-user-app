@@ -1245,6 +1245,8 @@ void MainWin::setupEasyDownloads()
     ui->m_easyDownloadTable->setModel( m_easyDownloadTableModel );
 
     ui->m_easyDownloadTable->setColumnWidth(0,300);
+    ui->m_easyDownloadTable->setColumnWidth(1,300);
+    ui->m_easyDownloadTable->setColumnWidth(2,300);
     ui->m_easyDownloadTable->horizontalHeader()->setStretchLastSection(true);
     ui->m_easyDownloadTable->horizontalHeader()->hide();
     ui->m_easyDownloadTable->setGridStyle( Qt::NoPen );
@@ -2129,7 +2131,7 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         const QString message = QString::fromStdString( "Channel '" + alias + "' created successfully.");
         if ( ! m_model->viewingFsTreeHandler() )
         {
-            showNotification(message);
+            //showNotification(message);
         }
         addNotification(message);
 
@@ -3601,7 +3603,6 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     uint64_t downloadId = downloadIdRef;
     auto it = m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo( downloadIdRef, dataInfo) );
     m_easyDownloadTableModel->endResetModel();
-    return;
 
     std::string driveKeyStr = str_toupper(sirius::drive::toString( dataInfo.m_driveKey ));
     
@@ -3610,7 +3611,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     //
     connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
 
-    const auto channelName = "download-channel7"; //TODO
+    const auto channelName = "dn: " + dataInfo.savingName();
     
     // this callback receives channel key (tx)
     //

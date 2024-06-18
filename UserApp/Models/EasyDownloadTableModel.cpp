@@ -92,7 +92,7 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                 case 1:
                 {
                     const auto& row = mp_model->easyDownloads()[index.row()];
-                    return QString::fromStdString( std::to_string( row.m_size ) + " (" +std::to_string( row.m_progress) + "%)" );
+                    return QString::fromStdString( std::to_string( row.m_size ) + " (" +std::to_string( row.m_progress/10) + "%)" );
                 }
             }
         }
@@ -248,15 +248,27 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
     {
         for( auto& info: downloads )
         {
+            if ( info.m_isCompleted || info.m_childs.empty() )
+            {
+                continue;
+            }
+
             uint64_t dnBytes = 0;
             uint64_t totalBytes = 0;
             
+            bool isSomeChildsNotCompleted = false;
             for( const auto& dnInfo: info.m_childs )
             {
                 bool isCompleted = false;
-                if ( dnInfo.m_isCompleted || ! dnInfo.m_ltHandle.is_valid() )
+                if ( dnInfo.m_isCompleted )
                 {
                     isCompleted = true;
+                    info.m_progress = 1000;
+                    continue;
+                }
+                if ( ! dnInfo.m_ltHandle.is_valid() )
+                {
+                    continue;
                 }
                 else
                 {
@@ -275,6 +287,8 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                     totalBytes  += dnInfo.m_size;
                     continue;
                 }
+                
+                isSomeChildsNotCompleted = true;
 
                 std::vector<int64_t> fp = dnInfo.m_ltHandle.file_progress();
                 
@@ -290,6 +304,12 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                 double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
                 //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
                 info.m_progress = progress;
+            }
+            
+            if ( ! isSomeChildsNotCompleted )
+            {
+                info.m_isCompleted = true;
+                info.m_progress = 1000;
             }
         }
     }

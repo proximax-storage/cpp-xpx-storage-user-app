@@ -86,14 +86,7 @@ struct EasyDownloadInfo
         , m_itemPath( dataInfo.m_path )
         , m_size( dataInfo.m_totalSize )
     {
-        if ( dataInfo.m_itemName.empty() )
-        {
-            m_name = std::filesystem::path(dataInfo.m_path).filename();
-        }
-        else
-        {
-            m_name = dataInfo.m_itemName;
-        }
+        m_name = dataInfo.savingName();
     }
     
     void init( const sirius::drive::FsTree& fsTree )
