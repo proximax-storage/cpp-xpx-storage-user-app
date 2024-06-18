@@ -58,7 +58,9 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent, Model* model )
 
             setLayout();
             m_pathLabel->setText(QString::fromStdString(m_model->getDownloadFolder().string() + m_dataInfo.m_path));
-            m_dataSizeLabel->setText(QString::fromStdString(std::to_string(m_dataInfo.m_totalSize)));
+
+            std::string sizeInMb = std::to_string( m_dataInfo.m_totalSize/double(1000000));
+            m_dataSizeLabel->setText(QString::fromStdString(sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb"));
             if(!m_dataInfo.m_itemName.empty())
             {
                 m_folderNameLabel->setText(QString::fromStdString(m_dataInfo.m_itemName));

@@ -1218,7 +1218,7 @@ void MainWin::onDownloadBtn()
 
             auto ltHandle = m_model->downloadFile( channel->getKey(),  selectedRow.m_hash );
 
-            qDebug() << "childIt->m_path(2): " << selectedRow.m_path.c_str() << " : " << selectedRow.m_name.c_str() << " : " << m_model->getDownloadFolder();
+            qDebug() << "childIt->m_path(2): " << selectedRow.m_path.c_str() << " : " << selectedRow.m_name.c_str() << " : " << m_model->getDownloadFolder().string();
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash(selectedRow.m_hash);
@@ -1244,6 +1244,8 @@ void MainWin::setupEasyDownloads()
     m_easyDownloadTableModel = new EasyDownloadTableModel(m_model, this);
     ui->m_easyDownloadTable->setModel( m_easyDownloadTableModel );
 
+    ui->m_easyDownloadTable->setSelectionBehavior( QAbstractItemView::SelectRows );
+    ui->m_easyDownloadTable->setSelectionMode( QAbstractItemView::SingleSelection );
     ui->m_easyDownloadTable->setColumnWidth(0,300);
     ui->m_easyDownloadTable->setColumnWidth(1,300);
     ui->m_easyDownloadTable->setColumnWidth(2,300);
@@ -3758,7 +3760,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
         
         for( auto childIt = downloadIt->m_childs.begin(); childIt != downloadIt->m_childs.end(); childIt++ )
         {
-            qDebug() << "childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder();
+            qDebug() << "childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder().string();
             QDir().mkpath(QString::fromStdString( m_model->getDownloadFolder().string() + childIt->m_path ));
 
             childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash );
