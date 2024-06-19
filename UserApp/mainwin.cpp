@@ -2663,7 +2663,11 @@ void MainWin::setupDrivesTab()
         std::string             path;
         std::string             itemName;
         sirius::drive::Folder*  folder = nullptr;
-        
+
+        if(!m_model->currentDrive())
+        {
+            return;
+        }
         auto rows = ui->m_driveFsTableView->selectionModel()->selectedRows();
         if ( rows.size() == 0 )
         {
