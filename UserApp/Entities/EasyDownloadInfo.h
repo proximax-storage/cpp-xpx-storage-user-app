@@ -119,7 +119,7 @@ struct EasyDownloadInfo
                 m_isFolder = true;
                 m_downloadingFolder = &sirius::drive::getFolder(*child);
 
-                std::filesystem::path path;
+                std::filesystem::path path = m_itemPath;
                 m_downloadingFolder->iterate( path, [this] ( const std::filesystem::path& path, const auto& file) -> bool
                 {
                     m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),

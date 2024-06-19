@@ -3657,14 +3657,14 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
             assert( channel );
             if ( channel->isCreating() )
             {
-                displayError( "channel->isCreating(): todo" );
-                qDebug() << "channel->isCreating(): " <<  channelKey.c_str() << " != " << channelKey.c_str();
+//                displayError( "channel->isCreating(): todo" );
+//                qDebug() << "channel->isCreating(): " <<  channelKey.c_str() << " != " << channelKey.c_str();
                 return false;
             }
 
-            m_modalDialog->reject();
-            delete m_modalDialog;
-            m_modalDialog = nullptr;
+//            m_modalDialog->reject();
+//            delete m_modalDialog;
+//            m_modalDialog = nullptr;
             
             if ( channel != nullptr )
             {
@@ -3691,9 +3691,9 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
                                         0,
                                         callback); // feedback is unused for now
 
-    m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
-    
-    m_modalDialog->exec();
+//    m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
+//    
+//    m_modalDialog->exec();
 }
 
 void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, const std::string& channelKey )

@@ -92,6 +92,16 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                 case 1:
                 {
                     const auto& row = mp_model->easyDownloads()[index.row()];
+                    if ( row.m_progress == 0 )
+                    {
+                        std::string sizeInMb = std::to_string( row.m_size/double(1000000));
+                        return "(preparing...)";
+                    }
+                    else if ( row.m_progress == 1000 )
+                    {
+                        std::string sizeInMb = std::to_string( row.m_size/double(1000000));
+                        return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb" );
+                    }
                     std::string sizeInMb = std::to_string( row.m_size/double(1000000));
                     return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb (" +std::to_string( row.m_progress/10) + "%)" );
                 }
@@ -269,6 +279,10 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                 }
                 if ( ! dnInfo.m_ltHandle.is_valid() )
                 {
+                    if ( info.m_progress == 0 )
+                    {
+                        isSomeChildsNotCompleted = true;
+                    }
                     continue;
                 }
                 else
