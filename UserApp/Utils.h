@@ -34,6 +34,8 @@ std::filesystem::path getFsTreesFolder();
 
 std::string getPrettyDriveState(int state);
 
+std::string dataSizeToString(uint64_t bytes);
+
 QDebug& operator<<(QDebug& out, const std::string& str);
 
 enum ErrorType

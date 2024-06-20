@@ -169,3 +169,18 @@ QDebug& operator<<(QDebug& out, const std::string& str)
     out << QString::fromStdString(str);
     return out;
 }
+
+std::string dataSizeToString(uint64_t bytes)
+{
+    std::string units[] = {"bytes", "kB", "MB", "GB", "TB"};
+    double b = bytes;
+    int i = 0;
+    for( ; b >= 1000 ; ++i )
+    {
+        b /= 1024.0;
+    }
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(1) << b << " " << units[i] ;
+    return oss.str();
+}
+

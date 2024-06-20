@@ -21,8 +21,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
 
     m_driveNameConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_driveName));
     m_pathConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_path));
-    std::string sizeInMb = std::to_string( m_dataInfo.m_totalSize/double(1000000));
-    m_dataSizeConfirmLabel = new QLabel(QString::fromStdString(sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb"));
+    m_dataSizeConfirmLabel = new QLabel(QString::fromStdString(dataSizeToString(m_dataInfo.m_totalSize)));
     m_folderNameConfirmEdit = new QLineEdit("");
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);

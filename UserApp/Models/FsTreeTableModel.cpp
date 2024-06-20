@@ -308,7 +308,7 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                     {
                         return QString();
                     }
-                    return QString::fromStdString( std::to_string( row.m_size) );
+                    return QString::fromStdString( dataSizeToString(row.m_size) );
                 }
             }
         }
@@ -404,7 +404,7 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
                     {
                         return QString();
                     }
-                    return QString::fromStdString( std::to_string( row.m_size) );
+                    return QString::fromStdString( dataSizeToString(row.m_size) );
                 }
             }
         }

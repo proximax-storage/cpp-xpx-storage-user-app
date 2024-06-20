@@ -1,4 +1,5 @@
 #include "EasyDownloadTableModel.h"
+#include "Utils.h"
 #include "mainwin.h"
 
 #include <QApplication>
@@ -94,7 +95,7 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                     const auto& row = mp_model->easyDownloads()[index.row()];
                     if ( row.m_progress == 0 && !row.m_isCompleted )
                     {
-                        std::string sizeInMb = std::to_string( row.m_size/double(1000000));
+                        std::string sizeInMb = dataSizeToString(row.m_size);
                         return "(preparing...)";
                     }
                     else if ( row.m_progress == 1000 || row.m_isCompleted )
