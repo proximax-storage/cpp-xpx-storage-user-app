@@ -20,6 +20,8 @@ class DownloadInfo
     bool                     m_channelIsOutdated = false;
     int                      m_progress = 0; // m_progress==1001 means completed
     sirius::drive::lt_handle m_ltHandle;
+    
+    uint64_t                 m_easyDownloadId = -1;
 
     std::optional<DownloadNotification> m_notification;
     
@@ -59,6 +61,9 @@ public:
     auto getNotification() { return m_notification; };
     
     bool isForViewing() const { return m_notification.has_value(); }
+    
+    void     setEasyDownloadId( uint64_t id ) { m_easyDownloadId = id; }
+    uint64_t easyDownloadId() const { return m_easyDownloadId; }
 
 public:
     template<class Archive>

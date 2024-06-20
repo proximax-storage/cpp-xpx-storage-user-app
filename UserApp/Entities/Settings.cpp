@@ -289,9 +289,9 @@ void Settings::setCurrentAccountIndex( int currentAccountIndex )
     ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() )
 }
 
-void Settings::onDownloadCompleted( lt::torrent_handle handle )
+void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
 {
-    std::thread( [ this, handle ]
+    std::thread( [ this, handle, &model ]
     {
         auto& downloads = accountConfig().m_downloads;
 
@@ -426,6 +426,34 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle )
                 }
 
                 dnInfo.setCompleted(true);
+
+                // EasyDownload
+                if ( dnInfo.easyDownloadId() >= 0 )
+                {
+                    for( auto& easyDnInfo: model.easyDownloads() )
+                    {
+                        if ( easyDnInfo.m_uniqueId == dnInfo.easyDownloadId() )
+                        {
+                            for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                            {
+                                if ( childIt->m_hash == dnInfo.getHash() )
+                                {
+                                    childIt->m_isCompleted = true;
+                                    break;
+                                }
+                            }
+                            bool isCompleted = true;
+                            for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                            {
+                                if ( !childIt->m_isCompleted )
+                                {
+                                    isCompleted = false;
+                                }
+                            }
+                            easyDnInfo.m_isCompleted = isCompleted;
+                        }
+                    }
+                }
             }
         }
 

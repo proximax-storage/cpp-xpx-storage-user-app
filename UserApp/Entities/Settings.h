@@ -47,7 +47,7 @@ class Settings : public QObject
         Account& accountConfig();
         fs::path downloadFolder();
         void setCurrentAccountIndex( int currentAccountIndex );
-        void onDownloadCompleted( lt::torrent_handle handle );
+        void onDownloadCompleted( lt::torrent_handle handle, Model& model );
         void removeFromDownloads( int index );
 
     signals:

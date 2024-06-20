@@ -88,6 +88,8 @@ void MainWin::displayError( const std::string& text, const std::string& informat
 
 void MainWin::init()
 {
+    gSkipDhtPktLogs = true;
+    
     if ( ! m_model->loadSettings() )
     {
         initGeometry();
@@ -3617,7 +3619,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     //
     connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
 
-    const auto channelName = "dn: " + dataInfo.savingName();
+    const auto channelName = "easy-download: " + dataInfo.savingName();
     
     // this callback receives channel key (tx)
     //
@@ -3644,7 +3646,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
 
             if ( channelKey != key  )
             {
-                qDebug() << "Skip other channels: " <<  channelKey.c_str() << " != " << channelKey.c_str();
+                qDebug() << "Skip other channels: " <<  channelKey.c_str();
                 return false;
             }
             
@@ -3779,6 +3781,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);
             downloadInfo.setHandle( childIt->m_ltHandle );
+            downloadInfo.setEasyDownloadId( downloadIt->m_uniqueId );
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
         }

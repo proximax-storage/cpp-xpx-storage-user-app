@@ -108,7 +108,7 @@ const sirius::crypto::KeyPair& Model::getKeyPair() {
 }
 
 void Model::onDownloadCompleted(lt::torrent_handle handle) {
-    m_settings->onDownloadCompleted(handle);
+    m_settings->onDownloadCompleted(handle,*this);
 }
 
 void Model::addDownloadChannel(const DownloadChannel &channel) {

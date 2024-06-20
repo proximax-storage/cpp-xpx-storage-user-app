@@ -87,6 +87,10 @@ struct EasyDownloadInfo
         , m_size( dataInfo.m_totalSize )
     {
         m_name = dataInfo.savingName();
+        if ( m_itemPath.size() > 1 && (m_itemPath[0] == '/' || m_itemPath[0] == '\\') )
+        {
+            m_itemPath = dataInfo.m_path.substr(1);
+        }
     }
     
     void init( const sirius::drive::FsTree& fsTree )

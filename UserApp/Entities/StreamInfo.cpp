@@ -33,7 +33,7 @@ std::string StreamInfo::getLink() const
     {
         uint8_t b1 = (*((uint8_t*)&c))&0x0F;
         uint8_t b2 = (*((uint8_t*)&c))>>4;
-        qDebug() << "c b1 b2: " << (*((uint8_t*)&c)) << " " << b1 << " " << b2;
+//        qDebug() << "c b1 b2: " << (*((uint8_t*)&c)) << " " << b1 << " " << b2;
         static char table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' };
 
         assert( b1 < sizeof(table) && b2 < sizeof(table) );

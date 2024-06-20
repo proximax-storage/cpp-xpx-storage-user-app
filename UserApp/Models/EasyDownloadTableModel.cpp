@@ -92,12 +92,12 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                 case 1:
                 {
                     const auto& row = mp_model->easyDownloads()[index.row()];
-                    if ( row.m_progress == 0 )
+                    if ( row.m_progress == 0 && !row.m_isCompleted )
                     {
                         std::string sizeInMb = std::to_string( row.m_size/double(1000000));
                         return "(preparing...)";
                     }
-                    else if ( row.m_progress == 1000 )
+                    else if ( row.m_progress == 1000 || row.m_isCompleted )
                     {
                         std::string sizeInMb = std::to_string( row.m_size/double(1000000));
                         return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb" );
