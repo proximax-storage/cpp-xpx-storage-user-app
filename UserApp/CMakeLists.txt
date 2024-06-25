@@ -46,11 +46,14 @@ endif ()
 
 if (MSVC)
     set(BOOST_STACKTRACE_BACKTRACE_INCLUDE_FILE "${Bost_INCLUDE_DIR}boost/stacktrace.hpp")
-endif ()
+endif()
 
 find_package(Threads REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS atomic system date_time regex timer chrono log log_setup thread filesystem program_options random REQUIRED)
-find_package(OpenSSL 1.1.1 REQUIRED)
+if (MSVC)
+else()
+    find_package(OpenSSL 1.1.1 REQUIRED)
+endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,./lib")

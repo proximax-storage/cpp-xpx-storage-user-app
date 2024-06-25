@@ -44,7 +44,7 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
 
                     hash = sirius::drive::calculateInfoHash((path / entryName).make_preferred(), sirius::Key(*driveKey) ).array();
                     qWarning () << "driveKey: " << sirius::drive::toString(*driveKey).c_str();
-                    qWarning () << "filename: " << (path / entryName);
+                    qWarning () << "filename: " << (path / entryName).string().c_str();
                     qWarning () << "hash: " << sirius::drive::toString(hash).c_str();
                 }
 

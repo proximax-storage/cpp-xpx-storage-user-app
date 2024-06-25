@@ -350,7 +350,7 @@ void MainWin::initStreaming()
     if ( m_settings->accountConfig().m_streamFolder.empty() )
     {
         fs::path homePath = QDir::homePath().toStdString();
-        m_settings->accountConfig().m_streamFolder = std::string( homePath / "sirius-movies" );
+        m_settings->accountConfig().m_streamFolder = ( homePath / "sirius-movies" ).string();
         m_settings->save();
     }
     
