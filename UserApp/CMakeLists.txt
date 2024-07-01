@@ -145,6 +145,47 @@ else()
 endif()
 
 if (WIN32)
+
+    set(DLL_DIR "${CMAKE_BINARY_DIR}/bin/Debug")
+    message(STATUS "DLL_DIR: ${DLL_DIR}")
+
+    get_target_property(Qt6_BIN_DIR Qt6::Core LOCATION)
+    get_filename_component(Qt6_BIN_DIR "${Qt6_BIN_DIR}" DIRECTORY)
+    message(STATUS "Qt6_BIN_DIR: ${CMAKE_PREFIX_PATH}")
+
+    message(STATUS "Boost_LIBRARY_DIR_DEBUG: ${Boost_LIBRARY_DIR_DEBUG}")
+
+    set(REQUIRED_DLLS
+        "${Boost_LIBRARY_DIR_DEBUG}/boost_filesystem-vc143-mt-gd-x64-1_85.dll"
+        "${Boost_LIBRARY_DIR_DEBUG}/boost_log-vc143-mt-gd-x64-1_85.dll"
+        "${Boost_LIBRARY_DIR_DEBUG}/boost_thread-vc143-mt-gd-x64-1_85.dll"
+        "${Qt6_BIN_DIR}/Qt6Cored.dll"
+        "${Qt6_BIN_DIR}/Qt6Guid.dll"
+        "${Qt6_BIN_DIR}/Qt6Multimediad.dll"
+        "${Qt6_BIN_DIR}/Qt6MultimediaWidgetsd.dll"
+        "${Qt6_BIN_DIR}/Qt6Networkd.dll"
+        "${Qt6_BIN_DIR}/Qt6Widgetsd.dll"
+        "${DLL_DIR}/drive.dll"
+        "${DLL_DIR}/sdk_external.dll"
+        "${DLL_DIR}/storage-crypto.dll"
+        "${DLL_DIR}/torrent-sirius.dll"
+        "${DLL_DIR}/utils.dll"
+        "${CMAKE_BINARY_DIR}/cpp-xpx-chain-sdk/Debug/xpxchaincpp.dll"
+    )
+
+    set(EXECUTABLE_DIR "${CMAKE_BINARY_DIR}/UserApp/Debug")
+    message(STATUS "EXECUTABLE_DIR: ${EXECUTABLE_DIR}")
+
+    if(EXISTS "${DLL_DIR}/drive.dll")
+        foreach(DLL_FILE ${REQUIRED_DLLS})
+            file(COPY ${DLL_FILE} DESTINATION ${EXECUTABLE_DIR})
+        endforeach()
+    endif()
+    
+    get_filename_component(Qt6_PLUGIN_PARENT_DIR "${Qt6_BIN_DIR}/../" ABSOLUTE)
+    message(STATUS "Qt6_PLUGIN_PARENT_DIR: ${Qt6_PLUGIN_PARENT_DIR}")
+    file(COPY "${Qt6_PLUGIN_PARENT_DIR}/plugins" DESTINATION "${EXECUTABLE_DIR}")
+
     target_link_libraries(StorageClientApp PRIVATE
             ${Boost_LIBRARIES}
             Qt${QT_VERSION_MAJOR}::Widgets

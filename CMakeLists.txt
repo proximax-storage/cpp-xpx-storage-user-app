@@ -21,13 +21,12 @@ if (MSVC)
     add_definitions(-D_BOOST_ALL_DYN_LINK)
     add_definitions(-D_BOOST_USE_WINAPI_VERSION=0x0A00)
     add_definitions(-D_WIN32_WINNT=0x0A00)
-    #add_definitions(-DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL 3")
-    #add_definitions(-DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ROOT_DIR"/lib/libssl.a")
+    add_definitions(-DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL 3")
+    add_definitions(-DOPENSSL_CRYPTO_LIBRARY=$OPENSSL_ROOT_DIR"/lib/libssl.a")
     set(OPENSSL_INCLUDE_DIR "C:/Program Files/OpenSSL 3/include") 
     #add_definitions(-DOPENSSL_VERSION=3.3.1)
-    set(OPENSSL_ROOT_DIR "C:/Program Files/OpenSSL 3")
-    set(OPENSSL_LIBRARIES "C:/Program Files/OpenSSL 3/lib/libssl.lib")
-
+    #set(OPENSSL_ROOT_DIR "C:/Program Files/OpenSSL 3")
+    #set(OPENSSL_LIBRARIES "C:/Program Files/OpenSSL 3/lib/libssl.lib")
 
 endif ()
 
