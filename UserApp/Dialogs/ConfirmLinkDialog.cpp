@@ -32,7 +32,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     connect(buttonBox, &QDialogButtonBox::accepted, this, &ConfirmLinkDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &ConfirmLinkDialog::reject);
 
-    setFontAndSize();
+    // setFontAndSize();
     setLayout();
     // just in case if you want to display drive key in UI:
     // std::string str = sirius::drive::toString(m_dataInfo.m_driveKey);
@@ -139,33 +139,33 @@ void ConfirmLinkDialog::reject()
     QDialog::reject();
 }
 
-void ConfirmLinkDialog::setFontAndSize()
-{
-    QFont font;
-    font.setPointSize(13);
+// void ConfirmLinkDialog::setFontAndSize()
+// {
+//     QFont font;
+//     font.setPointSize(13);
 
-    driveName->setFont(font);
-    path->setFont(font);
-    dataSize->setFont(font);
-    folderNameForSaving->setFont(font);
-    m_driveNameConfirmLabel->setFont(font);
-    m_pathConfirmLabel->setFont(font);
-    m_dataSizeConfirmLabel->setFont(font);
-    m_folderNameConfirmEdit->setFont(font);
-    buttonBox->setFont(font);
+//     driveName->setFont(font);
+//     path->setFont(font);
+//     dataSize->setFont(font);
+//     folderNameForSaving->setFont(font);
+//     m_driveNameConfirmLabel->setFont(font);
+//     m_pathConfirmLabel->setFont(font);
+//     m_dataSizeConfirmLabel->setFont(font);
+//     m_folderNameConfirmEdit->setFont(font);
+//     buttonBox->setFont(font);
 
-    QFontMetrics fontMetrics(font);
-    int minHeight = fontMetrics.height() + fontMetrics.descent() + 2;
-    driveName->setMinimumHeight(minHeight);
-    path->setMinimumHeight(minHeight);
-    dataSize->setMinimumHeight(minHeight);
-    folderNameForSaving->setMinimumHeight(minHeight);
-    m_driveNameConfirmLabel->setMinimumHeight(minHeight);
-    m_pathConfirmLabel->setMinimumHeight(minHeight);
-    m_dataSizeConfirmLabel->setMinimumHeight(minHeight);
-    m_folderNameConfirmEdit->setMinimumHeight(minHeight);
-    buttonBox->setMinimumHeight(minHeight);
-}
+//     QFontMetrics fontMetrics(font);
+//     int minHeight = fontMetrics.height() + fontMetrics.descent() + 2;
+//     driveName->setMinimumHeight(minHeight);
+//     path->setMinimumHeight(minHeight);
+//     dataSize->setMinimumHeight(minHeight);
+//     folderNameForSaving->setMinimumHeight(minHeight);
+//     m_driveNameConfirmLabel->setMinimumHeight(minHeight);
+//     m_pathConfirmLabel->setMinimumHeight(minHeight);
+//     m_dataSizeConfirmLabel->setMinimumHeight(minHeight);
+//     m_folderNameConfirmEdit->setMinimumHeight(minHeight);
+//     buttonBox->setMinimumHeight(minHeight);
+// }
 
 void ConfirmLinkDialog::setLayout()
 {

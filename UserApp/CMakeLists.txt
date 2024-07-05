@@ -67,7 +67,7 @@ if (APPLE)
     # And this part tells CMake where to find and install the file itself
     set(APP_ICON_MACOSX ./resources/icons/icon.png)
     set_source_files_properties(${APP_ICON_MACOSX} PROPERTIES
-            MACOSX_PACKAGE_LOCATION "resources/icons")
+        MACOSX_PACKAGE_LOCATION "resources/icons")
 
     set(CMAKE_VERBOSE_MAKEFILE ON)
     set(BOOST_INCLUDE_DIR "/usr/local/include")
@@ -76,7 +76,7 @@ if (APPLE)
     set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
 
 
-#    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
+    #    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
 endif()
 
 add_definitions(-DSIRIUS_DRIVE_MULTI)
@@ -93,29 +93,29 @@ include_directories(${PROJECT_ROOT_DIR}/cpp-xpx-storage-sdk/libtorrent/include)
 set(TS_FILES StorageClientApp_en_US.ts)
 
 file(GLOB PROJECT_SOURCES
-        "*.h"
-        "*.cpp"
-        "*.ui"
-        "Dialogs/*.h"
-        "Dialogs/*.cpp"
-        "Dialogs/*.ui"
-        "Models/*.h"
-        "Models/*.cpp"
-        "Engines/*.h"
-        "Engines/*.cpp"
-        "Entities/*.h"
-        "Entities/*.cpp"
-        "ErrorCodeTranslator/*.h"
-        "ErrorCodeTranslator/*.cpp"
-        "ErrorCodeTranslator/*.txt"
-        "SignalEmitters/*.h"
-        "SignalEmitters/*.cpp"
+    "*.h"
+    "*.cpp"
+    "*.ui"
+    "Dialogs/*.h"
+    "Dialogs/*.cpp"
+    "Dialogs/*.ui"
+    "Models/*.h"
+    "Models/*.cpp"
+    "Engines/*.h"
+    "Engines/*.cpp"
+    "Entities/*.h"
+    "Entities/*.cpp"
+    "ErrorCodeTranslator/*.h"
+    "ErrorCodeTranslator/*.cpp"
+    "ErrorCodeTranslator/*.txt"
+    "SignalEmitters/*.h"
+    "SignalEmitters/*.cpp"
 
-        ${TS_FILES}
+    ${TS_FILES}
 )
 
 file(GLOB PROJECT_UI_SOURCES
-        "*.ui"
+    "*.ui"
 )
 qt_wrap_ui(SOURCES ${PROJECT_UI_SOURCES} mainwindow.ui)
 
@@ -129,24 +129,31 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
     if(ANDROID)
         add_library(StorageClientApp SHARED
             ${PROJECT_SOURCES}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(StorageClientApp ${PROJECT_SOURCES} main.cpp ${APP_ICON_MACOSX})
-    endif()
+    # Define properties for Android with Qt 5 after find_package() calls as:
+    #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+else()
+    add_executable(StorageClientApp ${PROJECT_SOURCES} main.cpp ${APP_ICON_MACOSX})
+endif()
 
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
 if (WIN32)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "Building in Debug mode")
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        message(STATUS "Building in Release mode")
+    else()
+        message(STATUS "Building in an unknown configuration: ${CMAKE_BUILD_TYPE}")
+    endif()
 
-    set(DLL_DIR "${CMAKE_BINARY_DIR}/bin/Debug")
+    set(DLL_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
     message(STATUS "DLL_DIR: ${DLL_DIR}")
 
     get_target_property(Qt6_BIN_DIR Qt6::Core LOCATION)
@@ -155,60 +162,81 @@ if (WIN32)
 
     message(STATUS "Boost_LIBRARY_DIR_DEBUG: ${Boost_LIBRARY_DIR_DEBUG}")
 
-    set(REQUIRED_DLLS
-        "${Boost_LIBRARY_DIR_DEBUG}/boost_filesystem-vc143-mt-gd-x64-1_85.dll"
-        "${Boost_LIBRARY_DIR_DEBUG}/boost_log-vc143-mt-gd-x64-1_85.dll"
-        "${Boost_LIBRARY_DIR_DEBUG}/boost_thread-vc143-mt-gd-x64-1_85.dll"
-        "${Qt6_BIN_DIR}/Qt6Cored.dll"
-        "${Qt6_BIN_DIR}/Qt6Guid.dll"
-        "${Qt6_BIN_DIR}/Qt6Multimediad.dll"
-        "${Qt6_BIN_DIR}/Qt6MultimediaWidgetsd.dll"
-        "${Qt6_BIN_DIR}/Qt6Networkd.dll"
-        "${Qt6_BIN_DIR}/Qt6Widgetsd.dll"
-        "${DLL_DIR}/drive.dll"
-        "${DLL_DIR}/sdk_external.dll"
-        "${DLL_DIR}/storage-crypto.dll"
-        "${DLL_DIR}/torrent-sirius.dll"
-        "${DLL_DIR}/utils.dll"
-        "${CMAKE_BINARY_DIR}/cpp-xpx-chain-sdk/Debug/xpxchaincpp.dll"
-    )
-
-    set(EXECUTABLE_DIR "${CMAKE_BINARY_DIR}/UserApp/Debug")
-    message(STATUS "EXECUTABLE_DIR: ${EXECUTABLE_DIR}")
-
-    if(EXISTS "${DLL_DIR}/drive.dll")
-        foreach(DLL_FILE ${REQUIRED_DLLS})
-            file(COPY ${DLL_FILE} DESTINATION ${EXECUTABLE_DIR})
-        endforeach()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(REQUIRED_DLLS
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_filesystem-vc143-mt-gd-x64-1_85.dll"
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_log-vc143-mt-gd-x64-1_85.dll"
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_thread-vc143-mt-gd-x64-1_85.dll"
+            "${Qt6_BIN_DIR}/Qt6Cored.dll"
+            "${Qt6_BIN_DIR}/Qt6Guid.dll"
+            "${Qt6_BIN_DIR}/Qt6Multimediad.dll"
+            "${Qt6_BIN_DIR}/Qt6MultimediaWidgetsd.dll"
+            "${Qt6_BIN_DIR}/Qt6Networkd.dll"
+            "${Qt6_BIN_DIR}/Qt6Widgetsd.dll"
+            "${DLL_DIR}/drive.dll"
+            "${DLL_DIR}/sdk_external.dll"
+            "${DLL_DIR}/storage-crypto.dll"
+            "${DLL_DIR}/torrent-sirius.dll"
+            "${DLL_DIR}/utils.dll"
+            "${CMAKE_BINARY_DIR}/cpp-xpx-chain-sdk/${CMAKE_BUILD_TYPE}/xpxchaincpp.dll"
+        )
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(REQUIRED_DLLS
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_filesystem-vc143-mt-x64-1_85.dll"
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_log-vc143-mt-x64-1_85.dll"
+            "${Boost_LIBRARY_DIR_DEBUG}/boost_thread-vc143-mt-x64-1_85.dll"
+            "${Qt6_BIN_DIR}/Qt6Core.dll"
+            "${Qt6_BIN_DIR}/Qt6Gui.dll"
+            "${Qt6_BIN_DIR}/Qt6Multimedia.dll"
+            "${Qt6_BIN_DIR}/Qt6MultimediaWidgets.dll"
+            "${Qt6_BIN_DIR}/Qt6Network.dll"
+            "${Qt6_BIN_DIR}/Qt6Widgets.dll"
+            "${DLL_DIR}/drive.dll"
+            "${DLL_DIR}/sdk_external.dll"
+            "${DLL_DIR}/storage-crypto.dll"
+            "${DLL_DIR}/torrent-sirius.dll"
+            "${DLL_DIR}/utils.dll"
+            "${CMAKE_BINARY_DIR}/cpp-xpx-chain-sdk/${CMAKE_BUILD_TYPE}/xpxchaincpp.dll"
+        )
     endif()
-    
-    get_filename_component(Qt6_PLUGIN_PARENT_DIR "${Qt6_BIN_DIR}/../" ABSOLUTE)
-    message(STATUS "Qt6_PLUGIN_PARENT_DIR: ${Qt6_PLUGIN_PARENT_DIR}")
-    file(COPY "${Qt6_PLUGIN_PARENT_DIR}/plugins" DESTINATION "${EXECUTABLE_DIR}")
 
-    target_link_libraries(StorageClientApp PRIVATE
-            ${Boost_LIBRARIES}
-            Qt${QT_VERSION_MAJOR}::Widgets
-            Qt${QT_VERSION_MAJOR}::Multimedia
-            Qt${QT_VERSION_MAJOR}::MultimediaWidgets
-            wsock32
-            ws2_32
-            torrent-sirius
-            drive
-            connection
-            sdk_external
-            nodediscovery
-            ionet
-            storage-crypto
-            net
-            model
-            utils
-            xpxchaincpp)
 
-    target_compile_definitions(StorageClientApp
-            PRIVATE
-            BOOST_EXCEPTION_DISABLE
-            )
+set(EXECUTABLE_DIR "${CMAKE_BINARY_DIR}/UserApp/${CMAKE_BUILD_TYPE}")
+message(STATUS "EXECUTABLE_DIR: ${EXECUTABLE_DIR}")
+
+if(EXISTS "${DLL_DIR}/drive.dll")
+    foreach(DLL_FILE ${REQUIRED_DLLS})
+        file(COPY ${DLL_FILE} DESTINATION ${EXECUTABLE_DIR})
+    endforeach()
+endif()
+
+get_filename_component(Qt6_PLUGIN_PARENT_DIR "${Qt6_BIN_DIR}/../" ABSOLUTE)
+message(STATUS "Qt6_PLUGIN_PARENT_DIR: ${Qt6_PLUGIN_PARENT_DIR}")
+file(COPY "${Qt6_PLUGIN_PARENT_DIR}/plugins" DESTINATION "${EXECUTABLE_DIR}")
+
+target_link_libraries(StorageClientApp PRIVATE
+    ${Boost_LIBRARIES}
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    Qt${QT_VERSION_MAJOR}::MultimediaWidgets
+    wsock32
+    ws2_32
+    torrent-sirius
+    drive
+    connection
+    sdk_external
+    nodediscovery
+    ionet
+    storage-crypto
+    net
+    model
+    utils
+    xpxchaincpp)
+
+target_compile_definitions(StorageClientApp
+    PRIVATE
+    BOOST_EXCEPTION_DISABLE
+)
 else()
     target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet storage-crypto net model utils xpxchaincpp)
 endif()

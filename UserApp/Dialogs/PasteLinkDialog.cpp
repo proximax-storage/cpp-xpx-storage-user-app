@@ -37,7 +37,7 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent, Model* model )
     m_pasteLinkButton = new QPushButton("Paste Link", this);
     buttonBox->addButton(m_pasteLinkButton, QDialogButtonBox::ActionRole);
 
-    setFontAndSize();
+    // setFontAndSize();
     m_layout->setSpacing(13);
     m_layout->addWidget(m_linkEdit, 0, 0, 1, 2);
     m_layout->addWidget(buttonBox, 1, 1, Qt::AlignRight);
@@ -117,28 +117,28 @@ void PasteLinkDialog::setLayout()
     m_layout->addWidget(buttonBox, 4, 1, Qt::AlignRight);
 }
 
-void PasteLinkDialog::setFontAndSize()
-{
-    QFont font;
-    font.setPointSize(13);
+// void PasteLinkDialog::setFontAndSize()
+// {
+//     QFont font;
+//     font.setPointSize(13);
 
-    m_linkEdit->setFont(font);
-    path->setFont(font);
-    dataSize->setFont(font);
-    folderName->setFont(font);
-    m_pathLabel->setFont(font);
-    m_dataSizeLabel->setFont(font);
-    m_folderNameLabel->setFont(font);
-    buttonBox->setFont(font);
+//     m_linkEdit->setFont(font);
+//     path->setFont(font);
+//     dataSize->setFont(font);
+//     folderName->setFont(font);
+//     m_pathLabel->setFont(font);
+//     m_dataSizeLabel->setFont(font);
+//     m_folderNameLabel->setFont(font);
+//     buttonBox->setFont(font);
 
-    QFontMetrics fontMetrics(font);
-    int minHeight = fontMetrics.height() + fontMetrics.descent() + 2;
+//     QFontMetrics fontMetrics(font);
+//     int minHeight = fontMetrics.height() + fontMetrics.descent() + 2;
 
-    path->setMinimumHeight(minHeight);
-    dataSize->setMinimumHeight(minHeight);
-    folderName->setMinimumHeight(minHeight);
-    m_pathLabel->setMinimumHeight(minHeight);
-    m_dataSizeLabel->setMinimumHeight(minHeight);
-    m_folderNameLabel->setMinimumHeight(minHeight);
-    buttonBox->setMinimumHeight(minHeight);
-}
+//     path->setMinimumHeight(minHeight);
+//     dataSize->setMinimumHeight(minHeight);
+//     folderName->setMinimumHeight(minHeight);
+//     m_pathLabel->setMinimumHeight(minHeight);
+//     m_dataSizeLabel->setMinimumHeight(minHeight);
+//     m_folderNameLabel->setMinimumHeight(minHeight);
+//     buttonBox->setMinimumHeight(minHeight);
+// }
