@@ -166,8 +166,10 @@ private:
 
     std::vector<DataInfo> readDataInfoList();
 public:
-    void startEasyDownload( const DataInfo& dataInfo );
-    void continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, const std::string& channelKey );
+    void addEasyDownload( const DataInfo& dataInfo );
+    void startEasyDownload( EasyDownloadInfo& info );
+    void continueEasyDownload( uint64_t downloadId, const std::string& channelKey );
+    void restartInterruptedEasyDownloads();
 private:
     sirius::drive::FsTree m_easyDownloadFsTree;
     

@@ -20,7 +20,7 @@
 #define STREAM_INFO_FILE_NAME   "info"
 
 const  uint32_t MIN_SETTINGS_VERSION = 1;
-const  uint32_t MAX_SETTINGS_VERSION = 2;
+const  uint32_t CURRENT_SETTINGS_VERSION = 4;
 inline uint32_t gSettingsVersion = 0;
 
 struct EasyDownloadInfo;
@@ -58,6 +58,15 @@ class Account
             if ( gSettingsVersion >= 2 )
             {
                 ar( m_streamFolder );
+            }
+            
+            if ( gSettingsVersion >= 3 )
+            {
+                ar( m_easyDownloads );
+            }
+            if ( gSettingsVersion >= 4 )
+            {
+                ar( m_lastUniqueIdOfEasyDownload );
             }
         }
 

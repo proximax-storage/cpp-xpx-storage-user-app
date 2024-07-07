@@ -108,7 +108,7 @@ bool Settings::load( const std::string& pwd )
         {
             iarchive( gSettingsVersion );
 
-            if ( gSettingsVersion < MIN_SETTINGS_VERSION || gSettingsVersion > MAX_SETTINGS_VERSION )
+            if ( gSettingsVersion < MIN_SETTINGS_VERSION || gSettingsVersion > CURRENT_SETTINGS_VERSION )
             {
                 QMessageBox msgBox;
                 msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
@@ -191,7 +191,7 @@ bool Settings::load( const std::string& pwd )
     return true;
 }
 
-void Settings::save()
+void Settings::saveSettings()
 {
     std::error_code ec;
     bool isExists = fs::exists( getSettingsFolder().make_preferred(), ec );
@@ -225,7 +225,7 @@ void Settings::save()
     {
         std::ostringstream os( std::ios::binary );
         cereal::PortableBinaryOutputArchive archive( os );
-        gSettingsVersion = MAX_SETTINGS_VERSION;
+        gSettingsVersion = CURRENT_SETTINGS_VERSION;
         archive( gSettingsVersion );
         archive( m_restBootstrap );
         archive( m_replicatorBootstrap );
@@ -308,24 +308,55 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
         //TODO: semaphore
         for( auto& dnInfo: downloads )
         {
-            if ( dnInfo.getHandle() == handle )
+            if ( dnInfo.getHandle() != handle )
             {
-                fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
-                fs::path destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
-                qDebug() << "onDownloadCompleted: counter: " << counter << " " << destPath.c_str();
+                continue;
+            }
+            
+            fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
+            fs::path destPath;
+            if ( dnInfo.getSaveFolder().empty() )
+            {
+                destPath = fs::path(downloadFolder().string() + "/" + dnInfo.getFileName()).make_preferred();
+            }
+            else
+            {
+                destPath = fs::path(downloadFolder().string() + "/" + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
+            }
+            qDebug() << "onDownloadCompleted: counter: " << counter;
+            qDebug() << "onDownloadCompleted: counter: " << srcPath.c_str();
+            qDebug() << "onDownloadCompleted: counter: " << destPath.c_str();
+            qDebug() << "onDownloadCompleted: counter: ------------ ";
 
-                std::error_code ec;
-                if ( ! fs::exists( destPath.parent_path(), ec ) )
-                {
-                    fs::create_directories( destPath.parent_path(), ec );
-                }
-
+            std::error_code ec;
+            if ( ! fs::exists( destPath.parent_path(), ec ) )
+            {
+                fs::create_directories( destPath.parent_path(), ec );
+            }
+            
+            if ( ec )
+            {
+                qWarning() << "onDownloadCompleted: Cannot create destination subfolder: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                
+                QString message;
+                message.append("Cannot create destination subfolder: ");
+                message.append(destPath.filename().string().c_str());
+                message.append(" (");
+                message.append(ec.message().c_str());
+                message.append(")");
+                emit downloadError(message);
+            }
+            
+            if ( dnInfo.isForViewing() )
+            {
+                fs::rename( srcPath, destPath, ec );
+                
                 if ( ec )
                 {
-                    qWarning() << "onDownloadCompleted: Cannot create destination subfolder: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
-
+                    qWarning() << "onDownloadCompleted: Cannot save viewing file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                    
                     QString message;
-                    message.append("Cannot create destination subfolder: ");
+                    message.append("Cannot save viewing file: ");
                     message.append(destPath.filename().string().c_str());
                     message.append(" (");
                     message.append(ec.message().c_str());
@@ -333,129 +364,113 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
                     emit downloadError(message);
                 }
                 
-                if ( dnInfo.isForViewing() )
+                dnInfo.setCompleted(true);
+                
+                if ( dnInfo.getNotification() )
                 {
-                    fs::rename( srcPath, destPath, ec );
-                    
-                    if ( ec )
-                    {
-                        qWarning() << "onDownloadCompleted: Cannot save viewing file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
-
-                        QString message;
-                        message.append("Cannot save viewing file: ");
-                        message.append(destPath.filename().string().c_str());
-                        message.append(" (");
-                        message.append(ec.message().c_str());
-                        message.append(")");
-                        emit downloadError(message);
-                    }
-
-                    dnInfo.setCompleted(true);
-
-                    if ( dnInfo.getNotification() )
-                    {
-                        (*dnInfo.getNotification())( dnInfo );
-                    }
-
-                    return;
+                    (*dnInfo.getNotification())( dnInfo );
                 }
-
-                int index = 0;
-                bool isFolder = !dnInfo.getSaveFolder().empty();
-                bool isExists = QFile(destPath.string().c_str()).exists();
-                auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
-                const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
-                while( isExists )
+                
+                return;
+            }
+            
+            int index = 1;
+            bool isFolder = !dnInfo.getSaveFolder().empty();
+            bool isExists = QFile(destPath.string().c_str()).exists();
+            auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
+            const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
+            while( isExists )
+            {
+                index++;
+                if (isFolder)
                 {
-                    index++;
-                    if (isFolder)
+                    auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
+                    destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
+                    isExists = QDir(destPath.string().c_str()).exists();
+                    if (!isExists)
                     {
-                        auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
-                        destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
-                        isExists = QDir(destPath.string().c_str()).exists();
-                        if (!isExists)
-                        {
-                            saveFolderPath.pop_front();
-                            saveFolderPath.push_front(newFolderName.string().c_str());
-                            auto rawPath = saveFolderPath.join("/");
-                            dnInfo.setSaveFolder("/" + rawPath.toStdString());
-                            const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
-                            QDir().mkpath(finalDownloadFolder.c_str());
-                            destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
-                        }
+                        saveFolderPath.pop_front();
+                        saveFolderPath.push_front(newFolderName.string().c_str());
+                        auto rawPath = saveFolderPath.join("/");
+                        dnInfo.setSaveFolder("/" + rawPath.toStdString());
+                        const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
+                        QDir().mkpath(finalDownloadFolder.c_str());
+                        destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
                     }
-                    else
-                    {
-                        auto newName = fs::path(dnInfo.getFileName()).stem().string()
-                                       + " (" + std::to_string(index) + ")"
-                                       + fs::path(dnInfo.getFileName()).extension().string();
-
-                        destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
-                        isExists = QFile(destPath.string().c_str()).exists();
-                        if (!isExists)
-                        {
-                            dnInfo.setFileName(newName);
-                        }
-                    }
-                }
-
-                dnInfo.getFileName() = destPath.filename().string();
-
-                if ( --counter == 0 )
-                {
-                    qDebug() <<  "onDownloadCompleted: rename(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
-                    fs::rename( srcPath, destPath, ec );
                 }
                 else
                 {
-                    qDebug() << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
-                    fs::copy( srcPath, destPath, ec );
-                }
-                
-                if ( ec )
-                {
-                    qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
-
-                    QString message;
-                    message.append("Cannot save file: ");
-                    message.append(destPath.filename().string().c_str());
-                    message.append(" (");
-                    message.append(ec.message().c_str());
-                    message.append(")");
-                    emit downloadError(message);
-                }
-
-                dnInfo.setCompleted(true);
-
-                // EasyDownload
-                if ( dnInfo.easyDownloadId() >= 0 )
-                {
-                    for( auto& easyDnInfo: model.easyDownloads() )
+                    auto newName = fs::path(dnInfo.getFileName()).stem().string()
+                    + " (" + std::to_string(index) + ")"
+                    + fs::path(dnInfo.getFileName()).extension().string();
+                    
+                    destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
+                    isExists = QFile(destPath.string().c_str()).exists();
+                    if (!isExists)
                     {
-                        if ( easyDnInfo.m_uniqueId == dnInfo.easyDownloadId() )
+                        dnInfo.setFileName(newName);
+                    }
+                }
+            }
+            
+            dnInfo.getFileName() = destPath.filename().string();
+            
+            if ( --counter == 0 )
+            {
+                qDebug() <<  "onDownloadCompleted: rename(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                fs::rename( srcPath, destPath, ec );
+            }
+            else
+            {
+                qDebug() << "onDownloadCompleted: copy(): " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                fs::copy( srcPath, destPath, ec );
+            }
+            
+            if ( ec )
+            {
+                qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                
+                QString message;
+                message.append("Cannot save file: ");
+                message.append(destPath.filename().string().c_str());
+                message.append(" (");
+                message.append(ec.message().c_str());
+                message.append(")");
+                emit downloadError(message);
+            }
+            
+            dnInfo.setCompleted(true);
+            
+            // EasyDownload
+            if ( dnInfo.easyDownloadId() >= 0 )
+            {
+                for( auto& easyDnInfo: model.easyDownloads() )
+                {
+                    if ( easyDnInfo.m_uniqueId == dnInfo.easyDownloadId() )
+                    {
+                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
                         {
-                            for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                            if ( childIt->m_hash == dnInfo.getHash() )
                             {
-                                if ( childIt->m_hash == dnInfo.getHash() )
-                                {
-                                    childIt->m_isCompleted = true;
-                                    break;
-                                }
+                                childIt->m_isCompleted = true;
+                                break;
                             }
-                            bool isCompleted = true;
-                            for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
-                            {
-                                if ( !childIt->m_isCompleted )
-                                {
-                                    isCompleted = false;
-                                }
-                            }
-                            easyDnInfo.m_isCompleted = isCompleted;
                         }
+                        bool isCompleted = true;
+                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                        {
+                            if ( !childIt->m_isCompleted )
+                            {
+                                isCompleted = false;
+                            }
+                        }
+                        easyDnInfo.m_isCompleted = isCompleted;
                     }
                 }
             }
         }
+        
+        saveSettings();
 
     }).detach();
 }

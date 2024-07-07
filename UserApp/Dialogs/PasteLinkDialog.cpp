@@ -94,7 +94,7 @@ void PasteLinkDialog::accept()
     {
         QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=m_dataInfo]
         {
-            mainwin->startEasyDownload( dataInfo );
+            mainwin->addEasyDownload( dataInfo );
         });
         QDialog::accept();
     }

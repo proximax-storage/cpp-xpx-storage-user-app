@@ -88,22 +88,21 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                         }
                     }
 
-                    return QString::fromStdString( mp_model->easyDownloads()[index.row()].m_name );
+                    return QString::fromStdString( mp_model->easyDownloads()[index.row()].m_itemName );
                 }
                 case 1:
                 {
                     const auto& row = mp_model->easyDownloads()[index.row()];
                     if ( row.m_progress == 0 && !row.m_isCompleted )
                     {
-                        std::string sizeInMb = dataSizeToString(row.m_size);
                         return "(preparing...)";
                     }
                     else if ( row.m_progress == 1000 || row.m_isCompleted )
                     {
-                        std::string sizeInMb = std::to_string( row.m_size/double(1000000));
-                        return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb" );
+                        std::string sizeInMb = dataSizeToString(row.m_calcTotalSize);
+                        return QString::fromStdString( sizeInMb );
                     }
-                    std::string sizeInMb = std::to_string( row.m_size/double(1000000));
+                    std::string sizeInMb = dataSizeToString(row.m_calcTotalSize);
                     return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb (" +std::to_string( row.m_progress/10) + "%)" );
                 }
             }

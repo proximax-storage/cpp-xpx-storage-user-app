@@ -180,7 +180,25 @@ std::string dataSizeToString(uint64_t bytes)
         b /= 1024.0;
     }
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(1) << b << " " << units[i] ;
+    if ( bytes < 1000)
+    {
+        oss << std::fixed << bytes << " " << units[i] ;
+    }
+    else
+    {
+        if ( b < 10.0 )
+        {
+            oss << std::fixed << std::setprecision(3) << b << " " << units[i] ;
+        }
+        else if ( b < 100.0 )
+        {
+            oss << std::fixed << std::setprecision(2) << b << " " << units[i] ;
+        }
+        else
+        {
+            oss << std::fixed << std::setprecision(1) << b << " " << units[i] ;
+        }
+    }
     return oss.str();
 }
 

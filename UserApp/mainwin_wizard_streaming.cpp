@@ -288,9 +288,12 @@ void MainWin::wizardUpdateStreamAnnouncementTable()
             ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 1, item );
         }
         {
-            auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
-            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
-            ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 2, item );
+            if ( m_model->findDrive(streamInfo.m_driveKey) != nullptr )
+            {
+                auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
+                item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
+                ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 2, item );
+            }
         }
     }
 }

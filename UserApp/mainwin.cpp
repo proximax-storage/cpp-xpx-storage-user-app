@@ -89,6 +89,7 @@ void MainWin::displayError( const std::string& text, const std::string& informat
 void MainWin::init()
 {
     gSkipDhtPktLogs = true;
+    gKademliaLogs   = true;
     
     if ( ! m_model->loadSettings() )
     {
@@ -1243,6 +1244,11 @@ void MainWin::onDownloadBtn()
 
 void MainWin::setupEasyDownloads()
 {
+    connect( ui->m_openDnFolderBtn, &QPushButton::released, this, [this]
+    {
+        QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( m_settings->downloadFolder().string() )));
+    });
+
     m_easyDownloadTableModel = new EasyDownloadTableModel(m_model, this);
     ui->m_easyDownloadTable->setModel( m_easyDownloadTableModel );
 
@@ -1275,32 +1281,24 @@ void MainWin::setupEasyDownloads()
     
     connect( ui->m_deleteDownloadedDataBtn, &QPushButton::released, this, [this]
     {
-//        auto rows = ui->m_downloadedDataTable->selectionModel()->selectedRows();
-//        if ( rows.empty() )
-//        {
-//            return;
-//        }
-//
-//        int rowIndex = rows.begin()->row();
-//        auto& downloads = m_model->downloads();
-//
-//        if ( rowIndex >= 0 && rowIndex < downloads.size() )
-//        {
-//            DownloadInfo dnInfo = downloads[rowIndex];
-//
-//            QMessageBox msgBox;
-//            const QString message = QString::fromStdString("Are you sure you want to permanently delete '" + dnInfo.getFileName() + "'?");
-//            msgBox.setText(message);
-//            msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
-//            auto reply = msgBox.exec();
-//
-//            if ( reply == QMessageBox::Ok )
-//            {
-//                m_model->removeFromDownloads( rowIndex );
-//                addNotification(message);
-//                m_model->saveSettings();
-//            }
-//        }
+        auto rows = ui->m_easyDownloadTable->selectionModel()->selectedRows();
+        
+        if ( rows.empty() )
+        {
+            return;
+        }
+
+        int rowIndex = rows.begin()->row();
+        auto& downloads = m_model->easyDownloads();
+
+        if ( rowIndex >= 0 && rowIndex < downloads.size() )
+        {
+            m_easyDownloadTableModel->beginResetModel();
+            downloads.erase( std::next( downloads.begin(), rowIndex ));
+            m_easyDownloadTableModel->endResetModel();
+            
+            m_model->saveSettings();
+        }
     }, Qt::QueuedConnection);
 
 
@@ -3167,6 +3165,8 @@ void MainWin::networkDataHandler(const QString networkName)
     {
         unlockDrive();
     }
+    
+    restartInterruptedEasyDownloads();
 }
 
 void MainWin::onCloseChannel()
@@ -3598,7 +3598,7 @@ std::string str_toupper(std::string s)
     return s;
 }
 
-void MainWin::startEasyDownload( const DataInfo& dataInfo )
+void MainWin::addEasyDownload( const DataInfo& dataInfo )
 {
     // 'max_metadata_size' should be extended (now it is 30 MB)
     
@@ -3610,20 +3610,57 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
     downloadIdRef++;
     uint64_t downloadId = downloadIdRef;
     auto it = m_model->easyDownloads().insert( m_model->easyDownloads().begin(), EasyDownloadInfo( downloadIdRef, dataInfo) );
-    m_easyDownloadTableModel->endResetModel();
 
-    std::string driveKeyStr = str_toupper(sirius::drive::toString( dataInfo.m_driveKey ));
+    {
+        // check duplicated destination path
+        //
+        auto itemName = it->m_itemName;
+        for( int index=1;;)
+        {
+            auto downloadIt2 = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&] (const auto& downloadInfo)
+            {
+                qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId << " " << downloadInfo.m_itemName;
+                return downloadInfo.m_uniqueId != it->m_uniqueId && downloadInfo.m_itemName == itemName;
+            });
+            if ( downloadIt2 == m_model->easyDownloads().end() )
+            {
+                it->m_itemName = itemName;
+                break;
+            }
+            else
+            {
+                itemName = it->m_itemName + "(" + std::to_string(++index) + ")";
+            }
+        }
+    }
+    m_easyDownloadTableModel->endResetModel();
     
+    // save easy-download-info
+    m_model->saveSettings();
+    
+    startEasyDownload( *it );
+}
+
+void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
+{
+    std::string driveKeyStr = str_toupper(sirius::drive::toString( easyDownloadInfo.m_driveKey ));
+    qDebug() << "startEasyDownload: " << driveKeyStr.c_str();
+
+
     //
     // create channel
     //
     connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
 
-    const auto channelName = "easy-download: " + dataInfo.savingName();
-    
+    const auto channelName = "easy-download: " + easyDownloadInfo.m_itemName;
+    qDebug() << "startEasyDownload: channelName: " << channelName.c_str();
+
     // this callback receives channel key (tx)
     //
-    auto callback = [client=m_onChainClient, downloadId, dataInfo, channelName, driveKeyStr = driveKeyStr,this] (std::string channelKey)
+    auto callback = [client=m_onChainClient, 
+                     downloadId  = easyDownloadInfo.m_uniqueId,
+                     driveKeyStr = driveKeyStr,
+                     channelName,  this] (std::string channelKey)
     {
         channelKey = QString::fromStdString(channelKey).toUpper().toStdString();
         qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << channelKey.c_str();
@@ -3632,7 +3669,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
         // Save channelKey into EasyDownloadInfo
         //
         auto it = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&downloadId](auto& info) {
-            return info.m_uniqueId = downloadId;
+            return info.m_uniqueId == downloadId;
         });
         assert( it != m_model->easyDownloads().end() );
         it->m_channelKey = channelKey;
@@ -3640,7 +3677,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
         //
         // Send tx and wait confirmation of channel creation
         //
-        m_model->addChannelFsTreeHandler( [key=channelKey,downloadId,dataInfo,this] ( bool success, const std::string& channelKey, const std::string& driveKey ) -> bool
+        m_model->addChannelFsTreeHandler( [key=channelKey,downloadId,this] ( bool success, const std::string& channelKey, const std::string& driveKey ) -> bool
         {
             qDebug() << "startEasyDownload(callback): downloadId = " << downloadId;
 
@@ -3674,7 +3711,7 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
             
             if ( channel != nullptr )
             {
-                continueEasyDownload( downloadId, dataInfo, channelKey );
+                continueEasyDownload( downloadId, channelKey );
             }
             else
             {
@@ -3689,10 +3726,10 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
         emit client->getDialogSignalsEmitter()->addDownloadChannel( channelName, channelKey, driveKeyStr, {});
     };
     
-    uint64_t prepaidSizeMB = 2 * (dataInfo.m_totalSize + (1024*1024-1)) / (1024*1024);
+    uint64_t prepaidSizeMB = 2 * (easyDownloadInfo.m_totalSize + (1024*1024-1)) / (1024*1024);
 
     m_onChainClient->addDownloadChannel( channelName,
-                                        {}, dataInfo.m_driveKey,
+                                        {}, easyDownloadInfo.m_driveKey,
                                         prepaidSizeMB,
                                         0,
                                         callback); // feedback is unused for now
@@ -3702,8 +3739,11 @@ void MainWin::startEasyDownload( const DataInfo& dataInfo )
 //    m_modalDialog->exec();
 }
 
-void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInfo, const std::string& channelKey )
+void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& channelKey )
 {
+    //
+    // Get FsTree
+    //
     auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
     {
         qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
@@ -3719,22 +3759,25 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
     auto* channel = m_model->findChannel(channelKey);
     assert( channel != nullptr );
 
-    channel->getFsTree().dbgPrint();
+    //channel->getFsTree().dbgPrint();
     downloadIt->init( channel->getFsTree() );
+    
+    // update saved easy-download-list
+    m_model->saveSettings();
 
     //
-    // Check info
+    // Compare info with FsTree
     //
     if ( downloadIt->m_downloadingFolder == nullptr && downloadIt->m_downloadingFile == nullptr )
     {
-        displayError( "Invalid data link: item not found: " + dataInfo.m_itemName , dataInfo.m_path );
+        displayError( "Invalid data link: item not found: " + downloadIt->m_itemName , downloadIt->m_itemPath );
         return;
     }
     
     //
     // Check item size
     //
-    if ( dataInfo.m_totalSize < downloadIt->m_size )
+    if ( downloadIt->m_totalSize < downloadIt->m_calcTotalSize )
     {
         displayError( "Invalid data link: data size is more than stated in link" );
         return;
@@ -3756,7 +3799,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
         sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
         qDebug() << "replicatorList2: " << replicatorList.size();
 
-        auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
+        auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&] (const auto& downloadInfo)
         {
             qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
             return downloadInfo.m_uniqueId == downloadId;
@@ -3764,18 +3807,33 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
         
         assert( downloadIt != m_model->easyDownloads().end() );
         
+        // add childs for downloading
+        //
         for( auto childIt = downloadIt->m_childs.begin(); childIt != downloadIt->m_childs.end(); childIt++ )
         {
+            if ( childIt->m_isCompleted )
+            {
+                continue;
+            }
+            
             qDebug() << "childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder().string();
-            QDir().mkpath(QString::fromStdString( m_model->getDownloadFolder().string() + childIt->m_path ));
+            auto outFolder = m_model->getDownloadFolder().make_preferred() / fs::path( childIt->m_path ).make_preferred();
+            QDir().mkpath(QString::fromStdString( outFolder.string() ));
 
             childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash );
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash( childIt->m_hash );
             downloadInfo.setDownloadChannelKey( channel->getKey() );
-            downloadInfo.setFileName( childIt->m_fileName );
-            downloadInfo.setSaveFolder( childIt->m_path );
+            if ( downloadIt->m_isFolder )
+            {
+                downloadInfo.setSaveFolder( (fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred().string() );
+                downloadInfo.setFileName( childIt->m_fileName );
+            }
+            else
+            {
+                downloadInfo.setFileName( downloadIt->m_itemName );
+            }
             downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string() );
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
@@ -3785,8 +3843,24 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const DataInfo& dataInf
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
         }
+        
         m_model->saveSettings();
     });
+}
+
+void MainWin::restartInterruptedEasyDownloads()
+{
+    auto& downloads = m_model->easyDownloads();
+    
+    for( auto& downloadInfo: downloads )
+    {
+        if ( downloadInfo.m_isCompleted )
+        {
+            continue;
+        }
+        
+        startEasyDownload( downloadInfo );
+    }
 }
 
 

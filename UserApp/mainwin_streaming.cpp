@@ -351,7 +351,7 @@ void MainWin::initStreaming()
     {
         fs::path homePath = QDir::homePath().toStdString();
         m_settings->accountConfig().m_streamFolder = ( homePath / "sirius-movies" ).string();
-        m_settings->save();
+        m_settings->saveSettings();
     }
     
     ui->m_streamFolder->setReadOnly(true);
@@ -367,7 +367,7 @@ void MainWin::initStreaming()
         ui->m_streamFolder->setText(path.trimmed());
 
         m_settings->accountConfig().m_streamFolder = ui->m_streamFolder->text().toStdString();
-        m_settings->save();
+        m_settings->saveSettings();
     });
 }
 

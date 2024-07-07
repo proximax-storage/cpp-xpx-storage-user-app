@@ -290,7 +290,7 @@ void SettingsDialog::accept()
     mpSettings->m_accounts                = mpSettingsDraft->m_accounts;
     mpSettings->m_isDriveStructureAsTree  = mpSettingsDraft->m_isDriveStructureAsTree;
     mpSettings->setCurrentAccountIndex( mpSettingsDraft->m_currentAccountIndex );
-    mpSettings->save();
+    mpSettings->saveSettings();
 
     qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( mpSettings->accountConfig().m_accountName );
     qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->accountConfig().m_publicKeyStr );

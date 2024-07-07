@@ -61,7 +61,7 @@ bool Model::loadSettings()
 
 void Model::saveSettings()
 {
-    return m_settings->save();
+    return m_settings->saveSettings();
 }
 
 fs::path Model::getDownloadFolder()
@@ -311,7 +311,7 @@ void Model::onMyOwnChannelsLoaded(const std::vector<xpx_chain_sdk::download_chan
 
     // remove closed channels from saved
     m_settings->accountConfig().m_dnChannels = validChannels;
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_channels_page::DownloadChannelsPage>& remoteChannelsPages) {
@@ -343,7 +343,7 @@ void Model::onSponsoredChannelsLoaded(const std::vector<xpx_chain_sdk::download_
         }
     }
 
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::DrivesPage>& remoteDrivesPages )
@@ -468,7 +468,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
         }
     }
 
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 std::map<std::string, Drive>& Model::getDrives()
@@ -536,7 +536,7 @@ void Model::removeDrive( const std::string& driveKey )
     auto& drives = m_settings->accountConfig().m_drives;
     drives.erase(driveKeyUpperCase);
 
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 void Model::removeChannelsByDriveKey(const std::string &driveKey) {
@@ -603,7 +603,7 @@ void Model::removeChannel( const std::string& channelKey )
     auto& channels = m_settings->accountConfig().m_dnChannels;
     channels.erase(channelKeyUpperCase);
 
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 void Model::applyForChannels(const std::string &driveKey, std::function<void(DownloadChannel &)> callback) {
@@ -744,14 +744,14 @@ void Model::addStreamRef( const StreamInfo& streamInfo )
         return s1.m_secsSinceEpoch > s2.m_secsSinceEpoch;
     });
     
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 void Model::deleteStreamRef( int index )
 {
     auto& streams = m_settings->accountConfig().m_streamRefs;
     streams.erase( streams.begin() + index );
-    m_settings->save();
+    m_settings->saveSettings();
 }
 
 const std::vector<StreamInfo>& Model::streamRefs() const

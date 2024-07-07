@@ -47,4 +47,7 @@ enum ErrorType
     Storage
 };
 
+inline std::filesystem::path make_path( const std::string& str ) { return std::filesystem::path(str).make_preferred(); };
+
+
 #endif //UTILS_H

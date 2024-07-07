@@ -41,7 +41,7 @@ class Settings : public QObject
     public:
         void initForTests();
         bool load( const std::string& pwd );
-        void save();
+        void saveSettings();
         bool loaded() const;
         std::vector<std::string> accountList();
         Account& accountConfig();

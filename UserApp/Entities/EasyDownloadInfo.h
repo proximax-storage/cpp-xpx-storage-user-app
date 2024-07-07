@@ -6,6 +6,8 @@
 #include "DataInfo.h"
 #include "Common.h"
 
+#include <cereal/types/variant.hpp>
+
 #include <QDebug>
 
 
@@ -47,29 +49,38 @@ public:
 struct EasyDownloadInfo
 {
     template<class Archive>
-    void serialize( Archive &ar )
+    void save( Archive &ar ) const
     {
-        ar( m_fsTree, m_itemPath, m_isCompleted );
+        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_childs );
+    }
+
+    template<class Archive>
+    void load( Archive &ar )
+    {
+        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_childs );
+        init();
     }
 
     uint64_t                m_uniqueId;
+    uint64_t                m_totalSize;
     sirius::drive::FsTree   m_fsTree;
     std::array<uint8_t,32>  m_driveKey;
-    std::string             m_name;     // item name
+    std::string             m_itemName;     // item name
     std::string             m_itemPath; // path into fsTree
-    size_t                  m_size;     // total size
+    size_t                  m_calcTotalSize;     // total size
     std::string             m_channelKey;
     bool                    m_isCompleted = false;
 
-    
     bool                     m_isFolder = false;
     sirius::drive::Folder*   m_downloadingFolder = nullptr;
     sirius::drive::File*     m_downloadingFile = nullptr;
 
-    bool    m_channelIsOutdated = false;
+    //bool    m_channelIsOutdated = false;
     int     m_progress = 0; // m_progress==1001 means completed
     
     std::vector<EasyDownloadChildInfo> m_childs;
+
+    EasyDownloadInfo() {}
 
 //    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
 //        : m_uniqueId(uniqueId)
@@ -82,11 +93,12 @@ struct EasyDownloadInfo
     
     EasyDownloadInfo( uint64_t uniqueId, const DataInfo& dataInfo )
         : m_uniqueId(uniqueId)
+        , m_totalSize( dataInfo.m_totalSize)
         , m_driveKey( dataInfo.m_driveKey )
         , m_itemPath( dataInfo.m_path )
-        , m_size( dataInfo.m_totalSize )
+        , m_calcTotalSize( dataInfo.m_totalSize )
     {
-        m_name = dataInfo.savingName();
+        m_itemName = dataInfo.savingName();
         if ( m_itemPath.size() > 1 && (m_itemPath[0] == '/' || m_itemPath[0] == '\\') )
         {
             m_itemPath = dataInfo.m_path.substr(1);
@@ -102,7 +114,7 @@ struct EasyDownloadInfo
     // It will be used after deserialization
     void init()
     {
-        m_size = 0;
+        m_calcTotalSize = 0;
         if ( m_itemPath == "" || m_itemPath == "/" || m_itemPath == "\\" )
         {
             m_isFolder = true;
@@ -124,13 +136,13 @@ struct EasyDownloadInfo
                 m_downloadingFolder = &sirius::drive::getFolder(*child);
 
                 std::filesystem::path path = m_itemPath;
-                m_downloadingFolder->iterate( path, [this] ( const std::filesystem::path& path, const auto& file) -> bool
+                m_downloadingFolder->iterate( path, [&,this] ( const std::filesystem::path& filePath, const auto& file) -> bool
                 {
                     m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
-                                                                    path.string(),
+                                                                    std::filesystem::relative( filePath.string(), path ).string(),
                                                                     file.name(),
                                                                     file.size() } );
-                    m_size += file.size();
+                    m_calcTotalSize += file.size();
                     return false;
                 });
             }
@@ -143,7 +155,7 @@ struct EasyDownloadInfo
                                                                 "",
                                                                 m_downloadingFile->name(),
                                                                 m_downloadingFile->size() } );
-                m_size += m_downloadingFile->size();
+                m_calcTotalSize += m_downloadingFile->size();
             }
         }
     }

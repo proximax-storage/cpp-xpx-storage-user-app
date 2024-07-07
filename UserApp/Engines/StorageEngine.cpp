@@ -237,7 +237,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
                                 ),
                        channelId,
                        mp_model->getDownloadFolder().make_preferred(),
-                                       {},
+                       {},
                        {},
                        replicators );
     return handle;
