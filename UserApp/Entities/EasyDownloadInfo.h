@@ -115,10 +115,12 @@ struct EasyDownloadInfo
     void init()
     {
         m_calcTotalSize = 0;
+
         if ( m_itemPath == "" || m_itemPath == "/" || m_itemPath == "\\" )
         {
             m_isFolder = true;
             m_downloadingFolder = &m_fsTree;
+            addChilds();
         }
         else
         {
@@ -134,17 +136,7 @@ struct EasyDownloadInfo
             {
                 m_isFolder = true;
                 m_downloadingFolder = &sirius::drive::getFolder(*child);
-
-                std::filesystem::path path = m_itemPath;
-                m_downloadingFolder->iterate( path, [&,this] ( const std::filesystem::path& filePath, const auto& file) -> bool
-                {
-                    m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
-                                                                    std::filesystem::relative( filePath.string(), path ).string(),
-                                                                    file.name(),
-                                                                    file.size() } );
-                    m_calcTotalSize += file.size();
-                    return false;
-                });
+                addChilds();
             }
             else
             {
@@ -158,6 +150,20 @@ struct EasyDownloadInfo
                 m_calcTotalSize += m_downloadingFile->size();
             }
         }
+    }
+    
+    void addChilds()
+    {
+        std::filesystem::path path = m_itemPath;
+        m_downloadingFolder->iterate( path, [&,this] ( const std::filesystem::path& filePath, const auto& file) -> bool
+        {
+            m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
+                                                            std::filesystem::relative( filePath.string(), path ).string(),
+                                                            file.name(),
+                                                            file.size() } );
+            m_calcTotalSize += file.size();
+            return false;
+        });
     }
 
 };
