@@ -3820,21 +3820,38 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
             auto outFolder = m_model->getDownloadFolder().make_preferred() / fs::path( childIt->m_path ).make_preferred();
             QDir().mkpath(QString::fromStdString( outFolder.string() ));
 
-            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash );
+            std::filesystem::path outputFolder = m_model->getDownloadFolder();
+            if ( downloadIt->m_isFolder )
+            {
+                outputFolder = (m_model->getDownloadFolder() / fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred();
+                std::error_code ec;
+                if ( fs::exists( outputFolder, ec ) )
+                {
+                    fs::create_directories( outputFolder, ec );
+                }
+            }
+            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash, outputFolder );
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash( childIt->m_hash );
             downloadInfo.setDownloadChannelKey( channel->getKey() );
             if ( downloadIt->m_isFolder )
             {
-                downloadInfo.setSaveFolder( (fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred().string() );
+//                if ( childIt->m_path == "." )
+//                {
+//                    downloadInfo.setSaveFolder( fs::path(downloadIt->m_itemName).make_preferred().string() );
+//                }
+//                else
+//                {
+                    downloadInfo.setSaveFolder( (fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred().string() );
+//                }
                 downloadInfo.setFileName( childIt->m_fileName );
             }
             else
             {
                 downloadInfo.setFileName( downloadIt->m_itemName );
             }
-            downloadInfo.setDownloadFolder( m_model->getDownloadFolder().string() );
+            downloadInfo.setDownloadFolder( outputFolder.string() );
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);

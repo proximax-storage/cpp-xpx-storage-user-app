@@ -374,41 +374,44 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
                 return;
             }
             
-            int index = 1;
-            bool isFolder = !dnInfo.getSaveFolder().empty();
-            bool isExists = QFile(destPath.string().c_str()).exists();
-            auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
-            const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
-            while( isExists )
+            if ( dnInfo.easyDownloadId() == -1 )
             {
-                index++;
-                if (isFolder)
+                int index = 1;
+                bool isFolder = !dnInfo.getSaveFolder().empty();
+                bool isExists = QFile(destPath.string().c_str()).exists();
+                auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
+                const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
+                while( isExists )
                 {
-                    auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
-                    destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
-                    isExists = QDir(destPath.string().c_str()).exists();
-                    if (!isExists)
+                    index++;
+                    if (isFolder)
                     {
-                        saveFolderPath.pop_front();
-                        saveFolderPath.push_front(newFolderName.string().c_str());
-                        auto rawPath = saveFolderPath.join("/");
-                        dnInfo.setSaveFolder("/" + rawPath.toStdString());
-                        const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
-                        QDir().mkpath(finalDownloadFolder.c_str());
-                        destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
+                        auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
+                        destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
+                        isExists = QDir(destPath.string().c_str()).exists();
+                        if (!isExists)
+                        {
+                            saveFolderPath.pop_front();
+                            saveFolderPath.push_front(newFolderName.string().c_str());
+                            auto rawPath = saveFolderPath.join("/");
+                            dnInfo.setSaveFolder("/" + rawPath.toStdString());
+                            const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
+                            QDir().mkpath(finalDownloadFolder.c_str());
+                            destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
+                        }
                     }
-                }
-                else
-                {
-                    auto newName = fs::path(dnInfo.getFileName()).stem().string()
-                    + " (" + std::to_string(index) + ")"
-                    + fs::path(dnInfo.getFileName()).extension().string();
-                    
-                    destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
-                    isExists = QFile(destPath.string().c_str()).exists();
-                    if (!isExists)
+                    else
                     {
-                        dnInfo.setFileName(newName);
+                        auto newName = fs::path(dnInfo.getFileName()).stem().string()
+                        + " (" + std::to_string(index) + ")"
+                        + fs::path(dnInfo.getFileName()).extension().string();
+                        
+                        destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
+                        isExists = QFile(destPath.string().c_str()).exists();
+                        if (!isExists)
+                        {
+                            dnInfo.setFileName(newName);
+                        }
                     }
                 }
             }

@@ -163,7 +163,8 @@ class Model : public QObject
         uint64_t lastModificationSize() const;
 
         sirius::drive::lt_handle downloadFile( const std::string&            channelId,
-                                               const std::array<uint8_t,32>& fileHash );
+                                               const std::array<uint8_t,32>& fileHash,
+                                               std::filesystem::path         outputFolder = {});
 
         void                     removeTorrentSync( sirius::drive::InfoHash infoHash );
 

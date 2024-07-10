@@ -259,7 +259,13 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
     {
         for( auto& info: downloads )
         {
-            if ( info.m_isCompleted || info.m_childs.empty() )
+            if ( info.m_isCompleted )
+            {
+                info.m_progress = 1000;
+                continue;
+            }
+
+            if ( info.m_childs.empty() )
             {
                 continue;
             }
@@ -271,12 +277,12 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
             for( const auto& dnInfo: info.m_childs )
             {
                 bool isCompleted = false;
+
                 if ( dnInfo.m_isCompleted )
                 {
-                    isCompleted = true;
-                    info.m_progress = 1000;
                     continue;
                 }
+
                 if ( ! dnInfo.m_ltHandle.is_valid() )
                 {
                     if ( info.m_progress == 0 )
