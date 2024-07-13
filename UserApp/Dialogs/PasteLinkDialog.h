@@ -39,6 +39,7 @@ private:
 private:
     void setLayout();
     void setFontAndSize();
+    void pasteClipboard( bool onStart );
 
 public:
     explicit PasteLinkDialog( MainWin* parent = nullptr, Model* model = nullptr);

@@ -19,6 +19,7 @@
 #include "Utils.h"
 #include "Account.h"
 
+class Model;
 
 class Settings : public QObject
 {
@@ -61,4 +62,28 @@ class Settings : public QObject
         int                     m_currentAccountIndex = -1;
         bool                    m_loaded = false;
         fs::path                m_configPath;
+    
+    public:
+        // It is used for proper removing downloaded torrents
+        //
+        struct DownloadTorrentItem
+        {
+            //std::array<uint8_t,32>   m_hash; // key
+            std::filesystem::path    m_path; // last saved (or moved) path
+            sirius::drive::lt_handle m_ltHandle;
+            int                      m_useCounter = 0;
+        };
+        std::map<std::array<uint8_t,32>,DownloadTorrentItem> m_downloadTorrentMap;
+    
+    sirius::drive::lt_handle addDownloadTorrent(  Model&                          model,
+                                                  const std::string&              channelIdStr,
+                                                  const std::array<uint8_t, 32>&  fileHash,
+                                                  std::filesystem::path           outputFolder );
+    
+        void onTorrentDownloaded( Model&                          model,
+                                  const std::array<uint8_t, 32>&  fileHash,
+                                  std::filesystem::path           destinationFilename );
+    
+        void onDownloadCanceled( Model&                          model,
+                                 const std::array<uint8_t, 32>&  fileHash );
 };

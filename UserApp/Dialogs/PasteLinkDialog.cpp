@@ -43,49 +43,60 @@ PasteLinkDialog::PasteLinkDialog( MainWin* parent, Model* model )
     m_layout->addWidget(buttonBox, 1, 1, Qt::AlignRight);
 
     connect(m_pasteLinkButton, &QPushButton::clicked, this, [&](){
-        QClipboard* clipboard = QApplication::clipboard();
-        if (!clipboard) {
-            qWarning() << LOG_SOURCE << "bad clipboard";
-            return;
-        }
-        try
+        pasteClipboard( false );
+    });
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &PasteLinkDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &PasteLinkDialog::reject);
+    
+    QTimer::singleShot( 0, this, [this] { pasteClipboard(true); } );
+}
+
+PasteLinkDialog::~PasteLinkDialog()
+{
+    
+}
+
+void PasteLinkDialog::pasteClipboard( bool onStart )
+{
+    QClipboard* clipboard = QApplication::clipboard();
+    if (!clipboard) {
+        qWarning() << LOG_SOURCE << "bad clipboard";
+        return;
+    }
+    try
+    {
+        m_linkEdit->setStyleSheet("");
+        m_linkEdit->setText(clipboard->text());
+
+        m_dataInfo.parseLink( clipboard->text().toStdString() );
+        m_dataInfoIsSet = true;
+
+        setLayout();
+        m_pathLabel->setText(QString::fromStdString(m_model->getDownloadFolder().string() + m_dataInfo.m_path));
+
+        m_dataSizeLabel->setText(QString::fromStdString(dataSizeToString(m_dataInfo.m_totalSize)));
+        if(!m_dataInfo.m_itemName.empty())
         {
-            m_linkEdit->setStyleSheet("");
-            m_linkEdit->setText(clipboard->text());
-
-            m_dataInfo.parseLink( clipboard->text().toStdString() );
-            m_dataInfoIsSet = true;
-
-            setLayout();
-            m_pathLabel->setText(QString::fromStdString(m_model->getDownloadFolder().string() + m_dataInfo.m_path));
-
-            m_dataSizeLabel->setText(QString::fromStdString(dataSizeToString(m_dataInfo.m_totalSize)));
-            if(!m_dataInfo.m_itemName.empty())
-            {
-                m_folderNameLabel->setText(QString::fromStdString(m_dataInfo.m_itemName));
-                m_layout->addWidget(folderName, 1, 0, Qt::AlignRight);
-                m_layout->addWidget(m_folderNameLabel, 1, 1);
-            }
+            m_folderNameLabel->setText(QString::fromStdString(m_dataInfo.m_itemName));
+            m_layout->addWidget(folderName, 1, 0, Qt::AlignRight);
+            m_layout->addWidget(m_folderNameLabel, 1, 1);
         }
-        catch(...)
+    }
+    catch(...)
+    {
+        if ( !onStart )
         {
             QMessageBox msgBox(QMessageBox::Warning
-                              , "Warning"
-                              , m_linkEdit->toPlainText() + ": incorrect link!"
-                              , QMessageBox::Ok, this);
+                               , "Warning"
+                               , m_linkEdit->toPlainText() + ": incorrect link!"
+                               , QMessageBox::Ok, this);
             connect(msgBox.button(QMessageBox::Ok), &QPushButton::clicked, this, [&]() {
                 m_linkEdit->setText("Link will be pasted here.");
                 m_linkEdit->setStyleSheet("background-color: gainsboro; color: dimgray;");
             });
             msgBox.exec();
         }
-    });
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &PasteLinkDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &PasteLinkDialog::reject);
-}
-
-PasteLinkDialog::~PasteLinkDialog()
-{
+    }
 }
 
 void PasteLinkDialog::accept()

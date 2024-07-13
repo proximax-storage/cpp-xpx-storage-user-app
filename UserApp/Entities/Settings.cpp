@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QFile>
 #include <QDir>
+#include <QTimer>
 
 Settings::Settings(QObject *parent)
     : QObject(parent)
@@ -291,7 +292,8 @@ void Settings::setCurrentAccountIndex( int currentAccountIndex )
 
 void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
 {
-    std::thread( [ this, handle, &model ]
+//    std::thread( [ this, handle, &model ]
+    QTimer::singleShot( 0, this, [ this, handle, &model ]
     {
         auto& downloads = accountConfig().m_downloads;
 
@@ -299,21 +301,19 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
 
         for( auto& dnInfo: downloads )
         {
-            if ( dnInfo.getHandle() == handle )
+            if ( !dnInfo.isCompleted() && dnInfo.getHandle() == handle )
             {
                 counter++;
             }
         }
 
-        //TODO: semaphore
         for( auto& dnInfo: downloads )
         {
             if ( dnInfo.getHandle() != handle )
             {
                 continue;
             }
-            
-            fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
+
             fs::path destPath;
             if ( dnInfo.getSaveFolder().empty() )
             {
@@ -323,10 +323,43 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             {
                 destPath = fs::path(downloadFolder().string() + "/" + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
             }
+            onTorrentDownloaded( model, dnInfo.getHash(), destPath );
+
+            if ( dnInfo.easyDownloadId() >= 0 )
+            {
+                for( auto& easyDnInfo: model.easyDownloads() )
+                {
+                    if ( easyDnInfo.m_uniqueId == dnInfo.easyDownloadId() )
+                    {
+                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                        {
+                            if ( childIt->m_hash == dnInfo.getHash() )
+                            {
+                                childIt->m_isCompleted = true;
+                            }
+                        }
+                        bool isCompleted = true;
+                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
+                        {
+                            if ( !childIt->m_isCompleted )
+                            {
+                                isCompleted = false;
+                            }
+                        }
+                        easyDnInfo.m_isCompleted = isCompleted;
+                    }
+                }
+                
+                dnInfo.setCompleted(true);
+                continue;
+            }
+            
+            fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
             qDebug() << "onDownloadCompleted: counter: " << counter;
-            qDebug() << "onDownloadCompleted: counter: " << srcPath.c_str();
-            qDebug() << "onDownloadCompleted: counter: " << destPath.c_str();
-            qDebug() << "onDownloadCompleted: counter: ------------ ";
+            qDebug() << "onDownloadCompleted: id: " << dnInfo.easyDownloadId();
+            qDebug() << "onDownloadCompleted: " << srcPath.c_str();
+            qDebug() << "onDownloadCompleted: " << destPath.c_str();
+            qDebug() << "onDownloadCompleted: ------------------------------- ";
 
             std::error_code ec;
             if ( ! fs::exists( destPath.parent_path(), ec ) )
@@ -444,38 +477,13 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             
             dnInfo.setCompleted(true);
             
-            // EasyDownload
-            if ( dnInfo.easyDownloadId() >= 0 )
-            {
-                for( auto& easyDnInfo: model.easyDownloads() )
-                {
-                    if ( easyDnInfo.m_uniqueId == dnInfo.easyDownloadId() )
-                    {
-                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
-                        {
-                            if ( childIt->m_hash == dnInfo.getHash() )
-                            {
-                                childIt->m_isCompleted = true;
-                                break;
-                            }
-                        }
-                        bool isCompleted = true;
-                        for( auto childIt = easyDnInfo.m_childs.begin(); childIt != easyDnInfo.m_childs.end(); childIt++ )
-                        {
-                            if ( !childIt->m_isCompleted )
-                            {
-                                isCompleted = false;
-                            }
-                        }
-                        easyDnInfo.m_isCompleted = isCompleted;
-                    }
-                }
-            }
         }
         
         saveSettings();
+        
+        
 
-    }).detach();
+    });
 }
 
 void Settings::removeFromDownloads( int index )
@@ -538,3 +546,80 @@ void Settings::removeFromDownloads( int index )
 
     accountConfig().m_downloads.erase( accountConfig().m_downloads.begin()+index );
 }
+
+sirius::drive::lt_handle Settings::addDownloadTorrent( Model&                          model,
+                                                       const std::string&              channelIdStr,
+                                                       const std::array<uint8_t, 32>&  fileHash,
+                                                       std::filesystem::path           outputFolder )
+{
+    if ( auto it = m_downloadTorrentMap.find( fileHash ); it != m_downloadTorrentMap.end() )
+    {
+        it->second.m_useCounter++;
+        return it->second.m_ltHandle;
+    }
+    
+    auto ltHandle = model.downloadFile( channelIdStr, fileHash, outputFolder );
+    m_downloadTorrentMap.insert( { fileHash, DownloadTorrentItem{ (outputFolder / sirius::drive::toString(fileHash)).make_preferred(),
+                                                                    ltHandle,
+                                                                    1 }} );
+    return ltHandle;
+}
+
+void Settings::onTorrentDownloaded( Model&                          model,
+                                    const std::array<uint8_t, 32>&  fileHash,
+                                    std::filesystem::path           destinationFilename )
+{
+    if ( auto it = m_downloadTorrentMap.find( fileHash ); it == m_downloadTorrentMap.end() )
+    {
+        qWarning() << "onTorrentDownloaded: unknown fileHash: " << sirius::drive::toString(fileHash);
+        qWarning() << "onTorrentDownloaded: unknown fileHash: destinationFilename: " << destinationFilename;
+        return;
+    }
+    else
+    {
+        std:: error_code ec;
+
+        if ( it->second.m_useCounter > 1 )
+        {
+            qDebug() <<  "onTorrentDownloaded: copy: " << it->second.m_path.string().c_str() << " -> " << destinationFilename.string().c_str();
+            fs::copy( it->second.m_path.make_preferred() , destinationFilename.make_preferred(), ec );
+        }
+        else
+        {
+            qDebug() <<  "onTorrentDownloaded: rename: " << it->second.m_path.string().c_str() << " -> " << destinationFilename.string().c_str();
+            fs::rename( it->second.m_path.make_preferred() , destinationFilename.make_preferred(), ec );
+            it->second.m_path = destinationFilename;
+        }
+        
+        it->second.m_useCounter--;
+        if ( it->second.m_useCounter == 0 )
+        {
+            model.removeTorrentSync( it->first );
+            m_downloadTorrentMap.erase( it );
+        }
+    
+        if ( ec )
+        {
+            qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << it->second.m_path.string().c_str() << " -> " << destinationFilename.string().c_str();
+            
+            QString message;
+            message.append("Cannot save file: ");
+            message.append( destinationFilename.string().c_str() );
+            message.append(" (");
+            message.append(ec.message().c_str());
+            message.append(")");
+            emit downloadError(message);
+        }
+    }
+}
+
+void Settings::onDownloadCanceled( Model&                          model,
+                                   const std::array<uint8_t, 32>&  fileHash )
+{
+    if ( auto it = m_downloadTorrentMap.find( fileHash ); it != m_downloadTorrentMap.end() )
+    {
+        model.removeTorrentSync( it->first );
+        m_downloadTorrentMap.erase( it->first );
+    }
+}
+

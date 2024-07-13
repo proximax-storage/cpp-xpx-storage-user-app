@@ -65,29 +65,6 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    if (rowCount(index) == 0)
-                    {
-                        if ( !mp_model->isDownloadChannelsLoaded() )
-                        {
-                            return QString("Loading...");
-                        }
-
-                        if (mp_model->getDownloadChannels().empty())
-                        {
-                            return QString("You don't have download channels.");
-                        }
-
-                        auto channelInfo = mp_model->currentDownloadChannel();
-                        if ( !channelInfo )
-                        {
-                            return QString("No download channel selected");
-                        }
-                        if ( channelInfo->isDownloadingFsTree() )
-                        {
-                            return QString("Loading...");
-                        }
-                    }
-
                     return QString::fromStdString( mp_model->easyDownloads()[index.row()].m_itemName );
                 }
                 case 1:

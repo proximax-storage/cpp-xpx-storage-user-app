@@ -821,6 +821,8 @@ void MainWin::init()
     // Hide streaming
     ui->tabWidget->setTabVisible( 5, true );
 
+    m_easyDownloadTableModel->updateProgress( ui->m_easyDownloadTable->selectionModel() );
+
     doUpdateBalancePeriodically();
 }
 
@@ -3619,7 +3621,7 @@ void MainWin::addEasyDownload( const DataInfo& dataInfo )
         {
             auto downloadIt2 = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&] (const auto& downloadInfo)
             {
-                qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId << " " << downloadInfo.m_itemName;
+                //qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId << " " << downloadInfo.m_itemName;
                 return downloadInfo.m_uniqueId != it->m_uniqueId && downloadInfo.m_itemName == itemName;
             });
             if ( downloadIt2 == m_model->easyDownloads().end() )
@@ -3746,7 +3748,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
     //
     auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [=] (const auto& downloadInfo)
     {
-        qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
+        //qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
         return downloadInfo.m_uniqueId == downloadId;
     });
     
@@ -3756,6 +3758,8 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
         return;
     }
     
+    qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadId;
+
     auto* channel = m_model->findChannel(channelKey);
     assert( channel != nullptr );
 
@@ -3797,11 +3801,11 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
         assert( channel != nullptr );
 
         sirius::drive::ReplicatorList replicatorList = channel->getReplicators();
-        qDebug() << "replicatorList2: " << replicatorList.size();
+        qDebug() << "continueEasyDownload: replicatorList2: " << replicatorList.size();
 
         auto downloadIt = std::find_if( m_model->easyDownloads().begin(), m_model->easyDownloads().end(), [&] (const auto& downloadInfo)
         {
-            qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
+            //qDebug() << "continueEasyDownload: downloadInfo.m_uniqueId = " << downloadInfo.m_uniqueId << " " << downloadId;
             return downloadInfo.m_uniqueId == downloadId;
         });
         
@@ -3816,35 +3820,41 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
                 continue;
             }
             
-            qDebug() << "childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder().string();
-            auto outFolder = m_model->getDownloadFolder().make_preferred() / fs::path( childIt->m_path ).make_preferred();
-            QDir().mkpath(QString::fromStdString( outFolder.string() ));
+            qDebug() << "continueEasyDownload: downloadIt->m_uniqueId:" << downloadIt->m_uniqueId << " childIt->m_path: " << childIt->m_path.c_str() << " : " << childIt->m_fileName.c_str() << " : " << m_model->getDownloadFolder().string();
 
-            std::filesystem::path outputFolder = m_model->getDownloadFolder();
+            // Calculate destination folder
+            std::error_code ec;
+            std::filesystem::path outputFolder = m_model->getDownloadFolder().make_preferred();
+            
             if ( downloadIt->m_isFolder )
             {
                 outputFolder = (m_model->getDownloadFolder() / fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred();
-                std::error_code ec;
-                if ( fs::exists( outputFolder, ec ) )
-                {
-                    fs::create_directories( outputFolder, ec );
-                }
             }
-            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash, outputFolder );
+
+            QDir().mkpath(QString::fromStdString( outputFolder.string() ));
+
+            if ( fs::exists( outputFolder / childIt->m_fileName, ec ) )
+            {
+                childIt->m_isCompleted = true;
+                continue;
+            }
+            
+            if ( childIt->m_isStarted )
+            {
+                qDebug() << "continueEasyDownload: already started";
+                continue;
+            }
+            
+//            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash, outputFolder );
+            childIt->m_ltHandle = m_settings->addDownloadTorrent( *m_model, channel->getKey(), childIt->m_hash, outputFolder );
+            childIt->m_isStarted = true;
 
             DownloadInfo downloadInfo;
             downloadInfo.setHash( childIt->m_hash );
             downloadInfo.setDownloadChannelKey( channel->getKey() );
             if ( downloadIt->m_isFolder )
             {
-//                if ( childIt->m_path == "." )
-//                {
-//                    downloadInfo.setSaveFolder( fs::path(downloadIt->m_itemName).make_preferred().string() );
-//                }
-//                else
-//                {
-                    downloadInfo.setSaveFolder( (fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred().string() );
-//                }
+                downloadInfo.setSaveFolder( (fs::path(downloadIt->m_itemName) / fs::path(childIt->m_path)).make_preferred().string() );
                 downloadInfo.setFileName( childIt->m_fileName );
             }
             else
@@ -3856,7 +3866,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);
             downloadInfo.setHandle( childIt->m_ltHandle );
-            downloadInfo.setEasyDownloadId( downloadIt->m_uniqueId );
+            downloadInfo.setEasyDownloadId( downloadId );
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );
         }

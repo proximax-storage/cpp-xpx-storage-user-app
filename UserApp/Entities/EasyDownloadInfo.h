@@ -27,9 +27,10 @@ struct EasyDownloadChildInfo
     size_t                   m_size;
     std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
     bool                     m_isCompleted = false;
-    bool                     m_channelIsOutdated = false;
+    
     int                      m_progress = 0; // m_progress==1001 means completed
 
+    bool                     m_isStarted = false;
     sirius::drive::lt_handle m_ltHandle;
     std::string              m_channelKey;
 
@@ -43,6 +44,7 @@ public:
     void serialize( Archive &ar )
     {
         ar( m_hash, m_path, m_fileName, m_size, m_downloadFolder, m_isCompleted );
+        qDebug() << "EasyDownloadChildInfo: " << m_path.c_str() << " size: " << m_size;
     }
 };
 
@@ -51,23 +53,23 @@ struct EasyDownloadInfo
     template<class Archive>
     void save( Archive &ar ) const
     {
-        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_childs );
+        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_calcTotalSize, m_isFolder, m_childs );
     }
 
     template<class Archive>
     void load( Archive &ar )
     {
-        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_childs );
-        init();
+        ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_calcTotalSize, m_isFolder, m_childs );
+        qDebug() << "EasyDownloadInfo: " << m_uniqueId << " " << m_totalSize << " " << m_itemName.c_str();
     }
 
     uint64_t                m_uniqueId;
-    uint64_t                m_totalSize;
+    uint64_t                m_totalSize;    // declared total size (in link)
     sirius::drive::FsTree   m_fsTree;
     std::array<uint8_t,32>  m_driveKey;
     std::string             m_itemName;     // item name
-    std::string             m_itemPath; // path into fsTree
-    size_t                  m_calcTotalSize;     // total size
+    std::string             m_itemPath;     // path into fsTree
+    size_t                  m_calcTotalSize;    // total size
     std::string             m_channelKey;
     bool                    m_isCompleted = false;
 
