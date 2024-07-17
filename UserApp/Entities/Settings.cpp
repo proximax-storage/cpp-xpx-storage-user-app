@@ -572,7 +572,7 @@ void Settings::onTorrentDownloaded( Model&                          model,
     if ( auto it = m_downloadTorrentMap.find( fileHash ); it == m_downloadTorrentMap.end() )
     {
         qWarning() << "onTorrentDownloaded: unknown fileHash: " << sirius::drive::toString(fileHash);
-        qWarning() << "onTorrentDownloaded: unknown fileHash: destinationFilename: " << destinationFilename;
+        qWarning() << "onTorrentDownloaded: unknown fileHash: destinationFilename: " << destinationFilename.string();
         return;
     }
     else

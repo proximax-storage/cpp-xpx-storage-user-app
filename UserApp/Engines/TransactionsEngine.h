@@ -110,6 +110,7 @@ class TransactionsEngine : public QObject
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
         void newError(const QString& errorText);
         void removeTorrent(const std::array<uint8_t, 32>& torrentId);
+        void removeFromTorrentMap(const std::string& downloadDataCdi);
 
         void deployContractInitiated(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
         void deployContractConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);

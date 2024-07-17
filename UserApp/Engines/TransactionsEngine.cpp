@@ -398,7 +398,7 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
                 } else {
                     removeDriveModifications(pathToActionList, preferredPathFormat.c_str());
                 }
-
+                emit removeFromTorrentMap(currentModification.downloadDataCdi);
                 emit cancelModificationConfirmed(rawHashFromHex(driveKey.c_str()), currentModification.id.c_str());
             }
         }
@@ -622,7 +622,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     });
 
     dataModificationApprovalTransactionNotifier.set([
-            this, pathToSandbox, modificationId, driveId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId()](
+                                                        this, pathToSandbox, modificationId, driveId, pathToActionList, replicators, statusNotifierId = replicatorsStatusNotifier.getId(), infoHash](
             const auto& id,
             const xpx_chain_sdk::TransactionNotification& notification) {
         if (xpx_chain_sdk::TransactionType::Data_Modification_Approval != notification.data.type) {
@@ -644,7 +644,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
         mpBlockchainEngine->getTransactionInfo(xpx_chain_sdk::Confirmed,
                                                notification.meta.hash,
-                                               [this, pathToActionList, pathToSandbox, driveId, modificationId, notification,
+                                               [this, infoHash, pathToActionList, pathToSandbox, driveId, modificationId, notification,
                                                 id, replicators, statusNotifierId](auto transaction, auto isSuccess, auto message, auto code) {
             if (!isSuccess) {
                 emit dataModificationApprovalFailed(driveId, {}, -1);
@@ -722,6 +722,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
             unsubscribeFromReplicators(replicators, id, statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
             removeDriveModifications(pathToActionList, pathToSandbox.c_str());
+            emit removeFromTorrentMap(rawHashToHex(infoHash).toStdString());
         });
     });
 

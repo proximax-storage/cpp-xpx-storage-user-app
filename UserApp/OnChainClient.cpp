@@ -455,6 +455,11 @@ void OnChainClient::initConnects() {
         mpStorageEngine->removeTorrentSync(torrentId);
     }, Qt::QueuedConnection);
 
+    connect(mpTransactionsEngine, &TransactionsEngine::removeFromTorrentMap, this, [this](auto downloadDataCdi) {
+            qDebug() << "removeFromTorrentMap: " << QString::fromStdString(downloadDataCdi);
+            mpStorageEngine->removeTorrentSync(rawHashFromHex(QString::fromStdString(downloadDataCdi)));
+    }, Qt::QueuedConnection);
+
     connect(mpTransactionsEngine, &TransactionsEngine::streamStartConfirmed, this, [this](auto streamId) {
         emit streamStartTransactionConfirmed(streamId);
     });
@@ -607,7 +612,7 @@ void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string
 
             mpChainClient->notifications()->addBlockNotifiers({ blockNotifier }, [](){}, [](auto){});
         });
-    });
+                                       });
 }
 
 void OnChainClient::deployContract( const std::array<uint8_t, 32>& driveKey, const ContractDeploymentData& data ) {
