@@ -396,9 +396,8 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
                 if (pathToActionList.isEmpty()) {
                     qWarning() << "TransactionsEngine::cancelDataModification: action list not found: " << hash << " sandbox: " << preferredPathFormat.c_str();
                 } else {
-                    removeDriveModifications(pathToActionList, preferredPathFormat.c_str());
+                    removeDriveModifications(pathToActionList, preferredPathFormat.c_str(), currentModification.downloadDataCdi);
                 }
-                emit removeFromTorrentMap(currentModification.downloadDataCdi);
                 emit cancelModificationConfirmed(rawHashFromHex(driveKey.c_str()), currentModification.id.c_str());
             }
         }
@@ -721,8 +720,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
 
             unsubscribeFromReplicators(replicators, id, statusNotifierId);
             removeConfirmedAddedNotifier(mpChainAccount->address(), id);
-            removeDriveModifications(pathToActionList, pathToSandbox.c_str());
-            emit removeFromTorrentMap(rawHashToHex(infoHash).toStdString());
+            removeDriveModifications(pathToActionList, pathToSandbox.c_str(), rawHashToHex(infoHash).toStdString());
         });
     });
 
@@ -930,7 +928,7 @@ QString TransactionsEngine::findFile(const QString& fileName, const QString& dir
     return hitList.empty() ? "" : hitList[0].absoluteFilePath();
 }
 
-void TransactionsEngine::removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox) {
+void TransactionsEngine::removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox, const std::string& dataCdi) {
     sirius::drive::ActionList actionList;
     actionList.deserialize(std::filesystem::path(pathToActionList.toStdString()).make_preferred());
 
@@ -946,6 +944,7 @@ void TransactionsEngine::removeDriveModifications(const QString& pathToActionLis
 
     removeFile(pathToActionList);
     removeFile(pathToActionList + ".torrent");
+    emit removeFromTorrentMap(dataCdi);
 }
 
 void TransactionsEngine::removeFile(const QString& path) {

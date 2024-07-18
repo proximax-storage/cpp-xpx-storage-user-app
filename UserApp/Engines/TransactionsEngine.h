@@ -165,7 +165,7 @@ class TransactionsEngine : public QObject
 
         QString findFile(const QString& fileName, const QString& directory);
 
-        void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox);
+        void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox, const std::string& dataCdi);
 
         void removeFile(const QString& path);
 

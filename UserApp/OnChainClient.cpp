@@ -456,7 +456,6 @@ void OnChainClient::initConnects() {
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::removeFromTorrentMap, this, [this](auto downloadDataCdi) {
-            qDebug() << "removeFromTorrentMap: " << QString::fromStdString(downloadDataCdi);
             mpStorageEngine->removeTorrentSync(rawHashFromHex(QString::fromStdString(downloadDataCdi)));
     }, Qt::QueuedConnection);
 
