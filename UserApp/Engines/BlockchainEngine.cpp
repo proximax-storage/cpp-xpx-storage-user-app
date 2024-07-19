@@ -5,6 +5,9 @@ BlockchainEngine::BlockchainEngine(std::shared_ptr<xpx_chain_sdk::IClient> chain
     , mpChainClient(chainClient)
     , mpWorker(new Worker)
     , mpThread(new QThread)
+    , mRandomDevice()
+    , mGenerator(mRandomDevice())
+    , mUniformDistribution(1, 100000)
 {
     qRegisterMetaType<std::array<uint8_t,32>>("std::array<uint8_t,32>");
     qRegisterMetaType<sirius::drive::ActionList>("ActionList");
@@ -326,7 +329,7 @@ void BlockchainEngine::getTransactionDeadline(std::function<void(std::optional<x
             return;
         }
 
-        getBlockByHeight(height, [callback, height](auto block, auto isSuccess, auto message, auto code)
+        getBlockByHeight(height, [this, callback, height](auto block, auto isSuccess, auto message, auto code)
         {
             if (!isSuccess)
             {
@@ -335,8 +338,11 @@ void BlockchainEngine::getTransactionDeadline(std::function<void(std::optional<x
                 return;
             }
 
-            // current block time + 10 minutes
-            std::optional<xpx_chain_sdk::NetworkDuration> deadline(block.data.timestamp + xpx_chain_sdk::GetConfig().TransactionDelta.count());
+            // current block time + 10 minutes + random value to avoid transaction duplicates
+            const auto randomValue = mUniformDistribution(mRandomDevice);
+            const auto blockTime = block.data.timestamp;
+            const auto delta = xpx_chain_sdk::GetConfig().TransactionDelta.count();
+            std::optional<xpx_chain_sdk::NetworkDuration> deadline( randomValue + blockTime + delta );
             qDebug() << "BlockchainEngine::getTransactionDeadline::getBlockByHeight: height: "
                      << height << " current block time: " << block.data.timestamp
                      << " current deadline: " << deadline->count();

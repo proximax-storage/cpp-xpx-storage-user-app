@@ -147,9 +147,9 @@ void MainWin::init()
 
     connect( ui->m_settingsButton, &QPushButton::released, this, &MainWin::showSettingsDialog, Qt::QueuedConnection);
     connect(m_modificationsWatcher, &QFileSystemWatcher::directoryChanged, this, &MainWin::onDriveLocalDirectoryChanged, Qt::QueuedConnection);
+    connect(m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::QueuedConnection);
     connect(ui->m_addChannel, &QPushButton::released, this, [this] () {
         AddDownloadChannelDialog dialog(m_onChainClient, m_model, this);
-        connect(m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel);
         dialog.exec();
     }, Qt::QueuedConnection);
 
@@ -2095,7 +2095,8 @@ void MainWin::onDriveStateChanged( Drive& drive )
 void MainWin::addChannel( const std::string&              channelName,
                           const std::string&              channelKey,
                           const std::string&              driveKey,
-                          const std::vector<std::string>& allowedPublicKeys )
+                          const std::vector<std::string>& allowedPublicKeys,
+                          bool                            isForEasyDownload )
 {
     DownloadChannel newChannel;
     newChannel.setName(channelName);
@@ -2105,8 +2106,13 @@ void MainWin::addChannel( const std::string&              channelName,
     newChannel.setCreating(true);
     newChannel.setDeleting(false);
     newChannel.setCreatingTimePoint(std::chrono::steady_clock::now());
+    newChannel.setForEasyDownload(isForEasyDownload);
     m_model->addDownloadChannel(newChannel);
-    m_model->setCurrentDownloadChannelKey(channelKey);
+
+    if (!isForEasyDownload)
+    {
+        m_model->setCurrentDownloadChannelKey(channelKey);
+    }
 
     auto drive = m_model->findDrive(driveKey);
     if (drive) {
@@ -2122,7 +2128,7 @@ void MainWin::addChannel( const std::string&              channelName,
 void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey )
 {
     qDebug() << "MainWin::onChannelCreationConfirmed: alias:" << alias << " channel key: " << channelKey << " drive key: " << driveKey;
-    
+
     auto channel = m_model->findChannel( channelKey );
     if ( channel )
     {
@@ -2137,8 +2143,8 @@ void MainWin::onChannelCreationConfirmed( const std::string& alias, const std::s
         {
             //showNotification(message);
         }
-        addNotification(message);
 
+        addNotification(message);
         unlockChannel(channelKey);
     }
     else
@@ -3076,16 +3082,22 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
 void MainWin::addEntityToUi(QComboBox* box, const std::string& name, const std::string& key)
 {
     const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
-    if (index == -1) {
+    if (index == -1)
+    {
         box->addItem(QString::fromStdString(name), QString::fromStdString(key));
         box->model()->sort(0);
+    }
+    else
+    {
+        qDebug () << "MainWin::addEntityToUi: ignored: key: " << key << " name: " << name;
     }
 }
 
 void MainWin::removeEntityFromUi(QComboBox* box, const std::string& key)
 {
     const int index = box->findData(QVariant::fromValue(QString::fromStdString(key)), Qt::UserRole, Qt::MatchFixedString);
-    if (index != -1) {
+    if (index != -1)
+    {
         box->removeItem(index);
     }
 }
@@ -3645,27 +3657,22 @@ void MainWin::addEasyDownload( const DataInfo& dataInfo )
 
 void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
 {
-    std::string driveKeyStr = str_toupper(sirius::drive::toString( easyDownloadInfo.m_driveKey ));
-    qDebug() << "startEasyDownload: " << driveKeyStr.c_str();
-
-
-    //
-    // create channel
-    //
-    connect( m_onChainClient->getDialogSignalsEmitter(), &DialogSignals::addDownloadChannel, this, &MainWin::addChannel, Qt::SingleShotConnection );
-
+    const std::string driveKeyStr = str_toupper(sirius::drive::toString( easyDownloadInfo.m_driveKey ));
     const auto channelName = "easy-download: " + easyDownloadInfo.m_itemName;
-    qDebug() << "startEasyDownload: channelName: " << channelName.c_str();
+
+    qDebug() << "MainWin::startEasyDownload: drive key:" << driveKeyStr.c_str() << " channel name: " << channelName;
 
     // this callback receives channel key (tx)
     //
-    auto callback = [client=m_onChainClient, 
+    auto callback = [client= m_onChainClient,
                      downloadId  = easyDownloadInfo.m_uniqueId,
                      driveKeyStr = driveKeyStr,
-                     channelName,  this] (std::string channelKey)
+                     channelName, this] (std::string channelKey)
     {
         channelKey = QString::fromStdString(channelKey).toUpper().toStdString();
-        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << channelKey.c_str();
+        qDebug() << "MainWin::startEasyDownload: channel key: " << channelKey.c_str();
+
+        addChannel(channelName, channelKey, driveKeyStr, {}, true);
 
         //
         // Save channelKey into EasyDownloadInfo
@@ -3679,7 +3686,7 @@ void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
         //
         // Send tx and wait confirmation of channel creation
         //
-        m_model->addChannelFsTreeHandler( [key=channelKey,downloadId,this] ( bool success, const std::string& channelKey, const std::string& driveKey ) -> bool
+        m_model->addChannelFsTreeHandler( [key= channelKey, downloadId, this] ( bool success, const std::string& channelKey, const std::string& driveKey ) -> bool
         {
             qDebug() << "startEasyDownload(callback): downloadId = " << downloadId;
 
@@ -3691,8 +3698,8 @@ void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
             
             if ( !success )
             {
-                qDebug() << "Channel creation faled: driveKey: " << driveKey.c_str();
-                displayError( "Channel creation faled: todo" );
+                qDebug() << "Channel creation failed: driveKey: " << driveKey.c_str();
+                displayError( "Channel creation failed: todo" );
                 
                 // true - remove handler
                 return true;
@@ -3723,9 +3730,6 @@ void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
             // true - remove handler
             return true;
         });
-
-        
-        emit client->getDialogSignalsEmitter()->addDownloadChannel( channelName, channelKey, driveKeyStr, {});
     };
     
     uint64_t prepaidSizeMB = 2 * (easyDownloadInfo.m_totalSize + (1024*1024-1)) / (1024*1024);

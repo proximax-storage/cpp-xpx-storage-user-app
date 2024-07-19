@@ -9,6 +9,7 @@
 #include <memory>
 #include <thread>
 #include <iostream>
+#include <random>
 
 #include <drive/FsTree.h>
 #include <drive/ActionList.h>
@@ -93,6 +94,9 @@ private slots:
 private:
     Worker* mpWorker;
     QThread* mpThread;
+    std::random_device mRandomDevice;
+    std::mt19937 mGenerator;
+    std::uniform_int_distribution<> mUniformDistribution;
     std::map<QUuid, std::function<void(QVariant)>> mResolvers;
     std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
 };

@@ -152,7 +152,7 @@ void AddDownloadChannelDialog::startCreateChannel()
     auto callback = [client = mpOnChainClient, channelName, currDriveKey = m_currentDriveKey, publicKeys](std::string hash) {
         hash = QString::fromStdString(hash).toUpper().toStdString();
         qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
-        emit client->getDialogSignalsEmitter()->addDownloadChannel(channelName, hash, currDriveKey, publicKeys);
+        emit client->getDialogSignalsEmitter()->addDownloadChannel(channelName, hash, currDriveKey, publicKeys, false);
     };
 
     mpOnChainClient->addDownloadChannel(ui->name->text().toStdString(),

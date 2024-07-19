@@ -9,8 +9,6 @@
 #include <QComboBox>
 #include <QProcess>
 #include <QTableWidget>
-//#include "Worker.h"
-//#include "OnChainClient.h"
 #include "Entities/DataInfo.h"
 #include "types.h"
 #include "CustomLogsRedirector.h"
@@ -68,7 +66,8 @@ public:
     void addChannel( const std::string&              channelName,
                      const std::string&              channelKey,
                      const std::string&              driveKey,
-                     const std::vector<std::string>& allowedPublicKeys );
+                     const std::vector<std::string>& allowedPublicKeys,
+                     bool                            isForEasyDownload );
 
     void removeDrive( Drive* drive );
     

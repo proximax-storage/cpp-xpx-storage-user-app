@@ -44,6 +44,8 @@ class DownloadChannel {
         void setDownloadingFsTree(bool state);
         sirius::drive::ReplicatorList getReplicators() const;
         void setReplicators(const std::vector<std::string>& replicators);
+        void setForEasyDownload(bool state);
+        bool isForEasyDownload() const;
 
         template<class Archive>
         void serialize( Archive &ar )
@@ -56,7 +58,8 @@ class DownloadChannel {
                 m_isDeleting,
                 m_creationTimepoint,
                 m_tobeDeletedTimepoint,
-                m_fsTreeHash );
+                m_fsTreeHash,
+                m_isForEasyDownload );
         }
 
     private:
@@ -66,6 +69,7 @@ class DownloadChannel {
         std::vector<std::string> m_allowedPublicKeys;
         bool m_isCreating;
         bool m_isDeleting;
+        bool m_isForEasyDownload;
         timepoint m_creationTimepoint;
         timepoint m_tobeDeletedTimepoint;
         std::vector<std::string> m_lastOpenedPath;

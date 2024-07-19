@@ -123,3 +123,13 @@ void DownloadChannel::setReplicators(const std::vector<std::string>& replicators
         m_shardReplicators.emplace_back(replicatorKey);
     }
 }
+
+void DownloadChannel::setForEasyDownload(bool state)
+{
+    m_isForEasyDownload = state;
+}
+
+bool DownloadChannel::isForEasyDownload() const
+{
+    return m_isForEasyDownload;
+}

@@ -17,7 +17,8 @@ signals:
     void addDownloadChannel(const std::string&             channelName,
                             const std::string&             channelKey,
                             const std::string&             driveKey,
-                            const std::vector<std::string> allowedPublicKeys);
+                            const std::vector<std::string> allowedPublicKeys,
+                            bool                           isForEasyDownload);
 
 };
 
