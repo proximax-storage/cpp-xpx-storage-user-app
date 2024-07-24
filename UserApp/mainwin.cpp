@@ -53,6 +53,7 @@
 #include <QFileDialog>
 #include <QStyledItemDelegate>
 #include <filesystem>
+#include <QShortcut>
 
 #include <boost/algorithm/string.hpp>
 
@@ -364,7 +365,6 @@ void MainWin::init()
         showNotification(notification);
         addNotification(notification);
     }, Qt::QueuedConnection);
-
 
     setupDownloadsTab();
     setupDrivesTab();
@@ -1244,6 +1244,102 @@ void MainWin::onDownloadBtn()
     updateReplicatorsForChannel(channel->getKey(), updateReplicatorsCallback);
 }
 
+void MainWin::invokePasteLinkDialog()
+{
+    PasteLinkDialog dialog(this, m_model);
+    dialog.exec();
+
+    // The rest of the code remains the same
+    // #ifdef __APPLE__
+    //     std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
+    //     std::string             path = "/";
+    //     uint64_t                totalSize = 33554477;
+    //
+    //     DataInfo testData( "todo", driveKeyHash, path, totalSize );
+    //
+    //     startEasyDownload( testData );
+    // #endif
+}
+
+void MainWin::deleteEasyDnlLocalFiles(QModelIndexList rows)
+{
+    for(auto& indexListElem : rows)
+    {
+        int rowIndex = indexListElem.row();
+        auto& downloads = m_model->easyDownloads();
+        if ( rowIndex >= 0 && rowIndex < downloads.size() )
+        {
+            QString filename = m_easyDownloadTableModel->data(m_easyDownloadTableModel->index(rowIndex, 0)
+                                                          , Qt::DisplayRole).toString();
+            QFileInfo fileInfo(QString::fromStdString( m_settings->downloadFolder().string()), filename);
+
+            if (fileInfo.isDir())
+            {
+                qDebug() << "Deleting directory:" << fileInfo.absoluteFilePath();
+                if (!QDir(fileInfo.absoluteFilePath()).removeRecursively())
+                {
+                    qDebug() << "Failed to delete directory:" << fileInfo.absoluteFilePath();
+                }
+            } else
+            {
+                qDebug() << "Deleting file:" << fileInfo.absoluteFilePath();
+                if (!QFile::remove(fileInfo.absoluteFilePath())) {
+                    qDebug() << "Failed to delete file:" << fileInfo.absoluteFilePath();
+                }
+            }
+        }
+    }
+}
+
+void MainWin::cleanEasyDownloadsTable()
+{
+    auto rows = ui->m_easyDownloadTable->selectionModel()->selectedRows();
+
+    if ( rows.empty() )
+    {
+        return;
+    }
+
+    QMessageBox msgBox;
+    msgBox.setText( "Delete Records?" );
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Close );
+    if ( msgBox.exec() != QMessageBox::Ok )
+    {
+        return;
+    }
+    else
+    {
+        // deleteEasyDnlLocalFiles(rows);
+
+        m_easyDownloadTableModel->beginResetModel();
+
+        std::vector<int> r;
+        for(auto& indexListElem : rows)
+        {
+            r.push_back(indexListElem.row());
+        }
+        sort(r.begin(), r.end());
+
+        for( int i = 0; i < r.size(); ++i )
+        {
+            int rowIndex = r[i];
+            auto& downloads = m_model->easyDownloads();
+            if ( rowIndex >= 0 && rowIndex < downloads.size() )
+            {
+                downloads.erase( std::next( downloads.begin(), rowIndex ));
+                for( int j = i; j < r.size(); ++j )
+                {
+                    --r[j];
+                }
+            }
+        }
+
+        m_easyDownloadTableModel->endResetModel();
+        m_model->saveSettings();
+
+    }
+}
+
 void MainWin::setupEasyDownloads()
 {
     connect( ui->m_openDnFolderBtn, &QPushButton::released, this, [this]
@@ -1255,7 +1351,7 @@ void MainWin::setupEasyDownloads()
     ui->m_easyDownloadTable->setModel( m_easyDownloadTableModel );
 
     ui->m_easyDownloadTable->setSelectionBehavior( QAbstractItemView::SelectRows );
-    ui->m_easyDownloadTable->setSelectionMode( QAbstractItemView::SingleSelection );
+    ui->m_easyDownloadTable->setSelectionMode( QAbstractItemView::MultiSelection );
     ui->m_easyDownloadTable->setColumnWidth(0,300);
     ui->m_easyDownloadTable->setColumnWidth(1,300);
     ui->m_easyDownloadTable->setColumnWidth(2,300);
@@ -1264,46 +1360,16 @@ void MainWin::setupEasyDownloads()
     ui->m_easyDownloadTable->setGridStyle( Qt::NoPen );
     ui->m_easyDownloadTable->update();
     
-    connect( ui->m_downloadDataByLinkBtn, &QPushButton::released, this, [this]
-    {
-       PasteLinkDialog dialog(this, m_model);
-       dialog.exec();
-
-//#ifdef __APPLE__
-//        std::array<uint8_t, 32> driveKeyHash = Model::hexStringToHash("84E68E6D280370993650E1DEAB7597FA91E943E74B18682234D18C29224DFE81");;
-//        std::string             path = "/";
-//        uint64_t                totalSize = 33554477;
-//
-//        DataInfo testData( "todo", driveKeyHash, path, totalSize );
-//
-//        startEasyDownload( testData );
-//#endif
-    });
-    
-    
-    connect( ui->m_deleteDownloadedDataBtn, &QPushButton::released, this, [this]
-    {
-        auto rows = ui->m_easyDownloadTable->selectionModel()->selectedRows();
-        
-        if ( rows.empty() )
-        {
-            return;
-        }
-
-        int rowIndex = rows.begin()->row();
-        auto& downloads = m_model->easyDownloads();
-
-        if ( rowIndex >= 0 && rowIndex < downloads.size() )
-        {
-            m_easyDownloadTableModel->beginResetModel();
-            downloads.erase( std::next( downloads.begin(), rowIndex ));
-            m_easyDownloadTableModel->endResetModel();
-            
-            m_model->saveSettings();
-        }
-    }, Qt::QueuedConnection);
+    QShortcut* plusShortcut = new QShortcut(QKeySequence(Qt::Key_Plus), this);
+    connect( plusShortcut, &QShortcut::activated, this, &MainWin::invokePasteLinkDialog );
+    connect( ui->m_downloadDataByLinkBtn, &QPushButton::released, this, &MainWin::invokePasteLinkDialog );
 
 
+    QShortcut* minusShortcut = new QShortcut(QKeySequence(Qt::Key_Minus), this);
+    connect( minusShortcut, &QShortcut::activated, this, &MainWin::cleanEasyDownloadsTable);
+    connect( ui->m_deleteDownloadedDataBtn, &QPushButton::released
+           , this, &MainWin::cleanEasyDownloadsTable
+           , Qt::QueuedConnection );
 }
 
 

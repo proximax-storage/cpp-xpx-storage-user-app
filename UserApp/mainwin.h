@@ -149,6 +149,7 @@ private:
     void updateDriveView();
     void updateDownloadChannelData(DownloadChannel* channel);
     void getMosaicIdByName(const QString& accountPublicKey, const QString& mosaicName, std::function<void(uint64_t id)> callback);
+    void deleteEasyDnlLocalFiles(QModelIndexList rows);
 
     void onDeployContract();
     void onRunContract();
@@ -277,6 +278,8 @@ private slots:
     void hideWizardUi();
 
     void on_m_streamingTabView_currentChanged(int index);
+    void invokePasteLinkDialog();
+    void cleanEasyDownloadsTable();
 
 public:
     // if private key is not set it will be 'true'
