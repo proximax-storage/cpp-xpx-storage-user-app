@@ -52,7 +52,11 @@ find_package(Threads REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS atomic system date_time regex timer chrono log log_setup thread filesystem program_options random REQUIRED)
 if (MSVC)
 else()
-    find_package(OpenSSL 1.1.1 REQUIRED)
+    if (APPLE)
+        find_package(OpenSSL)
+    else()
+        find_package(OpenSSL 1.1.1 REQUIRED)
+    endif()
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -74,7 +78,6 @@ if (APPLE)
     set(BOOST_LIB_DIR "/usr/local/lib")
     set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
     set(OPENSSL_LIBRARIES "/usr/local/opt/openssl/lib")
-
 
     #    include_directories(${Boost_INCLUDE_DIRS} /usr/local/opt/openssl@1.1/include)
 endif()
@@ -231,7 +234,12 @@ target_link_libraries(StorageClientApp PRIVATE
     net
     model
     utils
-    xpxchaincpp)
+    xpxchaincpp
+if(APPLE)
+    "-framework CoreFoundation"
+    "-framework SystemConfiguration"
+endif()
+    )
 
 target_compile_definitions(StorageClientApp
     PRIVATE
