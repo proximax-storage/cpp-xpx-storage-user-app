@@ -320,34 +320,10 @@ void BlockchainEngine::callbackResolver(const QUuid& id, const QVariant& data) {
 
 void BlockchainEngine::getTransactionDeadline(std::function<void(std::optional<xpx_chain_sdk::NetworkDuration> deadline)> callback)
 {
-    getBlockchainHeight([this, callback](auto height, auto isSuccess, auto message, auto code)
-    {
-        if (!isSuccess)
-        {
-            qWarning() << "BlockchainEngine::getTransactionDeadline: " << message.c_str() << " : " << code.c_str();
-            callback(std::nullopt);
-            return;
-        }
+    auto now = std::chrono::system_clock::now();
+    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - xpx_chain_sdk::GetConfig().NetworkEpoch);
+    std::chrono::hours oneHour(1);
 
-        getBlockByHeight(height, [this, callback, height](auto block, auto isSuccess, auto message, auto code)
-        {
-            if (!isSuccess)
-            {
-                qWarning() << "BlockchainEngine::getTransactionDeadline::getBlockByHeight " << message.c_str() << " : " << code.c_str();
-                callback(std::nullopt);
-                return;
-            }
-
-            // current block time + 10 minutes + random value to avoid transaction duplicates
-            const auto randomValue = mUniformDistribution(mRandomDevice);
-            const auto blockTime = block.data.timestamp;
-            const auto delta = xpx_chain_sdk::GetConfig().TransactionDelta.count();
-            std::optional<xpx_chain_sdk::NetworkDuration> deadline( randomValue + blockTime + delta );
-            qDebug() << "BlockchainEngine::getTransactionDeadline::getBlockByHeight: height: "
-                     << height << " current block time: " << block.data.timestamp
-                     << " current deadline: " << deadline->count();
-
-            callback(deadline);
-        });
-    });
+    std::optional<xpx_chain_sdk::NetworkDuration> deadline( diff.count() + std::chrono::duration_cast<std::chrono::milliseconds>(oneHour).count() );
+    callback(deadline);
 }
