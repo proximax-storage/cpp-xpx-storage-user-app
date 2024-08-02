@@ -235,11 +235,14 @@ target_link_libraries(StorageClientApp PRIVATE
     model
     utils
     xpxchaincpp
+)
+
 if(APPLE)
-    "-framework CoreFoundation"
-    "-framework SystemConfiguration"
-endif()
+    target_link_libraries(StorageClientApp PRIVATE
+        "-framework CoreFoundation"
+        "-framework SystemConfiguration"
     )
+endif()
 
 target_compile_definitions(StorageClientApp
     PRIVATE
