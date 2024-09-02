@@ -1,4 +1,4 @@
-#pragma once
+#ifndef WA_APP
 
 #include <QDialog>
 #include <QString>
@@ -121,3 +121,5 @@ void CheckReplicatorEndpointDialog::checkEndpoints()
         QDialog::accept();
     }
 }
+
+#endif // #ifndef WA_APP

@@ -355,10 +355,18 @@ void SettingsDialog::onRemoveAccount()
 
     int index = mpSettingsDraft->m_currentAccountIndex;
     mpSettingsDraft->m_currentAccountIndex = 0;
-    erase_if(mpSettingsDraft->m_accounts, [&currentAccountName](auto account)
+    // erase_if(mpSettingsDraft->m_accounts, [&currentAccountName](auto account)
+    // {
+    //     return account.m_accountName == currentAccountName.toStdString();
+    // });
+    auto it = std::find_if( mpSettingsDraft->m_accounts.begin(), mpSettingsDraft->m_accounts.end(), [&currentAccountName](auto account)
     {
         return account.m_accountName == currentAccountName.toStdString();
     });
+    if ( it != mpSettingsDraft->m_accounts.end() )
+    {
+        mpSettingsDraft->m_accounts.erase(it);
+    }
 
     ui->m_accountCbox->removeItem(index);
     if (ui->m_accountCbox->count() > 0) {

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef WA_APP
+
 #include <QDialog>
 #include <QString>
 #include <QLabel>
@@ -32,3 +34,5 @@ private:
     
     void checkEndpoints();
 };
+
+#endif // #ifndef WA_APP

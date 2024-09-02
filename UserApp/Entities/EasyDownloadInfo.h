@@ -31,7 +31,11 @@ struct EasyDownloadChildInfo
     int                      m_progress = 0; // m_progress==1001 means completed
 
     bool                     m_isStarted = false;
+#ifdef WA_APP
+    uint64_t                 m_ltHandle;
+#else
     sirius::drive::lt_handle m_ltHandle;
+#endif
     std::string              m_channelKey;
 
 //    std::optional<DownloadNotification> m_notification;

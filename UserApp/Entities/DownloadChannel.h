@@ -9,7 +9,11 @@
 #include <cereal/types/chrono.hpp>
 
 #include "Engines/StorageEngine.h"
-#include "drive/Session.h"
+
+#ifndef WA_APP
+#   include "drive/Session.h"
+#endif
+
 #include "drive/FsTree.h"
 
 using timepoint = std::chrono::time_point<std::chrono::steady_clock>;

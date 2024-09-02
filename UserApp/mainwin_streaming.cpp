@@ -1,3 +1,5 @@
+#ifndef WA_APP
+
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
@@ -1451,3 +1453,5 @@ void MainWin::dbg()
                                         "AB0F0F0F00000000000000000000000000000000000000000000000000000000",
                                        ep );
 }
+
+#endif // #ifndef WA_APP

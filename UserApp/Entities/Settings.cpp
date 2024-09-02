@@ -57,24 +57,32 @@ Settings &Settings::operator=(const Settings &s) {
 void Settings::initForTests()
 {
     std::error_code ec;
-    if ( m_accounts.empty() && fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
+    if ( m_accounts.empty() && (fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) || fs::exists( "/Users/alex2/Proj/cpp-xpx-storage-user-app", ec ) ) )
     {
-        m_restBootstrap       = "54.151.169.225:3000";
+        m_restBootstrap       = "109.205.181.31:3000";
+        m_replicatorBootstrap = "194.163.183.194:7904";
 
         m_accounts.emplace_back();
         setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        accountConfig().initAccount( "test_staging_DA", "3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B" );
+        accountConfig().initAccount( "test_staging_47", "7A1F2FFA08AE506EAE3ED665D147D54BC003F1520861230DB20D1B25AC4B2792" );
         accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
 
-        m_accounts.emplace_back();
-        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        accountConfig().initAccount( "test_staging_FA", "FEB6F12EEF165E0BF19B8A1D02A2C3BEF5DA6B88897E241C3A47B12A6E2FC153" );
-        accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
+        // m_accounts.emplace_back();
+        // setCurrentAccountIndex( (int)m_accounts.size() - 1 );
+        // accountConfig().initAccount( "test_staging_DA", "3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B" );
+        // accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
 
-        m_accounts.emplace_back();
-        setCurrentAccountIndex( (int)m_accounts.size() - 1 );
-        accountConfig().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
-        accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
+        // m_accounts.emplace_back();
+        // setCurrentAccountIndex( (int)m_accounts.size() - 1 );
+        // accountConfig().initAccount( "test_staging_FA", "FEB6F12EEF165E0BF19B8A1D02A2C3BEF5DA6B88897E241C3A47B12A6E2FC153" );
+        // accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
+
+        // m_accounts.emplace_back();
+        // setCurrentAccountIndex( (int)m_accounts.size() - 1 );
+        // accountConfig().initAccount( "test_staging_F95", "834C1DBBEC0E8A6E5262BF409CC66DDA6DB3B1A292B39B58CC83FEBA7FF33973" );
+        // accountConfig().m_downloadFolder = "/Users/alex/000-Downloads";
+
+        // setCurrentAccountIndex( 0 );
     }
 }
 
@@ -290,6 +298,7 @@ void Settings::setCurrentAccountIndex( int currentAccountIndex )
     ASSERT( m_currentAccountIndex >= 0 && m_currentAccountIndex < m_accounts.size() )
 }
 
+#ifndef WA_APP
 void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
 {
 //    std::thread( [ this, handle, &model ]
@@ -480,11 +489,9 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
         }
         
         saveSettings();
-        
-        
-
     });
 }
+#endif // not WA_APP
 
 void Settings::removeFromDownloads( int index )
 {

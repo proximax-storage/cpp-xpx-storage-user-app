@@ -1,5 +1,7 @@
 #include "Diff.h"
+#ifndef WA_APP
 #include "drive/Session.h"
+#endif
 #include "drive/Utils.h"
 #include "Utils.h"
 
@@ -42,7 +44,11 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 else
                 {
 
+#ifdef WA_APP
+                    //TODO_WA
+#else
                     hash = sirius::drive::calculateInfoHash((path / entryName).make_preferred(), sirius::Key(*driveKey) ).array();
+#endif
                     qWarning () << "driveKey: " << sirius::drive::toString(*driveKey).c_str();
                     qWarning () << "filename: " << (path / entryName).string().c_str();
                     qWarning () << "hash: " << sirius::drive::toString(hash).c_str();
@@ -132,7 +138,11 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             }
             else
             {
+#ifdef WA_APP
+    //TODO_WA
+#else
                 hash = sirius::drive::calculateInfoHash( (fsPath / entryName).make_preferred(), sirius::Key(driveKey) ).array();
+#endif
             }
 
             std::error_code errorCode(errno, std::generic_category());

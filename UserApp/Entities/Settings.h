@@ -10,8 +10,11 @@
 
 #include "crypto/KeyPair.h"
 #include "drive/Utils.h"
+
+#ifndef WA_APP
 #include "drive/Session.h"
 #include "libtorrent/torrent_handle.hpp"
+#endif
 
 #include "Drive.h"
 #include "DownloadChannel.h"
@@ -48,7 +51,9 @@ class Settings : public QObject
         Account& accountConfig();
         fs::path downloadFolder();
         void setCurrentAccountIndex( int currentAccountIndex );
+#ifndef WA_APP
         void onDownloadCompleted( lt::torrent_handle handle, Model& model );
+#endif
         void removeFromDownloads( int index );
 
     signals:

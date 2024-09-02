@@ -18,6 +18,14 @@
 #define CLIENT_SANDBOX_FOLDER "/modify_drive_data" // it is used for user modification torrents
 #define CLIENT_SANDBOX_FOLDER0 "modify_drive_data" // it is used for user modification torrents
 
+#ifdef WA_APP
+#define MAP_CONTAINS(map,key) (map.find(key) != map.end())
+#else
+#define MAP_CONTAINS(map,key) map.conains(key)
+#endif
+
+
+
 void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 QString rawHashToHex(const std::array<uint8_t, 32>& rawHash);

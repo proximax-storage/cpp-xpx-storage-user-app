@@ -1,3 +1,5 @@
+#ifndef WA_APP
+
 #include "StreamingView.h"
 #include "ui_StreamingView.h"
 
@@ -58,3 +60,4 @@ StreamingView::~StreamingView()
 {
 }
 
+#endif //#ifndef WA_APP

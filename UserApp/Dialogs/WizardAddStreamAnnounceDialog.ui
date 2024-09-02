@@ -36,18 +36,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLabel" name="m_errorText">
-         <property name="styleSheet">
-          <string notr="true">color: #CC0000</string>
-         </property>
-         <property name="text">
-          <string>Error text</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QHBoxLayout" name="horizontalLayout"/>
      </item>
      <item row="3" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">

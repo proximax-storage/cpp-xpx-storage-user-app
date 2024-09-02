@@ -15,6 +15,8 @@
 #include "Dialogs/ModalDialog.h"
 #include "drive/FlatDrive.h"
 
+#include <boost/beast/core/string_type.hpp>
+
 class OnChainClient;
 class Worker;
 
@@ -265,17 +267,20 @@ private slots:
     void dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
                                         const sirius::Hash256 &modificationHash,
                                         const sirius::drive::ModifyTrafficInfo &msg,
-                                        lt::string_view currentTask,
+                                        boost::string_view currentTask,
                                         bool isModificationQueued,
                                         bool isModificationFinished,
                                         const std::string &error);
     //void on_m_wizardAddStreamAnnouncementBtn_clicked();
 
+#ifndef WA_APP
+    //TODO_WA
     void onRowsRemovedAnnouncements();
-    void onRowsRemovedArchive();
     void onRowsInsertedAnnouncements();
+    void onRowsRemovedArchive();
     void onRowsInsertedArchive();
     void hideWizardUi();
+#endif
 
     void on_m_streamingTabView_currentChanged(int index);
     void invokePasteLinkDialog();

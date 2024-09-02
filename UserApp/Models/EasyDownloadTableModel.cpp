@@ -260,6 +260,9 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                     continue;
                 }
 
+#ifdef WA_APP
+                //TODO_WA
+#else
                 if ( ! dnInfo.m_ltHandle.is_valid() )
                 {
                     if ( info.m_progress == 0 )
@@ -278,7 +281,7 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                         isCompleted = true;
                     }
                 }
-                
+#endif
                 if ( isCompleted )
                 {
                     dnBytes     += dnInfo.m_size;
@@ -288,6 +291,9 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                 
                 isSomeChildsNotCompleted = true;
 
+#ifdef WA_APP \
+    //TODO_WA
+#else
                 std::vector<int64_t> fp = dnInfo.m_ltHandle.file_progress();
                 
                 //qDebug() << LOG_SOURCE << "fp.size(): " << fp.size();
@@ -302,6 +308,7 @@ void EasyDownloadTableModel::updateProgress( QItemSelectionModel* selectionModel
                 double progress = (totalBytes==0) ? 0 : (1000.0 * dnBytes) / double(totalBytes);
                 //qDebug() << LOG_SOURCE << "progress: " << progress << ". dnBytes: " << dnBytes << ". totalBytes: " << totalBytes;
                 info.m_progress = progress;
+#endif
             }
             
             if ( ! isSomeChildsNotCompleted )

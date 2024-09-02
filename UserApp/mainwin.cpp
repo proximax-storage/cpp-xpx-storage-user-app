@@ -31,7 +31,7 @@
 #include "Dialogs/ReplicatorOffBoardingDialog.h"
 #include "Dialogs/ReplicatorInfoDialog.h"
 #include "Dialogs/ModifyProgressPanel.h"
-#include "Dialogs/StreamingPanel.h"
+//#include "Dialogs/StreamingPanel.h"
 #include "PopupMenu.h"
 #include "Dialogs/EditDialog.h"
 
@@ -49,13 +49,18 @@
 #include <QListWidget>
 #include <QAction>
 #include <QToolTip>
-#include <QTcpServer>
+//#include <QTcpServer>
 #include <QFileDialog>
 #include <QStyledItemDelegate>
 #include <filesystem>
 #include <QShortcut>
 
 #include <boost/algorithm/string.hpp>
+
+#ifdef WA_APP
+#   define FS_TREE_FILE_NAME  "FsTree.bin"
+#endif
+
 
 MainWin* MainWin::m_instance = nullptr;
 
@@ -91,12 +96,12 @@ void MainWin::init()
 {
     gSkipDhtPktLogs = true;
     gKademliaLogs   = true;
-    
+
     if ( ! m_model->loadSettings() )
     {
         initGeometry();
         std::error_code ec;
-        if ( fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
+        if ( fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) || fs::exists( "/Users/alex2/Proj/cpp-xpx-storage-user-app", ec ) )
         {
             m_model->initForTests();
         }
@@ -434,16 +439,23 @@ void MainWin::init()
         m_modifyProgressPanel->setApproving();
     }, Qt::QueuedConnection);
 
+#ifndef WA_APP
+    //TODO_WA
+
     m_startViewingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelViewingStream(); });
     m_startViewingProgressPanel->setVisible(false);
 
     m_streamingProgressPanel = new ModifyProgressPanel( m_model, 350, 350, this, [this]{ cancelStreaming(); }, ModifyProgressPanel::create_announcement );
     m_streamingProgressPanel->setVisible(false);
+#endif
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
 
+#ifndef WA_APP
+            //TODO_WA
         updateViewerProgressPanel( index );
         updateStreamerProgressPanel( index );
+#endif
 
         // Downloads tab
         if (index == 0) {
@@ -805,9 +817,13 @@ void MainWin::init()
     ui->label_2->hide();
     ui->label_7->hide();
 
+
+#ifndef WA_APP
+    //TODO_WA
     initStreaming();
     initWizardStreaming();
     initWizardArchiveStreaming();
+#endif
 
     std::error_code ec;
     // if ( ! fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
@@ -849,7 +865,8 @@ void MainWin::drivesInitialized()
         }
     }
 
-    if (!m_model->getDrives().empty() && (!m_model->getDrives().contains(m_model->currentDriveKey()) || m_model->currentDriveKey().empty())) {
+    if ( ! m_model->getDrives().empty() &&
+         ( ! MAP_CONTAINS( m_model->getDrives(),m_model->currentDriveKey() ) || m_model->currentDriveKey().empty())) {
         const auto driveKey = ui->m_driveCBox->currentData().toString().toStdString();
         m_model->setCurrentDriveKey(driveKey);
         setCurrentDriveOnUi(driveKey);
@@ -1842,9 +1859,13 @@ void MainWin::updateDriveWidgets(const std::string& driveKey, int state, bool it
                     }
                     else
                     {
+#ifndef WA_APP
+                        //TODO_WA
+
                         m_streamingProgressPanel->setApproved();
                         wizardUpdateStreamAnnouncementTable();
                         wizardUpdateArchiveTable();
+#endif
                     }
                 }
 
@@ -2534,7 +2555,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     message.append("Your modification was DECLINED, Drive: ");
     message.append(driveAlias.c_str());
     showNotification(message, error);
-	addNotification(message);
+    addNotification(message);
 }
 
 void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32> &driveId, const QString &modificationId) {
@@ -3343,7 +3364,10 @@ void MainWin::onFsTreeReceived( const std::string& driveKey, const std::array<ui
         }
 
         // inform stream annotations about possible changes
+#ifndef WA_APP
+        //TODO_WA
         onFsTreeReceivedForStreamAnnotations( *drive );
+#endif
     }
 
     m_model->applyFsTreeForChannels(driveKey, fsTree, fsTreeHash);
@@ -3555,7 +3579,7 @@ void MainWin::calculateDiffAsync(const std::function<void(int, std::string)>& ca
 void MainWin::dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
                                              const sirius::Hash256 &modificationHash,
                                              const sirius::drive::ModifyTrafficInfo &msg,
-                                             lt::string_view,
+                                             boost::string_view,
                                              bool isModificationQueued,
                                              bool isModificationFinished,
                                              const std::string &error) {
@@ -3667,8 +3691,11 @@ void MainWin::onRunContract() {
 
 void MainWin::on_m_streamingTabView_currentChanged(int index)
 {
+#ifndef WA_APP
+    //TODO_WA
     wizardUpdateStreamAnnouncementTable();
     wizardUpdateArchiveTable();
+#endif
 }
 
 
@@ -3807,7 +3834,7 @@ void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
                                         callback); // feedback is unused for now
 
 //    m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
-//    
+//
 //    m_modalDialog->exec();
 }
 
@@ -3916,7 +3943,12 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
             }
             
 //            childIt->m_ltHandle = m_model->downloadFile( channel->getKey(), childIt->m_hash, outputFolder );
+#ifdef WA_APP
+            //TODO_WA
+            m_settings->addDownloadTorrent( *m_model, channel->getKey(), childIt->m_hash, outputFolder );
+#else
             childIt->m_ltHandle = m_settings->addDownloadTorrent( *m_model, channel->getKey(), childIt->m_hash, outputFolder );
+#endif
             childIt->m_isStarted = true;
 
             DownloadInfo downloadInfo;
@@ -3935,7 +3967,10 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const std::string& chan
             downloadInfo.setChannelOutdated(false);
             downloadInfo.setCompleted(false);
             downloadInfo.setProgress(0);
+#ifndef WA_APP
+            //TODO_WA
             downloadInfo.setHandle( childIt->m_ltHandle );
+#endif
             downloadInfo.setEasyDownloadId( downloadId );
 
             m_model->downloads().insert( m_model->downloads().begin(), downloadInfo );

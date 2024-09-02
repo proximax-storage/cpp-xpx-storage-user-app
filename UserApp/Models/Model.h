@@ -11,7 +11,10 @@
 
 #include <cereal/types/chrono.hpp>
 
+#ifndef WA_APP
 #include "drive/ViewerSession.h"
+#endif
+
 #include "drive/FsTree.h"
 #include "drive/FlatDrive.h"
 #include "xpxchaincpp/model/storage/drives_page.h"

@@ -4,7 +4,9 @@
 #include "LocalDriveItem.h"
 #include "Engines/StorageEngine.h"
 #include "utils/HexParser.h"
+#ifndef WA_APP
 #include "drive/ViewerSession.h"
+#endif
 #include "Entities/Settings.h"
 #include "Entities/Settings.h"
 
@@ -107,9 +109,11 @@ const sirius::crypto::KeyPair& Model::getKeyPair() {
     return m_settings->accountConfig().m_keyPair.value();
 }
 
+#ifndef WA_APP
 void Model::onDownloadCompleted(lt::torrent_handle handle) {
     m_settings->onDownloadCompleted(handle,*this);
 }
+#endif
 
 void Model::addDownloadChannel(const DownloadChannel &channel) {
     m_settings->accountConfig().m_dnChannels.insert({ channel.getKey(), channel });
@@ -170,7 +174,8 @@ void Model::removeMyReplicator(const std::string& replicatorKey) {
 void Model::setCurrentDriveKey( const std::string& driveKey )
 {
     const auto driveKyeUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
-    if ( !m_settings->accountConfig().m_drives.contains(driveKyeUpperCase) )
+    if ( ! MAP_CONTAINS(m_settings->accountConfig().m_drives, driveKyeUpperCase) )
+    //if ( !m_settings->accountConfig().m_drives.contains(driveKyeUpperCase) )
     {
         qWarning() << "Model::setCurrentDriveKey: invalid drive key: " << driveKyeUpperCase;
     }
@@ -358,7 +363,9 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
 
     for( auto& remoteDrive : remoteDrives )
     {
-        if (drives.contains(remoteDrive.data.multisig)) {
+//        if (drives.contains(remoteDrive.data.multisig)) {
+        if ( MAP_CONTAINS(drives, remoteDrive.data.multisig)) {
+
             const auto driveKeyUpperCase = QString::fromStdString(remoteDrive.data.multisig).toUpper().toStdString();
             Drive& drive = drives[driveKeyUpperCase];
             drive.setReplicatorsCount(remoteDrive.data.replicatorCount);
@@ -441,7 +448,8 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
                 }
 
                 for (const auto& t : torrentsList) {
-                    if (filesData.contains(t.fileName())) {
+                    //if (filesData.contains(t.fileName())) {
+                    if ( MAP_CONTAINS(filesData, t.fileName())) {
                         emit addTorrentFileToStorageSession(t.fileName().toStdString(),
                                                             pathToDriveData,
                                                             rawHashFromHex(currentDrive.getKey().c_str()),
@@ -478,7 +486,8 @@ std::map<std::string, Drive>& Model::getDrives()
 
 Drive* Model::currentDrive()
 {
-    if (m_settings->accountConfig().m_drives.contains(m_settings->accountConfig().m_currentDriveKey))
+//    if (m_settings->accountConfig().m_drives.contains(m_settings->accountConfig().m_currentDriveKey))
+    if ( MAP_CONTAINS( m_settings->accountConfig().m_drives, m_settings->accountConfig().m_currentDriveKey) )
     {
         return &m_settings->accountConfig().m_drives[m_settings->accountConfig().m_currentDriveKey];
     }
@@ -490,7 +499,8 @@ Drive* Model::findDrive( const std::string& driveKey )
 {
     const auto driveKeyUpperCase = QString::fromStdString(driveKey).toUpper().toStdString();
     auto& drives = m_settings->accountConfig().m_drives;
-    if (drives.contains(driveKeyUpperCase)) {
+    //if ( drives.contains(driveKeyUpperCase) ) {
+    if ( MAP_CONTAINS(drives,driveKeyUpperCase) ) {
         return &drives[driveKeyUpperCase];
     }
 
@@ -558,7 +568,8 @@ void Model::removeFromDownloads( int rowIndex )
 
 DownloadChannel* Model::currentDownloadChannel()
 {
-    if (m_settings->accountConfig().m_dnChannels.contains(m_settings->accountConfig().m_currentDownloadChannelKey))
+    //if (m_settings->accountConfig().m_dnChannels.contains(m_settings->accountConfig().m_currentDownloadChannelKey))
+    if ( MAP_CONTAINS( m_settings->accountConfig().m_dnChannels, m_settings->accountConfig().m_currentDownloadChannelKey ))
     {
         return &m_settings->accountConfig().m_dnChannels[m_settings->accountConfig().m_currentDownloadChannelKey];
     }
@@ -798,7 +809,11 @@ void Model::requestStreamStatus( const StreamInfo& streamInfo, StreamStatusRespo
 
 void Model::setModificationStatusResponseHandler( ModificationStatusResponseHandler handler )
 {
+#ifdef WA_APP
+//TODO_WA
+#else
     gStorageEngine->m_session->setModificationStatusResponseHandler( handler );
+#endif
 }
 
 DriveContractModel& Model::driveContractModel() {
@@ -810,6 +825,10 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                         const std::string&     modificationHash,
                                         std::optional<boost::asio::ip::udp::endpoint> replicatorEndpoint )
 {
+#ifdef WA_APP
+//TODO_WA
+#else
+
 //    std::error_code ec;
 //    if ( fs::exists( "/Users/alex/Proj/cpp-xpx-storage-user-app", ec ) )
 //    {
@@ -827,6 +846,7 @@ void Model::requestModificationStatus(  const std::string&     replicatorKey,
                                                                               hexStringToHash(modificationHash),
                                                                              replicatorEndpoint );
 //    }
+#endif
 }
 
 const std::vector<EasyDownloadInfo>& Model::easyDownloads() const

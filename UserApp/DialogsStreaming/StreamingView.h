@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef WA_APP
+
 #include <QDialog>
 
 #ifdef _WIN64
@@ -46,3 +48,5 @@ private:
     std::function<void()> m_cancelStreamingFunc;
     std::function<void()> m_finishStreamingFunc;
 };
+
+#endif

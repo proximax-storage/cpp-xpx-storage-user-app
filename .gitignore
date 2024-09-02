@@ -60,3 +60,6 @@ compile_commands.json
 /build/
 /_build/
 /_bin/
+
+.DS_Store
+

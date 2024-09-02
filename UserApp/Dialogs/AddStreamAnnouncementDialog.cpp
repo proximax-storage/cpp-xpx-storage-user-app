@@ -5,6 +5,8 @@
 #include "drive/Utils.h"
 #include "./ui_AddStreamAnnouncementDialog.h"
 
+#include <fstream>
+
 #include <QFileDialog>
 #include <QPushButton>
 #include <QRegularExpression>

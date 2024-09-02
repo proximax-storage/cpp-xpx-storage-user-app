@@ -543,7 +543,7 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         return;
     }
 
-    if (!mDataModifications.contains(driveId)) {
+    if ( ! MAP_CONTAINS( mDataModifications,driveId)) {
         mDataModifications.insert({ driveId, {} });
     }
 
@@ -630,11 +630,11 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
         }
 
         qInfo() << "TransactionsEngine::sendModification. Confirmed DataModificationApproval transaction hash: " << notification.meta.hash.c_str();
-        if (!mDataModificationApprovals.contains(driveId)) {
+        if ( ! MAP_CONTAINS( mDataModificationApprovals, driveId )) {
             mDataModificationApprovals.insert({ driveId, {} });
         }
 
-        if (mDataModificationApprovals[driveId].contains(modificationId)) {
+        if ( MAP_CONTAINS( mDataModificationApprovals[driveId], modificationId )) {
             qWarning() << "TransactionsEngine::sendModification. ModificationId already exists (skip!) : " << rawHashToHex(modificationId);
             return;
         }
@@ -1614,12 +1614,12 @@ void TransactionsEngine::streamFinish(const std::array<uint8_t, 32>& rawDrivePub
         }
 
         qInfo() << "TransactionsEngine::streamFinish. Confirmed DataModificationApproval transaction hash: " << notification.meta.hash.c_str();
-        if (!mDataModificationApprovals.contains(rawDrivePubKey))
+        if ( ! MAP_CONTAINS( mDataModificationApprovals, rawDrivePubKey ))
         {
             mDataModificationApprovals.insert({ rawDrivePubKey, {} });
         }
 
-        if (mDataModificationApprovals[rawDrivePubKey].contains(modificationId))
+        if ( MAP_CONTAINS( mDataModificationApprovals[rawDrivePubKey], modificationId ))
         {
             qWarning() << "TransactionsEngine::streamFinish. ModificationId already exists (skip!) : " << rawHashToHex(modificationId);
             return;

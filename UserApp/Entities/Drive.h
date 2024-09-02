@@ -3,8 +3,17 @@
 
 #include <QObject>
 #include "drive/FsTree.h"
-#include "LocalDriveItem.h"
 #include "drive/ActionList.h"
+#include "LocalDriveItem.h"
+
+#ifdef WA_APP
+#   include <boost/asio.hpp>
+//#   include "types.h"
+    // namespace sirius { namespace drive {
+    // class FsTree;
+    // class ActionList;
+    // }}
+#endif
 
 using  endpoint_list  = std::vector<boost::asio::ip::udp::endpoint>;
 

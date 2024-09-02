@@ -23,7 +23,7 @@ void OnChainClient::start(const std::string& privateKey,
             return;
         }
 
-        if (mLoadedDrives.contains(id)) {
+        if ( MAP_CONTAINS( mLoadedDrives, id )) {
             mLoadedDrives[id].push_back(drivesPage);
             if (drivesPage.pagination.pageNumber == drivesPage.pagination.totalPages) {
                 emit drivesLoaded(mLoadedDrives[id]);
@@ -40,7 +40,7 @@ void OnChainClient::start(const std::string& privateKey,
             return;
         }
 
-        if (mLoadedChannels.contains(id)) {
+        if ( MAP_CONTAINS( mLoadedChannels, id )) {
             mLoadedChannels[id].push_back(channelsPage);
             if (channelsPage.pagination.pageNumber == channelsPage.pagination.totalPages) {
                 emit downloadChannelsLoaded(type, mLoadedChannels[id]);
