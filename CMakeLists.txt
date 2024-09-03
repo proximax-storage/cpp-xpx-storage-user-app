@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+if(NOT DEFINED EMSCRIPTEN)
+
 project(cpp-xpx-storage-user-app LANGUAGES CXX)
 
 if(POLICY CMP0074)
@@ -110,3 +112,5 @@ elseif (WIN32 OR WIN64)
         file(COPY resources DESTINATION ${CMAKE_BINARY_DIR}/UserApp/Release)
     endif()
 endif()
+
+endif() # if(NOT DEFINED EMSCRIPTEN)
