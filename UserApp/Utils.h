@@ -21,7 +21,7 @@
 #ifdef WA_APP
 #define MAP_CONTAINS(map,key) (map.find(key) != map.end())
 #else
-#define MAP_CONTAINS(map,key) map.conains(key)
+#define MAP_CONTAINS(map,key) map.contains(key)
 #endif
 
 
