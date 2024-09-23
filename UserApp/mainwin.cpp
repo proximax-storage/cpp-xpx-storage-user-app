@@ -54,6 +54,7 @@
 #include <QStyledItemDelegate>
 #include <filesystem>
 #include <QShortcut>
+#include <QSpinBox>
 
 #include <boost/algorithm/string.hpp>
 
@@ -831,11 +832,25 @@ void MainWin::init()
     //     ui->tabWidget->setTabVisible( 4, false );
     // }
 
+#if defined(NDEBUG) // if release
+    // Hide dbg-downloads
+    ui->tabWidget->setTabVisible( 0, false );
+
     // Hide contracts
     ui->tabWidget->setTabVisible( 4, false );
 
     // Hide streaming
+    ui->tabWidget->setTabVisible( 5, false );
+#else
+    // Show dbg-downloads
+    ui->tabWidget->setTabVisible( 0, true );
+
+    // Show contracts
+    ui->tabWidget->setTabVisible( 4, true );
+
+    // Show streaming
     ui->tabWidget->setTabVisible( 5, true );
+#endif
 
     m_easyDownloadTableModel->updateProgress( ui->m_easyDownloadTable->selectionModel() );
 
