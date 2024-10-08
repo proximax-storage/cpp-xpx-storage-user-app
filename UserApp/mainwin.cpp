@@ -816,7 +816,7 @@ void MainWin::init()
     // }
 
     // Hide contracts
-    ui->tabWidget->setTabVisible( 4, false );
+    ui->tabWidget->setTabVisible( 4, true );
 
     // Hide streaming
     ui->tabWidget->setTabVisible( 5, true );
