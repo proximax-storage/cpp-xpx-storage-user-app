@@ -67,7 +67,7 @@ ENV BUILD_DIR /home/cempl/repositories/cpp-xpx-storage-user-app
 # FROM sirius-so-app:1 AS BUILDER
 WORKDIR $BUILD_DIR
 COPY . /app-src
-RUN cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug /app-src && \
+RUN cmake -G Ninja -DCMAKE_BUILD_TYPE=Release /app-src && \
     cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)
 ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 RUN cp /app-src/tool.desktop $BUILD_DIR/UserApp/
