@@ -18,6 +18,9 @@ pipeline {
     
     stages {
         stage('Linux Build') { 
+            when {
+                tag "release-v*"   // only run these stage in tag release-*
+            }
             steps {
                 echo 'build inside a docker'                
                 script {
@@ -67,6 +70,9 @@ pipeline {
         }
 
         stage('Windows build') {
+            when {
+                tag "release-v*"   // only run these stage in tag release-*
+            }
             steps {
                 echo 'build inside a docker'                
                 script {
@@ -120,6 +126,11 @@ pipeline {
             slackSend channel: '#devops',
                 color: 'bad',
                 message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+        }
+        success {
+            slackSend channel: '#devops',
+                color: 'good',
+                message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* completed successfully :100:"
         }
     }
 }
