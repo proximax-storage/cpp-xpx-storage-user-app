@@ -115,8 +115,6 @@ file(GLOB PROJECT_SOURCES
     "ErrorCodeTranslator/*.cpp"
     "ErrorCodeTranslator/*.txt"
     "SignalEmitters/*.h"
-    "SignalEmitters/*.cpp"
-
     ${TS_FILES}
 )
 

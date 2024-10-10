@@ -9,8 +9,8 @@ public:
     Q_OBJECT
 
 public:
-    explicit DialogSignals(QObject* parent);
-    ~DialogSignals() override;
+    explicit DialogSignals(QObject* parent) : QObject(parent) {}
+    ~DialogSignals() override {}
 
 public:
 signals:
