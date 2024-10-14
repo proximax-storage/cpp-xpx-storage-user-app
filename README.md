@@ -15,6 +15,15 @@ cd cpp-xpx-storage-user-app
 git submodule update --init --recursive
 ```
 
+## Build bundle for MacOS
+```shell
+macdeployqt ./cpp-xpx-storage-user-app/_release/UserApp/StorageClientApp.app
+cd ./cpp-xpx-storage-user-app/_release/UserApp
+mkdir StorageClientAppDMG
+cp -R ./StorageClientApp.app ./StorageClientAppDMG/
+hdiutil create -volname "StorageClientApp" -srcfolder ./StorageClientAppDMG -ov -format UDZO ./StorageClientApp.dmg
+```
+
 ### Build cpp-xpx-storage-user-app
 ```shell
 mkdir build && cd build
