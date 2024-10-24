@@ -82,10 +82,18 @@ void StorageEngine::start()
     bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
                            (uint16_t)atoi(addressAndPort[1].c_str()) );
 
+    std::string ltAddress = "0.0.0.0:";
+#ifdef __APPLE__
+    if ( addressAndPort[0].size() > 7 && addressAndPort[0].substr(0,7) == "192.168")
+    {
+        ltAddress = "192.168.20.30:";
+    }
+#endif
     gStorageEngine->init(mp_model->getKeyPair(),
-                         "0.0.0.0:" + mp_model->getUdpPort(),
+                         ltAddress + mp_model->getUdpPort(),
                          bootstraps,
                          errorsCallback );
+
 }
 
 void StorageEngine::restart()
