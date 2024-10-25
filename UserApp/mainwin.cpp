@@ -2663,8 +2663,21 @@ void MainWin::loadBalance() {
             return mosaic.id == m_XPX_MOSAIC_ID;
         });
 
-        const uint64_t balance = mosaicIterator == info.mosaics.end() ? 0 : mosaicIterator->amount;
-        ui->m_balanceValue->setText(QString::number(balance));
+        if (mosaicIterator == info.mosaics.end()) {
+            ui->m_balanceValue->setText(QString::number(0));
+        } else {
+            uint64_t decimals = 1000000;
+            uint64_t integerPart = mosaicIterator->amount / decimals;
+            uint64_t fractionalPart = mosaicIterator->amount % decimals;
+
+            QLocale locale(QLocale::French);
+            const QString formattedIntegerPart = locale.toString(integerPart);
+            const QString formattedBalance = QString("%1.%2")
+                    .arg(formattedIntegerPart)
+                    .arg(fractionalPart, 6, 10, QChar('0'));
+
+            ui->m_balanceValue->setText(formattedBalance);
+        }
     });
 }
 
