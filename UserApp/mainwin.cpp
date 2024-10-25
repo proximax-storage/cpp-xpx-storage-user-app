@@ -2662,6 +2662,8 @@ void MainWin::loadBalance() {
         {
             return mosaic.id == m_XPX_MOSAIC_ID;
         });
+                
+        //qWarning() << "+@@@@+ MainWin::loadBalance: " << mosaicIterator->amount;
 
         if (mosaicIterator == info.mosaics.end()) {
             ui->m_balanceValue->setText(QString::number(0));

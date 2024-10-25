@@ -48,7 +48,7 @@ public:
     void serialize( Archive &ar )
     {
         ar( m_hash, m_path, m_fileName, m_size, m_downloadFolder, m_isCompleted );
-        qDebug() << "EasyDownloadChildInfo: " << m_path.c_str() << " size: " << m_size;
+        //qDebug() << "EasyDownloadChildInfo: " << m_path.c_str() << " size: " << m_size;
     }
 };
 
