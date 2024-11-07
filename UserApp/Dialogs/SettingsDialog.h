@@ -33,6 +33,7 @@ private:
     void updateAccountFields();
     void fillAccountCbox( bool initSettings );
     void validate();
+    void initTooltips();
 
 private:
     Ui::SettingsDialog* ui;

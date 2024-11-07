@@ -26,30 +26,74 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Save");
 
     setModal(true);
-
+    initTooltips();
     fillAccountCbox( initSettings );
     updateAccountFields();
 
     ui->m_transactionFeeMultiplier->setText(QString::number(mpSettings->m_feeMultiplier));
 
-    QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})")));
-    connect(ui->m_restBootAddrField, &QLineEdit::textChanged, this, [this,addressTemplate] (auto text)
+    ui->m_replicatorBootAddrField->setEditable(true);
+    ui->m_restBootAddrFieldCbox->setEditable(true);
+    ui->m_restBootAddrFieldCbox->addItem(mpSettings->SIRIUS_MAINNET);
+
+    const QString mainnetHost = std::get<0>(mpSettings->MAINNET_API_NODES[0]) + ":" + std::get<1>(mpSettings->MAINNET_API_NODES[0]);
+    ui->m_restBootAddrFieldCbox->setItemData(ui->m_restBootAddrFieldCbox->count() - 1, mainnetHost, Qt::UserRole);
+    ui->m_restBootAddrFieldCbox->addItem(mpSettings->SIRIUS_TESTNET);
+
+    const QString testnetHost = std::get<0>(mpSettings->TESTNET_API_NODES[0]) + ":" + std::get<1>(mpSettings->TESTNET_API_NODES[0]);
+    ui->m_restBootAddrFieldCbox->setItemData(ui->m_restBootAddrFieldCbox->count() - 1, testnetHost, Qt::UserRole);
+
+    QRegularExpression addressTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"(((Sirius Mainnet)|(Sirius Testnet 2)|(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|([0-9]{1,3}\.){3}[0-9]{1,3}):[0-9]{1,5}))")));
+    connect(ui->m_restBootAddrFieldCbox, QOverload<const QString&>::of(&QComboBox::currentTextChanged), this, [this,addressTemplate] (auto text)
     {
+        if (text == mpSettings->SIRIUS_MAINNET) {
+            ui->m_replicatorBootAddrField->addItem(mpSettings->SIRIUS_MAINNET);
+            const QString mainnetReplicator = std::get<0>(mpSettings->MAINNET_REPLICATORS[0]) + ":" + std::get<1>(mpSettings->MAINNET_REPLICATORS[0]);
+            ui->m_replicatorBootAddrField->setItemData(ui->m_replicatorBootAddrField->count() - 1, mainnetReplicator, Qt::UserRole);
+            ui->m_replicatorBootAddrField->setCurrentIndex(ui->m_replicatorBootAddrField->count() - 1);
+            ui->m_replicatorBootAddrField->setDisabled(true);
+        } else if (text == mpSettings->SIRIUS_TESTNET) {
+            ui->m_replicatorBootAddrField->addItem(mpSettings->SIRIUS_TESTNET);
+            const QString testnetReplicator = std::get<0>(mpSettings->TESTNET_REPLICATORS[0]) + ":" + std::get<1>(mpSettings->TESTNET_REPLICATORS[0]);
+            ui->m_replicatorBootAddrField->setItemData(ui->m_replicatorBootAddrField->count() - 1, testnetReplicator, Qt::UserRole);
+            ui->m_replicatorBootAddrField->setCurrentIndex(ui->m_replicatorBootAddrField->count() - 1);
+            ui->m_replicatorBootAddrField->setDisabled(true);
+        } else {
+            for (int i = ui->m_replicatorBootAddrField->count() - 1; i >= 0; --i) {
+                if ((ui->m_replicatorBootAddrField->itemText(i) == mpSettings->SIRIUS_MAINNET) ||
+                    (ui->m_replicatorBootAddrField->itemText(i) == mpSettings->SIRIUS_TESTNET)) {
+                    ui->m_replicatorBootAddrField->removeItem(i);
+                }
+            }
+
+            ui->m_replicatorBootAddrField->setEnabled(true);
+        }
+
         if (!addressTemplate.match(text).hasMatch()) {
-            QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
+            QToolTip::showText(ui->m_restBootAddrFieldCbox->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {},3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-            ui->m_restBootAddrField->setProperty("is_valid", false);
+            ui->m_restBootAddrFieldCbox->setProperty("is_valid", false);
+        } else if ((text != mpSettings->SIRIUS_MAINNET && text != mpSettings->SIRIUS_TESTNET) && !isResolvedToIpAddress(text)) {
+            const QString error = "Host not found: " + text;
+            QToolTip::showText(ui->m_restBootAddrFieldCbox->mapToGlobal(QPoint(0, 15)), tr(error.toStdString().c_str()), nullptr, {},3000);
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_restBootAddrFieldCbox->setProperty("is_valid", false);
         } else {
             QToolTip::hideText();
-            ui->m_restBootAddrField->setProperty("is_valid", true);
+            ui->m_restBootAddrFieldCbox->setProperty("is_valid", true);
             validate();
         }
     });
 
-    connect(ui->m_replicatorBootAddrField, &QLineEdit::textChanged, this, [this, addressTemplate] (auto text)
+    connect(ui->m_replicatorBootAddrField, QOverload<const QString&>::of(&QComboBox::currentTextChanged), this, [this, addressTemplate] (auto text)
     {
-        if (!addressTemplate.match(text).hasMatch()) {
+       if (!addressTemplate.match(text).hasMatch()) {
             QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
+            ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+            ui->m_replicatorBootAddrField->setProperty("is_valid", false);
+        } else if ((text != mpSettings->SIRIUS_MAINNET && text != mpSettings->SIRIUS_TESTNET) && !isResolvedToIpAddress(text)) {
+            const QString error = "Host not found: " + text;
+            QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr(error.toStdString().c_str()), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->m_replicatorBootAddrField->setProperty("is_valid", false);
         } else {
@@ -168,19 +212,32 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
         }
     });
 
-    if (!addressTemplate.match(ui->m_restBootAddrField->text()).hasMatch()) {
-        QToolTip::showText(ui->m_restBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
+
+    auto restBootAddrFieldRaw = ui->m_restBootAddrFieldCbox->currentText();
+    if (!addressTemplate.match(restBootAddrFieldRaw).hasMatch()) {
+        QToolTip::showText(ui->m_restBootAddrFieldCbox->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-        ui->m_restBootAddrField->setProperty("is_valid", false);
+        ui->m_restBootAddrFieldCbox->setProperty("is_valid", false);
+    } else if ((restBootAddrFieldRaw != mpSettings->SIRIUS_MAINNET || restBootAddrFieldRaw != mpSettings->SIRIUS_TESTNET) && !isResolvedToIpAddress(restBootAddrFieldRaw)) {
+        const QString error = "Host not found: " + restBootAddrFieldRaw;
+        QToolTip::showText(ui->m_restBootAddrFieldCbox->mapToGlobal(QPoint(0, 15)), tr(error.toStdString().c_str()), nullptr, {}, 3000);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_restBootAddrFieldCbox->setProperty("is_valid", false);
     } else {
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-        ui->m_restBootAddrField->setProperty("is_valid", true);
+        ui->m_restBootAddrFieldCbox->setProperty("is_valid", true);
         validate();
     }
 
-    if (!addressTemplate.match(ui->m_replicatorBootAddrField->text()).hasMatch()) {
+    auto replicatorBootAddrFieldRaw = ui->m_replicatorBootAddrField->currentText();
+    if (!addressTemplate.match(replicatorBootAddrFieldRaw).hasMatch()) {
         QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr("Invalid address!"), nullptr, {}, 3000);
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+        ui->m_replicatorBootAddrField->setProperty("is_valid", false);
+    } else if ((replicatorBootAddrFieldRaw != mpSettings->SIRIUS_MAINNET || replicatorBootAddrFieldRaw != mpSettings->SIRIUS_TESTNET) && !isResolvedToIpAddress(replicatorBootAddrFieldRaw)) {
+        const QString error = "Host not found: " + replicatorBootAddrFieldRaw;
+        QToolTip::showText(ui->m_replicatorBootAddrField->mapToGlobal(QPoint(0, 15)), tr(error.toStdString().c_str()), nullptr, {}, 3000);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
         ui->m_replicatorBootAddrField->setProperty("is_valid", false);
     } else {
@@ -232,9 +289,9 @@ SettingsDialog::SettingsDialog( Settings* settings, QWidget *parent, bool initSe
     setToolTipDuration(10);
     setWindowTitle("Settings");
     setFocus();
-    ui->m_restBootAddrField->setFocus();
+    ui->m_restBootAddrFieldCbox->setFocus();
 
-    setTabOrder(ui->m_restBootAddrField, ui->m_replicatorBootAddrField);
+    setTabOrder(ui->m_restBootAddrFieldCbox, ui->m_replicatorBootAddrField);
     setTabOrder(ui->m_replicatorBootAddrField, ui->m_portField);
     setTabOrder(ui->m_portField, ui->m_accountCbox);
     setTabOrder(ui->m_accountCbox, ui->m_newAccountBtn);
@@ -252,8 +309,20 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::updateAccountFields()
 {
-    ui->m_restBootAddrField->setText( QString::fromStdString( mpSettingsDraft->m_restBootstrap ));
-    ui->m_replicatorBootAddrField->setText( QString::fromStdString( mpSettingsDraft->m_replicatorBootstrap ));
+    int index = ui->m_restBootAddrFieldCbox->findText(QString::fromStdString( mpSettingsDraft->m_restBootstrap ));
+    if (index != -1) {
+        ui->m_restBootAddrFieldCbox->setCurrentIndex(index);
+    } else {
+        ui->m_restBootAddrFieldCbox->addItem(QString::fromStdString( mpSettingsDraft->m_restBootstrap ));
+    }
+
+    index = ui->m_replicatorBootAddrField->findText(QString::fromStdString( mpSettingsDraft->m_replicatorBootstrap ));
+    if (index != -1) {
+        ui->m_replicatorBootAddrField->setCurrentIndex(index);
+    } else {
+        ui->m_replicatorBootAddrField->addItem(QString::fromStdString( mpSettingsDraft->m_replicatorBootstrap ));
+    }
+
     ui->m_portField->setValidator( new QIntValidator(1025, 65535, this) );
     ui->m_portField->setText( QString::fromStdString( mpSettingsDraft->m_udpPort ));
     ui->m_dnFolderField->setText( QString::fromStdString( mpSettingsDraft->downloadFolder().string() ));
@@ -261,8 +330,20 @@ void SettingsDialog::updateAccountFields()
 
 void SettingsDialog::accept()
 {
-    mpSettingsDraft->m_restBootstrap           = ui->m_restBootAddrField->text().toStdString();
-    mpSettingsDraft->m_replicatorBootstrap     = ui->m_replicatorBootAddrField->text().toStdString();
+    if (ui->m_restBootAddrFieldCbox->currentText() == mpSettings->SIRIUS_MAINNET ||
+        ui->m_restBootAddrFieldCbox->currentText() == mpSettings->SIRIUS_TESTNET) {
+        mpSettingsDraft->m_restBootstrap = extractEndpointFromComboBox(ui->m_restBootAddrFieldCbox);
+    } else {
+        mpSettingsDraft->m_restBootstrap = ui->m_restBootAddrFieldCbox->currentText().toStdString();
+    }
+
+    if (ui->m_replicatorBootAddrField->currentText() == mpSettings->SIRIUS_MAINNET ||
+        ui->m_replicatorBootAddrField->currentText() == mpSettings->SIRIUS_TESTNET) {
+        mpSettingsDraft->m_replicatorBootstrap = extractEndpointFromComboBox(ui->m_replicatorBootAddrField);
+    } else {
+        mpSettingsDraft->m_replicatorBootstrap = ui->m_replicatorBootAddrField->currentText().toStdString();
+    }
+
     mpSettingsDraft->m_udpPort                 = ui->m_portField->text().toStdString();
     mpSettingsDraft->m_feeMultiplier           = ui->m_transactionFeeMultiplier->text().toDouble();
     mpSettingsDraft->accountConfig().m_downloadFolder = ui->m_dnFolderField->text().toStdString();
@@ -286,15 +367,18 @@ void SettingsDialog::accept()
 
     mpSettings->m_restBootstrap           = mpSettingsDraft->m_restBootstrap;
     mpSettings->m_replicatorBootstrap     = mpSettingsDraft->m_replicatorBootstrap;
+    mpSettings->m_udpPort                 = mpSettingsDraft->m_udpPort;
     mpSettings->accountConfig().m_downloadFolder = mpSettingsDraft->accountConfig().m_downloadFolder;
     mpSettings->m_accounts                = mpSettingsDraft->m_accounts;
     mpSettings->m_isDriveStructureAsTree  = mpSettingsDraft->m_isDriveStructureAsTree;
     mpSettings->setCurrentAccountIndex( mpSettingsDraft->m_currentAccountIndex );
     mpSettings->saveSettings();
 
-    qDebug() << LOG_SOURCE << "accept name: " << QString::fromStdString( mpSettings->accountConfig().m_accountName );
-    qDebug() << LOG_SOURCE << "accept key: " << QString::fromStdString( mpSettings->accountConfig().m_publicKeyStr );
-    qDebug() << LOG_SOURCE << "accept privateKey: " << QString::fromStdString( mpSettings->accountConfig().m_privateKeyStr );
+    qDebug() << "SettingsDialog::accept: accept name: " << QString::fromStdString( mpSettings->accountConfig().m_accountName );
+    qDebug() << "SettingsDialog::accept: accept key: " << QString::fromStdString( mpSettings->accountConfig().m_publicKeyStr );
+    qDebug() << "SettingsDialog::accept: accept privateKey: " << QString::fromStdString( mpSettings->accountConfig().m_privateKeyStr );
+    qDebug() << "SettingsDialog::accept: REST bootstrap address: " << mpSettings->m_restBootstrap;
+    qDebug() << "SettingsDialog::accept: REPLICATORS bootstrap addresses: " << mpSettings->m_replicatorBootstrap;
 
     emit closeLibtorrentPorts();
     QDialog::accept();
@@ -407,7 +491,7 @@ void SettingsDialog::onReset()
 }
 
 void SettingsDialog::validate() {
-    if (ui->m_restBootAddrField->property("is_valid").toBool() &&
+    if (ui->m_restBootAddrFieldCbox->property("is_valid").toBool() &&
         ui->m_replicatorBootAddrField->property("is_valid").toBool() &&
         ui->m_portField->property("is_valid").toBool() &&
         ui->m_transactionFeeMultiplier->property("is_valid").toBool() &&
@@ -416,4 +500,38 @@ void SettingsDialog::validate() {
     } else {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
     }
+}
+
+void SettingsDialog::initTooltips() {
+    const int tooltipsDuration = 20000;
+    const int width = 18;
+    const int height = 18;
+    QIcon helpIcon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation);
+    ui->m_restServerHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_restServerHelp->setToolTip("This field is for entering the IP address or domain name of the gateway\n"
+                                     "used to connect to the blockchain and interact with its nodes.");
+    ui->m_restServerHelp->setToolTipDuration(tooltipsDuration);
+
+    ui->m_replicatorBootstrapHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_replicatorBootstrapHelp->setToolTip("This field is for entering the IP address of the gateway used to\n"
+                                              "connect to replicators and interact with the storage layer.");
+    ui->m_replicatorBootstrapHelp->setToolTipDuration(tooltipsDuration);
+
+    ui->m_localUDPPortHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_localUDPPortHelp->setToolTip("This field is for entering the local port used for interacting with\n"
+                                       "the storage via the specified protocol. The default port is 6846.");
+    ui->m_localUDPPortHelp->setToolTipDuration(tooltipsDuration);
+
+    ui->m_downloadFolderHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_downloadFolderHelp->setToolTip("This field is for entering the path to the download folder,\n"
+                                         "where files from the disk will be saved by default.");
+    ui->m_downloadFolderHelp->setToolTipDuration(tooltipsDuration);
+
+    ui->m_feeMultiplierHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_feeMultiplierHelp->setToolTip("The fee multiplier is a factor used by the blockchain network to determine the actual\n"
+                                        "transaction fee. When a transaction specifies a maximum fee, the block (or validator)\n"
+                                        "sets the fee multiplier, which is applied to the base fee. The actual fee paid is\n"
+                                        "the base fee multiplied by this multiplier. This mechanism helps adjust fees\n"
+                                        "based on network congestion or blockchain policy.");
+    ui->m_feeMultiplierHelp->setToolTipDuration(tooltipsDuration);
 }
