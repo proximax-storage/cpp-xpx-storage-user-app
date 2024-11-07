@@ -25,10 +25,11 @@ public:
 
 private:
     void validate();
+    void initTooltips();
 
 private:
     Ui::AddDriveDialog* ui;
     Model*          mp_model;
     OnChainClient*  mp_onChainClient;
-    QMessageBox*    helpMessageBox = nullptr;
+    //QMessageBox*    helpMessageBox = nullptr;
 };
