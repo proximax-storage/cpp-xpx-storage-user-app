@@ -75,25 +75,47 @@ void StorageEngine::start()
 #endif
     };
 
+    auto settings= mp_model->getSettings();
+    auto isHostMatched = [this](std::tuple<QString, QString, QString> item)
+    {
+        const auto host = QString::fromStdString(mp_model->getBootstrapReplicator());
+        const auto ip = host.split(":");
+
+        return ip.size() == 2 && std::get<0>(item).toStdString() == ip[0].toStdString();
+    };
+
     endpoint_list bootstraps;
-    std::vector<std::string> addressAndPort;
-    std::string bootstrapReplicatorEndpoint = mp_model->getBootstrapReplicator();
-    boost::split( addressAndPort, bootstrapReplicatorEndpoint, [](char c){ return c==':'; } );
-    bootstraps.emplace_back( boost::asio::ip::make_address(addressAndPort[0]),
-                           (uint16_t)atoi(addressAndPort[1].c_str()) );
+    if (std::find_if( settings->MAINNET_REPLICATORS.begin(),settings->MAINNET_REPLICATORS.end(), isHostMatched) != settings->MAINNET_REPLICATORS.end()) {
+        for (auto& [host, port, ip] : settings->MAINNET_REPLICATORS) {
+            bootstraps.emplace_back(boost::asio::ip::make_address(ip.toStdString()), port.toUShort());
+        }
+    } else if (std::find_if( settings->TESTNET_REPLICATORS.begin(),settings->TESTNET_REPLICATORS.end(), isHostMatched) != settings->TESTNET_REPLICATORS.end()) {
+        for (auto& [host, port, ip] : settings->TESTNET_REPLICATORS) {
+            bootstraps.emplace_back(boost::asio::ip::make_address(ip.toStdString()), port.toUShort());
+        }
+    } else {
+        QString bootstrapReplicator = mp_model->getBootstrapReplicator().c_str();
+        if (!isResolvedToIpAddress(bootstrapReplicator)) {
+            emit newError(ErrorType::NetworkInit , "Cannot resolve host(3): " + bootstrapReplicator);
+            return;
+        }
+
+        qDebug() << "StorageEngine::start: REPLICATORS bootstrap ip addresses: " << bootstrapReplicator;
+
+        const auto host = bootstrapReplicator.split(":");
+        const auto ip = host[0].toStdString();
+        const auto port = host[1].toUShort();
+        bootstraps.emplace_back(boost::asio::ip::make_address(ip), port);
+    }
 
     std::string ltAddress = "0.0.0.0:";
 #ifdef __APPLE__
-    if ( addressAndPort[0].size() > 7 && addressAndPort[0].substr(0,7) == "192.168")
+    if ( ip.size() > 7 && ip.substr(0,7) == "192.168")
     {
         ltAddress = "192.168.20.30:";
     }
 #endif
-    gStorageEngine->init(mp_model->getKeyPair(),
-                         ltAddress + mp_model->getUdpPort(),
-                         bootstraps,
-                         errorsCallback );
-
+    gStorageEngine->init(mp_model->getKeyPair(),ltAddress + mp_model->getUdpPort(), bootstraps,errorsCallback );
 }
 
 void StorageEngine::restart()
@@ -125,8 +147,19 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
                          const endpoint_list&            bootstraps,
                          std::function<void()>           addressAlreadyInUseHandler )
 {
-    qDebug() << LOG_SOURCE << "createClientSession: address: " << address.c_str();
-    qDebug() << LOG_SOURCE << "createClientSession: bootstraps[0] address: " << bootstraps[0].address().to_string().c_str();
+    qDebug() <<"StorageEngine::init createClientSession: address: " << address.c_str();
+
+    std::string endpoints;
+    std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
+    for (const auto& endpoint : bootstraps) {
+        bootstrapReplicators.push_back({ endpoint, {} });
+        endpoints.append(endpoint.address().to_string());
+        endpoints.append(":");
+        endpoints.append(QString::number(endpoint.port()).toStdString());
+        endpoints.append(" ");
+    }
+
+    qDebug() << "StorageEngine::init createClientSession: replicators bootstrap addresses: " << endpoints;
 
 #ifdef WA_APP
 //TODO_WA
@@ -144,7 +177,7 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
 
                                                          addressAlreadyInUseHandler();
                                                      },
-                                                     bootstraps,
+                                                     bootstrapReplicators,
                                                      "client_session" );
 
     m_session->setTorrentDeletedHandler( [this] ( lt::torrent_handle handle )
