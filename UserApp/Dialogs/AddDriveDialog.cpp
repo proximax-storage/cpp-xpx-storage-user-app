@@ -176,17 +176,20 @@ void AddDriveDialog::initTooltips() {
     const int height = 18;
     QIcon helpIcon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation);
     ui->m_nameHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_nameHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_nameHelp->setToolTip("This field is for entering the drive alias, stored locally (app only),\n"
                                "and used for the user's convenience. It should be unique.");
     ui->m_nameHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_replicatorNumberHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_replicatorNumberHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_replicatorNumberHelp->setToolTip("This field is for entering the required number of replicators, with a minimum of 4. The value\n"
                                            "corresponds to the system architecture. Setting it to 4 or higher may increase costs slightly,\n"
                                            "but it enhances robustness, as your data will be stored across more replicators.");
     ui->m_replicatorNumberHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_maxDriveSizeHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_maxDriveSizeHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_maxDriveSizeHelp->setToolTip("This field is for entering the desired disk size in megabytes.\n"
                                        "The current size limits are a minimum of 1 megabyte and a\n"
                                        "maximum of 500 megabytes to prevent abuse and resource\n"
@@ -195,6 +198,7 @@ void AddDriveDialog::initTooltips() {
     ui->m_maxDriveSizeHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_localDriveFolderHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_localDriveFolderHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_localDriveFolderHelp->setToolTip("This field is for specifying the folder associated with the user's local disk.\n"
                                            "The data stored in this folder can be uploaded to the disk. The application\n"
                                            "monitors the status of the data in the root directory and will notify you\n"

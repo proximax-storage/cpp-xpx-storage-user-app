@@ -508,26 +508,31 @@ void SettingsDialog::initTooltips() {
     const int height = 18;
     QIcon helpIcon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation);
     ui->m_restServerHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_restServerHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_restServerHelp->setToolTip("This field is for entering the IP address or domain name of the gateway\n"
                                      "used to connect to the blockchain and interact with its nodes.");
     ui->m_restServerHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_replicatorBootstrapHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_replicatorBootstrapHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_replicatorBootstrapHelp->setToolTip("This field is for entering the IP address of the gateway used to\n"
                                               "connect to replicators and interact with the storage layer.");
     ui->m_replicatorBootstrapHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_localUDPPortHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_localUDPPortHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_localUDPPortHelp->setToolTip("This field is for entering the local port used for interacting with\n"
                                        "the storage via the specified protocol. The default port is 6846.");
     ui->m_localUDPPortHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_downloadFolderHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_downloadFolderHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_downloadFolderHelp->setToolTip("This field is for entering the path to the download folder,\n"
                                          "where files from the disk will be saved by default.");
     ui->m_downloadFolderHelp->setToolTipDuration(tooltipsDuration);
 
     ui->m_feeMultiplierHelp->setPixmap(helpIcon.pixmap(width, height));
+    ui->m_feeMultiplierHelp->setStyleSheet("QToolTip { font-size: 14px; }");
     ui->m_feeMultiplierHelp->setToolTip("The fee multiplier is a factor used by the blockchain network to determine the actual\n"
                                         "transaction fee. When a transaction specifies a maximum fee, the block (or validator)\n"
                                         "sets the fee multiplier, which is applied to the base fee. The actual fee paid is\n"
