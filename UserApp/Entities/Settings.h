@@ -36,6 +36,35 @@ class Settings : public QObject
         QRect           m_windowGeometry;
         bool            m_isDriveStructureAsTree = false;
 
+        // pre-defined settings
+        const QString SIRIUS_MAINNET = "Sirius Mainnet";
+        const QString SIRIUS_TESTNET = "Sirius Testnet 2";
+        std::vector<std::tuple<QString, QString, QString>> MAINNET_API_NODES{   { "arcturus.xpxsirius.io", "3000", "" },
+                                                                                { "aldebaran.xpxsirius.io", "3000", "" },
+                                                                                { "betelgeuse.xpxsirius.io", "3000", "" },
+                                                                                { "bigcalvin.xpxsirius.io", "3000", "" },
+                                                                                { "delphinus.xpxsirius.io", "3000", "" },
+                                                                                { "lyrasithara.xpxsirius.io", "3000", "" } };
+
+        std::vector<std::tuple<QString, QString, QString>> MAINNET_REPLICATORS {   { "replicator-1.dfms.io","7904", "" },
+                                                                                   { "replicator-2.dfms.io","7904", "" },
+                                                                                   { "replicator-3.dfms.io","7904", "" },
+                                                                                   { "replicator-4.dfms.io","7904", "" },
+                                                                                   { "replicator-5.dfms.io","7904", "" },
+                                                                                   { "replicator-6.dfms.io","7904", "" },
+                                                                                   { "replicator-7.dfms.io","7904", "" },
+                                                                                   { "replicator-8.dfms.io","7904", "" },
+                                                                                   { "replicator-9.dfms.io","7904", "" },
+                                                                                   { "replicator-10.dfms.io","7904", "" } };
+
+        std::vector<std::tuple<QString, QString, QString>> TESTNET_API_NODES{ { "api-1.testnet2.xpxsirius.io", "3000", "" },
+                                                                              { "api-2.testnet2.xpxsirius.io", "3000", "" } };
+
+        std::vector<std::tuple<QString, QString, QString>> TESTNET_REPLICATORS{   { "genesis-p2p-2.testnet2.xpxsirius.io", "7904", "" },
+                                                                                  { "genesis-p2p-3.testnet2.xpxsirius.io", "7904", "" },
+                                                                                  { "apsouth1-p2p-2.testnet2.xpxsirius.io", "7904", "" },
+                                                                                  { "apsouth1-p2p-3.testnet2.xpxsirius.io", "7904" , ""} };
+
     public:
         explicit Settings(QObject* parent = nullptr);
         ~Settings();
@@ -55,9 +84,13 @@ class Settings : public QObject
         void onDownloadCompleted( lt::torrent_handle handle, Model& model );
 #endif
         void removeFromDownloads( int index );
+        void resolveBootstrapEndpoints();
 
     signals:
         void downloadError(const QString& message);
+
+    private:
+        static void resolveEndpointsList(std::vector<std::tuple<QString, QString, QString>>& endpoints);
 
     private:
         friend class PrivKeyDialog;

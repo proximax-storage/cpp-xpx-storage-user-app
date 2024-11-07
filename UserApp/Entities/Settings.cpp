@@ -177,11 +177,13 @@ bool Settings::load( const std::string& pwd )
         qDebug() << "/*****************************************************************************************/.";
         qDebug() << "Settings::load. New session has been started.";
 
+#ifndef NDEBUG // Hide private key in release mode
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );
             qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
         }
+#endif
 
         qDebug() << "Settings::load. Current account public key: " << QString::fromStdString(accountConfig().m_publicKeyStr).toUpper();
         qDebug() << "/*****************************************************************************************/.";
@@ -628,5 +630,23 @@ void Settings::onDownloadCanceled( Model&                          model,
         model.removeTorrentSync( it->first );
         m_downloadTorrentMap.erase( it->first );
     }
+}
+
+void Settings::resolveEndpointsList(std::vector<std::tuple<QString, QString, QString>>& endpoints) {
+    for (auto& [host, port, ip] : endpoints ) {
+        QString rawHost = host + ":" + port;
+        if (isResolvedToIpAddress(rawHost)) {
+            ip = rawHost.split(":")[0];
+        }
+    }
+}
+
+void Settings::resolveBootstrapEndpoints() {
+    resolveEndpointsList(MAINNET_API_NODES);
+    resolveEndpointsList(MAINNET_REPLICATORS);
+    resolveEndpointsList(TESTNET_API_NODES);
+    resolveEndpointsList(TESTNET_REPLICATORS);
+    getFastestEndpoint(MAINNET_API_NODES);
+    getFastestEndpoint(TESTNET_API_NODES);
 }
 
