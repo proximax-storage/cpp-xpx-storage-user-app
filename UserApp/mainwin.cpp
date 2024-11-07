@@ -98,6 +98,8 @@ void MainWin::init()
     gSkipDhtPktLogs = true;
     gKademliaLogs   = true;
 
+    m_settings->resolveBootstrapEndpoints();
+
     if ( ! m_model->loadSettings() )
     {
         initGeometry();
@@ -938,7 +940,11 @@ void MainWin::doUpdateBalancePeriodically()
 }
 
 void MainWin::setupIcons() {
-    QIcon settingsButtonIcon(getResource("./resources/icons/settings.png"));
+    bool isDarkMode = isDarkSystemTheme();
+    const QString settingsIconPath = isDarkMode ? "./resources/icons/settings_white.png"
+                                                : "./resources/icons/settings_black.png";
+
+    QIcon settingsButtonIcon(getResource(settingsIconPath));
     if (settingsButtonIcon.isNull())
     {
         qWarning () << "MainWin::setupIcons: settings icon is null: settings.png";
@@ -951,7 +957,10 @@ void MainWin::setupIcons() {
     ui->m_settingsButton->setStyleSheet("background: transparent; border: 0px;");
     ui->m_settingsButton->setIconSize(QSize(18, 18));
 
-    QIcon notificationsButtonIcon(getResource("./resources/icons/notification.png"));
+    const QString notificationIconPath = isDarkMode ? "./resources/icons/notification_white.png"
+                                                    : "./resources/icons/notification_black.png";
+
+    QIcon notificationsButtonIcon(getResource(notificationIconPath));
     if (notificationsButtonIcon.isNull())
     {
         qWarning () << "MainWin::setupIcons: notifications icon is null: notification.png";
@@ -3099,7 +3108,13 @@ void MainWin::setupNotifications() {
     m_notificationsWidget->setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
     m_notificationsWidget->setWindowModality(Qt::NonModal);
     m_notificationsWidget->setMaximumHeight(500);
-    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; background-color: #FFF; border: 1px solid gray;");
+    m_notificationsWidget->setStyleSheet("padding: 5px 5px 5px 5px; font: 13px; border-radius: 3px; border: 1px solid gray;");
+
+    bool isDarkMode = isDarkSystemTheme();
+    QPalette palette = m_notificationsWidget->palette();
+    palette.setColor(QPalette::Base, isDarkMode ? Qt::black : Qt::white);
+    palette.setColor(QPalette::Text, isDarkMode ? Qt::white : Qt::black);
+    m_notificationsWidget->setPalette(palette);
 
     connect(ui->m_notificationsButton, &QPushButton::released, this, [this](){
         if (m_notificationsWidget->count() < 1) {
