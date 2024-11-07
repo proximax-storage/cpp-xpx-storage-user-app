@@ -85,6 +85,7 @@ class Model : public QObject
         std::string getGatewayIp();
         std::string getGatewayPort();
         double getFeeMultiplier();
+        Settings* getSettings();
         const sirius::crypto::KeyPair& getKeyPair();
         void onDownloadCompleted( lt::torrent_handle handle );
 

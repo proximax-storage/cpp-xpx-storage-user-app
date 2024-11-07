@@ -105,6 +105,10 @@ double Model::getFeeMultiplier() {
     return m_settings->m_feeMultiplier;
 }
 
+Settings* Model::getSettings() {
+    return m_settings;
+}
+
 const sirius::crypto::KeyPair& Model::getKeyPair() {
     return m_settings->accountConfig().m_keyPair.value();
 }
