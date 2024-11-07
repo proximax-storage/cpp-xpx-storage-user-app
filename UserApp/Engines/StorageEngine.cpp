@@ -110,6 +110,14 @@ void StorageEngine::start()
 
     std::string ltAddress = "0.0.0.0:";
 #ifdef __APPLE__
+    QString bootstrapReplicator = mp_model->getBootstrapReplicator().c_str();
+    if (!isResolvedToIpAddress(bootstrapReplicator)) {
+        emit newError(ErrorType::NetworkInit , "Cannot resolve host(3): " + bootstrapReplicator);
+        return;
+    }
+
+    const auto host = bootstrapReplicator.split(":");
+    const auto ip = host[0].toStdString();
     if ( ip.size() > 7 && ip.substr(0,7) == "192.168")
     {
         ltAddress = "192.168.20.30:";

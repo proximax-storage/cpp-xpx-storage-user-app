@@ -279,16 +279,16 @@ std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>
     std::vector<std::future<void>> futures;
     for (int i = 0; i < nodes.size(); ++i) {
         const auto& [host, port, ip] = nodes[i];
-        futures.push_back(std::async(std::launch::async, [&, i]() {
+        futures.push_back(std::async(std::launch::async, [&, i, hostC = host, ipC = ip, portC = port]() {
             auto start = std::chrono::steady_clock::now();
-            if (!isFound.load() && isEndpointAvailable(ip.toStdString(), port.toStdString(), isFound)) {
+            if (!isFound.load() && isEndpointAvailable(ipC.toStdString(), portC.toStdString(), isFound)) {
                 auto end = std::chrono::steady_clock::now();
                 auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
                 std::lock_guard<std::mutex> lock(mutex);
                 if (responseTime < minResponse.first) {
                     minResponse = {responseTime, i};
-                    fastestEndpoint = host.toStdString() + ":" + port.toStdString();
+                    fastestEndpoint = hostC.toStdString() + ":" + portC.toStdString();
                 }
             }
         }));
