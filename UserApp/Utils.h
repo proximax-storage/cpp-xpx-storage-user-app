@@ -4,6 +4,7 @@
 #include <iostream>
 #include <filesystem>
 #include <QMessageLogger>
+#include <QComboBox>
 
 #define LOG_SOURCE \
     __FILE__ << __LINE__
@@ -57,5 +58,14 @@ enum ErrorType
 
 inline std::filesystem::path make_path( const std::string& str ) { return std::filesystem::path(str).make_preferred(); };
 
+bool isResolvedToIpAddress(QString& host);
+
+bool isEndpointAvailable(const std::string& host, const std::string& port, std::atomic<bool>& found);
+
+std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes);
+
+std::string extractEndpointFromComboBox(QComboBox* comboBox);
+
+bool isDarkSystemTheme();
 
 #endif //UTILS_H

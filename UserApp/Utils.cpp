@@ -1,14 +1,30 @@
+#include <QApplication>
+#include <QPalette>
 #include <QDateTime>
 #include <QFile>
 #include <QTextStream>
 #include <QMutex>
-#include <QCoreApplication>
 #include <iostream>
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QDir>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/write.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/http/dynamic_body.hpp>
+#include <boost/beast/http/read.hpp>
+#include <vector>
+#include <tuple>
+#include <string>
+#include <future>
+#include <atomic>
+#include <mutex>
+#include <chrono>
 #include "Utils.h"
 #include "Entities/Drive.h"
 
@@ -202,3 +218,102 @@ std::string dataSizeToString(uint64_t bytes)
     return oss.str();
 }
 
+bool isResolvedToIpAddress(QString& host) {
+    try {
+        boost::asio::io_context io_context;
+        boost::asio::ip::tcp::resolver resolver(io_context);
+
+        const auto rawEndpoint = host.split(':');
+        if (rawEndpoint.size() == 2) {
+            const auto& address = rawEndpoint[0];
+            const auto& port = rawEndpoint[1];
+
+            auto endpoints = resolver.resolve(address.toStdString(), port.toStdString());
+            if (!endpoints.empty()) {
+                host = QString::fromStdString(endpoints.begin()->endpoint().address().to_string() + ":" + port.toStdString());
+                return true;
+            }
+        } else {
+            qWarning() << "Utils::isResolvedToIpAddress: Port is missing: " << " host: " << host;
+        }
+    } catch (const boost::system::system_error& e) {
+        qWarning() << "Utils::isResolvedToIpAddress: Cannot resolve host: " << e.what() << " host: " << host;
+    }
+
+    return false;
+}
+
+bool isEndpointAvailable(const std::string& ip, const std::string& port, std::atomic<bool>& found) {
+    try {
+        boost::asio::io_context ioc;
+        boost::beast::tcp_stream stream(ioc);
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), QString::fromStdString(port).toUShort());
+        stream.connect(endpoint);
+
+        boost::beast::http::request<boost::beast::http::string_body> request{boost::beast::http::verb::get, "/network", 11};
+        request.set(boost::beast::http::field::host, ip);
+        request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+        boost::beast::http::write(stream, request);
+        boost::beast::flat_buffer buffer;
+        boost::beast::http::response<boost::beast::http::dynamic_body> res;
+        boost::beast::http::read(stream, buffer, res);
+
+        boost::beast::error_code ec;
+        stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+
+        return res.result() == boost::beast::http::status::ok && !found.load();
+
+    } catch (const std::exception& e) {
+        qWarning() << "Utils::isEndpointAvailable: Host error: " << e.what() << " ip: " << ip;
+        return false;
+    }
+}
+
+std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes) {
+    std::atomic<bool> isFound{false};
+    std::string fastestEndpoint;
+    std::mutex mutex;
+
+    std::pair<std::chrono::milliseconds, int> minResponse{std::chrono::milliseconds::max(), -1};
+    std::vector<std::future<void>> futures;
+    for (int i = 0; i < nodes.size(); ++i) {
+        const auto& [host, port, ip] = nodes[i];
+        futures.push_back(std::async(std::launch::async, [&, i]() {
+            auto start = std::chrono::steady_clock::now();
+            if (!isFound.load() && isEndpointAvailable(ip.toStdString(), port.toStdString(), isFound)) {
+                auto end = std::chrono::steady_clock::now();
+                auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+                std::lock_guard<std::mutex> lock(mutex);
+                if (responseTime < minResponse.first) {
+                    minResponse = {responseTime, i};
+                    fastestEndpoint = host.toStdString() + ":" + port.toStdString();
+                }
+            }
+        }));
+    }
+
+    for (auto& f : futures) {
+        f.wait();
+    }
+
+    if (minResponse.second != -1) {
+        std::iter_swap(nodes.begin(), nodes.begin() + minResponse.second);
+    }
+
+    return fastestEndpoint;
+}
+
+std::string extractEndpointFromComboBox(QComboBox* comboBox) {
+    int currentIndex = comboBox->currentIndex();
+    const QString endpoint = comboBox->itemData(currentIndex, Qt::UserRole).toString();
+    return endpoint.toStdString();
+}
+
+bool isDarkSystemTheme() {
+    QPalette palette = QApplication::palette();
+    QColor textColor = palette.color(QPalette::WindowText);
+    QColor backgroundColor = palette.color(QPalette::Window);
+    return textColor.lightness() > backgroundColor.lightness();
+}
