@@ -500,7 +500,24 @@ void OnChainClient::init(const std::string& address,
                          const double feeMultiplier,
                          const std::string& privateKey) {
     xpx_chain_sdk::Config& config = xpx_chain_sdk::GetConfig();
-    config.nodeAddress = address;
+
+    QString resolvedHost = QString::fromStdString(address + ":" + port);
+    if (!isResolvedToIpAddress(resolvedHost)) {
+        emit newError(ErrorType::NetworkInit, "Cannot resolve host(1): " + resolvedHost);
+        return;
+    }
+
+    qDebug() << "OnChainClient::init: REST bootstrap ip address: " << resolvedHost;
+
+    auto hostRaw = resolvedHost.split(":");
+    if (hostRaw.size() == 2) {
+        resolvedHost = hostRaw[0];
+    } else {
+        emit newError(ErrorType::NetworkInit, "Cannot resolve host(2): " + resolvedHost);
+        return;
+    }
+
+    config.nodeAddress = resolvedHost.toStdString();
     config.port = port;
     config.TransactionFeeMultiplier = feeMultiplier;
 
@@ -586,8 +603,10 @@ void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Private_Test;
         } else if (boost::iequals("public", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public;
+            info.name = "Sirius Mainnet";
         } else if (boost::iequals("publicTest", info.name)) {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Public_Test;
+            info.name = "Sirius Testnet 2";
         } else {
             config.NetworkId = xpx_chain_sdk::NetworkIdentifier::Zero;
         }
