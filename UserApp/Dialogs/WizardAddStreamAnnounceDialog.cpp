@@ -286,12 +286,20 @@ void WizardAddStreamAnnounceDialog::accept()
     //
     // Start modification
     //
+    auto confirmationCallback = [this, &drive](auto fee)
+    {
+        if (showConfirmationDialog(fee)) {
+            drive->setCreatingStreamAnnouncement();
+            drive->updateDriveState(registering);
+            QDialog::accept();
+            return true;
+        }
+
+        return false;
+    };
+
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-    mp_onChainClient->applyDataModification(driveKeyHex, actionList);
-    drive->setCreatingStreamAnnouncement();
-    drive->updateDriveState(registering);
-    
-    QDialog::accept();
+    mp_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
 }
 
 void WizardAddStreamAnnounceDialog::reject()

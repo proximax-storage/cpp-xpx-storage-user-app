@@ -38,18 +38,23 @@ class OnChainClient : public QObject
         BlockchainEngine* getBlockchainEngine();
 
         void addDownloadChannel(const std::string& channelAlias,
-                                       const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
-                                       const std::array<uint8_t, 32>& drivePubKey,
-                                       const uint64_t& prepaidSize,
-                                       const uint64_t& feedbacksNumber,
-                                       const std::function<void(std::string hash)>& callback);
+                                const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
+                                const std::array<uint8_t, 32>& drivePubKey,
+                                const uint64_t& prepaidSize,
+                                const uint64_t& feedbacksNumber,
+                                const std::function<void(std::string hash)>& callback,
+                                const std::function<bool(const QString& transactionFee)>& confirmationCallback);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId);
-        void addDrive(const uint64_t& driveSize, ushort replicatorsCount, const std::function<void(std::string hash)>& callback);
-        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey);
-        void cancelDataModification(const std::array<uint8_t, 32> &driveId);
+        void addDrive(const uint64_t& driveSize, ushort replicatorsCount,
+                      const std::function<void(std::string hash)>& callback,
+                      const std::function<bool(const QString& transactionFee)>& confirmationCallback);
+
+        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::function<bool(const QString& transactionFee)>& callback);
+        void cancelDataModification(const std::array<uint8_t, 32> &driveId, const std::function<bool(const QString& transactionFee)>& callback);
         void applyDataModification(const std::array<uint8_t, 32>& driveKey,
-                                   const sirius::drive::ActionList& actions);
+                                   const sirius::drive::ActionList& actions,
+                                   const std::function<bool(const QString& transactionFee)>& callback);
 
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t amount);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount);

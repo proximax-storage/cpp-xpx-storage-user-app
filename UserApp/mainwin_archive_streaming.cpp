@@ -63,8 +63,13 @@ void MainWin::initWizardArchiveStreaming()
                         //
                         // Start modification
                         //
+                        auto confirmationCallback = [](auto fee)
+                        {
+                            return showConfirmationDialog(fee);
+                        };
+
                         auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
                         drive->updateDriveState(registering);
                     }
                 }

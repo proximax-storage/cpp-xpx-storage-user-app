@@ -68,4 +68,8 @@ std::string extractEndpointFromComboBox(QComboBox* comboBox);
 
 bool isDarkSystemTheme();
 
+QString prettyBalance(uint64_t value);
+
+bool showConfirmationDialog(const QString& transactionFee);
+
 #endif //UTILS_H

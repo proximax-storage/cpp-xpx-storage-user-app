@@ -20,7 +20,12 @@ CancelModificationDialog::CancelModificationDialog(OnChainClient* onChainClient,
 }
 
 void CancelModificationDialog::accept() {
-    mpOnChainClient->cancelDataModification(rawHashFromHex(mDriveId));
+    auto confirmationCallback = [](auto fee)
+    {
+        return showConfirmationDialog(fee);
+    };
+
+    mpOnChainClient->cancelDataModification(rawHashFromHex(mDriveId), confirmationCallback);
 }
 
 void CancelModificationDialog::reject() {

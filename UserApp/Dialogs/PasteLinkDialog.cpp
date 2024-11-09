@@ -103,7 +103,7 @@ void PasteLinkDialog::accept()
 {
     if ( m_dataInfoIsSet )
     {
-        QTimer::singleShot( 1, m_mainwin, [mainwin=m_mainwin, dataInfo=m_dataInfo]
+        QTimer::singleShot( 1, m_mainwin, [mainwin= m_mainwin, dataInfo=m_dataInfo]
         {
             mainwin->addEasyDownload( dataInfo );
         });

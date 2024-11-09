@@ -210,9 +210,18 @@ void MainWin::initStreaming()
                         //
                         // Start modification
                         //
+                        auto confirmationCallback = [&drive](auto fee)
+                        {
+                            if (showConfirmationDialog(fee)) {
+                                drive->updateDriveState(registering);
+                                return true;
+                            }
+
+                            return false;
+                        };
+
                         auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                        drive->updateDriveState(registering);
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
                     }
                 }
             }
@@ -1326,7 +1335,12 @@ void MainWin::cancelStreaming()
         return;
     }
 
-    m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ) );
+    auto confirmationCallback = [](auto fee)
+    {
+        return showConfirmationDialog(fee);
+    };
+
+    m_onChainClient->cancelDataModification( rawHashFromHex( drive->getKey().c_str() ), confirmationCallback );
 
     if ( drive->getState() == registering )
     {

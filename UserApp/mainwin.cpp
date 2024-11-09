@@ -2385,9 +2385,18 @@ void MainWin::onApplyChanges()
         return;
     }
 
+    auto confirmationCallback = [&drive](auto fee)
+    {
+        if (showConfirmationDialog(fee)) {
+            drive->updateDriveState(registering);
+            return true;
+        }
+
+        return false;
+    };
+
     auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-    m_onChainClient->applyDataModification(driveKeyHex, actionList);
-    drive->updateDriveState(registering);
+    m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
 }
 
 void MainWin::onRefresh()
@@ -2677,17 +2686,7 @@ void MainWin::loadBalance() {
         if (mosaicIterator == info.mosaics.end()) {
             ui->m_balanceValue->setText(QString::number(0));
         } else {
-            uint64_t decimals = 1000000;
-            uint64_t integerPart = mosaicIterator->amount / decimals;
-            uint64_t fractionalPart = mosaicIterator->amount % decimals;
-
-            QLocale locale(QLocale::French);
-            const QString formattedIntegerPart = locale.toString(integerPart);
-            const QString formattedBalance = QString("%1.%2")
-                    .arg(formattedIntegerPart)
-                    .arg(fractionalPart, 6, 10, QChar('0'));
-
-            ui->m_balanceValue->setText(formattedBalance);
+            ui->m_balanceValue->setText(prettyBalance(mosaicIterator->amount));
         }
     });
 }
@@ -3876,7 +3875,7 @@ void MainWin::startEasyDownload( EasyDownloadInfo& easyDownloadInfo )
                                         {}, easyDownloadInfo.m_driveKey,
                                         prepaidSizeMB,
                                         0,
-                                        callback); // feedback is unused for now
+                                        callback, {}); // feedback is unused for now
 
 //    m_modalDialog = new ModalDialog( "Information", "Channel is creating..." );
 //

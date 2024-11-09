@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QPalette>
+#include <QPushButton>
 #include <QDateTime>
 #include <QFile>
 #include <QTextStream>
@@ -316,4 +317,30 @@ bool isDarkSystemTheme() {
     QColor textColor = palette.color(QPalette::WindowText);
     QColor backgroundColor = palette.color(QPalette::Window);
     return textColor.lightness() > backgroundColor.lightness();
+}
+
+QString prettyBalance(uint64_t value) {
+    uint64_t decimals = 1000000;
+    uint64_t integerPart = value / decimals;
+    uint64_t fractionalPart = value % decimals;
+
+    QLocale locale(QLocale::French);
+    const QString formattedIntegerPart = locale.toString(integerPart);
+    const QString formattedBalance = QString("%1.%2")
+            .arg(formattedIntegerPart)
+            .arg(fractionalPart, 6, 10, QChar('0'));
+
+    return formattedBalance;
+}
+
+bool showConfirmationDialog(const QString& transactionFee) {
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Confirmation");
+    msgBox.setText("The transaction will be sent, with an estimated cost\n"
+                   "of approximately: " + transactionFee + " xpx.");
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+    msgBox.button(QMessageBox::Ok)->setText("Confirm");
+    msgBox.setModal(true);
+
+    return msgBox.exec() == QMessageBox::Ok;
 }

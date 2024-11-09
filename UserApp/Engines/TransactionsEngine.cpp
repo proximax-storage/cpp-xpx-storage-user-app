@@ -26,7 +26,8 @@ void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
                                             const uint64_t &prepaidSize,
                                             const uint64_t &feedbacksNumber,
                                             const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                                            const std::function<void(std::string hash)>& callback) {
+                                            const std::function<void(std::string hash)>& callback,
+                                            const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
 
     xpx_chain_sdk::Key driveKey;
@@ -46,6 +47,11 @@ void TransactionsEngine::addDownloadChannel(const std::string& channelAlias,
     auto downloadTransaction = xpx_chain_sdk::CreateDownloadTransaction(driveKey, prepaidSize, feedbacksNumber, listOfAllowedPks.size(), listOfAllowedPks,
                                                                         std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(downloadTransaction.get());
+
+    if (confirmationCallback && !confirmationCallback(prettyBalance(downloadTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::addDownloadChannel: download channel creation was canceled by the user!";
+        return;
+    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> downloadNotifier;
@@ -236,16 +242,22 @@ void TransactionsEngine::storagePayment(const std::array<uint8_t, 32> &driveId, 
 void TransactionsEngine::addDrive(const uint64_t& driveSize,
                                   const ushort replicatorsCount,
                                   const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                                  const std::function<void(std::string hash)>& callback) {
+                                  const std::function<void(std::string hash)>& callback,
+                                  const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
     xpx_chain_sdk::Amount verificationFeeAmount = 100;
     auto prepareDriveTransaction = xpx_chain_sdk::CreatePrepareBcDriveTransaction(driveSize, verificationFeeAmount, replicatorsCount, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(prepareDriveTransaction.get());
+
+    if (!confirmationCallback(prettyBalance(prepareDriveTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::addDrive: drive creation was canceled by the user!";
+        return;
+    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> prepareDriveNotifier;
 
     std::string hash = rawHashToHex(prepareDriveTransaction->hash()).toStdString();
-    qInfo() << "TransactionsEngine::addDrive. Drive size: " << driveSize << " replicators count: " << replicatorsCount << " transaction id: " << hash;
+    qInfo() << "TransactionsEngine::addDrive. Drive size: " << driveSize << " replicators count: " << replicatorsCount << " transaction id: " << hash << " trx fee: " << prettyBalance(prepareDriveTransaction->maxFee());
 
     statusNotifier.set([this, hash, prepareDriveNotifierId = prepareDriveNotifier.getId()](const auto& id, const xpx_chain_sdk::TransactionStatusNotification& notification) {
         if (boost::iequals(notification.hash, hash)) {
@@ -282,7 +294,9 @@ void TransactionsEngine::addDrive(const uint64_t& driveSize,
     callback(hash);
 }
 
-void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey,
+                                    const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                    const std::function<bool(const QString& transactionFee)>& callback) {
     QString drivePubKey = rawHashToHex(rawDrivePubKey);
 
     xpx_chain_sdk::Key driveKey;
@@ -290,6 +304,11 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
 
     auto driveClosureTransaction = xpx_chain_sdk::CreateDriveClosureTransaction(driveKey, std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(driveClosureTransaction.get());
+
+    if (!callback(prettyBalance(driveClosureTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::addDrive: Drive closing was canceled by the user!";
+        return;
+    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> driveClosureNotifier;
@@ -328,7 +347,9 @@ void TransactionsEngine::closeDrive(const std::array<uint8_t, 32>& rawDrivePubKe
                                                                [this, hash](auto error) { onError(hash, error); });
 }
 
-void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& drive, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& drive,
+                                                const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                                const std::function<bool(const QString& transactionFee)>& callback) {
     if (drive.data.activeDataModifications.empty()) {
         qWarning() << "TransactionsEngine::cancelDataModification. Not active modifications found! Drive key: " << drive.data.multisig;
         return;
@@ -346,6 +367,11 @@ void TransactionsEngine::cancelDataModification(const xpx_chain_sdk::Drive& driv
     auto dataModificationCancelTransaction = xpx_chain_sdk::CreateDataModificationCancelTransaction(rawDriveKey, modificationHash256,
                                                                                                     std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationCancelTransaction.get());
+
+    if (!callback(prettyBalance(dataModificationCancelTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::cancelDataModification: Cancel was canceled by the user!";
+        return;
+    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationCancelNotifier;
@@ -412,20 +438,21 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
                                                const sirius::drive::ActionList& actions,
                                                const std::vector<xpx_chain_sdk::Address>& addresses,
                                                const std::vector<std::string>& replicators,
-                                               const std::optional<xpx_chain_sdk::NetworkDuration>& deadline) {
+                                               const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                               const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
     qInfo() << "TransactionsEngine::applyDataModification. Drive key: " << rawHashToHex(driveId);
     if (!isValidHash(driveId)) {
         emit newError("TransactionsEngine::applyDataModification. Bad driveId: empty!");
         return;
     }
 
-    auto callback = [this, driveId, actions, addresses, deadline](auto totalModifyDataSize, auto infoHash) {
+    auto callback = [this, driveId, actions, addresses, deadline, cb = confirmationCallback](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
             emit newError("TransactionsEngine::applyDataModification. Invalid info hash: " + rawHashToHex(infoHash));
             return;
         }
 
-        sendModification(driveId, infoHash, actions, totalModifyDataSize, addresses, deadline);
+        sendModification(driveId, infoHash, actions, totalModifyDataSize, addresses, deadline, cb);
     };
 
     const std::string pathToSandbox = getSettingsFolder().string() + "/" + rawHashToHex(driveId).toStdString() + mSandbox;
@@ -474,7 +501,8 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
                                           const sirius::drive::ActionList& actions,
                                           const uint64_t totalModifyDataSize,
                                           const std::vector<xpx_chain_sdk::Address>& replicators,
-                                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline)
+                                          const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                          const std::function<bool(const QString& transactionFee)>& callback)
 {
     const QString actionListFileName = rawHashToHex(infoHash);
     qInfo() << "TransactionsEngine::sendModification. action list downloadDataCDI: " << actionListFileName;
@@ -526,6 +554,11 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     auto dataModificationTransaction = xpx_chain_sdk::CreateDataModificationTransaction(driveKeyRaw, downloadDataCdi, uploadSize, feedbackFeeAmount,
                                                                                         std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationTransaction.get());
+
+    if (callback && !callback(prettyBalance(dataModificationTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::sendModification: DataModification was canceled by the user!";
+        return;
+    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationUnconfirmedNotifier;

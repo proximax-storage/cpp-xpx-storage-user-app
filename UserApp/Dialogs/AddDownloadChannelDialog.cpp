@@ -159,7 +159,7 @@ void AddDownloadChannelDialog::startCreateChannel()
                                         listOfAllowedPublicKeys,rawHashFromHex(m_currentDriveKey.c_str()),
                                         ui->prepaidAmountLine->text().toULongLong(),
                                         0,
-                                        callback); // feedback is unused for now
+                                        callback, {}); // feedback is unused for now
 }
 
 void AddDownloadChannelDialog::accept() {

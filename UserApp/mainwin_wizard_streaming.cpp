@@ -180,9 +180,18 @@ void MainWin::initWizardStreaming()
                         //
                         // Start modification
                         //
+                        auto confirmationCallback = [&drive](auto fee)
+                        {
+                            if (showConfirmationDialog(fee)) {
+                                drive->updateDriveState(registering);
+                                return true;
+                            }
+
+                            return false;
+                        };
+
                         auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                        drive->updateDriveState(registering);
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
                     }
                 }
             }

@@ -94,7 +94,7 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                         }
                     }
 
-                    return QString::fromStdString( m_rows[index.row()].m_name );
+                    return m_rows[index.row()].m_name;
                 }
                 case 1:
                 {

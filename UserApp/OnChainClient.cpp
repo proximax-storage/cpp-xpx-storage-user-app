@@ -133,9 +133,13 @@ void OnChainClient::addDownloadChannel(const std::string& channelAlias,
                                        const std::array<uint8_t, 32> &drivePubKey,
                                        const uint64_t &prepaidSize,
                                        const uint64_t &feedbacksNumber,
-                                       const std::function<void(std::string hash)>& callback) {
-    auto deadlineCallback = [this, alias = channelAlias, keys = listOfAllowedPublicKeys, pKey = drivePubKey, prepaid = prepaidSize, feedback = feedbacksNumber, cb = callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-        mpTransactionsEngine->addDownloadChannel(alias, keys, pKey, prepaid, feedback, deadline, cb);
+                                       const std::function<void(std::string hash)>& callback,
+                                       const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
+    auto deadlineCallback = [this, alias = channelAlias, keys = listOfAllowedPublicKeys,
+                                                   pKey = drivePubKey, prepaid = prepaidSize,
+                                                   feedback = feedbacksNumber, cb = callback, ccb = confirmationCallback]
+                                                    (std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->addDownloadChannel(alias, keys, pKey, prepaid, feedback, deadline, cb, ccb);
     };
 
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
@@ -149,24 +153,29 @@ void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelI
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-void OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount, const std::function<void(std::string hash)>& callback) {
-    auto deadlineCallback = [this, size = driveSize, count = replicatorsCount, cb = callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-        mpTransactionsEngine->addDrive(size, count, deadline, cb);
+void OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount,
+                             const std::function<void(std::string hash)>& callback,
+                             const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
+    auto deadlineCallback = [this, size = driveSize, count = replicatorsCount, cb = callback, confCb = confirmationCallback]
+                                                   (std::optional<xpx_chain_sdk::NetworkDuration> deadline)
+    {
+        mpTransactionsEngine->addDrive(size, count, deadline, cb, confCb);
     };
 
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey) {
-    auto deadlineCallback = [this, driveKey](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-        mpTransactionsEngine->closeDrive(driveKey, deadline);
+void OnChainClient::closeDrive(const std::array<uint8_t, 32> &driveKey, const std::function<bool(const QString& transactionFee)>& callback) {
+    auto deadlineCallback = [this, driveKey, cb = callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+        mpTransactionsEngine->closeDrive(driveKey, deadline, cb);
     };
 
     mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
 }
 
-void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveId) {
-    mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),[this](auto drive, auto isSuccess, auto message, auto code)
+void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveId, const std::function<bool(const QString& transactionFee)>& callback) {
+    mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
+                                     [this, cb = callback](auto drive, auto isSuccess, auto message, auto code)
     {
         if (!isSuccess) {
             qWarning() << "OnChainClient::cancelDataModification. Drive key: " << drive.data.multisig.c_str() << " Message: " << message.c_str() << " code: " << code.c_str();
@@ -174,8 +183,8 @@ void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveI
             return;
         }
 
-        auto deadlineCallback = [this, drive](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
-            mpTransactionsEngine->cancelDataModification(drive, deadline);
+        auto deadlineCallback = [this, drive, ccb = cb](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
+            mpTransactionsEngine->cancelDataModification(drive, deadline, ccb);
         };
 
         mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
@@ -183,10 +192,11 @@ void OnChainClient::cancelDataModification(const std::array<uint8_t, 32> &driveI
 }
 
 void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId,
-                                          const sirius::drive::ActionList &actions)
+                                          const sirius::drive::ActionList &actions,
+                                          const std::function<bool(const QString& transactionFee)>& callback)
 {
     mpBlockchainEngine->getDriveById(rawHashToHex(driveId).toStdString(),
-                                     [this, driveId, actions]
+                                     [this, driveId, actions, cb = callback]
                                      (auto drive, auto isSuccess, auto message, auto code)
     {
         if (!isSuccess)
@@ -212,9 +222,9 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
             addresses.emplace_back(key);
         }
 
-        auto deadlineCallback = [this, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
+        auto deadlineCallback = [this, ccb = cb, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
         {
-            mpTransactionsEngine->applyDataModification(driveId, actions, addresses, replicators, deadline);
+            mpTransactionsEngine->applyDataModification(driveId, actions, addresses, replicators, deadline, ccb);
         };
 
         mpBlockchainEngine->getTransactionDeadline(deadlineCallback);

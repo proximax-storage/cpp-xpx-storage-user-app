@@ -3,7 +3,6 @@
 
 #include <QApplication>
 #include <QStyle>
-#include <QPushButton>
 #include <QThread>
 
 FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel, QObject* parent)
@@ -15,7 +14,7 @@ FsTreeTableModel::FsTreeTableModel(Model* model, bool isChannelFsModel, QObject*
 FsTreeTableModel::~FsTreeTableModel()
 {}
 
-void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<std::string>& path )
+void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std::vector<QString>& path )
 {
     m_fsTree = fsTree;
     m_currentFolder = &m_fsTree;
@@ -23,7 +22,7 @@ void FsTreeTableModel::setFsTree( const sirius::drive::FsTree& fsTree, const std
     for( const auto& folder: path )
     {
         m_currentPath.push_back( m_currentFolder );
-        auto it = m_currentFolder->findChild( folder );
+        auto it = m_currentFolder->findChild( folder.toStdString() );
         if ( it && sirius::drive::isFolder(*it) )
         {
             m_currentFolder = &sirius::drive::getFolder(*it);
@@ -85,7 +84,7 @@ void FsTreeTableModel::updateRows()
     endResetModel();
 }
 
-sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, std::string& outPath, std::string& outItemName  )
+sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, QString& outPath, QString& outItemName  )
 {
     outItemName = "";
     outPath = "";
@@ -98,10 +97,10 @@ sirius::drive::Folder* FsTreeTableModel::currentSelectedItem( int row, std::stri
     {
         if ( pathVector[i]->name() != "/" )
         {
-            outPath = outPath + "/" + pathVector[i]->name();
+            outPath = outPath + "/" + QString::fromUtf8(pathVector[i]->name());
         }
     }
-    if ( outPath.empty() )
+    if ( outPath.isEmpty() )
     {
         outPath = "/";
     }
@@ -159,7 +158,7 @@ int FsTreeTableModel::onDoubleClick( int row )
             return row;
         }
 
-        auto* it = m_currentFolder->findChild( m_rows[row].m_name );
+        auto* it = m_currentFolder->findChild( m_rows[row].m_name.toStdString() );
         ASSERT( it != nullptr )
         ASSERT( sirius::drive::isFolder(*it) );
         m_currentPath.emplace_back( m_currentFolder );
@@ -170,9 +169,9 @@ int FsTreeTableModel::onDoubleClick( int row )
     }
 }
 
-std::string FsTreeTableModel::currentPathString() const
+QString FsTreeTableModel::currentPathString() const
 {
-    std::string path;
+    QString path;
     if ( m_currentPath.empty() )
     {
         path = "/";
@@ -181,22 +180,23 @@ std::string FsTreeTableModel::currentPathString() const
 
     for( int i = 1; i < m_currentPath.size(); i++ )
     {
-        path += "/" + m_currentPath[i]->name();
+        path += "/" + QString::fromUtf8(m_currentPath[i]->name());
     }
 
-    path += "/" + m_currentFolder->name();
+    path += "/" + QString::fromUtf8(m_currentFolder->name());
 
     return path;
 }
 
-std::vector<std::string> FsTreeTableModel::currentPath() const
+std::vector<QString> FsTreeTableModel::currentPath() const
 {
-    std::vector<std::string> path;
+    std::vector<QString> path;
     for( int i=1; i<m_currentPath.size(); i++)
     {
-        path.push_back( m_currentPath[i]->name() );
+        path.push_back( QString::fromUtf8(m_currentPath[i]->name()) );
     }
-    path.push_back( m_currentFolder->name() );
+
+    path.push_back( QString::fromUtf8(m_currentFolder->name()) );
 
     return path;
 }
@@ -293,7 +293,7 @@ QVariant FsTreeTableModel::channelData(const QModelIndex &index, int role) const
                         }
                     }
 
-                    return QString::fromStdString( m_rows[index.row()].m_name );
+                    return m_rows[index.row()].m_name;
                 }
                 case 1:
                 {
@@ -388,7 +388,7 @@ QVariant FsTreeTableModel::driveData(const QModelIndex &index, int role) const
                         }
                     }
 
-                    return QString::fromStdString( m_rows[index.row()].m_name );
+                    return m_rows[index.row()].m_name;
                 }
                 case 1:
                 {
@@ -429,13 +429,13 @@ void FsTreeTableModel::readFolder(const sirius::drive::Folder& folder, std::vect
     {
         if ( sirius::drive::isFolder(child.second) )
         {
-            rows.emplace_back(Row{ true, sirius::drive::getFolder(child.second).name(), "", i, {}, {}});
+            rows.emplace_back(Row{ true, QString::fromUtf8(sirius::drive::getFolder(child.second).name()), "", i, {}, {}});
             readFolder(sirius::drive::getFolder(child.second), rows[rows.size() - 1].m_children);
         }
         else
         {
             const auto& file = sirius::drive::getFile(child.second);
-            Row newRow( false, file.name(), "", file.size(), file.hash().array(), {});
+            Row newRow( false, QString::fromUtf8(file.name()), "", file.size(), file.hash().array(), {});
             rows.emplace_back(newRow);
         }
 
@@ -447,8 +447,8 @@ void FsTreeTableModel::readFolder(const Row& parentRow, std::vector<Row>& rows, 
 {
     for (auto& row : rows)
     {
-        row.m_path = parentRow.m_path.empty() ? "/" + parentRow.m_name
-                                              : parentRow.m_path + "/" + parentRow.m_name;
+        row.m_path = parentRow.m_path.isEmpty() ? "/" + parentRow.m_name
+                                                : parentRow.m_path + "/" + parentRow.m_name;
 
         if (row.m_isFolder)
         {
@@ -488,7 +488,7 @@ std::vector<FsTreeTableModel::Row> FsTreeTableModel::getSelectedRows(bool isSkip
     return rows;
 }
 
-FsTreeTableModel::Row::Row(bool isFolder, const std::string& name, const std::string& path, size_t size, const std::array<uint8_t, 32>& hash, const std::vector<Row>& chailds)
+FsTreeTableModel::Row::Row(bool isFolder, const QString& name, const QString& path, size_t size, const std::array<uint8_t, 32>& hash, const std::vector<Row>& chailds)
     : m_isFolder(isFolder)
     , m_name(name)
     , m_path(path)

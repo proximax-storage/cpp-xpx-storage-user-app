@@ -28,21 +28,29 @@ class TransactionsEngine : public QObject
                                 const uint64_t& prepaidSize,
                                 const uint64_t& feedbacksNumber,
                                 const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                                const std::function<void(std::string hash)>& callback);
+                                const std::function<void(std::string hash)>& callback,
+                                const std::function<bool(const QString& transactionFee)>& confirmationCallback);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void downloadPayment(const std::array<uint8_t, 32>& channelId, uint64_t prepaidSize, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void addDrive(const uint64_t& driveSize, ushort replicatorsCount,
                       const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                      const std::function<void(std::string hash)>& callback);
-        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
-        void cancelDataModification(const xpx_chain_sdk::Drive& drive, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+                      const std::function<void(std::string hash)>& callback,
+                      const std::function<bool(const QString& transactionFee)>& confirmationCallback);
+        void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                        const std::function<bool(const QString& transactionFee)>& callback);
+
+        void cancelDataModification(const xpx_chain_sdk::Drive& drive, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                    const std::function<bool(const QString& transactionFee)>& callback);
+
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::vector<xpx_chain_sdk::Address>& addresses,
                                    const std::vector<std::string>& replicators,
-                                   const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+                                   const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                                   const std::function<bool(const QString& transactionFee)>& callback);
+
         void replicatorOnBoarding(const QString& replicatorPrivateKey, const QString& nodeBootPrivateKey, uint64_t capacityMB, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void replicatorOffBoarding(const std::array<uint8_t, 32> &driveId, const QString& replicatorPrivateKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         static bool isValidHash(const std::array<uint8_t, 32>& hash);
@@ -142,7 +150,8 @@ class TransactionsEngine : public QObject
                               const sirius::drive::ActionList& actionList,
                               uint64_t totalModifySize,
                               const std::vector<xpx_chain_sdk::Address>& replicators,
-                              const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
+                              const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
+                              const std::function<bool(const QString& transactionFee)>& callback);
 
         void removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
                                           const std::string& id,

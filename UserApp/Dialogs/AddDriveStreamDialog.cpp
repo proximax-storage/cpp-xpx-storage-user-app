@@ -228,8 +228,17 @@ void AddDriveStreamDialog::accept()
         }
     };
 
-    mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong(), callback);
-    QDialog::accept();
+    auto confirmationCallback = [this](auto fee)
+    {
+        if (showConfirmationDialog(fee)) {
+            QDialog::accept();
+            return true;
+        }
+
+        return false;
+    };
+
+    mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong(), callback, confirmationCallback);
 }
 
 void AddDriveStreamDialog::reject()
