@@ -14,7 +14,7 @@ class ReplicatorInfoDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ReplicatorInfoDialog(const std::string& replicator,
+    explicit ReplicatorInfoDialog(const QString& replicator,
                                   Model* model,
                                   QWidget *parent = nullptr);
     ~ReplicatorInfoDialog();
@@ -33,7 +33,7 @@ private:
 private:
     Ui::ReplicatorInfoDialog* ui;
     Model* mpModel;
-    std::string mPublicKey;
+    QString mPublicKey;
 };
 
 #endif // REPLICATORINFODIALOG_H

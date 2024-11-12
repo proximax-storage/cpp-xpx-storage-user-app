@@ -11,13 +11,13 @@
 AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                                                    Model* model,
                                                    QWidget *parent,
-                                                   std::string driveKey,
-                                                   std::string defaultChannelName ) :
+                                                   QString driveKey,
+                                                   QString defaultChannelName ) :
     QDialog(parent),
     ui(new Ui::AddDownloadChannelDialog),
     mpOnChainClient(onChainClient),
     m_model(model),
-    m_forStreaming( !driveKey.empty() )
+    m_forStreaming( !driveKey.isEmpty() )
 {
     ui->setupUi(this);
 
@@ -62,7 +62,7 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
                 } else {
                     QToolTip::hideText();
                     ui->driveKey->setProperty("is_valid", true);
-                    m_currentDriveKey = ui->driveKey->text().toStdString();
+                    m_currentDriveKey = ui->driveKey->text();
                     validate();
                 }
             });
@@ -109,10 +109,10 @@ AddDownloadChannelDialog::AddDownloadChannelDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::helpRequested, this, &AddDownloadChannelDialog::displayInfo);
 
     
-    ui->driveKey->setText( QString::fromStdString( driveKey ) );
-    if ( ! defaultChannelName.empty() )
+    ui->driveKey->setText( driveKey );
+    if ( ! defaultChannelName.isEmpty() )
     {
-        ui->name->setText( QString::fromStdString( defaultChannelName ) );
+        ui->name->setText( defaultChannelName );
         QTimer::singleShot( 0, this, [this] { ui->prepaidAmountLine->setFocus(); });
     }
 
@@ -143,20 +143,20 @@ void AddDownloadChannelDialog::startCreateChannel()
         qInfo() << LOG_SOURCE << "listOfAllowedPublicKeys is empty";
     }
 
-    std::vector<std::string> publicKeys;
+    std::vector<QString> publicKeys;
     for (const auto& key : listOfAllowedPublicKeys) {
-        publicKeys.push_back(rawHashToHex(key).toStdString());
+        publicKeys.push_back(rawHashToHex(key));
     }
 
-    const auto channelName = ui->name->text().toStdString();
-    auto callback = [client = mpOnChainClient, channelName, currDriveKey = m_currentDriveKey, publicKeys](std::string hash) {
-        hash = QString::fromStdString(hash).toUpper().toStdString();
-        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash.c_str();
+    const auto channelName = ui->name->text();
+    auto callback = [client = mpOnChainClient, channelName, currDriveKey = m_currentDriveKey, publicKeys](QString hash) {
+        hash = hash.toUpper();
+        qDebug() << "AddDownloadChannelDialog::accept::addChannelHash: " << hash;
         emit client->getDialogSignalsEmitter()->addDownloadChannel(channelName, hash, currDriveKey, publicKeys, false);
     };
 
-    mpOnChainClient->addDownloadChannel(ui->name->text().toStdString(),
-                                        listOfAllowedPublicKeys,rawHashFromHex(m_currentDriveKey.c_str()),
+    mpOnChainClient->addDownloadChannel(ui->name->text(),
+                                        listOfAllowedPublicKeys,rawHashFromHex(m_currentDriveKey),
                                         ui->prepaidAmountLine->text().toULongLong(),
                                         0,
                                         callback, {}); // feedback is unused for now

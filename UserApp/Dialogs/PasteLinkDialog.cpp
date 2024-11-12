@@ -68,16 +68,16 @@ void PasteLinkDialog::pasteClipboard( bool onStart )
         m_linkEdit->setStyleSheet("");
         m_linkEdit->setText(clipboard->text());
 
-        m_dataInfo.parseLink( clipboard->text().toStdString() );
+        m_dataInfo.parseLink( clipboard->text() );
         m_dataInfoIsSet = true;
 
         setLayout();
-        m_pathLabel->setText(QString::fromStdString(m_model->getDownloadFolder().string() + m_dataInfo.m_path));
+        m_pathLabel->setText(m_model->getDownloadFolder() + m_dataInfo.m_path);
 
-        m_dataSizeLabel->setText(QString::fromStdString(dataSizeToString(m_dataInfo.m_totalSize)));
-        if(!m_dataInfo.m_itemName.empty())
+        m_dataSizeLabel->setText(dataSizeToString(m_dataInfo.m_totalSize));
+        if(!m_dataInfo.m_itemName.isEmpty())
         {
-            m_folderNameLabel->setText(QString::fromStdString(m_dataInfo.m_itemName));
+            m_folderNameLabel->setText(m_dataInfo.m_itemName);
             m_layout->addWidget(folderName, 1, 0, Qt::AlignRight);
             m_layout->addWidget(m_folderNameLabel, 1, 1);
         }

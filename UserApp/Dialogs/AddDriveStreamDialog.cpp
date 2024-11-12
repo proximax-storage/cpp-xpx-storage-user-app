@@ -2,6 +2,7 @@
 #include "Models/Model.h"
 #include "AddDriveStreamDialog.h"
 #include "./ui_AddDriveStreamDialog.h"
+#include "Utils.h"
 
 #include <QFileDialog>
 #include <QRegularExpression>
@@ -199,17 +200,17 @@ void AddDriveStreamDialog::accept()
     }
 
     std::error_code ec;
-    if ( ! fs::is_directory( path.toStdString(), ec ) || ec )
+    if ( ! fs::is_directory( path.toUtf8().constData(), ec ) || ec )
     {
         QMessageBox::critical( this, "Folder does not exist", ui->m_localDriveFolder->text() );
         return;
     }
     
     auto callback = [model = mp_model,
-                     name = ui->m_driveName->text().toStdString(),
+                     name = ui->m_driveName->text(),
                      count = ui->m_replicatorNumber->text().toInt(),
                      size = ui->m_size->text().toInt(),
-                     folder = ui->m_localDriveFolder->text().toStdString()] (auto hash)
+                     folder = ui->m_localDriveFolder->text()] (auto hash)
     {
         Drive drive;
         drive.setName(name);

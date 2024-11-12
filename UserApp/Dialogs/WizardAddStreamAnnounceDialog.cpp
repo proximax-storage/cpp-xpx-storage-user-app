@@ -15,7 +15,7 @@
 
 WizardAddStreamAnnounceDialog::WizardAddStreamAnnounceDialog( OnChainClient* onChainClient,
                                                           Model*         model,
-                                                          std::string    driveKey,
+                                                          QString        driveKey,
                                                           QWidget*       parent ) :
     QDialog( parent ),
     ui( new Ui::WizardAddStreamAnnounceDialog() ),
@@ -26,7 +26,7 @@ WizardAddStreamAnnounceDialog::WizardAddStreamAnnounceDialog( OnChainClient* onC
     if ( m_model->currentStreamingDrive() != nullptr )
     {
         QMessageBox msgBox;
-        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        const QString message = "internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey();
         msgBox.setText(message);
         msgBox.setStandardButtons( QMessageBox::Close );
         msgBox.exec();
@@ -125,7 +125,7 @@ WizardAddStreamAnnounceDialog::~WizardAddStreamAnnounceDialog()
 
 void WizardAddStreamAnnounceDialog::validate()
 {
-    if ( mDriveKey.empty() )
+    if ( mDriveKey.isEmpty() )
     {
         ui->m_errorText->setText("Drive not assigned");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
@@ -191,7 +191,7 @@ void WizardAddStreamAnnounceDialog::accept()
     if ( m_model->currentStreamingDrive() != nullptr )
     {
         QMessageBox msgBox;
-        const QString message = QString::fromStdString("internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey() );
+        const QString message = "internal error: drive already is streaming: " + m_model->currentStreamingDrive()->getKey();
         msgBox.setText(message);
         msgBox.setStandardButtons( QMessageBox::Close );
         msgBox.exec();
@@ -229,9 +229,9 @@ void WizardAddStreamAnnounceDialog::accept()
         return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
     });
 
-    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 40 );
+    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 40 ).c_str();
         
-    auto streamFolder = fs::path(drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + mUniqueFolderName);
+    auto streamFolder = fs::path(qStringToStdStringUTF8(drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + mUniqueFolderName));
     
     //
     // Try to create stream folder
@@ -252,7 +252,7 @@ void WizardAddStreamAnnounceDialog::accept()
     // save stream annotaion on disk
     //
     StreamInfo  streamInfo( drive->getKey(),
-                            ui->m_title->text().toStdString(),
+                            ui->m_title->text(),
                             "",
                             ui->m_dateTime->dateTime().toSecsSinceEpoch(),
                             mUniqueFolderName );
@@ -280,7 +280,7 @@ void WizardAddStreamAnnounceDialog::accept()
     // Create action list
     //
     sirius::drive::ActionList actionList;
-    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ).string() + "/" + mUniqueFolderName;
+    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ).string() + "/" + qStringToStdStringUTF8(mUniqueFolderName);
     actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder + "/" + STREAM_INFO_FILE_NAME ) );
 
     //
@@ -298,7 +298,7 @@ void WizardAddStreamAnnounceDialog::accept()
         return false;
     };
 
-    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+    auto driveKeyHex = rawHashFromHex(drive->getKey());
     mp_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
 }
 
@@ -316,8 +316,7 @@ void WizardAddStreamAnnounceDialog::onDriveCreated( const Drive* drive )
         ui->m_driveSelection->setEnabled(true);
         ui->buttonBox->button(QDialogButtonBox::Cancel)->setEnabled(true);
         ui->m_driveSelection->setPlaceholderText("");
-        ui->m_driveSelection->insertItem(0,QString::fromStdString(drive->getName())
-                                , QString::fromStdString(drive->getKey()));
+        ui->m_driveSelection->insertItem(0, drive->getName(), drive->getKey());
         mDriveKey = drive->getKey();
     });
 }
@@ -326,13 +325,12 @@ void WizardAddStreamAnnounceDialog::addDrivesToCBox()
 {
     for (const auto& [key, drive] : m_model->getDrives())
     {
-        int index = ui->m_driveSelection->findData(QVariant::fromValue(QString::fromStdString(key))
+        int index = ui->m_driveSelection->findData(QVariant::fromValue(key)
                                                   , Qt::UserRole
                                                   , Qt::MatchFixedString);
         if (index == -1)
         {
-            ui->m_driveSelection->addItem(QString::fromStdString(drive.getName())
-                                        , QString::fromStdString(drive.getKey()));
+            ui->m_driveSelection->addItem(drive.getName(), drive.getKey());
             ui->m_driveSelection->model()->sort(0);
         }
     }
@@ -341,6 +339,6 @@ void WizardAddStreamAnnounceDialog::addDrivesToCBox()
 void WizardAddStreamAnnounceDialog::on_m_driveSelection_activated(int index)
 {
     QVariant driveKey = ui->m_driveSelection->itemData(index);
-    mDriveKey = driveKey.toString().toStdString();
+    mDriveKey = driveKey.toString();
 }
 

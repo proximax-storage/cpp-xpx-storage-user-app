@@ -15,7 +15,7 @@
 
 AddStreamAnnouncementDialog::AddStreamAnnouncementDialog( OnChainClient* onChainClient,
                                                           Model*         model,
-                                                          std::string    driveKey,
+                                                          QString        driveKey,
                                                           QWidget*       parent ) :
     QDialog( parent ),
     ui( new Ui::AddStreamAnnouncementDialog() ),
@@ -99,7 +99,7 @@ AddStreamAnnouncementDialog::~AddStreamAnnouncementDialog()
 
 void AddStreamAnnouncementDialog::validate()
 {
-    if ( mDriveKey.empty() )
+    if ( mDriveKey.isEmpty() )
     {
         ui->m_errorText->setText("Drive not assigned");
         ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
@@ -139,7 +139,7 @@ void AddStreamAnnouncementDialog::validate()
 //    bool isRelative = !mStreamFolder.empty() && std::filesystem::path(mStreamFolder).native()[0] != '.';
 //    if ( ! isRelative )
 //    {
-//        ui->m_errorText->setText( QString::fromStdString("Stream folder is not drive subfolder:\n"+std::string(drive->getLocalFolder())));
+//        ui->m_errorText->setText( QString::fromStdString("Stream folder is not drive subfolder:\n"+QString(drive->getLocalFolder())));
 //        ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 //        return;
 //    }
@@ -193,9 +193,11 @@ void AddStreamAnnouncementDialog::accept()
         return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
     });
 
-    mUniqueFolderName = sirius::drive::toString( buffer ).substr( 0, 40 );
+    mUniqueFolderName = stdStringToQStringUtf8(sirius::drive::toString( buffer ).substr( 0, 40 ));
         
-    auto streamFolder = fs::path(drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + mUniqueFolderName);
+    auto streamFolder = fs::path(qStringToStdStringUTF8(drive->getLocalFolder()) + "/" +
+                                    STREAM_ROOT_FOLDER_NAME + "/" +
+                                    qStringToStdStringUTF8(mUniqueFolderName));
     
     //
     // Try to create stream folder
@@ -216,7 +218,7 @@ void AddStreamAnnouncementDialog::accept()
     // save stream annotaion on disk
     //
     StreamInfo  streamInfo( drive->getKey(),
-                            ui->m_title->text().toStdString(),
+                            ui->m_title->text(),
                             "",
                             ui->m_dateTime->dateTime().toSecsSinceEpoch(),
                             mUniqueFolderName );
@@ -244,7 +246,7 @@ void AddStreamAnnouncementDialog::accept()
     // Create action list
     //
     sirius::drive::ActionList actionList;
-    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ).string() + "/" + mUniqueFolderName;
+    auto destFolder = fs::path( STREAM_ROOT_FOLDER_NAME ).string() + "/" + qStringToStdStringUTF8(mUniqueFolderName);
     actionList.push_back( sirius::drive::Action::upload( streamFolder.string() + "/" + STREAM_INFO_FILE_NAME, destFolder + "/" + STREAM_INFO_FILE_NAME ) );
 
     //
@@ -261,7 +263,7 @@ void AddStreamAnnouncementDialog::accept()
         return false;
     };
 
-    auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
+    auto driveKeyHex = rawHashFromHex(drive->getKey());
     mp_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
 }
 

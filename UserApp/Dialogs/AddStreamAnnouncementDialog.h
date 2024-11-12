@@ -14,7 +14,7 @@ public:
 public:
     explicit AddStreamAnnouncementDialog( OnChainClient* onChainClient,
                              Model* model,
-                             std::string driveKey,
+                             QString driveKey,
                              QWidget *parent = nullptr);
     ~AddStreamAnnouncementDialog() override;
 
@@ -22,7 +22,7 @@ public:
     void accept() override;
     void reject() override;
 
-    std::string streamFolderName() const { return mUniqueFolderName; };
+    QString streamFolderName() const { return mUniqueFolderName; };
 
 private:
     void validate();
@@ -31,6 +31,6 @@ private:
     Ui::AddStreamAnnouncementDialog* ui;
     Model*                           m_model;
     OnChainClient*                   mp_onChainClient;
-    std::string                      mDriveKey;
-    std::string                      mUniqueFolderName;
+    QString                          mDriveKey;
+    QString                          mUniqueFolderName;
 };

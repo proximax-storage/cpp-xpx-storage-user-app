@@ -11,7 +11,7 @@ CloseDriveDialog::CloseDriveDialog(OnChainClient* onChainClient,
 
     QString text;
     text.append("Please confirm drive '");
-    text.append(mDrive->getName().c_str());
+    text.append(mDrive->getName());
     text.append("' removal");
     setText(text);
 
@@ -38,7 +38,7 @@ void CloseDriveDialog::accept()
         return false;
     };
 
-    mpOnChainClient->closeDrive(rawHashFromHex(mDrive->getKey().c_str()), confirmationCallback);
+    mpOnChainClient->closeDrive(rawHashFromHex(mDrive->getKey()), confirmationCallback);
     QDialog::accept();
 }
 

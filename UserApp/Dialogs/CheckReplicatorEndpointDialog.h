@@ -19,17 +19,17 @@ class CheckReplicatorEndpointDialog : public QDialog
 {
     sirius::drive::ReplicatorList   m_replicatorList;
     
-    std::string                     m_channelKey;
+    QString                         m_channelKey;
     Model*                          m_model = nullptr;
 
 public:
     
     static bool check( const sirius::drive::ReplicatorList& replicatorList );
-    static bool check( Model* model, const std::string& channelKey );
+    static bool check( Model* model, const QString& channelKey );
 
 private:
     CheckReplicatorEndpointDialog( const sirius::drive::ReplicatorList& replicatorList );
-    CheckReplicatorEndpointDialog( Model* model, const std::string& channelKey );
+    CheckReplicatorEndpointDialog( Model* model, const QString& channelKey );
     void init();
     
     void checkEndpoints();

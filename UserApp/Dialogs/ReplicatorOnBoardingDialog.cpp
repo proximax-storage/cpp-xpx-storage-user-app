@@ -45,7 +45,7 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(OnChainClient* onChainCli
     QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
     connect(ui->replicatorKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
-        if (!keyTemplate.match(text).hasMatch() || !mpModel->findReplicatorByPublicKey(getReplicatorPublicKey()).getPrivateKey().empty()) {
+        if (!keyTemplate.match(text).hasMatch() || !mpModel->findReplicatorByPublicKey(getReplicatorPublicKey()).getPrivateKey().isEmpty()) {
             QToolTip::showText(ui->replicatorKey->mapToGlobal(QPoint(0, 15)), tr("Invalid or duplicate key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->replicatorKey->setProperty("is_valid", false);
@@ -56,7 +56,7 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(OnChainClient* onChainCli
             ui->replicatorKey->setProperty("is_valid", true);
             validate();
 
-            mpOnChainClient->getBlockchainEngine()->getReplicatorById(getReplicatorPublicKey(), [this] (auto, auto isSuccess, auto, auto ) {
+            mpOnChainClient->getBlockchainEngine()->getReplicatorById(getReplicatorPublicKey().toStdString(), [this] (auto, auto isSuccess, auto, auto ) {
                 if (isSuccess) {
                     ui->checkBox->setCheckState(Qt::Checked);
                 }
@@ -124,16 +124,16 @@ bool ReplicatorOnBoardingDialog::isReplicatorExists() const {
     return ui->checkBox->isChecked();
 }
 
-std::string ReplicatorOnBoardingDialog::getReplicatorPublicKey() const {
+QString ReplicatorOnBoardingDialog::getReplicatorPublicKey() const {
     auto keyPair = sirius::crypto::KeyPair::FromPrivate(sirius::crypto::PrivateKey::FromString(ui->replicatorKey->text().toStdString()));
-    return rawHashToHex(keyPair.publicKey().array()).toStdString();
+    return rawHashToHex(keyPair.publicKey().array());
 }
 
 void ReplicatorOnBoardingDialog::accept() {
     CachedReplicator r;
-    r.setName(ui->alias->text().toStdString());
+    r.setName(ui->alias->text());
     r.setPublicKey(getReplicatorPublicKey());
-    r.setPrivateKey(ui->replicatorKey->text().toStdString());
+    r.setPrivateKey(ui->replicatorKey->text());
     mpModel->addMyReplicator(r);
     mpModel->saveSettings();
 

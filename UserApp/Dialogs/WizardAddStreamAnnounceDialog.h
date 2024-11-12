@@ -14,7 +14,7 @@ public:
 public:
     explicit WizardAddStreamAnnounceDialog( OnChainClient* onChainClient,
                              Model* model,
-                             std::string driveKey,
+                             QString driveKey,
                              QWidget *parent = nullptr);
     ~WizardAddStreamAnnounceDialog() override;
 
@@ -22,7 +22,7 @@ public:
     void accept() override;
     void reject() override;
 
-    std::string streamFolderName() const { return mUniqueFolderName; };
+    QString streamFolderName() const { return mUniqueFolderName; };
     void onDriveCreated( const Drive* drive );
     void addDrivesToCBox();
 
@@ -36,6 +36,6 @@ private:
     Ui::WizardAddStreamAnnounceDialog* ui;
     Model*                           m_model;
     OnChainClient*                   mp_onChainClient;
-    std::string                      mDriveKey;
-    std::string                      mUniqueFolderName;
+    QString                          mDriveKey;
+    QString                          mUniqueFolderName;
 };

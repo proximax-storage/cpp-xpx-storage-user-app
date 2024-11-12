@@ -30,7 +30,7 @@ private:
     void validate();
 
 private:
-    std::string mCurrentChannelKey;
+    QString mCurrentChannelKey;
     Ui::DownloadPaymentDialog *ui;
     OnChainClient* mpOnChainClient;
     Model* mpModel;
