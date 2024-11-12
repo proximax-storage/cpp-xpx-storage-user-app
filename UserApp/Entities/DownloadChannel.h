@@ -9,6 +9,7 @@
 #include <cereal/types/chrono.hpp>
 
 #include "Engines/StorageEngine.h"
+#include "Utils.h"
 
 #ifndef WA_APP
 #   include "drive/Session.h"
@@ -24,22 +25,22 @@ class DownloadChannel {
         ~DownloadChannel();
 
     public:
-        std::string getName() const;
-        void setName(const std::string& name);
-        std::string getKey() const;
-        void setKey(const std::string& key);
-        std::string getDriveKey() const;
-        void setDriveKey(const std::string& key);
-        std::vector<std::string> getAllowedPublicKeys() const;
-        void setAllowedPublicKeys(const std::vector<std::string>& keys);
+        QString getName() const;
+        void setName(const QString& name);
+        QString getKey() const;
+        void setKey(const QString& key);
+        QString getDriveKey() const;
+        void setDriveKey(const QString& key);
+        std::vector<QString> getAllowedPublicKeys() const;
+        void setAllowedPublicKeys(const std::vector<QString>& keys);
         bool isCreating() const;
         void setCreating(bool state);
         bool isDeleting() const;
         void setDeleting(bool state);
         timepoint getCreatingTimePoint() const;
         void setCreatingTimePoint(timepoint time);
-        std::vector<std::string> getLastOpenedPath() const;
-        void setLastOpenedPath(const std::vector<std::string>& path);
+        std::vector<QString> getLastOpenedPath() const;
+        void setLastOpenedPath(const std::vector<QString>& path);
         std::array<uint8_t, 32> getFsTreeHash() const;
         void setFsTreeHash(const std::array<uint8_t, 32>& hash);
         sirius::drive::FsTree getFsTree() const;
@@ -47,7 +48,7 @@ class DownloadChannel {
         bool isDownloadingFsTree() const;
         void setDownloadingFsTree(bool state);
         sirius::drive::ReplicatorList getReplicators() const;
-        void setReplicators(const std::vector<std::string>& replicators);
+        void setReplicators(const std::vector<QString>& replicators);
         void setForEasyDownload(bool state);
         bool isForEasyDownload() const;
 
@@ -67,16 +68,16 @@ class DownloadChannel {
         }
 
     private:
-        std::string m_name;
-        std::string m_key;
-        std::string m_driveKey;
-        std::vector<std::string> m_allowedPublicKeys;
+        QString m_name;
+        QString m_key;
+        QString m_driveKey;
+        std::vector<QString> m_allowedPublicKeys;
         bool m_isCreating;
         bool m_isDeleting;
         bool m_isForEasyDownload;
         timepoint m_creationTimepoint;
         timepoint m_tobeDeletedTimepoint;
-        std::vector<std::string> m_lastOpenedPath;
+        std::vector<QString> m_lastOpenedPath;
         std::array<uint8_t, 32> m_fsTreeHash;
         sirius::drive::FsTree m_fsTree;
         bool m_downloadingFsTree;

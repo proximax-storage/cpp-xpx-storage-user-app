@@ -14,35 +14,35 @@ void DownloadInfo::setHash(const std::array<uint8_t,32>& hash) {
     m_hash = hash;
 }
 
-std::string DownloadInfo::getDownloadChannelKey() const {
+QString DownloadInfo::getDownloadChannelKey() const {
     return m_channelKey;
 }
 
-void DownloadInfo::setDownloadChannelKey(const std::string& key) {
+void DownloadInfo::setDownloadChannelKey(const QString& key) {
     m_channelKey = key;
 }
 
-std::string DownloadInfo::getFileName() const {
+QString DownloadInfo::getFileName() const {
     return m_fileName;
 }
 
-void DownloadInfo::setFileName(const std::string& name) {
+void DownloadInfo::setFileName(const QString& name) {
     m_fileName = name;
 }
 
-std::string DownloadInfo::getSaveFolder() const {
+QString DownloadInfo::getSaveFolder() const {
     return m_saveFolder;
 }
 
-void DownloadInfo::setSaveFolder(const std::string& folder) {
+void DownloadInfo::setSaveFolder(const QString& folder) {
     m_saveFolder = folder;
 }
 
-std::string DownloadInfo::getDownloadFolder() const {
+QString DownloadInfo::getDownloadFolder() const {
     return m_downloadFolder;
 }
 
-void DownloadInfo::setDownloadFolder(const std::string& folder) {
+void DownloadInfo::setDownloadFolder(const QString& folder) {
     m_downloadFolder = folder;
 }
 

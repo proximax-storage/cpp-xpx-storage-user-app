@@ -8,8 +8,8 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/portable_binary.hpp>
 
-#include <QDebug>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QFile>
 #include <QDir>
 #include <QTimer>
@@ -86,7 +86,7 @@ void Settings::initForTests()
     }
 }
 
-bool Settings::load( const std::string& pwd )
+bool Settings::load( const QString& pwd )
 {
     try
     {
@@ -94,7 +94,7 @@ bool Settings::load( const std::string& pwd )
         bool isExists = fs::exists( m_configPath, ec );
         if (ec)
         {
-            qCritical () << "Settings::load. fs::exists error: " << ec.message() << " code: " << std::to_string(ec.value()) << " path: " << m_configPath.string();
+            qCritical () << "Settings::load. fs::exists error: " << ec.message().c_str() << " code: " << std::to_string(ec.value()).c_str() << " path: " << m_configPath.string().c_str();
             return false;
         }
 
@@ -181,12 +181,14 @@ bool Settings::load( const std::string& pwd )
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );
-            qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr.c_str() << " / " << account.m_publicKeyStr.c_str();
+            qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr << " / " << account.m_publicKeyStr;
         }
 #endif
 
-        qDebug() << "Settings::load. Current account public key: " << QString::fromStdString(accountConfig().m_publicKeyStr).toUpper();
-        qDebug() << "/*****************************************************************************************/.";
+        if (!m_accounts.empty()) {
+            qDebug() << "Settings::load. Current account public key: " << accountConfig().m_publicKeyStr;
+            qDebug() << "/*****************************************************************************************/.";
+        }
     }
     catch( std::runtime_error& err )
     {
@@ -208,7 +210,7 @@ void Settings::saveSettings()
     bool isExists = fs::exists( getSettingsFolder().make_preferred(), ec );
     if (ec)
     {
-        qCritical () << "Settings::save. fs::exists error: " << ec.message() << " code: " << std::to_string(ec.value());
+        qCritical () << "Settings::save. fs::exists error: " << ec.message().c_str() << " code: " << std::to_string(ec.value()).c_str();
         return;
     }
 
@@ -223,8 +225,8 @@ void Settings::saveSettings()
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
 
-            qCritical () << "Settings::save. fs::create_directories error: " << ec.message() << " code: " << std::to_string(ec.value())
-                         << " path: " << getSettingsFolder().make_preferred().string();
+            qCritical () << "Settings::save. fs::create_directories error: " << ec.message().c_str() << " code: " << std::to_string(ec.value()).c_str()
+                         << " path: " << getSettingsFolder().make_preferred().string().c_str();
 
             exit(1);
         }
@@ -271,12 +273,12 @@ bool Settings::loaded() const
     return m_loaded;
 }
 
-std::vector<std::string> Settings::accountList()
+std::vector<QString> Settings::accountList()
 {
-    std::vector<std::string> list;
+    std::vector<QString> list;
     for( const auto& account : m_accounts )
     {
-        list.push_back( account.m_accountName );
+        list.push_back(account.m_accountName);
     }
 
     return list;
@@ -288,7 +290,7 @@ Account& Settings::accountConfig()
     return m_accounts[m_currentAccountIndex];
 }
 
-fs::path Settings::downloadFolder()
+QString Settings::downloadFolder()
 {
     return accountConfig().m_downloadFolder;
 }
@@ -326,14 +328,15 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             }
 
             fs::path destPath;
-            if ( dnInfo.getSaveFolder().empty() )
+            if ( dnInfo.getSaveFolder().isEmpty() )
             {
-                destPath = fs::path(downloadFolder().string() + "/" + dnInfo.getFileName()).make_preferred();
+                destPath = fs::path(qStringToStdStringUTF8(downloadFolder() + "/" + dnInfo.getFileName())).make_preferred();
             }
             else
             {
-                destPath = fs::path(downloadFolder().string() + "/" + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred();
+                destPath = fs::path(qStringToStdStringUTF8(downloadFolder() + "/" + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName())).make_preferred();
             }
+
             onTorrentDownloaded( model, dnInfo.getHash(), destPath );
 
             if ( dnInfo.easyDownloadId() >= 0 )
@@ -365,7 +368,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
                 continue;
             }
             
-            fs::path srcPath = fs::path(dnInfo.getDownloadFolder() + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred();
+            fs::path srcPath = fs::path(qStringToStdStringUTF8(dnInfo.getDownloadFolder()) + "/" + sirius::drive::toString( dnInfo.getHash())).make_preferred().c_str();
             qDebug() << "onDownloadCompleted: counter: " << counter;
             qDebug() << "onDownloadCompleted: id: " << dnInfo.easyDownloadId();
             qDebug() << "onDownloadCompleted: " << srcPath.c_str();
@@ -380,7 +383,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             
             if ( ec )
             {
-                qWarning() << "onDownloadCompleted: Cannot create destination subfolder: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                qWarning() << "onDownloadCompleted: Cannot create destination subfolder: " << ec.message().c_str() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                 
                 QString message;
                 message.append("Cannot create destination subfolder: ");
@@ -397,7 +400,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
                 
                 if ( ec )
                 {
-                    qWarning() << "onDownloadCompleted: Cannot save viewing file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                    qWarning() << "onDownloadCompleted: Cannot save viewing file: " << ec.message().c_str() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                     
                     QString message;
                     message.append("Cannot save viewing file: ");
@@ -421,9 +424,9 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             if ( dnInfo.easyDownloadId() == -1 )
             {
                 int index = 1;
-                bool isFolder = !dnInfo.getSaveFolder().empty();
+                bool isFolder = !dnInfo.getSaveFolder().isEmpty();
                 bool isExists = QFile(destPath.string().c_str()).exists();
-                auto saveFolderPath = QString(dnInfo.getSaveFolder().c_str()).split("/", Qt::SkipEmptyParts);
+                auto saveFolderPath = dnInfo.getSaveFolder().split("/", Qt::SkipEmptyParts);
                 const auto rootFolder = isFolder ? saveFolderPath.first().toStdString() : "";
                 while( isExists )
                 {
@@ -431,36 +434,36 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
                     if (isFolder)
                     {
                         auto newFolderName = fs::path(rootFolder + " (" + std::to_string(index) + ")");
-                        destPath = fs::path(downloadFolder().string() + "/" + newFolderName.string()).make_preferred();
+                        destPath = fs::path(qStringToStdStringUTF8(downloadFolder()) + "/" + newFolderName.string()).make_preferred();
                         isExists = QDir(destPath.string().c_str()).exists();
                         if (!isExists)
                         {
                             saveFolderPath.pop_front();
                             saveFolderPath.push_front(newFolderName.string().c_str());
                             auto rawPath = saveFolderPath.join("/");
-                            dnInfo.setSaveFolder("/" + rawPath.toStdString());
-                            const auto finalDownloadFolder = downloadFolder().string() + dnInfo.getSaveFolder();
+                            dnInfo.setSaveFolder("/" + rawPath);
+                            const auto finalDownloadFolder = qStringToStdStringUTF8(downloadFolder() + dnInfo.getSaveFolder());
                             QDir().mkpath(finalDownloadFolder.c_str());
-                            destPath = fs::path(finalDownloadFolder + "/" + dnInfo.getFileName()).make_preferred();
+                            destPath = fs::path(finalDownloadFolder + "/" + qStringToStdStringUTF8(dnInfo.getFileName())).make_preferred();
                         }
                     }
                     else
                     {
-                        auto newName = fs::path(dnInfo.getFileName()).stem().string()
+                        auto newName = fs::path(qStringToStdStringUTF8(dnInfo.getFileName())).stem().string()
                         + " (" + std::to_string(index) + ")"
-                        + fs::path(dnInfo.getFileName()).extension().string();
+                        + fs::path(qStringToStdStringUTF8(dnInfo.getFileName())).extension().string();
                         
-                        destPath = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + newName).make_preferred();
+                        destPath = fs::path(qStringToStdStringUTF8(downloadFolder() + dnInfo.getSaveFolder()) + "/" + newName).make_preferred();
                         isExists = QFile(destPath.string().c_str()).exists();
                         if (!isExists)
                         {
-                            dnInfo.setFileName(newName);
+                            dnInfo.setFileName(stdStringToQStringUtf8(newName));
                         }
                     }
                 }
             }
             
-            dnInfo.getFileName() = destPath.filename().string();
+            dnInfo.getFileName() = stdStringToQStringUtf8(destPath.filename().string());
             
             if ( --counter == 0 )
             {
@@ -475,7 +478,7 @@ void Settings::onDownloadCompleted( lt::torrent_handle handle, Model& model )
             
             if ( ec )
             {
-                qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
+                qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message().c_str() << " " << srcPath.string().c_str() << " : " << destPath.string().c_str();
                 
                 QString message;
                 message.append("Cannot save file: ");
@@ -528,28 +531,28 @@ void Settings::removeFromDownloads( int index )
     std::error_code ec;
     if ( dnInfo.isCompleted() )
     {
-        const std::string path = fs::path(downloadFolder().string() + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName()).make_preferred().string();
+        const std::string path = fs::path(qStringToStdStringUTF8(downloadFolder() + dnInfo.getSaveFolder() + "/" + dnInfo.getFileName())).make_preferred().string();
         fs::remove( path, ec );
         if (ec)
         {
-            qCritical () << "Settings::save. fs::remove error: " << ec.message() << " code: " + std::to_string(ec.value()) << " path: " << path;
+            qCritical () << "Settings::save. fs::remove error: " << ec.message().c_str() << " code: " << std::to_string(ec.value()).c_str() << " path: " << path.c_str();
         }
         else
         {
-            qDebug() << "Settings::removeFromDownloads. Remove(1): " << path;
+            qDebug() << "Settings::removeFromDownloads. Remove(1): " << path.c_str();
         }
     }
     else if ( hashCounter == 1 )
     {
-        const std::string path = fs::path(downloadFolder().string() + "/" + sirius::drive::hashToFileName(dnInfo.getHash())).make_preferred().string();
+        const std::string path = fs::path(qStringToStdStringUTF8(downloadFolder()) + "/" + sirius::drive::hashToFileName(dnInfo.getHash())).make_preferred().string();
         fs::remove( path, ec );
         if (ec)
         {
-            qCritical () << "Settings::save. fs::remove error: " << ec.message() << " code: " + std::to_string(ec.value()) << " path: " << path;
+            qCritical () << "Settings::save. fs::remove error: " << ec.message().c_str() << " code: " << std::to_string(ec.value()).c_str() << " path: " << path.c_str();
         }
         else
         {
-            qDebug() << "Settings::removeFromDownloads. Remove(2): " << path;
+            qDebug() << "Settings::removeFromDownloads. Remove(2): " << path.c_str();
         }
     }
 
@@ -557,7 +560,7 @@ void Settings::removeFromDownloads( int index )
 }
 
 sirius::drive::lt_handle Settings::addDownloadTorrent( Model&                          model,
-                                                       const std::string&              channelIdStr,
+                                                       const QString&                  channelIdStr,
                                                        const std::array<uint8_t, 32>&  fileHash,
                                                        std::filesystem::path           outputFolder )
 {
@@ -580,8 +583,8 @@ void Settings::onTorrentDownloaded( Model&                          model,
 {
     if ( auto it = m_downloadTorrentMap.find( fileHash ); it == m_downloadTorrentMap.end() )
     {
-        qWarning() << "onTorrentDownloaded: unknown fileHash: " << sirius::drive::toString(fileHash);
-        qWarning() << "onTorrentDownloaded: unknown fileHash: destinationFilename: " << destinationFilename.string();
+        qWarning() << "onTorrentDownloaded: unknown fileHash: " << sirius::drive::toString(fileHash).c_str();
+        qWarning() << "onTorrentDownloaded: unknown fileHash: destinationFilename: " << destinationFilename.string().c_str();
         return;
     }
     else
@@ -609,7 +612,7 @@ void Settings::onTorrentDownloaded( Model&                          model,
     
         if ( ec )
         {
-            qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message() << " " << it->second.m_path.string().c_str() << " -> " << destinationFilename.string().c_str();
+            qWarning() << "onDownloadCompleted: Cannot save file: " << ec.message().c_str() << " " << it->second.m_path.string().c_str() << " -> " << destinationFilename.string().c_str();
             
             QString message;
             message.append("Cannot save file: ");

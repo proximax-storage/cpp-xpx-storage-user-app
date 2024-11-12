@@ -1,7 +1,7 @@
 #pragma once
-#include <string>
 #include <filesystem>
 
+#include <QString>
 #include <QSettings>
 #include <QDir>
 #include <QObject>
@@ -16,18 +16,18 @@
 struct DataInfo
 {
     uint8_t                 m_version = 0;
-    std::string             m_itemName;
+    QString                 m_itemName;
     std::array<uint8_t, 32> m_driveKey = {};
-    std::string             m_driveName;
-    std::string             m_path;
+    QString                 m_driveName;
+    QString                 m_path;
     uint64_t                m_totalSize;
 
     DataInfo() = default;
     
     DataInfo( const std::array<uint8_t, 32>& driveKey,
-              std::string                    driveName,
-              const std::string&             path,
-              uint64_t                       totalSize )
+              QString                    driveName,
+              const QString&             path,
+              uint64_t                   totalSize )
         : m_driveKey(driveKey)
         , m_driveName(driveName)
         , m_path(path)
@@ -35,22 +35,23 @@ struct DataInfo
     {
     }
 
-    void parseLink( const std::string& link);
+    void parseLink( const QString& link);
 
-    std::string getLink() const;
+    QString getLink() const;
 
-    std::string savingName() const
+    QString savingName() const
     {
-        std::string name;
+        QString name;
         
-        if ( m_itemName.empty() )
+        if ( m_itemName.isEmpty() )
         {
-            name = std::filesystem::path(m_path).filename().string();
+            name = QString::fromUtf8(std::filesystem::path(m_path.toUtf8().constData()).filename().string());
         }
         else
         {
             name = m_itemName;
         }
+
         return name;
     }
 };

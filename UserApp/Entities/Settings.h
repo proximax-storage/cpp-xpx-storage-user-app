@@ -29,9 +29,9 @@ class Settings : public QObject
     Q_OBJECT
 
     public:
-        std::string     m_restBootstrap;
-        std::string     m_replicatorBootstrap;
-        std::string     m_udpPort  = "6846";
+        QString     m_restBootstrap;
+        QString     m_replicatorBootstrap;
+        QString     m_udpPort  = "6846";
         double          m_feeMultiplier = 150000;
         QRect           m_windowGeometry;
         bool            m_isDriveStructureAsTree = false;
@@ -73,12 +73,12 @@ class Settings : public QObject
 
     public:
         void initForTests();
-        bool load( const std::string& pwd );
+        bool load( const QString& pwd );
         void saveSettings();
         bool loaded() const;
-        std::vector<std::string> accountList();
+        std::vector<QString> accountList();
         Account& accountConfig();
-        fs::path downloadFolder();
+        QString downloadFolder();
         void setCurrentAccountIndex( int currentAccountIndex );
 #ifndef WA_APP
         void onDownloadCompleted( lt::torrent_handle handle, Model& model );
@@ -113,10 +113,10 @@ class Settings : public QObject
         };
         std::map<std::array<uint8_t,32>,DownloadTorrentItem> m_downloadTorrentMap;
     
-    sirius::drive::lt_handle addDownloadTorrent(  Model&                          model,
-                                                  const std::string&              channelIdStr,
-                                                  const std::array<uint8_t, 32>&  fileHash,
-                                                  std::filesystem::path           outputFolder );
+        sirius::drive::lt_handle addDownloadTorrent(  Model&                          model,
+                                                      const QString&                  channelIdStr,
+                                                      const std::array<uint8_t, 32>&  fileHash,
+                                                      std::filesystem::path           outputFolder );
     
         void onTorrentDownloaded( Model&                          model,
                                   const std::array<uint8_t, 32>&  fileHash,

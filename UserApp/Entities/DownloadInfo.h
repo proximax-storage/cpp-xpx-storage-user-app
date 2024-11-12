@@ -1,21 +1,21 @@
 #ifndef DOWNLOADINFO_H
 #define DOWNLOADINFO_H
 
-#include <string>
 #include <array>
+#include <QString>
 #include "drive/ActionList.h"
 #include "Common.h"
-
+#include "Utils.h"
 
 class DownloadInfo
 {
     using DownloadNotification = std::function<void( const DownloadInfo& )>;
 
     std::array<uint8_t,32>   m_hash;
-    std::string              m_channelKey;
-    std::string              m_fileName;
-    std::string              m_saveFolder;
-    std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
+    QString                  m_channelKey;
+    QString                  m_fileName;
+    QString                  m_saveFolder;
+    QString                  m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
     bool                     m_isCompleted = false;
     bool                     m_channelIsOutdated = false;
     int                      m_progress = 0; // m_progress==1001 means completed
@@ -33,17 +33,17 @@ public:
     std::array<uint8_t,32> getHash() const;
     void setHash(const std::array<uint8_t,32>& hash);
 
-    std::string getDownloadChannelKey() const;
-    void setDownloadChannelKey(const std::string& key);
+    QString getDownloadChannelKey() const;
+    void setDownloadChannelKey(const QString& key);
 
-    std::string getFileName() const;
-    void setFileName(const std::string& name);
+    QString getFileName() const;
+    void setFileName(const QString& name);
 
-    std::string getSaveFolder() const;
-    void setSaveFolder(const std::string& folder);
+    QString getSaveFolder() const;
+    void setSaveFolder(const QString& folder);
 
-    std::string getDownloadFolder() const;
-    void setDownloadFolder(const std::string& folder);
+    QString getDownloadFolder() const;
+    void setDownloadFolder(const QString& folder);
 
     int getProgress() const;
     void setProgress(int progress);
@@ -69,7 +69,13 @@ public:
     template<class Archive>
     void serialize( Archive &ar )
     {
-        ar( m_hash, m_channelKey, m_fileName, m_saveFolder, m_downloadFolder, m_isCompleted );
+        ar(
+                m_hash,
+                m_channelKey,
+                m_fileName,
+                m_saveFolder,
+                m_downloadFolder,
+                m_isCompleted );
     }
 };
 

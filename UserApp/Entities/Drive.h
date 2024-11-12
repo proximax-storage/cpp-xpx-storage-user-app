@@ -47,14 +47,14 @@ class Drive
         Drive& operator=(const Drive&);
 
     public:
-        std::string getKey() const;
-        void setKey(const std::string& key);
+        QString getKey() const;
+        void setKey(const QString& key);
 
-        std::string getName() const;
-        void setName(const std::string& name);
+        QString getName() const;
+        void setName(const QString& name);
 
-        std::string getLocalFolder() const;
-        void setLocalFolder(const std::string& localFolder);
+        QString getLocalFolder() const;
+        void setLocalFolder(const QString& localFolder);
 
         bool isLocalFolderExists() const;
         void setLocalFolderExists(bool state);
@@ -65,8 +65,8 @@ class Drive
         uint32_t getReplicatorsCount() const;
         void setReplicatorsCount(uint32_t count);
 
-        std::vector<std::string> getLastOpenedPath() const;
-        void setLastOpenedPath(const std::vector<std::string>& path);
+        std::vector<QString> getLastOpenedPath() const;
+        void setLastOpenedPath(const std::vector<QString>& path);
 
         std::array<uint8_t, 32> getRootHash() const;
         void setRootHash(const std::array<uint8_t, 32>& rootHash);
@@ -89,7 +89,7 @@ class Drive
         DriveState getState() const;
 
         sirius::drive::ReplicatorList getReplicators() const;
-        void setReplicators(const std::vector<std::string>& replicators);
+        void setReplicators(const std::vector<QString>& replicators);
     
         const sirius::drive::ReplicatorList& replicatorList() const { return m_replicatorList; }
     
@@ -116,14 +116,14 @@ class Drive
         }
 
     private:
-        std::string m_driveKey;
-        std::string m_name;
-        std::string m_localDriveFolder;
+        QString m_driveKey;
+        QString m_name;
+        QString m_localDriveFolder;
         bool m_localDriveFolderExists;
         uint64_t m_size;
         uint32_t m_replicatorNumber;
         sirius::drive::ReplicatorList m_replicatorList;
-        std::vector<std::string> m_lastOpenedPath;
+        std::vector<QString> m_lastOpenedPath;
 
         std::array<uint8_t, 32> m_rootHash;
         sirius::drive::FsTree m_fsTree;

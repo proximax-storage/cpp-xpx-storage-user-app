@@ -82,27 +82,27 @@ Drive &Drive::operator=(const Drive& drive) {
     return *this;
 }
 
-std::string Drive::getKey() const {
+QString Drive::getKey() const {
     return m_driveKey;
 }
 
-void Drive::setKey(const std::string &key) {
-    m_driveKey = QString::fromStdString(key).toUpper().toStdString();
+void Drive::setKey(const QString &key) {
+    m_driveKey = key.toUpper();
 }
 
-std::string Drive::getName() const {
+QString Drive::getName() const {
     return m_name;
 }
 
-void Drive::setName(const std::string &name) {
+void Drive::setName(const QString &name) {
     m_name = name;
 }
 
-std::string Drive::getLocalFolder() const {
+QString Drive::getLocalFolder() const {
     return m_localDriveFolder;
 }
 
-void Drive::setLocalFolder(const std::string &localFolder) {
+void Drive::setLocalFolder(const QString &localFolder) {
     m_localDriveFolder = localFolder;
 }
 
@@ -130,10 +130,10 @@ void Drive::setReplicatorsCount(uint32_t count) {
     m_replicatorNumber = count;
 }
 
-std::vector<std::string> Drive::getLastOpenedPath() const {
+std::vector<QString> Drive::getLastOpenedPath() const {
     return m_lastOpenedPath;
 }
-void Drive::setLastOpenedPath(const std::vector<std::string>& path) {
+void Drive::setLastOpenedPath(const std::vector<QString>& path) {
     m_lastOpenedPath = path;
 }
 
@@ -193,12 +193,12 @@ sirius::drive::ReplicatorList Drive::getReplicators() const {
     return m_replicatorList;
 }
 
-void Drive::setReplicators(const std::vector<std::string>& replicators) {
+void Drive::setReplicators(const std::vector<QString>& replicators) {
     m_replicatorList.clear();
     for( const auto& key : replicators )
     {
         std::array<uint8_t, 32> replicatorKey{};
-        sirius::utils::ParseHexStringIntoContainer( key.c_str(), 64, replicatorKey );
+        sirius::utils::ParseHexStringIntoContainer( key.toStdString().c_str(), 64, replicatorKey );
         m_replicatorList.emplace_back(replicatorKey);
     }
 }
@@ -355,6 +355,7 @@ void Drive::updateDriveState(DriveState newState)
         }
         default:
         {
+            qWarning () << "Unknown drive state: " << getPrettyDriveState(m_driveState);
             break;
         }
     }

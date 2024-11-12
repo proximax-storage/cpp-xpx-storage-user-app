@@ -12,6 +12,7 @@
 #include "DownloadInfo.h"
 #include "DownloadChannel.h"
 #include "CachedReplicator.h"
+#include "Utils.h"
 #include "drive/Utils.h"
 #include "Models/DriveContractModel.h"
 #include "Entities/EasyDownloadInfo.h"
@@ -34,7 +35,7 @@ class Account
         Account& operator=( const Account& a );
 
     public:
-        void initAccount( std::string name, std::string privateKeyStr );
+        void initAccount( const QString& name, const QString& privateKeyStr );
 
         template<class Archive>
         void serialize( Archive &ar )
@@ -57,7 +58,7 @@ class Account
             
             if ( gSettingsVersion >= 2 )
             {
-                ar( m_streamFolder );
+                ar(m_streamFolder);
             }
             
             if ( gSettingsVersion >= 3 )
@@ -70,22 +71,22 @@ class Account
             }
         }
 
-        std::string m_accountName;
-        std::string m_privateKeyStr;
-        std::string m_publicKeyStr;
+        QString m_accountName;
+        QString m_privateKeyStr;
+        QString m_publicKeyStr;
 
-        std::map<std::string, CachedReplicator> m_myReplicators;
-        std::map<std::string, DownloadChannel> m_dnChannels;
-        std::string m_currentDownloadChannelKey;
+        std::map<QString, CachedReplicator> m_myReplicators;
+        std::map<QString, DownloadChannel> m_dnChannels;
+        QString m_currentDownloadChannelKey;
         bool m_channelsLoaded = false;
-        std::string m_downloadFolder;
+        QString m_downloadFolder;
         std::vector<DownloadInfo> m_downloads;
 
-        std::map<std::string, Drive> m_drives;
-        std::string m_currentDriveKey;
+        std::map<QString, Drive> m_drives;
+        QString m_currentDriveKey;
         bool m_drivesLoaded = false;
 
-        std::string             m_viewerStreamRootFolder;
+        QString             m_viewerStreamRootFolder;
 
         DriveContractModel      m_driveContractModel;
 
@@ -93,7 +94,7 @@ class Account
         std::optional<StreamInfo>   m_currentStreamInfo;
         std::vector<StreamInfo>     m_streamRefs; // viewer part
     
-        std::string                 m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
+        QString                     m_streamFolder; // output folder for 'ffmpeg' or 'OBS'
     
         std::vector<EasyDownloadInfo> m_easyDownloads;
         uint64_t                      m_lastUniqueIdOfEasyDownload = 0;
