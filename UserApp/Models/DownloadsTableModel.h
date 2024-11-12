@@ -30,8 +30,8 @@ public:
     //void updateProgress();
 
 private:
-    std::string generateUniqueName(const FsTreeTableModel::Row& row);
-    bool isExists(const FsTreeTableModel::Row& row, std::string& name, int& index);
+    QString generateUniqueName(const FsTreeTableModel::Row& row);
+    bool isExists(const FsTreeTableModel::Row& row, QString& name, int& index);
     void readFolder(const FsTreeTableModel::Row& parentRow, std::vector<FsTreeTableModel::Row>& rows, std::vector<FsTreeTableModel::Row>& result);
 
 private:

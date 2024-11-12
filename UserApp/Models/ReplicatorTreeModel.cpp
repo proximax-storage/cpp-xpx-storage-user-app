@@ -1,6 +1,7 @@
 #include "ReplicatorTreeModel.h"
 #include "ReplicatorTreeItem.h"
 #include "Models/Model.h"
+#include "Utils.h"
 
 #include <QStringList>
 
@@ -168,27 +169,27 @@ void ReplicatorTreeModel::setupModelData(const std::vector<xpx_chain_sdk::Replic
     beginResetModel();
 
     for (const auto& replicator : replicators) {
-        auto replicatorAlias = replicator.data.key;
-        auto r = model->findReplicatorByPublicKey(replicator.data.key);
-        if (!r.getName().empty()) {
+        auto replicatorAlias = stdStringToQStringUtf8(replicator.data.key);
+        auto r = model->findReplicatorByPublicKey(replicator.data.key.c_str());
+        if (!r.getName().isEmpty()) {
             replicatorAlias = r.getName();
         }
 
-        auto newReplicator = new ReplicatorTreeItem(ReplicatorTreeItem::ItemType::Replicator, replicator.data.key.c_str(), replicatorAlias.c_str(), rootItem);
+        auto newReplicator = new ReplicatorTreeItem(ReplicatorTreeItem::ItemType::Replicator, replicator.data.key.c_str(), replicatorAlias, rootItem);
         rootItem->appendChild(newReplicator);
     }
 
     endResetModel();
 }
 
-void ReplicatorTreeModel::setupModelData(const std::map<std::string, CachedReplicator>& cachedReplicators)
+void ReplicatorTreeModel::setupModelData(const std::map<QString, CachedReplicator>& cachedReplicators)
 {
     beginResetModel();
 
     rootItem->clear();
 
     for (const auto& replicator : cachedReplicators) {
-        auto newReplicator = new ReplicatorTreeItem(ReplicatorTreeItem::ItemType::Replicator, replicator.second.getPublicKey().c_str(), replicator.second.getName().c_str(), rootItem);
+        auto newReplicator = new ReplicatorTreeItem(ReplicatorTreeItem::ItemType::Replicator, replicator.second.getPublicKey(), replicator.second.getName(), rootItem);
         rootItem->appendChild(newReplicator);
     }
 

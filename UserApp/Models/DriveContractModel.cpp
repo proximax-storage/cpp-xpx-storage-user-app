@@ -1,8 +1,7 @@
 #include "DriveContractModel.h"
 #include "Entities/Drive.h"
-#include <thread>
 
-void DriveContractModel::onDriveStateChanged( const std::string& driveKey, int state ) {
+void DriveContractModel::onDriveStateChanged( const QString& driveKey, int state ) {
     if ( state == creating || state == unconfirmed || state == deleted || state == contract_deployed ) {
         if ( auto it = m_drives.find( driveKey ); it != m_drives.end()) {
             m_drives.erase( it );
@@ -18,7 +17,7 @@ void DriveContractModel::onDriveStateChanged( const std::string& driveKey, int s
     }
 }
 
-std::map <std::string, ContractDeploymentData>& DriveContractModel::getContractDrives() {
+std::map <QString, ContractDeploymentData>& DriveContractModel::getContractDrives() {
     return m_drives;
 }
 

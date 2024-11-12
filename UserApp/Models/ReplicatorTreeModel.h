@@ -32,7 +32,7 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     void setupModelData(const std::vector<xpx_chain_sdk::Replicator>& replicators, Model* model);
-    void setupModelData(const std::map<std::string, CachedReplicator>& cachedReplicators);
+    void setupModelData(const std::map<QString, CachedReplicator>& cachedReplicators);
 private:
     ReplicatorTreeItem *rootItem;
 };

@@ -6,7 +6,8 @@
 
 void scanFolderR( DriveTreeItem* parent, const fs::path& path )
 {
-    if ( !isFolderExists(path.string()) )
+    const auto pathUTF8 = stdStringToQStringUtf8(path);
+    if ( !isFolderExists(pathUTF8) )
     {
         return;
     }
@@ -38,7 +39,7 @@ void scanFolderR( DriveTreeItem* parent, const fs::path& path )
     }
     catch( const std::runtime_error& err )
     {
-        qDebug() << LOG_SOURCE << "scanFolderR: error: " << err.what();
+        qWarning() << LOG_SOURCE << "scanFolderR: error: " << err.what();
     }
 }
 
@@ -73,7 +74,7 @@ DriveTreeModel::DriveTreeModel( Model* model, bool isDiffTree, QObject* parent)
 
     if ( localDrive != nullptr )
     {
-        auto localDriveFolder = localDrive->getLocalFolder();
+        auto localDriveFolder = qStringToStdStringUTF8(localDrive->getLocalFolder());
         scanFolderR( driveRoot, localDriveFolder );
     }
 }
@@ -88,7 +89,7 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder, bool skip
             {
                 QList<QVariant> child;
                 child << QApplication::style()->standardIcon(QStyle::SP_DirIcon);
-                child << QString::fromStdString( name ) << "";
+                child << name << "";
                 auto* treeItem = new DriveTreeItem( true, false, entry.m_ldiStatus, child, parent );
                 parent->appendChild( treeItem );
 
@@ -98,7 +99,7 @@ void parseR( DriveTreeItem* parent, const LocalDriveItem& localFolder, bool skip
             {
                 QList<QVariant> child;
                 child << QApplication::style()->standardIcon(QStyle::SP_FileIcon);
-                child << QString::fromStdString( name ) << QString::fromStdString( std::to_string( entry.m_size ) );
+                child << name << QString::fromStdString( std::to_string( entry.m_size ) );
                 auto* treeItem = new DriveTreeItem( false, false, entry.m_ldiStatus, child, parent );
                 parent->appendChild( treeItem );
             }
