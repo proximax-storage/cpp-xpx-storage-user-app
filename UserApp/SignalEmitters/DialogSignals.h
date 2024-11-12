@@ -14,11 +14,11 @@ public:
 
 public:
 signals:
-    void addDownloadChannel(const std::string&             channelName,
-                            const std::string&             channelKey,
-                            const std::string&             driveKey,
-                            const std::vector<std::string> allowedPublicKeys,
-                            bool                           isForEasyDownload);
+    void addDownloadChannel(const QString&             channelName,
+                            const QString&             channelKey,
+                            const QString&             driveKey,
+                            const std::vector<QString> allowedPublicKeys,
+                            bool                       isForEasyDownload);
 
 };
 
