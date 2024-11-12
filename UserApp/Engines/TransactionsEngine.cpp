@@ -446,6 +446,24 @@ void TransactionsEngine::applyDataModification(const std::array<uint8_t, 32>& dr
         return;
     }
 
+    const auto driveKeyHex = rawHashToHex(driveId);
+
+    // Draft transaction only for fee calculation
+    xpx_chain_sdk::Key driveKeyRaw;
+    xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), driveKeyRaw);
+
+    xpx_chain_sdk::Hash256 downloadDataCdi;
+    xpx_chain_sdk::ParseHexStringIntoContainer(driveKeyHex.toStdString().c_str(), driveKeyHex.size(), downloadDataCdi);
+
+    auto dataModificationTransaction = xpx_chain_sdk::CreateDataModificationTransaction(driveKeyRaw, downloadDataCdi, 0, 0,
+                                                                                        std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
+    mpChainAccount->signTransaction(dataModificationTransaction.get());
+
+    if (confirmationCallback && !confirmationCallback(prettyBalance(dataModificationTransaction->maxFee()))) {
+        qDebug () << "TransactionsEngine::sendModification: DataModification was canceled by the user!";
+        return;
+    }
+
     auto callback = [this, driveId, actions, addresses, deadline, cb = confirmationCallback](auto totalModifyDataSize, auto infoHash) {
         if (!isValidHash(infoHash)) {
             emit newError("TransactionsEngine::applyDataModification. Invalid info hash: " + rawHashToHex(infoHash));
@@ -564,11 +582,6 @@ void TransactionsEngine::sendModification(const std::array<uint8_t, 32>& driveId
     auto dataModificationTransaction = xpx_chain_sdk::CreateDataModificationTransaction(driveKeyRaw, downloadDataCdi, uploadSize, feedbackFeeAmount,
                                                                                         std::nullopt, deadline, mpChainClient->getConfig().NetworkId);
     mpChainAccount->signTransaction(dataModificationTransaction.get());
-
-    if (callback && !callback(prettyBalance(dataModificationTransaction->maxFee()))) {
-        qDebug () << "TransactionsEngine::sendModification: DataModification was canceled by the user!";
-        return;
-    }
 
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification> statusNotifier;
     xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification> dataModificationUnconfirmedNotifier;
