@@ -26,15 +26,13 @@ private:
     QDialogButtonBox*       buttonBox;
 
 private:
-    void setFontAndSize();
     void setLayout();
-    bool isValidFolderName(const QString& filename);
-    bool contains_invalid_chars(const QString& filename, const QString& invalid_chars);
+    static bool isValidFolderName(const QString& filename);
+    static bool contains_invalid_chars(const QString& filename, const QString& invalid_chars);
 
 public:
-    explicit ConfirmLinkDialog( QWidget *parent   = nullptr
-                              , DataInfo dataInfo = {});
-    ~ConfirmLinkDialog();
+    explicit ConfirmLinkDialog(QWidget *parent = nullptr, DataInfo dataInfo = {});
+    ~ConfirmLinkDialog() override;
 
     void accept() override;
     void reject() override;

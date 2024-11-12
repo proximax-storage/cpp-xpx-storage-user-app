@@ -29,10 +29,10 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     if (okButton) {
         okButton->setText("Copy Link To Clipboard");
     }
+
     connect(buttonBox, &QDialogButtonBox::accepted, this, &ConfirmLinkDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &ConfirmLinkDialog::reject);
 
-    // setFontAndSize();
     setLayout();
     // just in case if you want to display drive key in UI:
     // std::string str = sirius::drive::toString(m_dataInfo.m_driveKey);
@@ -45,18 +45,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     }
 }
 
-ConfirmLinkDialog::~ConfirmLinkDialog()
-{
-}
-
-// bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
-//     try {
-//         std::filesystem::path p(filename);
-//         return !p.empty() && p.filename() == filename;
-//     } catch (const std::filesystem::filesystem_error&) {
-//         return false;
-//     }
-// }
+ConfirmLinkDialog::~ConfirmLinkDialog() = default;
 
 bool ConfirmLinkDialog::contains_invalid_chars(const QString& filename, const QString& invalid_chars) {
     const auto utf8buffer = qStringToStdStringUTF8(filename);
@@ -66,57 +55,59 @@ bool ConfirmLinkDialog::contains_invalid_chars(const QString& filename, const QS
 }
 
 bool ConfirmLinkDialog::isValidFolderName(const QString& filename) {
+//    const QString windows_invalid_chars = "<>:\"/\\|?*";
+//    if (contains_invalid_chars(filename, windows_invalid_chars)) {
+//        return false;
+//    }
+//
+//    const std::string reserved_names[] = {
+//        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+//        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", ".."
+//    };
+//
+//    auto upper_filename = qStringToStdStringUTF8(filename);
+//    std::transform(upper_filename.begin(), upper_filename.end(), upper_filename.begin(), ::toupper);
+//    for (const auto& reserved_name : reserved_names) {
+//        if (upper_filename == reserved_name) {
+//            return false;
+//        }
+//    }
+//
+//    const QString unix_invalid_chars = "\0/";
+//    if (contains_invalid_chars(filename, unix_invalid_chars)) {
+//        return false;
+//    }
+//
+//    // Length check (optional, depending on file system limitations)
+//    if (filename.length() > 255) { // Example limit, can be adjusted
+//        return false;
+//    }
+//
+//    try {
+//        const auto fileNameUtf8 = qStringToStdStringUTF8(filename);
+//        std::filesystem::path p(fileNameUtf8);
+//        return !p.empty() && p.filename() == fileNameUtf8;
+//    }
+//    catch (const std::filesystem::filesystem_error&) {
+//        return false;
+//    }
 
-    const QString windows_invalid_chars = "<>:\"/\\|?*";
-    if (contains_invalid_chars(filename, windows_invalid_chars)) {
-        return false;
-    }
-    const std::string reserved_names[] = {
-        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", ".."
-    };
-
-    auto upper_filename = qStringToStdStringUTF8(filename);
-    std::transform(upper_filename.begin(), upper_filename.end(), upper_filename.begin(), ::toupper);
-    for (const auto& reserved_name : reserved_names) {
-        if (upper_filename == reserved_name) {
-            return false;
-        }
-    }
-
-    const QString unix_invalid_chars = "\0/";
-    if (contains_invalid_chars(filename, unix_invalid_chars)) {
-        return false;
-    }
-
-    // Length check (optional, depending on file system limitations)
-    if (filename.length() > 255) { // Example limit, can be adjusted
-        return false;
-    }
-
-    try {
-        const auto fileNameUtf8 = qStringToStdStringUTF8(filename);
-        std::filesystem::path p(fileNameUtf8);
-        return !p.empty() && p.filename() == fileNameUtf8;
-    }
-    catch (const std::filesystem::filesystem_error&) {
-        return false;
-    }
     return true;
 }
 
 void ConfirmLinkDialog::accept()
 {
-
     if( (m_dataInfo.m_path == "/") && !isValidFolderName(m_folderNameConfirmEdit->text()) )
     {
         QMessageBox msgBox(QMessageBox::Warning
                            , "Warning"
                            , m_folderNameConfirmEdit->text() + ": incorrect folder name!"
                            , QMessageBox::Ok, this);
+
         connect(msgBox.button(QMessageBox::Ok), &QPushButton::clicked, this, [&]() {
             m_folderNameConfirmEdit->setText(m_dataInfo.m_driveName);
         });
+
         msgBox.exec();
     }
     else
@@ -128,11 +119,13 @@ void ConfirmLinkDialog::accept()
             qWarning() << "ConfirmLinkDialog::accept: bad clipboard";
             return;
         }
+
         clipboard->setText(link, QClipboard::Clipboard );
         if ( clipboard->supportsSelection() )
         {
             clipboard->setText(link, QClipboard::Selection );
         }
+
         reject();
     }
 }
@@ -141,34 +134,6 @@ void ConfirmLinkDialog::reject()
 {
     QDialog::reject();
 }
-
-// void ConfirmLinkDialog::setFontAndSize()
-// {
-//     QFont font;
-//     font.setPointSize(13);
-
-//     driveName->setFont(font);
-//     path->setFont(font);
-//     dataSize->setFont(font);
-//     folderNameForSaving->setFont(font);
-//     m_driveNameConfirmLabel->setFont(font);
-//     m_pathConfirmLabel->setFont(font);
-//     m_dataSizeConfirmLabel->setFont(font);
-//     m_folderNameConfirmEdit->setFont(font);
-//     buttonBox->setFont(font);
-
-//     QFontMetrics fontMetrics(font);
-//     int minHeight = fontMetrics.height() + fontMetrics.descent() + 2;
-//     driveName->setMinimumHeight(minHeight);
-//     path->setMinimumHeight(minHeight);
-//     dataSize->setMinimumHeight(minHeight);
-//     folderNameForSaving->setMinimumHeight(minHeight);
-//     m_driveNameConfirmLabel->setMinimumHeight(minHeight);
-//     m_pathConfirmLabel->setMinimumHeight(minHeight);
-//     m_dataSizeConfirmLabel->setMinimumHeight(minHeight);
-//     m_folderNameConfirmEdit->setMinimumHeight(minHeight);
-//     buttonBox->setMinimumHeight(minHeight);
-// }
 
 void ConfirmLinkDialog::setLayout()
 {
