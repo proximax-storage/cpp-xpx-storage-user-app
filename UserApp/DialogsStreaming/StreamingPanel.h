@@ -13,7 +13,7 @@ class StreamingPanel : public QDialog
     std::function<void()> m_cancelStreamingFunc;
     std::function<void()> m_finishStreamingFunc;
     
-    std::string           m_streamLink;
+    QString               m_streamLink;
 
 public:
     explicit StreamingPanel( std::function<void()> cancelStreamingFunc,
@@ -21,7 +21,7 @@ public:
                              QWidget *parent = nullptr );
     ~StreamingPanel();
 
-    void setStreamLink( const std::string& streamLink ) { m_streamLink = streamLink; }
+    void setStreamLink( const QString& streamLink ) { m_streamLink = streamLink; }
     
     void onStartStreaming();
     void hidePanel();
