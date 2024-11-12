@@ -55,44 +55,42 @@ bool ConfirmLinkDialog::contains_invalid_chars(const QString& filename, const QS
 }
 
 bool ConfirmLinkDialog::isValidFolderName(const QString& filename) {
-//    const QString windows_invalid_chars = "<>:\"/\\|?*";
-//    if (contains_invalid_chars(filename, windows_invalid_chars)) {
-//        return false;
-//    }
-//
-//    const std::string reserved_names[] = {
-//        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-//        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", ".."
-//    };
-//
-//    auto upper_filename = qStringToStdStringUTF8(filename);
-//    std::transform(upper_filename.begin(), upper_filename.end(), upper_filename.begin(), ::toupper);
-//    for (const auto& reserved_name : reserved_names) {
-//        if (upper_filename == reserved_name) {
-//            return false;
-//        }
-//    }
-//
-//    const QString unix_invalid_chars = "\0/";
-//    if (contains_invalid_chars(filename, unix_invalid_chars)) {
-//        return false;
-//    }
-//
-//    // Length check (optional, depending on file system limitations)
-//    if (filename.length() > 255) { // Example limit, can be adjusted
-//        return false;
-//    }
-//
-//    try {
-//        const auto fileNameUtf8 = qStringToStdStringUTF8(filename);
-//        std::filesystem::path p(fileNameUtf8);
-//        return !p.empty() && p.filename() == fileNameUtf8;
-//    }
-//    catch (const std::filesystem::filesystem_error&) {
-//        return false;
-//    }
+    const QString windows_invalid_chars = "<>:\"/\\|?*";
+    if (contains_invalid_chars(filename, windows_invalid_chars)) {
+        return false;
+    }
 
-    return true;
+    const std::string reserved_names[] = {
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", ".."
+    };
+
+    auto upper_filename = qStringToStdStringUTF8(filename);
+    std::transform(upper_filename.begin(), upper_filename.end(), upper_filename.begin(), ::toupper);
+    for (const auto& reserved_name : reserved_names) {
+        if (upper_filename == reserved_name) {
+            return false;
+        }
+    }
+
+    const QString unix_invalid_chars = "\0/";
+    if (contains_invalid_chars(filename, unix_invalid_chars)) {
+        return false;
+    }
+
+    // Length check (optional, depending on file system limitations)
+    if (filename.length() > 255) { // Example limit, can be adjusted
+        return false;
+    }
+
+    try {
+        const auto fileNameUtf8 = qStringToStdStringUTF8(filename);
+        std::filesystem::path p(fileNameUtf8);
+        return !p.empty() && p.filename() == fileNameUtf8;
+    }
+    catch (const std::filesystem::filesystem_error&) {
+        return false;
+    }
 }
 
 void ConfirmLinkDialog::accept()
