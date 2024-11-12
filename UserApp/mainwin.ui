@@ -2317,7 +2317,7 @@
       <item>
        <widget class="QLabel" name="m_appVersion">
         <property name="text">
-         <string>Version 0.1.0</string>
+         <string>Version 1.1.0</string>
         </property>
         <property name="margin">
          <number>0</number>
