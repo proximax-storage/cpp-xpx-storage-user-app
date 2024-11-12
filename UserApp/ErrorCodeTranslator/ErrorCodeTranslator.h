@@ -1,22 +1,22 @@
 #pragma once
 
 #include <map>
-#include <string>
+#include <QString>
 
 class ErrorCodeTranslator
 {
-    std::map<std::string, std::string> m_dictionary;
+    std::map<QString, QString> m_dictionary;
 
 public:
     ErrorCodeTranslator();
 
-    const std::string translate(const std::string& errorCode) const
+    const QString translate(const QString& errorCode) const
     {
         auto it = m_dictionary.find(errorCode);
 
         if(it == m_dictionary.end())
         {
-            return errorCode.c_str();
+            return errorCode;
         }
 
         return it->second;
