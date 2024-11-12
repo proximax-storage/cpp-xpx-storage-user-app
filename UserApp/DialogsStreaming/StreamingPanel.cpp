@@ -30,9 +30,9 @@ StreamingPanel::StreamingPanel( std::function<void()> cancelStreamingFunc,
             return;
         }
 
-        clipboard->setText( QString::fromStdString(m_streamLink), QClipboard::Clipboard );
+        clipboard->setText( m_streamLink, QClipboard::Clipboard );
         if ( clipboard->supportsSelection() ) {
-            clipboard->setText( QString::fromStdString(m_streamLink), QClipboard::Selection );
+             clipboard->setText( m_streamLink, QClipboard::Selection );
         }
     });
 }

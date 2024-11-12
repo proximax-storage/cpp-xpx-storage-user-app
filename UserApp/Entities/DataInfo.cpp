@@ -1,4 +1,5 @@
 #include "DataInfo.h"
+#include "Utils.h"
 #include <sstream>
 
 static int charToInt( char input )
@@ -10,12 +11,17 @@ static int charToInt( char input )
     throw std::invalid_argument("Invalid input string");
 }
 
-std::string DataInfo::getLink() const
+QString DataInfo::getLink() const
 {
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
 
-    archive( m_version, m_driveKey, m_path, m_itemName, m_totalSize );
+    archive( m_version,
+             m_driveKey,
+             m_path,
+             m_itemName,
+             m_totalSize );
+
     auto rawString = os.str();
 
     qDebug() << "rawString.size: " << rawString.size();
@@ -34,23 +40,27 @@ std::string DataInfo::getLink() const
         link.push_back( table[b2] );
     }
 
-    qDebug() << "link: " << QString::fromStdString( std::string( &link[0], link.size() ) );
+    const std::string linkStdStr(&link[0], link.size());
+    const QString linkQstr = stdStringToQStringUtf8(linkStdStr);
+    qDebug() << "link: " << linkQstr;
 
-    return std::string( &link[0], link.size() );
+    return linkQstr;
 }
 
-void DataInfo::parseLink( const std::string& linkString )
+void DataInfo::parseLink( const QString& linkString )
 {
-    qDebug() << "linkString: " << QString::fromStdString( linkString );
+    qDebug() << "linkString: " << linkString;
+
+    const std::string link = qStringToStdStringUTF8(linkString);
 
     std::vector<uint8_t> rawLink;
-    rawLink.reserve( linkString.size()/2+1 );
-    for( size_t i=0; i<linkString.size()-1;)
+    rawLink.reserve( link.size()/2+1 );
+    for( size_t i=0; i<link.size()-1;)
     {
-        uint8_t b1 = charToInt(linkString[i]);
+        uint8_t b1 = charToInt(link[i]);
 //        qDebug() << "c1: " << linkString[i];
         i++;
-        uint8_t b2 = charToInt(linkString[i]) << 4;
+        uint8_t b2 = charToInt(link[i]) << 4;
 //        qDebug() << "c2: " << linkString[i];
         i++;
         rawLink.push_back(b1|b2);
@@ -63,5 +73,9 @@ void DataInfo::parseLink( const std::string& linkString )
     std::istringstream is( linkStr, std::ios::binary );
     cereal::PortableBinaryInputArchive iarchive( is );
 
-    iarchive( m_version, m_driveKey, m_path, m_itemName, m_totalSize );
+    iarchive( m_version,
+              m_driveKey,
+              m_path,
+              m_itemName,
+              m_totalSize );
 }

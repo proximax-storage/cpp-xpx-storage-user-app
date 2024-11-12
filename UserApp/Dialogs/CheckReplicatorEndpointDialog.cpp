@@ -6,16 +6,12 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-
-#include <optional>
 #include <functional>
 
 #include "CheckReplicatorEndpointDialog.h"
 #include "Entities/DownloadChannel.h"
 #include "Engines/StorageEngine.h"
 #include "Models/Model.h"
-#include "drive/ViewerSession.h"
 
 bool CheckReplicatorEndpointDialog::check( const sirius::drive::ReplicatorList& replicatorList )
 {
@@ -29,7 +25,7 @@ bool CheckReplicatorEndpointDialog::check( const sirius::drive::ReplicatorList& 
     return false;
 }
 
-bool CheckReplicatorEndpointDialog::check( Model* model, const std::string& channelKey )
+bool CheckReplicatorEndpointDialog::check( Model* model, const QString& channelKey )
 {
     CheckReplicatorEndpointDialog modalDialog( model, channelKey );
     modalDialog.show();
@@ -48,7 +44,7 @@ CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( const sirius::driv
     init();
 }
 
-CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( Model* model, const std::string& channelKey )
+CheckReplicatorEndpointDialog::CheckReplicatorEndpointDialog( Model* model, const QString& channelKey )
     :   QDialog(),
         m_channelKey(channelKey),
         m_model(model)
@@ -81,7 +77,7 @@ void CheckReplicatorEndpointDialog::checkEndpoints()
 {
     sirius::drive::ReplicatorList list;
     
-    if ( m_channelKey.empty() )
+    if ( m_channelKey.isEmpty() )
     {
         list = m_replicatorList;
     }

@@ -78,7 +78,7 @@ void MainWin::initWizardStreaming()
             if( !ObsProfileData().isOutputModeCorrect() )
             {
                 displayError( "'Output Mode' in 'Sirius-stream' profile must be set to "
-                                + ObsProfileData().m_outputMode.toStdString()
+                                + ObsProfileData().m_outputMode
                             , "(OBS Settings -> 'Output' tab -> 'Output Mode')" );
                 return;
             }
@@ -110,11 +110,11 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            std::string driveKey = selectedDriveKeyInWizardTable(ui->m_wizardStreamAnnouncementTable).toStdString();
+            const QString driveKey = selectedDriveKeyInWizardTable(ui->m_wizardStreamAnnouncementTable);
             auto* drive = m_model->findDrive(driveKey);
             if ( drive == nullptr )
             {
-                qWarning() << LOG_SOURCE << "bad driveKey: " << driveKey.c_str();
+                qWarning() << LOG_SOURCE << "bad driveKey: " << driveKey;
                 displayError( "Cannot found drive: " );
                 return;
             }
@@ -155,7 +155,7 @@ void MainWin::initWizardStreaming()
             }
 
             QMessageBox msgBox;
-            const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
+            const QString message = "'" + streamInfo->m_title + "' will be removed.";
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
@@ -166,7 +166,7 @@ void MainWin::initWizardStreaming()
 
                 if ( drive != nullptr )
                 {
-                    auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
+                    auto streamFolder = fs::path(qStringToStdStringUTF8(drive->getLocalFolder()) + "/" + STREAM_ROOT_FOLDER_NAME + "/" + qStringToStdStringUTF8(streamInfo->m_uniqueFolderName) );
                     std::error_code ec;
                     fs::remove_all( streamFolder, ec );
                     qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
@@ -174,15 +174,24 @@ void MainWin::initWizardStreaming()
                     if ( !ec )
                     {
                         sirius::drive::ActionList actionList;
-                        auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
+                        auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + qStringToStdStringUTF8(streamInfo->m_uniqueFolderName));
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
 
                         //
                         // Start modification
                         //
-                        auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
-                        drive->updateDriveState(registering);
+                        auto confirmationCallback = [&drive](auto fee)
+                        {
+                            if (showConfirmationDialog(fee)) {
+                                drive->updateDriveState(registering);
+                                return true;
+                            }
+
+                            return false;
+                        };
+
+                        auto driveKeyHex = rawHashFromHex(drive->getKey());
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
                     }
                 }
             }
@@ -204,16 +213,16 @@ void MainWin::initWizardStreaming()
                 return;
             }
 
-            std::string link = streamInfo->getLink();
+            QString link = streamInfo->getLink();
             QClipboard* clipboard = QApplication::clipboard();
             if ( !clipboard ) {
                 qWarning() << LOG_SOURCE << "bad clipboard";
                 return;
             }
 
-            clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+            clipboard->setText( link, QClipboard::Clipboard );
             if ( clipboard->supportsSelection() ) {
-                clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
+                clipboard->setText( link, QClipboard::Selection );
             }
 
         }, Qt::QueuedConnection);
@@ -242,7 +251,7 @@ QString MainWin::selectedDriveKeyInWizardTable(QTableWidget* table) const
 
 Drive* MainWin::selectedDriveInWizardTable(QTableWidget* table) const
 {
-    auto driveKey = selectedDriveKeyInWizardTable(table).toStdString();
+    auto driveKey = selectedDriveKeyInWizardTable(table);
     Drive* drive = m_model->findDrive( driveKey );
     if ( drive == nullptr && (ui->m_streamDriveCBox->count() == 0) )
     {
@@ -284,14 +293,14 @@ void MainWin::wizardUpdateStreamAnnouncementTable()
         }
         {
             auto* item = new QTableWidgetItem();
-            item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
+            item->setData( Qt::DisplayRole, streamInfo.m_title );
             ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 1, item );
         }
         {
             if ( m_model->findDrive(streamInfo.m_driveKey) != nullptr )
             {
-                auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
-                item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
+                auto* item = new QTableWidgetItem( m_model->findDrive(streamInfo.m_driveKey)->getName());
+                item->setData( Qt::UserRole, streamInfo.m_driveKey );
                 ui->m_wizardStreamAnnouncementTable->setItem( (int)rowIndex, 2, item );
             }
         }
@@ -319,7 +328,7 @@ std::optional<StreamInfo> MainWin::wizardSelectedStreamInfo(QTableWidget* table)
             auto streamInfoList = wizardReadStreamInfoList();
             for(auto& e : streamInfoList)
             {
-                if(e.m_title == streamTitle.toStdString())
+                if(e.m_title == streamTitle)
                 {
                     return e;
                 }

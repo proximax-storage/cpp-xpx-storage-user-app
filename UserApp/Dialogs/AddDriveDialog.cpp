@@ -1,6 +1,7 @@
 #include "Models/Model.h"
 #include "AddDriveDialog.h"
 #include "./ui_AddDriveDialog.h"
+#include "Utils.h"
 
 #include <QFileDialog>
 #include <QRegularExpression>
@@ -226,10 +227,10 @@ void AddDriveDialog::accept()
     }
     
     auto callback = [model = mp_model,
-                     name = ui->m_driveName->text().toStdString(),
+                     name = ui->m_driveName->text(),
                      count = ui->m_replicatorNumber->text().toInt(),
                      size = ui->m_size->text().toInt(),
-                     folder = ui->m_localDriveFolder->text().toStdString()] (auto hash)
+                     folder = ui->m_localDriveFolder->text()] (auto hash)
     {
         Drive drive;
         drive.setName(name);
@@ -248,8 +249,17 @@ void AddDriveDialog::accept()
         }
     };
 
-    mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong(), callback);
-    QDialog::accept();
+    auto confirmationCallback = [this](auto fee)
+    {
+        if (showConfirmationDialog(fee)) {
+            QDialog::accept();
+            return true;
+        }
+
+        return false;
+    };
+
+    mp_onChainClient->addDrive( ui->m_size->text().toULongLong(), ui->m_replicatorNumber->text().toULongLong(), callback, confirmationCallback);
 }
 
 void AddDriveDialog::reject()

@@ -26,17 +26,17 @@ Account& Account::operator=( const Account& a )
     return *this;
 }
 
-void Account::initAccount( std::string name, std::string privateKeyStr )
+void Account::initAccount( const QString& name, const QString& privateKeyStr )
 {
     m_accountName   = name;
     m_privateKeyStr = privateKeyStr;
 
     if ( m_privateKeyStr.size() == 64 )
     {
-        m_keyPair =
-                sirius::crypto::KeyPair::FromPrivate(
-                        sirius::crypto::PrivateKey::FromString( m_privateKeyStr ));
+        const auto pKeyUTF8 = qStringToStdStringUTF8(m_privateKeyStr);
+        m_keyPair = sirius::crypto::KeyPair::FromPrivate(sirius::crypto::PrivateKey::FromString(pKeyUTF8));
 
-        m_publicKeyStr = sirius::drive::toString( m_keyPair->publicKey().array() );
+        const auto pubKey = sirius::drive::toString( m_keyPair->publicKey().array() );
+        m_publicKeyStr = stdStringToQStringUtf8(pubKey);
     }
 }

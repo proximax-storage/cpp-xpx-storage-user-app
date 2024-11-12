@@ -13,10 +13,10 @@ DriveInfoDialog::DriveInfoDialog(const Drive& drive,
     ui->setupUi(this);
     setModal(true);
 
-    ui->m_driveName->setText( QString::fromStdString(drive.getName()) );
+    ui->m_driveName->setText(drive.getName());
     ui->m_replicatorNumber->setText( QString::number(drive.getReplicatorsCount()) );
     ui->m_maxDriveSize->setText( QString::number(drive.getSize()) );
-    ui->m_localDriveFolder->setText( QString::fromStdString(drive.getLocalFolder()) );
+    ui->m_localDriveFolder->setText( drive.getLocalFolder() );
 
     ui->m_driveName->setReadOnly(true);
     ui->m_replicatorNumber->setReadOnly(true);
@@ -26,7 +26,7 @@ DriveInfoDialog::DriveInfoDialog(const Drive& drive,
     QString title;
     title.append("About drive ");
     title.append("'");
-    title.append(drive.getName().c_str());
+    title.append(drive.getName());
     title.append("'");
     setWindowTitle(title);
     setFocus();

@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QPalette>
+#include <QPushButton>
 #include <QDateTime>
 #include <QFile>
 #include <QTextStream>
@@ -112,9 +113,10 @@ QString getResource( const QString& resource )
 #endif
 }
 
-bool isFolderExists(const std::string& path)
+bool isFolderExists(const QString& path)
 {
-    return std::filesystem::exists( path ) || ! std::filesystem::is_directory( path );
+    const auto pathUtf8 = qStringToStdStringUTF8(path);
+    return std::filesystem::exists( pathUtf8 ) || ! std::filesystem::is_directory( pathUtf8 );
 }
 
 std::filesystem::path getSettingsFolder()
@@ -150,7 +152,7 @@ std::filesystem::path getFsTreesFolder()
     return {getSettingsFolder().string() + "/FsTrees" };
 }
 
-std::string getPrettyDriveState(int state) {
+QString getPrettyDriveState(int state) {
     switch (state)
     {
         case no_modifications:
@@ -186,36 +188,38 @@ QDebug& operator<<(QDebug& out, const std::string& str)
     return out;
 }
 
-std::string dataSizeToString(uint64_t bytes)
+QString dataSizeToString(uint64_t bytes)
 {
-    std::string units[] = {"bytes", "kB", "MB", "GB", "TB"};
+    QString units[] = {"bytes", "kB", "MB", "GB", "TB"};
     double b = bytes;
     int i = 0;
     for( ; b >= 1000 ; ++i )
     {
         b /= 1024.0;
     }
+
     std::ostringstream oss;
     if ( bytes < 1000)
     {
-        oss << std::fixed << bytes << " " << units[i] ;
+        oss << std::fixed << bytes << " " << qStringToStdStringUTF8(units[i]);
     }
     else
     {
         if ( b < 10.0 )
         {
-            oss << std::fixed << std::setprecision(3) << b << " " << units[i] ;
+            oss << std::fixed << std::setprecision(3) << b << " " << qStringToStdStringUTF8(units[i]);
         }
         else if ( b < 100.0 )
         {
-            oss << std::fixed << std::setprecision(2) << b << " " << units[i] ;
+            oss << std::fixed << std::setprecision(2) << b << " " << qStringToStdStringUTF8(units[i]);
         }
         else
         {
-            oss << std::fixed << std::setprecision(1) << b << " " << units[i] ;
+            oss << std::fixed << std::setprecision(1) << b << " " << qStringToStdStringUTF8(units[i]);
         }
     }
-    return oss.str();
+
+    return stdStringToQStringUtf8(oss.str());
 }
 
 bool isResolvedToIpAddress(QString& host) {
@@ -270,9 +274,9 @@ bool isEndpointAvailable(const std::string& ip, const std::string& port, std::at
     }
 }
 
-std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes) {
+QString getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes) {
     std::atomic<bool> isFound{false};
-    std::string fastestEndpoint;
+    QString fastestEndpoint;
     std::mutex mutex;
 
     std::pair<std::chrono::milliseconds, int> minResponse{std::chrono::milliseconds::max(), -1};
@@ -288,7 +292,7 @@ std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>
                 std::lock_guard<std::mutex> lock(mutex);
                 if (responseTime < minResponse.first) {
                     minResponse = {responseTime, i};
-                    fastestEndpoint = hostC.toStdString() + ":" + portC.toStdString();
+                    fastestEndpoint = hostC + ":" + portC;
                 }
             }
         }));
@@ -305,10 +309,10 @@ std::string getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>
     return fastestEndpoint;
 }
 
-std::string extractEndpointFromComboBox(QComboBox* comboBox) {
-    int currentIndex = comboBox->currentIndex();
+QString extractEndpointFromComboBox(QComboBox* comboBox) {
+    const int currentIndex = comboBox->currentIndex();
     const QString endpoint = comboBox->itemData(currentIndex, Qt::UserRole).toString();
-    return endpoint.toStdString();
+    return endpoint;
 }
 
 bool isDarkSystemTheme() {
@@ -316,4 +320,50 @@ bool isDarkSystemTheme() {
     QColor textColor = palette.color(QPalette::WindowText);
     QColor backgroundColor = palette.color(QPalette::Window);
     return textColor.lightness() > backgroundColor.lightness();
+}
+
+QString prettyBalance(uint64_t value) {
+    uint64_t decimals = 1000000;
+    uint64_t integerPart = value / decimals;
+    uint64_t fractionalPart = value % decimals;
+
+    QLocale locale(QLocale::French);
+    const QString formattedIntegerPart = locale.toString(integerPart);
+    const QString formattedBalance = QString("%1.%2")
+            .arg(formattedIntegerPart)
+            .arg(fractionalPart, 6, 10, QChar('0'));
+
+    return formattedBalance;
+}
+
+bool showConfirmationDialog(const QString& transactionFee) {
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Confirmation");
+    msgBox.setText("The transaction will be sent, with an estimated cost\n"
+                   "of approximately: " + transactionFee + " xpx.");
+    msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
+    msgBox.button(QMessageBox::Ok)->setText("Confirm");
+    msgBox.setModal(true);
+
+    return msgBox.exec() == QMessageBox::Ok;
+}
+
+std::string qStringToStdStringUTF8(const QString& data) {
+    std::string result = data.toUtf8().constData();
+    return result;
+}
+
+QString stdStringToQStringUtf8(const std::string& data) {
+    QString result = QString::fromUtf8(data.c_str());
+    return result;
+}
+
+std::vector<QString> convertToQStringVector(const std::vector<std::string>& stdStrings) {
+    std::vector<QString> qStrings;
+    qStrings.reserve(stdStrings.size());
+    for (const auto& str : stdStrings) {
+        qStrings.emplace_back(QString::fromUtf8(str));
+    }
+
+    return qStrings;
 }

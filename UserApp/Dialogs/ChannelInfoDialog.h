@@ -21,8 +21,8 @@ public:
     void setName(const QString& name);
     void setId(const QString& id);
     void setDriveId(const QString& driveId);
-    void setReplicators(const std::vector<std::string>& keys);
-    void setKeys(const std::vector<std::string>& keys);
+    void setReplicators(const std::vector<QString>& keys);
+    void setKeys(const std::vector<QString>& keys);
     void setPrepaid(const uint64_t prepaid);
 
 public:
@@ -30,10 +30,10 @@ public:
     void reject() override;
 
 signals:
-    void addDownloadChannel(const std::string&             channelName,
-                            const std::string&             channelKey,
-                            const std::string&             driveKey,
-                            const std::vector<std::string> allowedPublicKeys);
+    void addDownloadChannel(const QString&             channelName,
+                            const QString&             channelKey,
+                            const QString&             driveKey,
+                            const std::vector<QString> allowedPublicKeys);
 
 private:
     void validate();
@@ -43,7 +43,7 @@ private:
     QString name;
     QString id;
     QString driveId;
-    std::vector<std::string> replicators;
-    std::vector<std::string> keys;
+    std::vector<QString> replicators;
+    std::vector<QString> keys;
     uint64_t prepaid;
 };

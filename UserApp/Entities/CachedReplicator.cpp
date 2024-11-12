@@ -1,5 +1,4 @@
 #include "CachedReplicator.h"
-#include "utils/HexParser.h"
 
 CachedReplicator::CachedReplicator()
     : m_name("")
@@ -10,26 +9,26 @@ CachedReplicator::CachedReplicator()
 CachedReplicator::~CachedReplicator()
 {}
 
-std::string CachedReplicator::getName() const {
+QString CachedReplicator::getName() const {
     return m_name;
 }
 
-void CachedReplicator::setName(const std::string& name) {
+void CachedReplicator::setName(const QString& name) {
     m_name = name;
 }
 
-std::string CachedReplicator::getPublicKey() const {
+QString CachedReplicator::getPublicKey() const {
     return m_publicKey;
 }
 
-void CachedReplicator::setPublicKey(const std::string& key) {
+void CachedReplicator::setPublicKey(const QString& key) {
     m_publicKey = key;
 }
 
-std::string CachedReplicator::getPrivateKey() const {
+QString CachedReplicator::getPrivateKey() const {
     return m_privateKey;
 }
 
-void CachedReplicator::setPrivateKey(const std::string& key) {
+void CachedReplicator::setPrivateKey(const QString& key) {
     m_privateKey = key;
 }

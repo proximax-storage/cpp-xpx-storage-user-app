@@ -5,27 +5,27 @@
 #include "drive/FsTree.h"
 #include "DataInfo.h"
 #include "Common.h"
-
+#include "Utils.h"
 #include <cereal/types/variant.hpp>
-
 #include <QDebug>
-
 
 struct EasyDownloadChildInfo
 {
     //using DownloadNotification = std::function<void( const EasyDownloadInfo& )>;
 
-    EasyDownloadChildInfo( const std::array<uint8_t,32>&  hash,
-                           std::string                    path,
-                           std::string                    fileName,
-                           size_t                         size )
-    : m_hash(hash), m_path(path), m_fileName(fileName), m_size(size) {}
+    EasyDownloadChildInfo( const std::array<uint8_t,32>&    hash,
+                           QString                          path,
+                           QString                          fileName,
+                           size_t                           size )
+    : m_hash(hash), m_path(path)
+    , m_fileName(fileName)
+    , m_size(size) {}
     
     std::array<uint8_t,32>   m_hash;
-    std::string              m_path;
-    std::string              m_fileName;
+    QString                  m_path;
+    QString                  m_fileName;
     size_t                   m_size;
-    std::string              m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
+    QString                  m_downloadFolder; // folder where torrent will be saved before renaming (by copy or move)
     bool                     m_isCompleted = false;
     
     int                      m_progress = 0; // m_progress==1001 means completed
@@ -36,7 +36,7 @@ struct EasyDownloadChildInfo
 #else
     sirius::drive::lt_handle m_ltHandle;
 #endif
-    std::string              m_channelKey;
+    QString              m_channelKey;
 
 //    std::optional<DownloadNotification> m_notification;
     
@@ -64,17 +64,17 @@ struct EasyDownloadInfo
     void load( Archive &ar )
     {
         ar( m_uniqueId, m_totalSize, m_driveKey, m_fsTree, m_itemPath, m_itemName, m_isCompleted, m_calcTotalSize, m_isFolder, m_childs );
-        qDebug() << "EasyDownloadInfo: " << m_uniqueId << " " << m_totalSize << " " << m_itemName.c_str();
+        qDebug() << "EasyDownloadInfo: " << m_uniqueId << " " << m_totalSize << " " << m_itemName;
     }
 
     uint64_t                m_uniqueId;
     uint64_t                m_totalSize;    // declared total size (in link)
     sirius::drive::FsTree   m_fsTree;
     std::array<uint8_t,32>  m_driveKey;
-    std::string             m_itemName;     // item name
-    std::string             m_itemPath;     // path into fsTree
+    QString                 m_itemName;     // item name
+    QString                 m_itemPath;     // path into fsTree
     size_t                  m_calcTotalSize;    // total size
-    std::string             m_channelKey;
+    QString                 m_channelKey;
     bool                    m_isCompleted = false;
 
     bool                     m_isFolder = false;
@@ -88,7 +88,7 @@ struct EasyDownloadInfo
 
     EasyDownloadInfo() {}
 
-//    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, std::string itemName, std::string itemPath, size_t totalSize )
+//    EasyDownloadInfo( uint64_t uniqueId, const std::array<uint8_t,32>& driveKey, QString itemName, QString itemPath, size_t totalSize )
 //        : m_uniqueId(uniqueId)
 //        , m_driveKey(driveKey)
 //        , m_name(itemPath)
@@ -107,7 +107,7 @@ struct EasyDownloadInfo
         m_itemName = dataInfo.savingName();
         if ( m_itemPath.size() > 1 && (m_itemPath[0] == '/' || m_itemPath[0] == '\\') )
         {
-            m_itemPath = dataInfo.m_path.substr(1);
+            m_itemPath = dataInfo.m_path.mid(1);
         }
     }
     
@@ -130,11 +130,11 @@ struct EasyDownloadInfo
         }
         else
         {
-            auto* child = m_fsTree.getEntryPtr( m_itemPath );
+            auto* child = m_fsTree.getEntryPtr( m_itemPath.toUtf8().constData() );
 
             if ( child == nullptr )
             {
-                qWarning() << "EasyDownloadInfo: bad path: " << m_itemPath.c_str();
+                qWarning() << "EasyDownloadInfo: bad path: " << m_itemPath;
                 return;
             }
             
@@ -151,7 +151,7 @@ struct EasyDownloadInfo
 
                 m_childs.emplace_back( EasyDownloadChildInfo {  m_downloadingFile->hash().array(),
                                                                 "",
-                                                                m_downloadingFile->name(),
+                                                                stdStringToQStringUtf8(m_downloadingFile->name()),
                                                                 m_downloadingFile->size() } );
                 m_calcTotalSize += m_downloadingFile->size();
             }
@@ -160,16 +160,18 @@ struct EasyDownloadInfo
     
     void addChilds()
     {
-        std::filesystem::path path = m_itemPath;
+        std::filesystem::path path = qStringToStdStringUTF8(m_itemPath);
         m_downloadingFolder->iterate( path, [&,this] ( const std::filesystem::path& filePath, const auto& file) -> bool
         {
+            const auto relativePath = stdStringToQStringUtf8(std::filesystem::relative( filePath.string(), path ).string());
+            const auto fileName = stdStringToQStringUtf8(file.name());
+
             m_childs.emplace_back( EasyDownloadChildInfo {  file.hash().array(),
-                                                            std::filesystem::relative( filePath.string(), path ).string(),
-                                                            file.name(),
+                                                            relativePath,
+                                                            fileName,
                                                             file.size() } );
             m_calcTotalSize += file.size();
             return false;
         });
     }
-
 };

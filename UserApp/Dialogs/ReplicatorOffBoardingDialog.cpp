@@ -18,7 +18,7 @@ ReplicatorOffBoardingDialog::ReplicatorOffBoardingDialog(OnChainClient* onChainC
 
     ui->drives->addItem("Select from my drives");
     for ( const auto& [key, drive] : mpModel->getDrives()) {
-        ui->drives->addItem(drive.getName().c_str());
+        ui->drives->addItem(drive.getName());
     }
 
     connect( ui->drives, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index){
@@ -31,17 +31,17 @@ ReplicatorOffBoardingDialog::ReplicatorOffBoardingDialog(OnChainClient* onChainC
             return;
         }
 
-        auto drive = mpModel->findDriveByNameOrPublicKey(ui->drives->currentText().toStdString());
+        auto drive = mpModel->findDriveByNameOrPublicKey(ui->drives->currentText());
         if (drive) {
-            ui->drive->setText(drive->getKey().c_str());
+            ui->drive->setText(drive->getKey());
         } else {
-            qWarning() << "Cached drive not found. Drive id: " << ui->drives->currentText().toStdString();
+            qWarning() << "Cached drive not found. Drive id: " << ui->drives->currentText();
         }
     });
 
     ui->cachedReplicators->addItem("Select from my replicators");
     for (const auto& replicator : mpModel->getMyReplicators()) {
-        ui->cachedReplicators->addItem(replicator.second.getName().c_str());
+        ui->cachedReplicators->addItem(replicator.second.getName());
     }
 
     connect( ui->cachedReplicators, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index){
@@ -54,11 +54,11 @@ ReplicatorOffBoardingDialog::ReplicatorOffBoardingDialog(OnChainClient* onChainC
             return;
         }
 
-        auto replicator = mpModel->findReplicatorByNameOrPublicKey(ui->cachedReplicators->currentText().toStdString());
-        if (replicator.getPrivateKey().empty()) {
-            qWarning() << "Cached replicator not found. Replicator id: " << ui->cachedReplicators->currentText().toStdString();
+        auto replicator = mpModel->findReplicatorByNameOrPublicKey(ui->cachedReplicators->currentText());
+        if (replicator.getPrivateKey().isEmpty()) {
+            qWarning() << "Cached replicator not found. Replicator id: " << ui->cachedReplicators->currentText();
         } else {
-            ui->replicatorKey->setText(replicator.getPrivateKey().c_str());
+            ui->replicatorKey->setText(replicator.getPrivateKey());
         }
     });
 

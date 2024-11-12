@@ -63,13 +63,13 @@ public:
     
     void init();
     
-    void displayError(  const std::string& text, const std::string& informativeText = "" );
+    void displayError(  const QString& text, const QString& informativeText = "" );
 
-    void addChannel( const std::string&              channelName,
-                     const std::string&              channelKey,
-                     const std::string&              driveKey,
-                     const std::vector<std::string>& allowedPublicKeys,
-                     bool                            isForEasyDownload );
+    void addChannel( const QString&              channelName,
+                     const QString&              channelKey,
+                     const QString&              driveKey,
+                     const std::vector<QString>& allowedPublicKeys,
+                     bool                        isForEasyDownload );
 
     void removeDrive( Drive* drive );
     
@@ -82,7 +82,7 @@ signals:
     void runProcess(const QUuid& id, const std::function<QVariant()>& task);
     void updateUploadedDataAmount(uint64_t receivedSize, uint64_t replicatorNumber);
     void modificationFinishedByReplicators();
-    void driveStateChangedSignal(const std::string& driveKey, int state, bool itIsNewState );
+    void driveStateChangedSignal(const QString& driveKey, int state, bool itIsNewState );
     void updateStreamingStatus( const QString& );
 
 
@@ -106,12 +106,12 @@ private:
     void setupDriveFsTable();
     void selectDriveFsItem( int index );
 
-    void onChannelCreationConfirmed( const std::string& alias, const std::string& channelKey, const std::string& driveKey );
-    void onChannelCreationFailed( const std::string& channelKey, const std::string& errorText );
+    void onChannelCreationConfirmed( const QString& alias, const QString& channelKey, const QString& driveKey );
+    void onChannelCreationFailed( const QString& channelKey, const QString& errorText );
     void onCurrentChannelChanged( int index );
     void onDriveLocalDirectoryChanged(const QString& path);
-    void onDriveCreationConfirmed( const std::string& driveKey );
-    void onDriveCreationFailed( const std::string& driveKey, const std::string& errorText );
+    void onDriveCreationConfirmed( const QString& driveKey );
+    void onDriveCreationFailed( const QString& driveKey, const QString& errorText );
     void onDriveCloseConfirmed( const std::array<uint8_t, 32>& driveKey );
     void onDriveCloseFailed( const std::array<uint8_t, 32>& driveKey, const QString& errorText );
     void onCurrentDriveChanged( int index );
@@ -125,8 +125,8 @@ private:
     void onStoragePaymentFailed(const std::array<uint8_t, 32> &driveKey, const QString& errorText);
     void onDataModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId);
     void onDataModificationTransactionFailed(const std::array<uint8_t, 32>& driveKey, const std::array<uint8_t, 32>& modificationId, const QString& status);
-    void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi);
-    void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t);
+    void onDataModificationApprovalTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& fileStructureCdi);
+    void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& fileStructureCdi, uint8_t);
     void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId, const QString& error);
     void onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
@@ -141,7 +141,7 @@ private:
     void setupNotifications();
     void showNotification(const QString& message, const QString& error = {});
     void addNotification(const QString& message);
-    void onFsTreeReceived( const std::string& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
+    void onFsTreeReceived( const QString& driveKey, const std::array<uint8_t,32>& fsTreeHash, const sirius::drive::FsTree& );
     void lockMainButtons(bool state);
     void closeEvent(QCloseEvent* event) override;
     void addLocalModificationsWatcher();
@@ -170,7 +170,7 @@ private:
 public:
     void addEasyDownload( const DataInfo& dataInfo );
     void startEasyDownload( EasyDownloadInfo& info );
-    void continueEasyDownload( uint64_t downloadId, const std::string& channelKey );
+    void continueEasyDownload( uint64_t downloadId, const QString& channelKey );
     void restartInterruptedEasyDownloads();
 private:
     sirius::drive::FsTree m_easyDownloadFsTree;
@@ -199,7 +199,7 @@ private:
     void startViewingStream();
     void startViewingStream2( DownloadChannel& channel );
     bool startViewingApprovedStream( DownloadChannel& channel );
-    void downloadApprovedChunk( std::string dnChannelKey, std::string destFolder, int chunkIndex );
+    void downloadApprovedChunk( QString dnChannelKey, QString destFolder, int chunkIndex );
     void cancelViewingStream();
 
     void waitStream();
@@ -225,11 +225,11 @@ private:
 //    void validateContractDrive();
 
     template<class Type>
-    void typeResolver(const QVariant& data, const std::function<void(Type, std::string)>& callback) {
+    void typeResolver(const QVariant& data, const std::function<void(Type, QString)>& callback) {
         if (data.canConvert<Type>()) {
             callback(data.value<Type>(), "");
-        } else if (data.canConvert<std::string>()) {
-            callback(Type(), data.value<std::string>());
+        } else if (data.canConvert<QString>()) {
+            callback(Type(), data.value<QString>());
         } else {
             callback(Type(), "unknown error");
         }
@@ -237,40 +237,40 @@ private:
     
     void dbg();
 
-    void updateDriveWidgets(const std::string& driveKey, int state, bool itIsNewState );
+    void updateDriveWidgets(const QString& driveKey, int state, bool itIsNewState );
 
 private slots:
     void checkDriveForUpdates(Drive* drive, const std::function<void(bool)>& callback);
     void checkDriveForUpdates(DownloadChannel* channel, const std::function<void(bool)>& callback);
-    void updateReplicatorsForChannel(const std::string& channelId, const std::function<void()>& callback);
+    void updateReplicatorsForChannel(const QString& channelId, const std::function<void()>& callback);
     void onErrorsHandler(int errorType, const QString& errorText);
-    void setDownloadChannelOnUi(const std::string& channelId);
-    void setCurrentDriveOnUi(const std::string& driveKey);
+    void setDownloadChannelOnUi(const QString& channelId);
+    void setCurrentDriveOnUi(const QString& driveKey);
     void showSettingsDialog();
-    void updateEntityNameOnUi(QComboBox* box, const std::string& name, const std::string& key);
+    void updateEntityNameOnUi(QComboBox* box, const QString& name, const QString& key);
     void updateDownloadChannelStatusOnUi(const DownloadChannel& channel);
     void updateDriveStatusOnUi(const Drive& drive);
-    void addEntityToUi(QComboBox* box, const std::string& name, const std::string& key);
-    void removeEntityFromUi(QComboBox* box, const std::string& key);
-    void lockChannel(const std::string& channelId);
-    void unlockChannel(const std::string& channelId);
+    void addEntityToUi(QComboBox* box, const QString& name, const QString& key);
+    void removeEntityFromUi(QComboBox* box, const QString& key);
+    void lockChannel(const QString& channelId);
+    void unlockChannel(const QString& channelId);
     void lockDrive();
     void unlockDrive();
     void networkDataHandler(const QString networkName);
     void onCloseChannel();
     void onCloseDrive();
-    void onDownloadFsTreeDirect(const std::string& driveId, const std::string& fileStructureCdi);
-    void downloadFsTreeByChannel(const std::string& channelId, const std::string& fileStructureCdi);
+    void onDownloadFsTreeDirect(const QString& driveId, const QString& fileStructureCdi);
+    void downloadFsTreeByChannel(const QString& channelId, const QString& fileStructureCdi);
     void onAddResolver(const QUuid& id, const std::function<void(QVariant)>& resolver);
     void onRemoveResolver(const QUuid& id);
-    void calculateDiffAsync(const std::function<void(int, std::string)>& callback);
+    void calculateDiffAsync(const std::function<void(int, QString)>& callback);
     void dataModificationsStatusHandler(const sirius::drive::ReplicatorKey &replicatorKey,
                                         const sirius::Hash256 &modificationHash,
                                         const sirius::drive::ModifyTrafficInfo &msg,
                                         boost::string_view currentTask,
                                         bool isModificationQueued,
                                         bool isModificationFinished,
-                                        const std::string &error);
+                                        const QString &error);
     //void on_m_wizardAddStreamAnnouncementBtn_clicked();
 
 #ifndef WA_APP

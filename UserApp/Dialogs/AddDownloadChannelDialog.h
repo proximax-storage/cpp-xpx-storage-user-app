@@ -24,8 +24,8 @@ public:
     explicit AddDownloadChannelDialog(OnChainClient* onChainClient,
                                       Model* model,
                                       QWidget *parent = nullptr,
-                                      std::string driveKey = "",
-                                      std::string defaultChannelName = "" );
+                                      QString driveKey = "",
+                                      QString defaultChannelName = "" );
     ~AddDownloadChannelDialog() override;
 
 public:
@@ -38,7 +38,7 @@ private:
     void validate();
 
 private:
-    std::string                     m_currentDriveKey;
+    QString                         m_currentDriveKey;
     Ui::AddDownloadChannelDialog*   ui;
     OnChainClient*                  mpOnChainClient;
     Model*                          m_model;

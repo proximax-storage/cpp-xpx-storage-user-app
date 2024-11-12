@@ -37,7 +37,7 @@ void ChannelInfoDialog::init()
     ui->driveKey->setText(driveId);
     ui->id->setText(id);
 
-    std::string allowedPublicKeys;
+    QString allowedPublicKeys;
     for( int i = 0; i < keys.size(); i++ )
     {
         if (i != 0 && i != keys.size() - 1)
@@ -50,7 +50,7 @@ void ChannelInfoDialog::init()
         }
     }
 
-    std::string replicatorKeys;
+    QString replicatorKeys;
     for( int i = 0; i < replicators.size(); i++ )
     {
         if (i != 0 && i != replicators.size() - 1)
@@ -63,9 +63,9 @@ void ChannelInfoDialog::init()
         }
     }
 
-    ui->replicators->setText(replicatorKeys.c_str());
+    ui->replicators->setText(replicatorKeys);
 
-    ui->keysLine->setText( QString::fromStdString(allowedPublicKeys) );
+    ui->keysLine->setText(allowedPublicKeys);
     ui->prepaidAmountLine->setText(QString::number(prepaid));
 
     ui->name->setReadOnly(true);
@@ -91,12 +91,12 @@ void ChannelInfoDialog::setDriveId(const QString& drive)
     driveId = drive;
 }
 
-void ChannelInfoDialog::setReplicators(const std::vector<std::string>& replicatorKeys)
+void ChannelInfoDialog::setReplicators(const std::vector<QString>& replicatorKeys)
 {
     replicators = replicatorKeys;
 }
 
-void ChannelInfoDialog::setKeys(const std::vector<std::string>& pKeys)
+void ChannelInfoDialog::setKeys(const std::vector<QString>& pKeys)
 {
     keys = pKeys;
 }

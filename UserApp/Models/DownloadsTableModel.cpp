@@ -94,7 +94,7 @@ QVariant DownloadsTableModel::data(const QModelIndex &index, int role) const
                         }
                     }
 
-                    return QString::fromStdString( m_rows[index.row()].m_name );
+                    return m_rows[index.row()].m_name;
                 }
                 case 1:
                 {
@@ -140,7 +140,7 @@ void DownloadsTableModel::addRow( const FsTreeTableModel::Row& row )
     if(m_allRows.empty())
     {
         auto newName = generateUniqueName(row);
-        if (newName.empty())
+        if (newName.isEmpty())
         {
             m_rows.emplace_back(row);
         }
@@ -209,26 +209,33 @@ void DownloadsTableModel::updateRows()
     endResetModel();
 }
 
-bool DownloadsTableModel::isExists(const FsTreeTableModel::Row& row, std::string& name, int& index)
+bool DownloadsTableModel::isExists(const FsTreeTableModel::Row& row, QString& name, int& index)
 {
     for (const auto& r : m_rows)
     {
         bool isExistsLocally;
-        fs::path path;
+        QString path;
         if (row.m_isFolder)
         {
-            path = fs::path(mp_model->getDownloadFolder().string() + "/" + name).make_preferred();
-            QDir dir(QString::fromStdString(path.string()));
+            path = mp_model->getDownloadFolder() + "/" + name;
+            QDir dir(QDir::toNativeSeparators(path));
             isExistsLocally = dir.exists();
         }
         else
         {
-            path = fs::path(mp_model->getDownloadFolder().string() + row.m_path + "/" + name).make_preferred();
-            QFile file(QString::fromStdString(path.string()));
+            path = mp_model->getDownloadFolder() + row.m_path + "/" + name;
+            QFile file(QDir::toNativeSeparators(path));
             isExistsLocally = file.exists();
         }
 
-        QDir parentDir(QString::fromStdString(path.parent_path().string()));
+        QDir parentDir(QDir::toNativeSeparators(path));
+        if (parentDir.cdUp()) {
+            parentDir = parentDir.absolutePath();
+        } else {
+            qWarning() << "DownloadsTableModel::isExists: Cannot get parent dir!";
+            continue;
+        }
+
         if ( ! parentDir.exists() && !QDir().mkpath(parentDir.path()))
         {
             qWarning() << "DownloadsTableModel::isExists: Cannot create path recursively!";
@@ -238,7 +245,7 @@ bool DownloadsTableModel::isExists(const FsTreeTableModel::Row& row, std::string
         if (r.m_name == name || isExistsLocally)
         {
             index++;
-            name = fs::path(row.m_name).stem().string() + " (" + std::to_string(index) + ")" + fs::path(row.m_name).extension().string();
+            name = QString::fromUtf8(fs::path(row.m_name.toStdString()).stem().string() + " (" + std::to_string(index) + ")" + fs::path(row.m_name.toStdString()).extension().string());
             return isExists(row, name, index);
         }
     }
@@ -246,7 +253,7 @@ bool DownloadsTableModel::isExists(const FsTreeTableModel::Row& row, std::string
     return false;
 }
 
-std::string DownloadsTableModel::generateUniqueName(const FsTreeTableModel::Row& row)
+QString DownloadsTableModel::generateUniqueName(const FsTreeTableModel::Row& row)
 {
     int index = 0;
     auto currentName = row.m_name;

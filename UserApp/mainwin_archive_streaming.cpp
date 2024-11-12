@@ -39,7 +39,7 @@ void MainWin::initWizardArchiveStreaming()
             }
 
             QMessageBox msgBox;
-            const QString message = QString::fromStdString("'" + streamInfo->m_title + "' will be removed.");
+            const QString message = "'" + streamInfo->m_title + "' will be removed.";
             msgBox.setText(message);
             msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
             auto reply = msgBox.exec();
@@ -50,7 +50,7 @@ void MainWin::initWizardArchiveStreaming()
 
                 if ( drive != nullptr )
                 {
-                    auto streamFolder = fs::path( drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName );
+                    auto streamFolder = fs::path(qStringToStdStringUTF8(drive->getLocalFolder() + "/" + STREAM_ROOT_FOLDER_NAME + "/" + streamInfo->m_uniqueFolderName));
                     std::error_code ec;
                     fs::remove_all( streamFolder, ec );
                     qWarning() << "remove: " << streamFolder.string().c_str() << " ec:" << ec.message().c_str();
@@ -58,13 +58,18 @@ void MainWin::initWizardArchiveStreaming()
                     if ( !ec )
                     {
                         sirius::drive::ActionList actionList;
-                        auto streamFolder = fs::path( std::string(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName);
+                        auto streamFolder = fs::path(qStringToStdStringUTF8(QString(STREAM_ROOT_FOLDER_NAME) + "/" + streamInfo->m_uniqueFolderName));
                         actionList.push_back( sirius::drive::Action::remove( streamFolder.string() ) );
                         //
                         // Start modification
                         //
-                        auto driveKeyHex = rawHashFromHex(drive->getKey().c_str());
-                        m_onChainClient->applyDataModification(driveKeyHex, actionList);
+                        auto confirmationCallback = [](auto fee)
+                        {
+                            return showConfirmationDialog(fee);
+                        };
+
+                        auto driveKeyHex = rawHashFromHex(drive->getKey());
+                        m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
                         drive->updateDriveState(registering);
                     }
                 }
@@ -95,12 +100,12 @@ void MainWin::wizardUpdateArchiveTable()
         ui->m_wizardArchiveTable->insertRow( (int)rowIndex );
         {
             auto* item = new QTableWidgetItem();
-            item->setData( Qt::DisplayRole, QString::fromStdString( streamInfo.m_title ) );
+            item->setData( Qt::DisplayRole, streamInfo.m_title );
             ui->m_wizardArchiveTable->setItem( (int)rowIndex, 0, item );
         }
         {
-            auto* item = new QTableWidgetItem( QString::fromStdString( m_model->findDrive(streamInfo.m_driveKey)->getName() ));
-            item->setData( Qt::UserRole, QString::fromStdString( streamInfo.m_driveKey ) );
+            auto* item = new QTableWidgetItem( m_model->findDrive(streamInfo.m_driveKey)->getName() );
+            item->setData( Qt::UserRole, streamInfo.m_driveKey );
             ui->m_wizardArchiveTable->setItem( (int)rowIndex, 1, item );
         }
     }

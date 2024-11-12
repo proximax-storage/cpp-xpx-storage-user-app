@@ -19,7 +19,7 @@ public:
     };
 
 public:
-    explicit EditDialog( const QString& title, const QString& text, std::string& renameText, EntityType type, Model* model, QWidget *parent = nullptr );
+    explicit EditDialog( const QString& title, const QString& text, QString& renameText, EntityType type, Model* model, QWidget *parent = nullptr );
     ~EditDialog();
 
 protected:

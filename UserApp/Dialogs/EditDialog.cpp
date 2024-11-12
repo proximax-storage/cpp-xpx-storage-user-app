@@ -6,7 +6,7 @@
 #include <QRegularExpression>
 
 
-EditDialog::EditDialog( const QString& title, const QString& text, std::string& renameText, EntityType type, Model* model, QWidget *parent ) :
+EditDialog::EditDialog( const QString& title, const QString& text, QString& renameText, EntityType type, Model* model, QWidget *parent ) :
     QDialog(parent),
     ui(new Ui::EditDialog),
     mp_model(model)
@@ -15,7 +15,7 @@ EditDialog::EditDialog( const QString& title, const QString& text, std::string& 
 
     setWindowTitle( title );
     ui->label->setText( text );
-    ui->name->setText( QString::fromStdString(renameText) );
+    ui->name->setText( renameText );
     ui->name->selectAll();
 
     QRegularExpression nameTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9_]{1,40})")));
@@ -29,7 +29,7 @@ EditDialog::EditDialog( const QString& title, const QString& text, std::string& 
         } else {
             QToolTip::hideText();
             ui->name->setProperty("is_valid", true);
-            renameText = ui->name->text().toStdString();
+            renameText = ui->name->text();
         }
 
         validate();

@@ -12,7 +12,7 @@ public:
     void updateModel();
 
     int onDoubleClick( int row );
-    std::string currentPath() const;
+    QString currentPath() const;
 
     int rowCount(const QModelIndex &) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -25,7 +25,7 @@ public:
     struct Row
     {
         bool        m_isFolder;
-        std::string m_name;
+        QString     m_name;
         size_t      m_size;
 
         std::array<uint8_t,32> m_hash;

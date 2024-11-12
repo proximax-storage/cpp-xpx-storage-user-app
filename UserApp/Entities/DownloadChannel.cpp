@@ -21,35 +21,35 @@ DownloadChannel::DownloadChannel()
 DownloadChannel::~DownloadChannel()
 {}
 
-std::string DownloadChannel::getName() const {
+QString DownloadChannel::getName() const {
     return m_name;
 }
 
-void DownloadChannel::setName(const std::string& name) {
+void DownloadChannel::setName(const QString& name) {
     m_name = name;
 }
 
-std::string DownloadChannel::getKey() const {
+QString DownloadChannel::getKey() const {
     return m_key;
 }
 
-void DownloadChannel::setKey(const std::string& key) {
+void DownloadChannel::setKey(const QString& key) {
     m_key = key;
 }
 
-std::string DownloadChannel::getDriveKey() const {
+QString DownloadChannel::getDriveKey() const {
     return m_driveKey;
 }
 
-void DownloadChannel::setDriveKey(const std::string& key) {
+void DownloadChannel::setDriveKey(const QString& key) {
     m_driveKey = key;
 }
 
-std::vector<std::string> DownloadChannel::getAllowedPublicKeys() const {
+std::vector<QString> DownloadChannel::getAllowedPublicKeys() const {
     return m_allowedPublicKeys;
 }
 
-void DownloadChannel::setAllowedPublicKeys(const std::vector<std::string>& keys) {
+void DownloadChannel::setAllowedPublicKeys(const std::vector<QString>& keys) {
     m_allowedPublicKeys = keys;
 }
 
@@ -77,11 +77,11 @@ void DownloadChannel::setCreatingTimePoint(timepoint time) {
     m_creationTimepoint = time;
 }
 
-std::vector<std::string> DownloadChannel::getLastOpenedPath() const {
+std::vector<QString> DownloadChannel::getLastOpenedPath() const {
     return m_lastOpenedPath;
 }
 
-void DownloadChannel::setLastOpenedPath(const std::vector<std::string>& path) {
+void DownloadChannel::setLastOpenedPath(const std::vector<QString>& path) {
     m_lastOpenedPath = path;
 }
 
@@ -113,13 +113,13 @@ sirius::drive::ReplicatorList DownloadChannel::getReplicators() const {
     return m_shardReplicators;
 }
 
-void DownloadChannel::setReplicators(const std::vector<std::string>& replicators) {
+void DownloadChannel::setReplicators(const std::vector<QString>& replicators) {
     qDebug() << "setReplicators: " << this << " size: " << replicators.size();
     m_shardReplicators.clear();
     for( const auto& key : replicators )
     {
         std::array<uint8_t, 32> replicatorKey{ 0 };
-        sirius::utils::ParseHexStringIntoContainer( key.c_str(), 64, replicatorKey );
+        sirius::utils::ParseHexStringIntoContainer( key.toStdString().c_str(), 64, replicatorKey );
         m_shardReplicators.emplace_back(replicatorKey);
     }
 }

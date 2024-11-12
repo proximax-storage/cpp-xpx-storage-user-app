@@ -53,9 +53,9 @@ public:
 
     sirius::drive::InfoHash addActions(const sirius::drive::ActionList& actions,
                                        const sirius::Key& driveId,
-                                       const std::string& sandboxFolder,
+                                       const QString& sandboxFolder,
                                        uint64_t& modifySize,
-                                       const std::vector<std::string>& replicators);
+                                       const std::vector<QString>& replicators);
 
     void start();
 
@@ -63,9 +63,9 @@ public:
 
     void addReplicators( const sirius::drive::ReplicatorList& replicators);
 
-    void downloadFsTree( const std::string&                     driveHash,
-                         const std::string&                     dnChannelId,
-                         const std::array<uint8_t,32>&          fsTreeHash);
+    void downloadFsTree( const QString&                     driveHash,
+                         const QString&                     dnChannelId,
+                         const std::array<uint8_t,32>&      fsTreeHash);
 
     sirius::drive::lt_handle downloadFile( const std::array<uint8_t,32>&        channelInfo,
                                            const std::array<uint8_t,32>&        fileHash,
@@ -83,7 +83,7 @@ public:
     }
 
     void init(const sirius::crypto::KeyPair&  keyPair,
-              const std::string&              address,
+              QString                         address,
               const endpoint_list&            bootstraps,
               std::function<void()>           addressAlreadyInUseHandler );
 
@@ -94,7 +94,7 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> getEndpoint( const sirius::Key& key );
 
     void startStreaming( const sirius::Hash256&  streamId,
-                         const std::string&      streamFolderName,
+                         const QString&      streamFolderName,
                          const sirius::Key&      driveKey,
                          const fs::path&         m3u8Playlist,
                          const fs::path&         driveLocalFolder,
@@ -102,20 +102,20 @@ public:
                          sirius::drive::StreamingStatusHandler streamingStatusHandler,
                          const endpoint_list&    endPointList );
 
-    void finishStreaming( const std::string& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall );
+    void finishStreaming( const QString& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall );
     void cancelStreaming();
 
 signals:
     void newError(int errorType, const QString& errorText);
 
 private:
-    void addTorrentFileToSession(const std::string &torrentFilename,
-                                 const std::string &folderWhereFileIsLocated,
+    void addTorrentFileToSession(const QString &torrentFilename,
+                                 const QString &folderWhereFileIsLocated,
                                  const std::array<uint8_t, 32>& driveKey,
                                  const std::array<uint8_t, 32>& modifyTx);
 
 signals:
-    void fsTreeReceived(const std::string& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
+    void fsTreeReceived(const QString& myDriveId, const std::array<uint8_t, 32>& fsTreeHash, const sirius::drive::FsTree& fsTree);
 
 private:
     Model* mp_model;

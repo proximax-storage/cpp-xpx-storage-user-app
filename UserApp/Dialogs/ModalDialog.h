@@ -14,11 +14,11 @@ class ModalDialog : public QDialog
     std::optional<std::function<void()>> m_callback;
     
 public:
-    ModalDialog( const std::string& title, const std::string& text, std::optional<std::function<void()>> callback = {} ) : QDialog(), m_callback(callback)
+    ModalDialog( const QString& title, const QString& text, std::optional<std::function<void()>> callback = {} ) : QDialog(), m_callback(callback)
     {
-        setWindowTitle( QString::fromStdString(title) );
+        setWindowTitle( title );
 
-        QLabel*      label  = new QLabel( QString::fromStdString(text), this );
+        QLabel*      label  = new QLabel( text, this );
         QHBoxLayout* layout = new QHBoxLayout( this );
         layout->addWidget( label );
         resize(sizeHint());

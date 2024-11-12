@@ -111,7 +111,7 @@ void PrivKeyDialog::validate() {
 bool PrivKeyDialog::isAccountExists() {
     auto nameIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
-        return boost::iequals(account.m_accountName, ui->m_accountName->text().toStdString());
+        return account.m_accountName.compare(ui->m_accountName->text(), Qt::CaseInsensitive) == 0;
     });
 
     if ( nameIterator != mp_settings->m_accounts.end() )
@@ -122,7 +122,7 @@ bool PrivKeyDialog::isAccountExists() {
 
     auto keyIterator = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [this]( auto account )
     {
-        return boost::iequals(account.m_privateKeyStr, ui->m_pkField->text().toStdString());
+        return account.m_privateKeyStr.compare(ui->m_pkField->text(), Qt::CaseInsensitive) == 0;
     });
 
     if ( keyIterator != mp_settings->m_accounts.end() )
@@ -183,14 +183,14 @@ void PrivKeyDialog::onLoadFromFileBtn()
 
 void PrivKeyDialog::accept()
 {
-    std::string privateKeyStr = ui->m_pkField->text().toUpper().toStdString();
-    std::string accountName   = ui->m_accountName->text().toStdString();
+    QString privateKeyStr = ui->m_pkField->text().toUpper();
+    QString accountName   = ui->m_accountName->text();
 
     // Check unique key
     //
     auto it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
     {
-        return boost::iequals(account.m_privateKeyStr, privateKeyStr);
+        return account.m_privateKeyStr.compare(privateKeyStr, Qt::CaseInsensitive) == 0;
     } );
 
     if ( it != mp_settings->m_accounts.end() )
@@ -204,9 +204,9 @@ void PrivKeyDialog::accept()
 
     // Check unique name
     //
-    it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const auto& account )
+    it = std::find_if( mp_settings->m_accounts.begin(), mp_settings->m_accounts.end(), [&]( const Account& account )
     {
-        return boost::iequals(account.m_accountName, accountName);
+        return account.m_accountName.compare(accountName, Qt::CaseInsensitive) == 0;
     } );
 
     if ( it != mp_settings->m_accounts.end() )

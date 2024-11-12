@@ -21,11 +21,11 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DownloadPaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DownloadPaymentDialog::reject);
 
-    std::vector<std::string> channelsKeys;
+    std::vector<QString> channelsKeys;
     channelsKeys.reserve(mpModel->getDownloadChannels().size());
     for ( const auto& [key, channel] : mpModel->getDownloadChannels()) {
         channelsKeys.push_back(key);
-        ui->selectChannelBox->addItem(channel.getName().c_str());
+        ui->selectChannelBox->addItem(channel.getName());
     }
 
     ui->selectChannelBox->model()->sort(0);
@@ -38,7 +38,7 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
             ui->m_channelKey->setText("");
         } else if (index >= 1) {
             mCurrentChannelKey = channelsKeys[--index];
-            ui->m_channelKey->setText(mCurrentChannelKey.c_str());
+            ui->m_channelKey->setText(mCurrentChannelKey);
         }
     }, Qt::QueuedConnection);
 
@@ -54,12 +54,12 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
         } else {
             QToolTip::hideText();
             ui->m_channelKey->setProperty("is_valid", true);
-            mCurrentChannelKey = ui->m_channelKey->text().toStdString();
+            mCurrentChannelKey = ui->m_channelKey->text();
             validate();
 
             auto index = ui->selectChannelBox->currentIndex();
             if (index >= 1) {
-                bool isEquals = boost::iequals( channelsKeys[--index], mCurrentChannelKey );
+                bool isEquals = channelsKeys[--index].compare(mCurrentChannelKey, Qt::CaseInsensitive) == 0;
                 if (!isEquals) {
                     ui->selectChannelBox->setCurrentIndex(0);
                 }
@@ -91,12 +91,12 @@ DownloadPaymentDialog::DownloadPaymentDialog(OnChainClient* onChainClient,
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_channelKey->setProperty("is_valid", true);
-        mCurrentChannelKey = ui->m_channelKey->text().toStdString();
+        mCurrentChannelKey = ui->m_channelKey->text();
         validate();
 
         auto index = ui->selectChannelBox->currentIndex();
         if (index >= 1) {
-            bool isEquals = boost::iequals( channelsKeys[--index], mCurrentChannelKey );
+            bool isEquals = channelsKeys[--index].compare(mCurrentChannelKey, Qt::CaseInsensitive) == 0;
             if (!isEquals) {
                 ui->selectChannelBox->setCurrentIndex(0);
             }
@@ -129,7 +129,7 @@ DownloadPaymentDialog::~DownloadPaymentDialog()
 }
 
 void DownloadPaymentDialog::accept() {
-    mpOnChainClient->downloadPayment(rawHashFromHex(mCurrentChannelKey.c_str()), ui->m_prepaid->text().toULongLong());
+    mpOnChainClient->downloadPayment(rawHashFromHex(mCurrentChannelKey), ui->m_prepaid->text().toULongLong());
     QDialog::accept();
 }
 

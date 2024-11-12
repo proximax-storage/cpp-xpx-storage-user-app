@@ -6,7 +6,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 
-ReplicatorInfoDialog::ReplicatorInfoDialog(const std::string& replicator,
+ReplicatorInfoDialog::ReplicatorInfoDialog(const QString& replicator,
                                            Model* model,
                                            QWidget* parent) :
     QDialog(parent),
@@ -17,8 +17,8 @@ ReplicatorInfoDialog::ReplicatorInfoDialog(const std::string& replicator,
 
     mPublicKey = replicator;
     auto cachedReplicator = mpModel->findReplicatorByPublicKey(replicator);
-    ui->alias->setText(cachedReplicator.getName().c_str());
-    ui->publicKey->setText(cachedReplicator.getPublicKey().c_str());
+    ui->alias->setText(cachedReplicator.getName());
+    ui->publicKey->setText(cachedReplicator.getPublicKey());
     ui->publicKey->setReadOnly(true);
     ui->drivesAmount->setText("0");
     ui->drivesAmount->setReadOnly(true);
@@ -68,8 +68,8 @@ ReplicatorInfoDialog::~ReplicatorInfoDialog()
 
 void ReplicatorInfoDialog::accept() {
     auto replicator = mpModel->findReplicatorByPublicKey(mPublicKey);
-    if (replicator.getName() != ui->alias->text().toStdString()) {
-        mpModel->updateReplicatorAlias(replicator.getPublicKey(), ui->alias->text().toStdString());
+    if (replicator.getName() != ui->alias->text()) {
+        mpModel->updateReplicatorAlias(replicator.getPublicKey(), ui->alias->text());
         mpModel->saveSettings();
         emit ((MainWin*)parent())->refreshMyReplicatorsTable();
     }

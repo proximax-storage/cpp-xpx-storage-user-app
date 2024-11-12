@@ -19,9 +19,9 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     dataSize = new QLabel("Data Size:");
     folderNameForSaving = new QLabel("Folder Name For Saving:");
 
-    m_driveNameConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_driveName));
-    m_pathConfirmLabel = new QLabel(QString::fromStdString(m_dataInfo.m_path));
-    m_dataSizeConfirmLabel = new QLabel(QString::fromStdString(dataSizeToString(m_dataInfo.m_totalSize)));
+    m_driveNameConfirmLabel = new QLabel(m_dataInfo.m_driveName);
+    m_pathConfirmLabel = new QLabel(m_dataInfo.m_path);
+    m_dataSizeConfirmLabel = new QLabel(dataSizeToString(m_dataInfo.m_totalSize));
     m_folderNameConfirmEdit = new QLineEdit("");
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -41,7 +41,7 @@ ConfirmLinkDialog::ConfirmLinkDialog( QWidget*  parent
     {
         m_layout->addWidget(folderNameForSaving, 3, 0, Qt::AlignRight);
         m_layout->addWidget(m_folderNameConfirmEdit, 3, 1);
-        m_folderNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_driveName));
+        m_folderNameConfirmEdit->setText(m_dataInfo.m_driveName);
     }
 }
 
@@ -58,15 +58,16 @@ ConfirmLinkDialog::~ConfirmLinkDialog()
 //     }
 // }
 
-bool ConfirmLinkDialog::contains_invalid_chars(const std::string& filename, const std::string& invalid_chars) {
-    return std::any_of(filename.begin(), filename.end(), [&](char c) {
-        return invalid_chars.find(c) != std::string::npos;
+bool ConfirmLinkDialog::contains_invalid_chars(const QString& filename, const QString& invalid_chars) {
+    const auto utf8buffer = qStringToStdStringUTF8(filename);
+    return std::any_of(utf8buffer.begin(), utf8buffer.end(), [&](char c) {
+        return qStringToStdStringUTF8(invalid_chars).find(c) != std::string::npos;
     });
 }
 
-bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
+bool ConfirmLinkDialog::isValidFolderName(const QString& filename) {
 
-    const std::string windows_invalid_chars = "<>:\"/\\|?*";
+    const QString windows_invalid_chars = "<>:\"/\\|?*";
     if (contains_invalid_chars(filename, windows_invalid_chars)) {
         return false;
     }
@@ -74,7 +75,8 @@ bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
         "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", ".."
     };
-    std::string upper_filename = filename;
+
+    auto upper_filename = qStringToStdStringUTF8(filename);
     std::transform(upper_filename.begin(), upper_filename.end(), upper_filename.begin(), ::toupper);
     for (const auto& reserved_name : reserved_names) {
         if (upper_filename == reserved_name) {
@@ -82,7 +84,7 @@ bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
         }
     }
 
-    const std::string unix_invalid_chars = "\0/";
+    const QString unix_invalid_chars = "\0/";
     if (contains_invalid_chars(filename, unix_invalid_chars)) {
         return false;
     }
@@ -93,8 +95,9 @@ bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
     }
 
     try {
-        std::filesystem::path p(filename);
-        return !p.empty() && p.filename() == filename;
+        const auto fileNameUtf8 = qStringToStdStringUTF8(filename);
+        std::filesystem::path p(fileNameUtf8);
+        return !p.empty() && p.filename() == fileNameUtf8;
     }
     catch (const std::filesystem::filesystem_error&) {
         return false;
@@ -105,30 +108,30 @@ bool ConfirmLinkDialog::isValidFolderName(const std::string& filename) {
 void ConfirmLinkDialog::accept()
 {
 
-    if( (m_dataInfo.m_path == "/") && !isValidFolderName(m_folderNameConfirmEdit->text().toStdString()) )
+    if( (m_dataInfo.m_path == "/") && !isValidFolderName(m_folderNameConfirmEdit->text()) )
     {
         QMessageBox msgBox(QMessageBox::Warning
                            , "Warning"
                            , m_folderNameConfirmEdit->text() + ": incorrect folder name!"
                            , QMessageBox::Ok, this);
         connect(msgBox.button(QMessageBox::Ok), &QPushButton::clicked, this, [&]() {
-            m_folderNameConfirmEdit->setText(QString::fromStdString(m_dataInfo.m_driveName));
+            m_folderNameConfirmEdit->setText(m_dataInfo.m_driveName);
         });
         msgBox.exec();
     }
     else
     {
-        m_dataInfo.m_itemName = m_folderNameConfirmEdit->text().toStdString();
-        std::string link = m_dataInfo.getLink();
+        m_dataInfo.m_itemName = m_folderNameConfirmEdit->text();
+        QString link = m_dataInfo.getLink();
         QClipboard* clipboard = QApplication::clipboard();
         if ( !clipboard ) {
-            qWarning() << LOG_SOURCE << "bad clipboard";
+            qWarning() << "ConfirmLinkDialog::accept: bad clipboard";
             return;
         }
-        clipboard->setText( QString::fromStdString(link), QClipboard::Clipboard );
+        clipboard->setText(link, QClipboard::Clipboard );
         if ( clipboard->supportsSelection() )
         {
-            clipboard->setText( QString::fromStdString(link), QClipboard::Selection );
+            clipboard->setText(link, QClipboard::Selection );
         }
         reject();
     }

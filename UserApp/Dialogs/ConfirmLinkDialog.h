@@ -28,8 +28,8 @@ private:
 private:
     void setFontAndSize();
     void setLayout();
-    bool isValidFolderName(const std::string& filename);
-    bool contains_invalid_chars(const std::string& filename, const std::string& invalid_chars);
+    bool isValidFolderName(const QString& filename);
+    bool contains_invalid_chars(const QString& filename, const QString& invalid_chars);
 
 public:
     explicit ConfirmLinkDialog( QWidget *parent   = nullptr

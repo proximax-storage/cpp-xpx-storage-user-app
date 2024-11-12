@@ -20,11 +20,11 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &StoragePaymentDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &StoragePaymentDialog::reject);
 
-    std::vector<std::string> drivesKeys;
+    std::vector<QString> drivesKeys;
     drivesKeys.reserve(mpModel->getDrives().size());
     for ( const auto& [key, value] : mpModel->getDrives()) {
         drivesKeys.push_back(key);
-        ui->selectDriveBox->addItem(value.getName().c_str());
+        ui->selectDriveBox->addItem(value.getName());
     }
 
     ui->selectDriveBox->model()->sort(0);
@@ -37,7 +37,7 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
             ui->m_driveKy->setText("");
         } else if (index >= 1) {
             mCurrentDriveKey = drivesKeys[--index];
-            ui->m_driveKy->setText(mCurrentDriveKey.c_str());
+            ui->m_driveKy->setText(mCurrentDriveKey);
         }
     }, Qt::QueuedConnection);
 
@@ -53,12 +53,12 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
         } else {
             QToolTip::hideText();
             ui->m_driveKy->setProperty("is_valid", true);
-            mCurrentDriveKey = ui->m_driveKy->text().toStdString();
+            mCurrentDriveKey = ui->m_driveKy->text();
             validate();
 
             auto index = ui->selectDriveBox->currentIndex();
             if (index >= 1) {
-                bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+                bool isEquals = drivesKeys[--index].compare(mCurrentDriveKey, Qt::CaseInsensitive) == 0;
                 if (!isEquals) {
                     ui->selectDriveBox->setCurrentIndex(0);
                 }
@@ -90,12 +90,12 @@ StoragePaymentDialog::StoragePaymentDialog(OnChainClient* onChainClient,
         QToolTip::hideText();
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         ui->m_driveKy->setProperty("is_valid", true);
-        mCurrentDriveKey = ui->m_driveKy->text().toStdString();
+        mCurrentDriveKey = ui->m_driveKy->text();
         validate();
 
         auto index = ui->selectDriveBox->currentIndex();
         if (index >= 1) {
-            bool isEquals = boost::iequals( drivesKeys[--index], mCurrentDriveKey );
+            bool isEquals = drivesKeys[--index].compare(mCurrentDriveKey, Qt::CaseInsensitive) == 0;
             if (!isEquals) {
                 ui->selectDriveBox->setCurrentIndex(0);
             }
@@ -123,7 +123,7 @@ StoragePaymentDialog::~StoragePaymentDialog()
 }
 
 void StoragePaymentDialog::accept() {
-    mpOnChainClient->storagePayment(rawHashFromHex(mCurrentDriveKey.c_str()), ui->m_unitsAmount->text().toULongLong());
+    mpOnChainClient->storagePayment(rawHashFromHex(mCurrentDriveKey), ui->m_unitsAmount->text().toULongLong());
     QDialog::accept();
 }
 

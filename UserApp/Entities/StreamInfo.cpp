@@ -12,16 +12,16 @@ static int charToInt( char input )
 }
 
 
-std::string StreamInfo::getLink() const
+QString StreamInfo::getLink() const
 {
     std::ostringstream os( std::ios::binary );
     cereal::PortableBinaryOutputArchive archive( os );
 
-    archive( m_version );
-    archive( m_driveKey );
-    archive( m_title );
-    archive( m_secsSinceEpoch );
-    archive( m_uniqueFolderName );
+    archive(m_version);
+    archive(m_driveKey);
+    archive(m_title);
+    archive(m_secsSinceEpoch);
+    archive(m_uniqueFolderName);
 
     auto rawString = os.str();
     
@@ -43,21 +43,22 @@ std::string StreamInfo::getLink() const
 
     qDebug() << "link: " << QString::fromStdString( std::string( &link[0], link.size() ) );
 
-    return std::string( &link[0], link.size() );
+    const std::string buffer(&link[0], link.size());
+    return stdStringToQStringUtf8(buffer);
 }
 
-void StreamInfo::parseLink( const std::string& linkString )
+void StreamInfo::parseLink( const QString& linkString )
 {
-    qDebug() << "linkString: " << QString::fromStdString( linkString );
+    qDebug() << "StreamInfo::parseLink: linkString: " << linkString;
 
     std::vector<uint8_t> rawLink;
     rawLink.reserve( linkString.size()/2+1 );
     for( size_t i=0; i<linkString.size()-1;)
     {
-        uint8_t b1 = charToInt(linkString[i]);
+        uint8_t b1 = charToInt(linkString[i].toLatin1());
 //        qDebug() << "c1: " << linkString[i];
         i++;
-        uint8_t b2 = charToInt(linkString[i]) << 4;
+        uint8_t b2 = charToInt(linkString[i].toLatin1()) << 4;
 //        qDebug() << "c2: " << linkString[i];
         i++;
         rawLink.push_back(b1|b2);
@@ -70,11 +71,11 @@ void StreamInfo::parseLink( const std::string& linkString )
     std::istringstream is( linkStr, std::ios::binary );
     cereal::PortableBinaryInputArchive iarchive( is );
 
-    iarchive( m_version );
-    iarchive( m_driveKey );
-    iarchive( m_title );
+    iarchive(m_version );
+    iarchive(m_driveKey);
+    iarchive(m_title);
     iarchive( m_secsSinceEpoch );
-    iarchive( m_uniqueFolderName );
+    iarchive(m_uniqueFolderName);
 }
 
 

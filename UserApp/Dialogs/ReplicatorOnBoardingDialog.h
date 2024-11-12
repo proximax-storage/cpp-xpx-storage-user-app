@@ -27,7 +27,7 @@ public:
 
 private:
     bool isReplicatorExists() const;
-    std::string getReplicatorPublicKey() const;
+    QString getReplicatorPublicKey() const;
     void validate();
 
 private:

@@ -30,7 +30,7 @@ private:
     void validate();
 
 private:
-    std::string mCurrentDriveKey;
+    QString mCurrentDriveKey;
     Ui::StoragePaymentDialog *ui;
     OnChainClient* mpOnChainClient;
     Model* mpModel;

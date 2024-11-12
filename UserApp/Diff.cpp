@@ -16,21 +16,22 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
 
     for( const auto& entry : std::filesystem::directory_iterator(path.make_preferred()) )
     {
-        const auto entryName = entry.path().filename().make_preferred();
+        const auto entryNameQStringUFT8 = stdStringToQStringUtf8(entry.path().filename().make_preferred());
+        const auto entryNameStdStringUFT8 = qStringToStdStringUTF8(entryNameQStringUFT8);
         if ( entry.is_directory() )
         {
             std::error_code errorCode(errno, std::generic_category());
             auto lastWriteTime = fs::last_write_time(entry, errorCode);
 
             if (errorCode.value() == 0) {
-                LocalDriveItem child{ true, entryName.string(), 0, "", {}, lastWriteTime };
-                calcLocalDriveInfoR( child, (path / entryName).make_preferred(), calculateHashes, driveKey );
-                parent.m_childs[entryName.string()] = std::move(child);
+                LocalDriveItem child{ true, entryNameQStringUFT8, 0, "", {}, lastWriteTime };
+                calcLocalDriveInfoR( child, (path / entryNameStdStringUFT8).make_preferred(), calculateHashes, driveKey );
+                parent.m_childs[entryNameQStringUFT8] = std::move(child);
             } else {
-                qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message();
+                qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
             }
         }
-        else if ( entry.is_regular_file() && entryName.string() != ".DS_Store" )
+        else if ( entry.is_regular_file() && entryNameQStringUFT8 != ".DS_Store" )
         {
             size_t fileSize = entry.file_size();
 
@@ -47,10 +48,10 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
 #ifdef WA_APP
                     //TODO_WA
 #else
-                    hash = sirius::drive::calculateInfoHash((path / entryName).make_preferred(), sirius::Key(*driveKey) ).array();
+                    hash = sirius::drive::calculateInfoHash((path / entryNameStdStringUFT8).make_preferred(), sirius::Key(*driveKey) ).array();
 #endif
                     qWarning () << "driveKey: " << sirius::drive::toString(*driveKey).c_str();
-                    qWarning () << "filename: " << (path / entryName).string().c_str();
+                    qWarning () << "filename: " << (path / entryNameStdStringUFT8).string().c_str();
                     qWarning () << "hash: " << sirius::drive::toString(hash).c_str();
                 }
 
@@ -58,9 +59,9 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
                 if (errorCode.value() == 0) {
-                    parent.m_childs[entryName.string()] = LocalDriveItem{ false, entryName.string(), fileSize, hash.array(), {}, lastWriteTime };
+                    parent.m_childs[entryNameQStringUFT8] = LocalDriveItem{ false, entryNameQStringUFT8, fileSize, hash.array(), {}, lastWriteTime };
                 } else {
-                    qWarning () << "Diff::calcLocalDriveInfoR. entry.is_regular_file(). Error code: " << errorCode.value() << " message: " << errorCode.message();
+                    qWarning () << "Diff::calcLocalDriveInfoR. entry.is_regular_file(). Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
                 }
             }
             else
@@ -69,9 +70,9 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
                 auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
                 if (errorCode.value() == 0) {
-                    parent.m_childs[entryName.string()] = LocalDriveItem{ false, entryName.string(), fileSize, {}, {}, lastWriteTime };
+                    parent.m_childs[entryNameQStringUFT8] = LocalDriveItem{ false, entryNameQStringUFT8, fileSize, {}, {}, lastWriteTime };
                 } else {
-                    qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message();
+                    qWarning () << "Diff::calcLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
                 }
             }
         }
@@ -86,6 +87,7 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
     for( const auto& entry : std::filesystem::directory_iterator(fsPath.make_preferred()) )
     {
         const auto entryName = entry.path().filename().string();
+        const QString entryNameQUTF8 = stdStringToQStringUtf8(entryName);
 
         if ( entry.is_directory() )
         {
@@ -93,9 +95,9 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             auto lastWriteTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
             if (errorCode.value() == 0) {
-                LocalDriveItem child{ true, entryName, 0, "", {}, lastWriteTime };
+                LocalDriveItem child{ true, entryNameQUTF8, 0, "", {}, lastWriteTime };
 
-                auto oldIt = oldRoot.m_childs.find( entryName );
+                auto oldIt = oldRoot.m_childs.find( entryNameQUTF8 );
                 if ( oldIt != oldRoot.m_childs.end() && oldIt->second.m_isFolder )
                 {
                     updateLocalDriveInfoR( child, oldIt->second, fs::path(fsPath.string() + "/" + entryName).make_preferred(), driveKey );
@@ -105,16 +107,16 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
                     updateLocalDriveInfoR( child, {}, fs::path(fsPath.string() + "/" + entryName).make_preferred(), driveKey );
                 }
 
-                newRoot.m_childs[entryName] = std::move(child);
+                newRoot.m_childs[entryNameQUTF8] = std::move(child);
             } else {
-                qWarning () << "Diff::updateLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message();
+                qWarning () << "Diff::updateLocalDriveInfoR. entry.is_directory(). Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
             }
         }
         else if ( entry.is_regular_file() && entryName != ".DS_Store" )
         {
             size_t fileSize = entry.file_size();
 
-            auto oldIt = oldRoot.m_childs.find( entryName );
+            auto oldIt = oldRoot.m_childs.find( entryNameQUTF8 );
             if ( oldIt != oldRoot.m_childs.end() && ! oldIt->second.m_isFolder )
             {
                 std::error_code errorCode(errno, std::generic_category());
@@ -123,11 +125,11 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
                 if (errorCode.value() == 0) {
                     if ( modifyTime == oldIt->second.m_modifyTime )
                     {
-                        newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, oldIt->second.m_fileHash, {}, modifyTime };
+                        newRoot.m_childs[entryNameQUTF8] = LocalDriveItem{ false, entryNameQUTF8, fileSize, oldIt->second.m_fileHash, {}, modifyTime };
                         continue;
                     }
                 } else {
-                    qWarning () << "Diff::updateLocalDriveInfoR. oldIt != oldRoot.m_childs.end(). Error code: " << errorCode.value() << " message: " << errorCode.message();
+                    qWarning () << "Diff::updateLocalDriveInfoR. oldIt != oldRoot.m_childs.end(). Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
                 }
             }
 
@@ -149,9 +151,9 @@ void Diff::updateLocalDriveInfoR( LocalDriveItem&           newRoot,
             auto modifyTime = fs::last_write_time(fs::path(entry).make_preferred(), errorCode);
 
             if (errorCode.value() == 0) {
-                newRoot.m_childs[entryName] = LocalDriveItem{ false, entryName, fileSize, hash.array(), {}, modifyTime };
+                newRoot.m_childs[entryNameQUTF8] = LocalDriveItem{ false, entryNameQUTF8, fileSize, hash.array(), {}, modifyTime };
             } else {
-                qWarning () << "Diff::updateLocalDriveInfoR. Error code: " << errorCode.value() << " message: " << errorCode.message();
+                qWarning () << "Diff::updateLocalDriveInfoR. Error code: " << errorCode.value() << " message: " << errorCode.message().c_str();
             }
         }
     }
@@ -175,15 +177,17 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
     //
     for( auto& [name, localChild] : localChilds )
     {
+        const auto nameUTF8 = qStringToStdStringUTF8(name);
+
         // Logic path of file/folder on the drive
-        fs::path childPath = localFolderPath / name;
-        fs::path fsChildPath = fsPath.empty() ? fs::path(localChild.m_name) : fs::path(fsPath / name);
+        fs::path childPath = localFolderPath / nameUTF8;
+        fs::path fsChildPath = fsPath.empty() ? fs::path(qStringToStdStringUTF8(localChild.m_name)) : fs::path(fsPath / nameUTF8);
         qDebug() << "Diff::calcDiff !!! fsChildPath: " << fsChildPath.string().c_str();
 
         // check that file (or folder) exists on the drive
         //
         //fsFolder.dbgPrint();
-        if ( auto fsIt = fsFolder.childs().find(name); fsIt != fsFolder.childs().end() )
+        if ( auto fsIt = fsFolder.childs().find(nameUTF8); fsIt != fsFolder.childs().end() )
         {
             // Item exists in local folder and in remote drive
             //
@@ -202,7 +206,16 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                     // Remote file has been replaced by folder with same name
 
                     // save removed file into 'replacedItems'
-                    removedItems.emplace_back(LocalDriveItem{ false, name, getFile(fsIt->second).size(), {}, {}, {}, ldi_removed } );
+                    LocalDriveItem item;
+                    item.m_isFolder = false;
+                    item.m_name = name;
+                    item.m_size = getFile(fsIt->second).size();
+                    item.m_fileHash = {};
+                    item.m_childs = {};
+                    item.m_modifyTime = {};
+                    item.m_ldiStatus = ldi_removed;
+
+                    removedItems.emplace_back(item);
 
                     // remove remote file
                     m_diffActionList.emplace_back( sirius::drive::Action::remove( fsChildPath.string() ) );
@@ -287,8 +300,9 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
     //
     for( const auto& [name,fsChild] : fsFolder.childs() )
     {
+        const auto nameUTF8 = stdStringToQStringUtf8(name);
         // check that file/folder is absent in local drive copy
-        if ( auto localIt = localChilds.find(name); localIt == localChilds.end() )
+        if ( auto localIt = localChilds.find(nameUTF8); localIt == localChilds.end() )
         {
             if ( isFolder(fsChild) )
             {
@@ -297,7 +311,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 qDebug() << LOG_SOURCE << "! fsChildPath: " << fsChildPath.string().c_str() << " ?: " << getFolder(fsChild).name().c_str();
 
                 // remov folder content (from drive)
-                LocalDriveItem removedFolder{ true,name,0,{},{},{},ldi_removed};
+                LocalDriveItem removedFolder{ true,nameUTF8,0,{},{},{},ldi_removed};
                 removeFolderWithChilds( getFolder(fsChild), removedFolder, fsChildPath );
 
                 // save removed folder into 'removedItems'
@@ -314,7 +328,7 @@ bool Diff::calcDiff( LocalDriveItem&                localFolder,
                 qDebug() << LOG_SOURCE << "! remove fsChildPath: " << fsChildPath.string().c_str();
 
                 // save removed file into 'removedItems'
-                removedItems.emplace_back(LocalDriveItem{ false,name,getFile(fsChild).size(),{},{},{},ldi_removed} );
+                removedItems.emplace_back(LocalDriveItem{ false,nameUTF8,getFile(fsChild).size(),{},{},{},ldi_removed} );
 
                 // remove remote file
                 m_diffActionList.push_back( sirius::drive::Action::remove( fsChildPath.string() ) );
@@ -344,16 +358,17 @@ void Diff::removeFolderWithChilds( const sirius::drive::Folder& remoteFolder, Lo
 {
     for( const auto& [name,child]: remoteFolder.childs() )
     {
+        const auto nameUTF8 = stdStringToQStringUtf8(name);
         if ( isFolder(child) )
         {
-            LocalDriveItem folder{ true,name,{},0,{},{},ldi_removed};
+            LocalDriveItem folder{ true, nameUTF8,{},0,{},{},ldi_removed};
             removeFolderWithChilds( getFolder(child), folder, path / name);
 
-            localFolder.m_childs[name] = std::move(folder);
+            localFolder.m_childs[nameUTF8] = std::move(folder);
         }
         else
         {
-            localFolder.m_childs[name] = LocalDriveItem{false,name,getFile(child).size(),{},{},{},ldi_removed};
+            localFolder.m_childs[nameUTF8] = LocalDriveItem{false,nameUTF8,getFile(child).size(),{},{},{},ldi_removed};
         }
     }
 }
@@ -364,15 +379,16 @@ void Diff::addFolderWithChilds( LocalDriveItem& localFolder,
 {
     for( auto& [name,item]: localFolder.m_childs )
     {
+        const auto nameUTF8 = qStringToStdStringUTF8(name);
         if ( item.m_isFolder )
         {
-            addFolderWithChilds( item, localFolderPath / name, path / name );
+            addFolderWithChilds( item, localFolderPath / nameUTF8, path / nameUTF8 );
         }
         else
         {
             if ( item.m_size > 0 )
             {
-                m_diffActionList.push_back( sirius::drive::Action::upload((localFolderPath / name).string(), (path / name).string()) );
+                m_diffActionList.push_back( sirius::drive::Action::upload((localFolderPath / nameUTF8).string(), (path / nameUTF8).string()) );
                 item.m_ldiStatus = ldi_added;
             }
         }

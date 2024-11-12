@@ -13,6 +13,8 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/portable_binary.hpp>
 
+#include "Utils.h"
+
 struct ObsProfileData
 {
     QString m_recordingPath;
@@ -109,24 +111,23 @@ struct StreamInfo
     int m_streamingStatus = ss_undefined;
 
     uint8_t                 m_version = 1;
-    std::string             m_driveKey;
-    std::string             m_title;
-    std::string             m_annotation;
+    QString                 m_driveKey;
+    QString                 m_title;
+    QString                 m_annotation;
     uint64_t                m_secsSinceEpoch = 0;   // start time
-    std::string             m_uniqueFolderName;
-    std::string             m_channelKey;
+    QString                 m_uniqueFolderName;
+    QString                 m_channelKey;
     
     uint64_t                m_totalStreamSizeBytes = 0;
     uint64_t                m_totalStreamStreamDurationSeconds = 0;
 
     StreamInfo() : m_streamingStatus(ss_undefined) {}
-    StreamInfo( const std::string&  driveKey,
-                const std::string&  title,
-                const std::string&  annotation,
-                uint64_t            secsSinceEpoch,
-                const std::string&  streamFolder )
-        :
-        m_driveKey(driveKey)
+    StreamInfo( const QString&  driveKey,
+                const QString&  title,
+                const QString&  annotation,
+                uint64_t        secsSinceEpoch,
+                const QString&  streamFolder )
+        :m_driveKey(driveKey)
         ,m_title(title)
         ,m_annotation(annotation)
         ,m_secsSinceEpoch(secsSinceEpoch)
@@ -142,14 +143,13 @@ struct StreamInfo
             m_title,
             m_annotation,
             m_secsSinceEpoch,
-            m_uniqueFolderName
-           );
+            m_uniqueFolderName );
         ar( m_totalStreamSizeBytes );
         ar( m_totalStreamStreamDurationSeconds );
     }
 
-    std::string getLink() const;
+    QString getLink() const;
 
-    void parseLink( const std::string& );
+    void parseLink( const QString& );
 };
 

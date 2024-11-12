@@ -65,7 +65,7 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
             {
                 case 0:
                 {
-                    return QString::fromStdString( mp_model->easyDownloads()[index.row()].m_itemName );
+                    return mp_model->easyDownloads()[index.row()].m_itemName;
                 }
                 case 1:
                 {
@@ -76,10 +76,10 @@ QVariant EasyDownloadTableModel::data(const QModelIndex &index, int role) const
                     }
                     else if ( row.m_progress == 1000 || row.m_isCompleted )
                     {
-                        std::string sizeInMb = dataSizeToString(row.m_calcTotalSize);
-                        return QString::fromStdString( sizeInMb );
+                        return dataSizeToString(row.m_calcTotalSize);
                     }
-                    std::string sizeInMb = dataSizeToString(row.m_calcTotalSize);
+
+                    std::string sizeInMb = dataSizeToString(row.m_calcTotalSize).toStdString();
                     return QString::fromStdString( sizeInMb.substr(0, sizeInMb.find('.') + 3)  + " Mb (" +std::to_string( row.m_progress/10) + "%)" );
                 }
             }
