@@ -23,11 +23,11 @@ StorageEngine::StorageEngine(Model* model, QObject *parent)
 
 sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionList &actions,
                                                   const sirius::Key &driveId,
-                                                  const std::string &sandboxFolder,
+                                                  const QString &sandboxFolder,
                                                   uint64_t &modifySize,
-                                                  const std::vector<std::string>& replicators)
+                                                  const std::vector<QString>& replicators)
 {
-    auto driveKey = rawHashToHex(driveId.array()).toStdString();
+    auto driveKey = rawHashToHex(driveId.array());
     qDebug() << "StorageEngine::addActions. Drive key: " << driveKey << " Path to sandbox: " << sandboxFolder;
     if (replicators.empty()) {
         qWarning () << "StorageEngine::addActions. Replicators list is empty! Drive key: " << driveKey;
@@ -50,9 +50,9 @@ sirius::drive::InfoHash StorageEngine::addActions(const sirius::drive::ActionLis
 
     std::error_code ec;
     m_lastModifySize = 0;
-    auto hash = m_session->addActionListToSession(actions, driveId, drive->getReplicators(), sandboxFolder, modifySize, {}, ec);
+    auto hash = m_session->addActionListToSession(actions, driveId, drive->getReplicators(), qStringToStdStringUTF8(sandboxFolder), modifySize, {}, ec);
     if (ec) {
-        qCritical () << "StorageEngine::addActionListToSession. Error: " << ec.message() << " code: " << ec.value();
+        qCritical () << "StorageEngine::addActionListToSession. Error: " << ec.message().c_str() << " code: " << ec.value();
         emit newError(ErrorType::Storage, ec.message().c_str());
     }
     
@@ -78,7 +78,7 @@ void StorageEngine::start()
     auto settings= mp_model->getSettings();
     auto isHostMatched = [this](std::tuple<QString, QString, QString> item)
     {
-        const auto host = QString::fromStdString(mp_model->getBootstrapReplicator());
+        const auto host = mp_model->getBootstrapReplicator();
         const auto ip = host.split(":");
 
         return ip.size() == 2 && std::get<0>(item).toStdString() == ip[0].toStdString();
@@ -94,7 +94,7 @@ void StorageEngine::start()
             bootstraps.emplace_back(boost::asio::ip::make_address(ip.toStdString()), port.toUShort());
         }
     } else {
-        QString bootstrapReplicator = mp_model->getBootstrapReplicator().c_str();
+        QString bootstrapReplicator = mp_model->getBootstrapReplicator();
         if (!isResolvedToIpAddress(bootstrapReplicator)) {
             emit newError(ErrorType::NetworkInit , "Cannot resolve host(3): " + bootstrapReplicator);
             return;
@@ -108,9 +108,9 @@ void StorageEngine::start()
         bootstraps.emplace_back(boost::asio::ip::make_address(ip), port);
     }
 
-    std::string ltAddress = "0.0.0.0:";
+    QString ltAddress = "0.0.0.0:";
 #ifdef __APPLE__
-    QString bootstrapReplicator = mp_model->getBootstrapReplicator().c_str();
+    QString bootstrapReplicator = mp_model->getBootstrapReplicator();
     if (!isResolvedToIpAddress(bootstrapReplicator)) {
         emit newError(ErrorType::NetworkInit , "Cannot resolve host(3): " + bootstrapReplicator);
         return;
@@ -123,7 +123,7 @@ void StorageEngine::start()
         ltAddress = "192.168.20.30:";
     }
 #endif
-    gStorageEngine->init(mp_model->getKeyPair(),ltAddress + mp_model->getUdpPort(), bootstraps,errorsCallback );
+    gStorageEngine->init(mp_model->getKeyPair(), ltAddress + mp_model->getUdpPort(), bootstraps,errorsCallback );
 }
 
 void StorageEngine::restart()
@@ -151,19 +151,19 @@ void StorageEngine::streamStatusHandler( const std:: string&)
 }
 
 void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
-                         const std::string&              address,
+                         QString                         address,
                          const endpoint_list&            bootstraps,
                          std::function<void()>           addressAlreadyInUseHandler )
 {
-    qDebug() <<"StorageEngine::init createClientSession: address: " << address.c_str();
+    qDebug() <<"StorageEngine::init createClientSession: address: " << address;
 
-    std::string endpoints;
+    QString endpoints;
     std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
     for (const auto& endpoint : bootstraps) {
         bootstrapReplicators.push_back({ endpoint, {} });
-        endpoints.append(endpoint.address().to_string());
+        endpoints.append(endpoint.address().to_string().c_str());
         endpoints.append(":");
-        endpoints.append(QString::number(endpoint.port()).toStdString());
+        endpoints.append(QString::number(endpoint.port()));
         endpoints.append(" ");
     }
 
@@ -178,10 +178,10 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
 #else
     m_session = sirius::drive::createViewerSession(  keyPair,
 #endif
-                                                     address,
+                                                     address.toStdString(),
                                                      [addressAlreadyInUseHandler]( const lt::alert* alert )
                                                      {
-                                                         qDebug() << LOG_SOURCE << "createClientSession: socketError?" << alert->message();
+                                                         qDebug() << LOG_SOURCE << "createClientSession: socketError?" << alert->message().c_str();
 
                                                          addressAlreadyInUseHandler();
                                                      },
@@ -197,9 +197,9 @@ void StorageEngine::init(const sirius::crypto::KeyPair&  keyPair,
     connect(mp_model, &Model::addTorrentFileToStorageSession, this, &StorageEngine::addTorrentFileToSession, Qt::QueuedConnection);
 }
 
-void StorageEngine::downloadFsTree( const std::string&                      driveId,
-                                    const std::string&                      dnChannelId,
-                                    const std::array<uint8_t,32>&           fsTreeHash )
+void StorageEngine::downloadFsTree( const QString&                      driveId,
+                                    const QString&                      dnChannelId,
+                                    const std::array<uint8_t,32>&       fsTreeHash )
 {
     qDebug() << "StorageEngine::downloadFsTree. DownloadFsTree(): driveHash: " << driveId;
 
@@ -235,7 +235,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
     }
 
     std::array<uint8_t,32> channelId{ 0 };
-    sirius::utils::ParseHexStringIntoContainer( dnChannelId.c_str(), 64, channelId );
+    sirius::utils::ParseHexStringIntoContainer( dnChannelId.toStdString().c_str(), 64, channelId );
 
     m_session->addDownloadChannel( channelId );
 
@@ -250,7 +250,7 @@ void StorageEngine::downloadFsTree( const std::string&                      driv
                                                             size_t /*downloaded*/,
                                                             size_t /*fileSize*/,
                                                             const std::string& /*errorText*/) {
-        qDebug() <<"StorageEngine::downloadFsTree. fstree received: " << fsTreeSaveFolder.string();
+        qDebug() <<"StorageEngine::downloadFsTree. fstree received: " << fsTreeSaveFolder.string().c_str();
         sirius::drive::FsTree fsTree;
         try
         {
@@ -284,7 +284,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
     m_session->addDownloadChannel( channelId );
 
     sirius::drive::ReplicatorList replicators;
-    auto channel = mp_model->findChannel(rawHashToHex(channelId).toStdString());
+    auto channel = mp_model->findChannel(rawHashToHex(channelId));
     if (!channel) {
         qWarning () << "StorageEngine::downloadFile. Download channel not found! Channel key: " << rawHashToHex(channelId);
     } else {
@@ -302,7 +302,7 @@ sirius::drive::lt_handle StorageEngine::downloadFile( const std::array<uint8_t,3
 
     if ( outputFolder.empty() )
     {
-        outputFolder = mp_model->getDownloadFolder();
+        outputFolder = qStringToStdStringUTF8(mp_model->getDownloadFolder());
     }
         
     auto handle = m_session->download( sirius::drive::DownloadContext(
@@ -348,8 +348,8 @@ void StorageEngine::torrentDeletedHandler( const sirius::drive::InfoHash& infoHa
 {
 }
 
-void StorageEngine::addTorrentFileToSession(const std::string &torrentFilename,
-                                            const std::string &folderWhereFileIsLocated,
+void StorageEngine::addTorrentFileToSession(const QString &torrentFilename,
+                                            const QString &folderWhereFileIsLocated,
                                             const std::array<uint8_t, 32>& driveKey,
                                             const std::array<uint8_t, 32> &modifyTx)
 {
@@ -361,13 +361,15 @@ void StorageEngine::addTorrentFileToSession(const std::string &torrentFilename,
 #ifdef WA_APP
 //TODO_WA
 #else
-    auto drive = mp_model->findDrive(rawHashToHex(driveKey).toStdString());
+    auto drive = mp_model->findDrive(rawHashToHex(driveKey));
     if (!drive) {
         qWarning () << "StorageEngine::addTorrentFileToSession. Drive not found!";
         return;
     }
 
-    m_session->addTorrentFileToSession(torrentFilename, folderWhereFileIsLocated, driveKey, modifyTx, drive->getReplicators());
+    m_session->addTorrentFileToSession(qStringToStdStringUTF8(torrentFilename),
+                                       qStringToStdStringUTF8(folderWhereFileIsLocated),
+                                       driveKey, modifyTx, drive->getReplicators());
 #endif
 }
 
@@ -398,7 +400,7 @@ std::optional<boost::asio::ip::udp::endpoint> StorageEngine::getEndpoint( const 
 }
 
 void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
-                                    const std::string&      streamFolderName,
+                                    const QString&          streamFolderName,
                                     const sirius::Key&      driveKey,
                                     const fs::path&         m3u8Playlist,
                                     const fs::path&         driveLocalFolder,
@@ -409,11 +411,11 @@ void StorageEngine::startStreaming( const sirius::Hash256&  streamId,
 #ifdef WA_APP
 //TODO_WA
 #else
-    m_session->initStream( streamId, streamFolderName, driveKey, m3u8Playlist, driveLocalFolder, torrentLocalFolder, streamingStatusHandler, endPointList );
+    m_session->initStream( streamId, qStringToStdStringUTF8(streamFolderName), driveKey, m3u8Playlist, driveLocalFolder, torrentLocalFolder, streamingStatusHandler, endPointList );
 #endif
 }
 
-void StorageEngine::finishStreaming( const std::string& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall )
+void StorageEngine::finishStreaming( const QString& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall )
 {
 #ifdef WA_APP
 //TODO_WA
@@ -431,7 +433,7 @@ void StorageEngine::finishStreaming( const std::string& driveKey, std::function<
         {
             m_session->addReplicatorList( replicators );
         }
-        auto pathToSandbox = getSettingsFolder().string() + "/" + driveKey + CLIENT_SANDBOX_FOLDER;
+        auto pathToSandbox = getSettingsFolder().string() + "/" + driveKey.toStdString() + CLIENT_SANDBOX_FOLDER;
         m_session->finishStream( backCall, replicators, pathToSandbox, {} );
     }
     else

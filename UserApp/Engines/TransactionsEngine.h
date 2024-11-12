@@ -22,13 +22,13 @@ class TransactionsEngine : public QObject
         ~TransactionsEngine() = default;
 
     public:
-        void addDownloadChannel(const std::string& channelAlias,
+        void addDownloadChannel(const QString& channelAlias,
                                 const std::vector<std::array<uint8_t, 32>>& listOfAllowedPublicKeys,
                                 const std::array<uint8_t, 32>& drivePubKey,
                                 const uint64_t& prepaidSize,
                                 const uint64_t& feedbacksNumber,
                                 const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                                const std::function<void(std::string hash)>& callback,
+                                const std::function<void(QString hash)>& callback,
                                 const std::function<bool(const QString& transactionFee)>& confirmationCallback);
 
         void closeDownloadChannel(const std::array<uint8_t, 32>& channelId, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
@@ -36,7 +36,7 @@ class TransactionsEngine : public QObject
         void storagePayment(const std::array<uint8_t, 32> &driveId, const uint64_t& amount, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
         void addDrive(const uint64_t& driveSize, ushort replicatorsCount,
                       const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                      const std::function<void(std::string hash)>& callback,
+                      const std::function<void(QString hash)>& callback,
                       const std::function<bool(const QString& transactionFee)>& confirmationCallback);
         void closeDrive(const std::array<uint8_t, 32>& rawDrivePubKey, const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
                         const std::function<bool(const QString& transactionFee)>& callback);
@@ -47,7 +47,7 @@ class TransactionsEngine : public QObject
         void applyDataModification(const std::array<uint8_t, 32>& driveId,
                                    const sirius::drive::ActionList& actions,
                                    const std::vector<xpx_chain_sdk::Address>& addresses,
-                                   const std::vector<std::string>& replicators,
+                                   const std::vector<QString>& replicators,
                                    const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
                                    const std::function<bool(const QString& transactionFee)>& callback);
 
@@ -67,11 +67,11 @@ class TransactionsEngine : public QObject
                             const std::optional<xpx_chain_sdk::NetworkDuration>& deadline );
 
         void streamStart(const std::array<uint8_t, 32>& rawDrivePubKey,
-                                const std::string& folderName,
+                                const QString& folderName,
                                 uint64_t expectedUploadSizeMegabytes,
                                 uint64_t feedbackFeeAmount,
                                 const std::optional<xpx_chain_sdk::NetworkDuration>& deadline,
-                                const std::function<void(std::string hash)>& callback);
+                                const std::function<void(QString hash)>& callback);
 
         void streamFinish(const std::array<uint8_t, 32>& rawDrivePubKey,
                           const std::array<uint8_t, 32>& streamId,
@@ -86,7 +86,7 @@ class TransactionsEngine : public QObject
                            const std::optional<xpx_chain_sdk::NetworkDuration>& deadline);
 
     signals:
-        void createDownloadChannelConfirmed(const std::string& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
+        void createDownloadChannelConfirmed(const QString& channelAlias, const std::array<uint8_t, 32>& channelId, const std::array<uint8_t, 32>& rawDrivePubKey);
         void createDownloadChannelFailed(const QString& channelId, const QString& errorText);
         void closeDownloadChannelConfirmed(const std::array<uint8_t, 32>& channelId);
         void closeDownloadChannelFailed(const std::array<uint8_t, 32>& channelId, const QString& errorText);
@@ -101,12 +101,12 @@ class TransactionsEngine : public QObject
 
         void addActions(const sirius::drive::ActionList& actionList,
                         const sirius::Key& drivePublicKey,
-                        const std::string& sandboxFolder,
-                        const std::vector<std::string>& replicators,
+                        const QString& sandboxFolder,
+                        const std::vector<QString>& replicators,
                         std::function<void(uint64_t totalModifySize, std::array<uint8_t, 32>)> callback);
 
-        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, bool isStream);
-        void dataModificationApprovalFailed(const std::array<uint8_t, 32>& driveId, const std::string& fileStructureCdi, uint8_t errorCode);
+        void dataModificationApprovalConfirmed(const std::array<uint8_t, 32>& driveId, const QString& fileStructureCdi, bool isStream);
+        void dataModificationApprovalFailed(const std::array<uint8_t, 32>& driveId, const QString& fileStructureCdi, uint8_t errorCode);
         void dataModificationConfirmed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId);
         void dataModificationFailed(const std::array<uint8_t, 32>& driveId, const std::array<uint8_t, 32>& modificationId, const QString& errorText);
         void cancelModificationConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
@@ -118,7 +118,7 @@ class TransactionsEngine : public QObject
         void replicatorOnBoardingFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
         void newError(const QString& errorText);
         void removeTorrent(const std::array<uint8_t, 32>& torrentId);
-        void removeFromTorrentMap(const std::string& downloadDataCdi);
+        void removeFromTorrentMap(const QString& downloadDataCdi);
 
         void deployContractInitiated(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
         void deployContractConfirmed(std::array<uint8_t, 32> driveId, std::array<uint8_t, 32> contractId);
@@ -142,8 +142,8 @@ class TransactionsEngine : public QObject
                                     const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionNotification>& notifier,
                                     const xpx_chain_sdk::Notifier<xpx_chain_sdk::TransactionStatusNotification>& statusNotifier);
         void unsubscribeFromReplicators(const std::vector<xpx_chain_sdk::Address>& addresses,
-                                        const std::string& notifierId,
-                                        const std::string& statusNotifierId);
+                                        const QString& notifierId,
+                                        const QString& statusNotifierId);
 
         void sendModification(const std::array<uint8_t, 32>& driveId,
                               const std::array<uint8_t, 32>& infoHash,
@@ -154,27 +154,27 @@ class TransactionsEngine : public QObject
                               const std::function<bool(const QString& transactionFee)>& callback);
 
         void removeConfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
-                                          const std::string& id,
+                                          const QString& id,
                                           std::function<void()> onSuccess = {},
                                           std::function<void(boost::beast::error_code errorCode)> onError = {});
 
         void removeUnconfirmedAddedNotifier(const xpx_chain_sdk::Address& address,
-                                            const std::string &id,
+                                            const QString &id,
                                             std::function<void()> onSuccess = {},
                                             std::function<void(boost::beast::error_code errorCode)> onError = {});
 
         void removeStatusNotifier(const xpx_chain_sdk::Address& address,
-                                  const std::string& id,
+                                  const QString& id,
                                   std::function<void()> onSuccess = {},
                                   std::function<void(boost::beast::error_code errorCode)> onError = {});
 
         void announceTransaction(const std::vector<uint8_t>& data);
 
-        void onError(const std::string& transactionId, boost::beast::error_code errorCode);
+        void onError(const QString& transactionId, boost::beast::error_code errorCode);
 
         QString findFile(const QString& fileName, const QString& directory);
 
-        void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox, const std::string& dataCdi);
+        void removeDriveModifications(const QString& pathToActionList, const QString& pathToSandbox, const QString& dataCdi);
 
         void removeFile(const QString& path);
 
@@ -196,7 +196,7 @@ class TransactionsEngine : public QObject
         };
 
     private:
-        std::string mSandbox;
+        QString mSandbox;
         std::shared_ptr<xpx_chain_sdk::Account> mpChainAccount;
         std::shared_ptr<xpx_chain_sdk::IClient> mpChainClient;
         BlockchainEngine* mpBlockchainEngine;
