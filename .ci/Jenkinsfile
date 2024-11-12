@@ -29,7 +29,7 @@ pipeline {
                         buildImage.inside("-u 0") {
                             sh """
                                 echo 'Configure'
-                                echo "deb http://deb.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list && sudo apt update && sudo apt install gcc-12 g++-12 && sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && sudo update-alternatives --config gcc && sudo update-alternatives --config g++
+                                echo "deb http://deb.debian.org/debian testing main" | tee -a /etc/apt/sources.list && apt-get update && sudo apt-get install -y gcc-12 g++-12 update-alternatives && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && update-alternatives --config gcc && update-alternatives --config g++
                                 export LC_ALL=C.UTF-8
                                 export LANG=C.UTF-8
                                 g++ --version
