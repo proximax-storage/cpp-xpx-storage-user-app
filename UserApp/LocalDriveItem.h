@@ -1,6 +1,7 @@
 #pragma once
 
 #include "drive/FsTree.h"
+#include "Utils.h"
 
 namespace fs = std::filesystem;
 
@@ -12,10 +13,10 @@ enum { ldi_not_changed, ldi_added, ldi_removed, ldi_changed };
 struct LocalDriveItem
 {
     bool                                    m_isFolder;
-    std::string                             m_name;
+    QString                                 m_name;
     uint64_t                                m_size;
     std::array<uint8_t,32>                  m_fileHash;     // file hash
-    std::map<std::string,LocalDriveItem>    m_childs;
+    std::map<QString, LocalDriveItem>       m_childs;
     fs::file_time_type                      m_modifyTime;
 
     int                                     m_ldiStatus = ldi_not_changed;

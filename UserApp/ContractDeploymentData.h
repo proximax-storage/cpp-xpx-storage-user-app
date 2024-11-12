@@ -4,14 +4,14 @@
 #include "ServicePayment.h"
 
 struct ContractDeploymentData {
-    std::string m_assignee;
-    std::string m_file;
-    std::string m_function;
-    std::string m_parameters;
+    QString m_assignee;
+    QString m_file;
+    QString m_function;
+    QString m_parameters;
     int m_executionCallPayment = 0;
     int m_downloadCallPayment = 0;
-    std::string m_automaticExecutionFileName;
-    std::string m_automaticExecutionFunctionName;
+    QString m_automaticExecutionFileName;
+    QString m_automaticExecutionFunctionName;
     int m_automaticExecutionCallPayment = 0;
     int m_automaticDownloadCallPayment = 0;
     int m_automaticExecutionsNumber = 0;
@@ -27,13 +27,13 @@ struct ContractDeploymentData {
         }
 
         QRegularExpression keyTemplate( QRegularExpression::anchoredPattern( QLatin1String( R"([a-zA-Z0-9]{64})" )));
-        if ( !keyTemplate.match( QString::fromStdString( m_assignee )).hasMatch()) {
+        if ( !keyTemplate.match( m_assignee ).hasMatch()) {
             return false;
         }
-        if ( m_file.empty() || m_file.size() > maxRowSize ) {
+        if ( m_file.isEmpty() || m_file.size() > maxRowSize ) {
             return false;
         }
-        if ( m_function.empty() || m_function.size() > maxRowSize ) {
+        if ( m_function.isEmpty() || m_function.size() > maxRowSize ) {
             return false;
         }
         if ( m_parameters.size() > maxRowSize ) {

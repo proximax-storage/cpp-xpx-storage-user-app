@@ -11,9 +11,9 @@ OnChainClient::OnChainClient(StorageEngine* storage, QObject* parent)
     qRegisterMetaType<OnChainClient::ChannelsType>("OnChainClient::ChannelsType");
 }
 
-void OnChainClient::start(const std::string& privateKey,
-                          const std::string& address,
-                          const std::string& port,
+void OnChainClient::start(const QString& privateKey,
+                          const QString& address,
+                          const QString& port,
                           double feeMultiplier) {
     init(address, port, feeMultiplier, privateKey);
 
@@ -128,12 +128,12 @@ BlockchainEngine* OnChainClient::getBlockchainEngine() {
     return mpBlockchainEngine;
 }
 
-void OnChainClient::addDownloadChannel(const std::string& channelAlias,
+void OnChainClient::addDownloadChannel(const QString& channelAlias,
                                        const std::vector<std::array<uint8_t, 32>> &listOfAllowedPublicKeys,
                                        const std::array<uint8_t, 32> &drivePubKey,
                                        const uint64_t &prepaidSize,
                                        const uint64_t &feedbacksNumber,
-                                       const std::function<void(std::string hash)>& callback,
+                                       const std::function<void(QString hash)>& callback,
                                        const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
     auto deadlineCallback = [this, alias = channelAlias, keys = listOfAllowedPublicKeys,
                                                    pKey = drivePubKey, prepaid = prepaidSize,
@@ -154,7 +154,7 @@ void OnChainClient::closeDownloadChannel(const std::array<uint8_t, 32> &channelI
 }
 
 void OnChainClient::addDrive(const uint64_t &driveSize, ushort replicatorsCount,
-                             const std::function<void(std::string hash)>& callback,
+                             const std::function<void(QString hash)>& callback,
                              const std::function<bool(const QString& transactionFee)>& confirmationCallback) {
     auto deadlineCallback = [this, size = driveSize, count = replicatorsCount, cb = callback, confCb = confirmationCallback]
                                                    (std::optional<xpx_chain_sdk::NetworkDuration> deadline)
@@ -224,7 +224,7 @@ void OnChainClient::applyDataModification(const std::array<uint8_t, 32> &driveId
 
         auto deadlineCallback = [this, ccb = cb, driveId, actions, addresses, replicators = drive.data.replicators](std::optional<xpx_chain_sdk::NetworkDuration> deadline)
         {
-            mpTransactionsEngine->applyDataModification(driveId, actions, addresses, replicators, deadline, ccb);
+            mpTransactionsEngine->applyDataModification(driveId, actions, addresses, convertToQStringVector(replicators), deadline, ccb);
         };
 
         mpBlockchainEngine->getTransactionDeadline(deadlineCallback);
@@ -306,7 +306,7 @@ void OnChainClient::calculateUsedSpaceOfReplicator(const QString& publicKey, std
         for (uint64_t i = 0; i < replicator.data.drivesInfo.size(); i++) {
             mpBlockchainEngine->getDriveById(replicator.data.drivesInfo[i].drive, [callback, i](auto drive, auto isSuccess, auto message, auto code ){
                 if (!isSuccess) {
-                    qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator:: drive info. Error: " << message << " Code: " << code;
+                    qWarning() << "OnChainClient::calculateUsedSpaceOfReplicator:: drive info. Error: " << message.c_str() << " Code: " << code.c_str();
                     callback(i, 0);
                     return;
                 }
@@ -334,11 +334,11 @@ void OnChainClient::initConnects() {
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelConfirmed, this, [this](auto alias, auto channelId, auto driveKey) {
-        emit downloadChannelOpenTransactionConfirmed(alias, rawHashToHex(channelId).toStdString(), rawHashToHex(driveKey).toStdString());
+        emit downloadChannelOpenTransactionConfirmed(alias, rawHashToHex(channelId), rawHashToHex(driveKey));
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::createDownloadChannelFailed, this, [this](auto channelId, auto errorText) {
-        emit downloadChannelOpenTransactionFailed(channelId.toStdString(), errorText.toStdString());
+        emit downloadChannelOpenTransactionFailed(channelId, errorText);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::closeDownloadChannelConfirmed, this, [this](auto channelId) {
@@ -383,7 +383,7 @@ void OnChainClient::initConnects() {
 
     connect(mpTransactionsEngine, &TransactionsEngine::addActions, this, [this](auto actionList, auto driveId, auto sandboxFolder, auto replicators, auto callback) {
         uint64_t modificationsSize = 0;
-        auto hash = mpStorageEngine->addActions(actionList, driveId,  sandboxFolder, modificationsSize, replicators);
+        auto hash = mpStorageEngine->addActions(actionList, driveId, sandboxFolder, modificationsSize, replicators);
         callback(modificationsSize, hash.array());
     }, Qt::QueuedConnection);
 
@@ -448,13 +448,13 @@ void OnChainClient::initConnects() {
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalConfirmed, this,
             [this](auto driveId, auto fileStructureCdi, auto isStream) {
                 const QString driveKey = rawHashToHex(driveId);
-                qInfo() << "TransactionsEngine::dataModificationApprovalConfirmed. Drive key: " << driveKey << " fileStructureCdi: " << fileStructureCdi.c_str();
+                qInfo() << "TransactionsEngine::dataModificationApprovalConfirmed. Drive key: " << driveKey << " fileStructureCdi: " << fileStructureCdi;
                 if (!isStream)
                 {
                     emit dataModificationApprovalTransactionConfirmed(driveId, fileStructureCdi);
                 }
 
-                emit downloadFsTreeDirect(driveKey.toStdString(), fileStructureCdi);
+                emit downloadFsTreeDirect(driveKey, fileStructureCdi);
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::dataModificationApprovalFailed, this,  [this](auto driveId, auto fileStructureCdi, auto code) {
@@ -466,7 +466,7 @@ void OnChainClient::initConnects() {
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::removeFromTorrentMap, this, [this](auto downloadDataCdi) {
-            mpStorageEngine->removeTorrentSync(rawHashFromHex(QString::fromStdString(downloadDataCdi)));
+            mpStorageEngine->removeTorrentSync(rawHashFromHex(downloadDataCdi));
     }, Qt::QueuedConnection);
 
     connect(mpTransactionsEngine, &TransactionsEngine::streamStartConfirmed, this, [this](auto streamId) {
@@ -494,24 +494,24 @@ void OnChainClient::initConnects() {
     });
 }
 
-void OnChainClient::initAccount(const std::string &privateKey) {
+void OnChainClient::initAccount(const QString &privateKey) {
     mpChainAccount = std::make_shared<xpx_chain_sdk::Account>([privateKey](
             xpx_chain_sdk::PrivateKeySupplierReason reason,
             xpx_chain_sdk::PrivateKeySupplierParam param)
     {
         xpx_chain_sdk::Key key;
-        ParseHexStringIntoContainer(privateKey.c_str(), privateKey.size(), key);
+        ParseHexStringIntoContainer(privateKey.toStdString().c_str(), privateKey.size(), key);
         return xpx_chain_sdk::PrivateKey(key.data(), key.size());
     }, mpChainClient->getConfig().NetworkId);
 }
 
-void OnChainClient::init(const std::string& address,
-                         const std::string& port,
+void OnChainClient::init(const QString& address,
+                         const QString& port,
                          const double feeMultiplier,
-                         const std::string& privateKey) {
+                         const QString& privateKey) {
     xpx_chain_sdk::Config& config = xpx_chain_sdk::GetConfig();
 
-    QString resolvedHost = QString::fromStdString(address + ":" + port);
+    QString resolvedHost = address + ":" + port;
     if (!isResolvedToIpAddress(resolvedHost)) {
         emit newError(ErrorType::NetworkInit, "Cannot resolve host(1): " + resolvedHost);
         return;
@@ -528,7 +528,7 @@ void OnChainClient::init(const std::string& address,
     }
 
     config.nodeAddress = resolvedHost.toStdString();
-    config.port = port;
+    config.port = port.toStdString();
     config.TransactionFeeMultiplier = feeMultiplier;
 
     mpChainClient = xpx_chain_sdk::getClient(config);
@@ -592,8 +592,8 @@ void OnChainClient::loadSponsoredChannels(const QUuid& id, xpx_chain_sdk::downlo
     emit downloadChannelsPageLoaded(id, ChannelsType::Sponsored, channelsPage);
 }
 
-void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const std::string& privateKey) {
-    qInfo () << "OnChainClient::init. Connected to server: " << config.nodeAddress << ":" << config.port;
+void OnChainClient::onConnected(xpx_chain_sdk::Config& config, const QString& privateKey) {
+    qInfo () << "OnChainClient::init. Connected to server: " << config.nodeAddress.c_str() << ":" << config.port.c_str();
 
     mpBlockchainEngine->init(80); // 1000 milliseconds / 15 request per second
     mpBlockchainEngine->getNetworkInfo([this, &config, privateKey](auto info, auto isSuccess, auto message, auto code) {
@@ -683,10 +683,10 @@ void OnChainClient::runContract(const ContractManualCallData& data ) {
 }
 
 void OnChainClient::streamStart(const std::array<uint8_t, 32> &rawDrivePubKey,
-                                const std::string &folderName,
+                                const QString &folderName,
                                 uint64_t expectedUploadSizeMegabytes,
                                 uint64_t feedbackFeeAmount,
-                                const std::function<void(std::string hash)>& callback) {
+                                const std::function<void(QString hash)>& callback) {
     auto deadlineCallback = [this, rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount, callback](std::optional<xpx_chain_sdk::NetworkDuration> deadline) {
         mpTransactionsEngine->streamStart(rawDrivePubKey, folderName, expectedUploadSizeMegabytes, feedbackFeeAmount, deadline, callback);
     };
