@@ -18,8 +18,11 @@ pipeline {
     
     stages {
         stage('Linux Build') { 
-            when {
-                tag "release-*"   // only run these stage in tag release-*
+            when { 
+                anyOf { 
+                    branch 'master'     // only run these stage in branch 'master'
+                    tag "release-*"     // only run these stage in tag 'release-*'
+                }
             }
             steps {
                 echo 'build inside a docker'                
@@ -75,8 +78,11 @@ pipeline {
         }
 
         stage('Windows build') {
-            when {
-                tag "release-*"   // only run these stage in tag release-*
+            when { 
+                anyOf { 
+                    branch 'master'     // only run these stage in branch 'master'
+                    tag "release-*"     // only run these stage in tag 'release-*'
+                }
             }
             steps {
                 echo 'build inside a docker'                
