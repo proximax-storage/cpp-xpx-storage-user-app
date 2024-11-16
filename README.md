@@ -8,8 +8,9 @@
 * Boost 1.71.0 or higher
 
 
-## Build for MacOS
+## Clone source code
 ```shell
+git config --system core.longpaths true
 git clone https://github.com/proximax-storage/cpp-xpx-storage-user-app.git
 cd cpp-xpx-storage-user-app
 git submodule update --init --recursive
