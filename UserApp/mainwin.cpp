@@ -2782,14 +2782,13 @@ void MainWin::setupDrivesTab()
             QDesktopServices::openUrl( QUrl::fromLocalFile(driveInfo->getLocalFolder()));
 #else
 //            QProcess fileManagerProcess;
-//            fileManagerProcess.startDetached("xdg-open", QStringList() << QString::fromStdString( driveInfo->getLocalFolder() ));
+//            fileManagerProcess.startDetached("xdg-open", QStringList() << driveInfo->getLocalFolder() );
 //            if (!fileManagerProcess.waitForStarted())
 //            {
-//                QMessageBox::critical(nullptr, "Error", "Failed to open folder: " +
-//                                                            QString::fromStdString( driveInfo->getLocalFolder() ));
+//                QMessageBox::critical(nullptr, "Error", "Failed to open folder: " + driveInfo->getLocalFolder());
 //            }
             qDebug() << "TRY OPEN " << driveInfo->getLocalFolder();
-            QDesktopServices::openUrl( QUrl::fromLocalFile( QString::fromStdString( driveInfo->getLocalFolder() )));
+            QDesktopServices::openUrl( QUrl::fromLocalFile( driveInfo->getLocalFolder() ));
 #endif
         }
     });

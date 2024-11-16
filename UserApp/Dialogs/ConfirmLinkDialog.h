@@ -27,12 +27,13 @@ private:
 
 private:
     void setLayout();
-    static bool isValidFolderName(const QString& filename);
-    static bool contains_invalid_chars(const QString& filename, const QString& invalid_chars);
+    bool isValidFolderName(const std::string& filename);
+    static bool contains_invalid_chars(const std::string& filename, const std::string& invalid_chars);
 
 public:
-    explicit ConfirmLinkDialog(QWidget *parent = nullptr, DataInfo dataInfo = {});
-    ~ConfirmLinkDialog() override;
+    explicit ConfirmLinkDialog( QWidget *parent   = nullptr
+            , DataInfo dataInfo = {});
+    ~ConfirmLinkDialog();
 
     void accept() override;
     void reject() override;
