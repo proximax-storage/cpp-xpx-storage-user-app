@@ -125,7 +125,7 @@ void MainWin::init()
             fs::create_directories( getFsTreesFolder() );
         } catch( const std::runtime_error& err ) {
             QMessageBox msgBox(this);
-            msgBox.setText( QString::fromStdString( "Cannot create directory to store fsTree!") );
+            msgBox.setText( "Cannot create directory to store fsTree!" );
             msgBox.setInformativeText( QString::fromStdString( "Error: " ) + err.what() );
             msgBox.setStandardButtons( QMessageBox::Ok );
             msgBox.exec();

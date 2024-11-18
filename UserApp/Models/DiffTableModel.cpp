@@ -121,7 +121,7 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                         case sirius::drive::action_list_id::remove:
                             return QString::fromStdString( action.m_param1 );
                         default:
-                            return QString::fromStdString( "???" );
+                            return "???";
                     }
                 }
                 case 1:
@@ -129,11 +129,11 @@ QVariant DiffTableModel::data(const QModelIndex &index, int role) const
                     switch( action.m_actionId )
                     {
                         case sirius::drive::action_list_id::upload:
-                            return QString::fromStdString( "add" );
+                            return "add";
                         case sirius::drive::action_list_id::remove:
-                            return QString::fromStdString( "del" );
+                            return "del";
                         default:
-                            return QString::fromStdString( "???" );
+                            return "???";
                     }
                 }
             }

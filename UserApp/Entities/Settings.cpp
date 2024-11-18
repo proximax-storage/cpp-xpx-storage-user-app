@@ -120,7 +120,7 @@ bool Settings::load( const QString& pwd )
             if ( gSettingsVersion < MIN_SETTINGS_VERSION || gSettingsVersion > CURRENT_SETTINGS_VERSION )
             {
                 QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "Your config data has old version" ) );
+                msgBox.setText( "Your config data has old version" );
                 msgBox.setInformativeText( "It will be lost" );
                 msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
                 int reply = msgBox.exec();
@@ -167,7 +167,7 @@ bool Settings::load( const QString& pwd )
             std::cerr << "Your config data is corrupted" << std::endl;
             std::cerr << m_configPath << std::endl;
             QMessageBox msgBox;
-            msgBox.setText( QString::fromStdString( "Your config data is corrupted" ) );
+            msgBox.setText( "Your config data is corrupted" );
             msgBox.setInformativeText( QString::fromStdString( m_configPath.string() ) );
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.exec();
@@ -193,7 +193,7 @@ bool Settings::load( const QString& pwd )
     catch( std::runtime_error& err )
     {
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "Cannot load config data" ) );
+        msgBox.setText( "Cannot load config data" );
         msgBox.setInformativeText( QString::fromStdString( err.what() ) );
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.exec();

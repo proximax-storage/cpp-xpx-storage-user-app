@@ -273,7 +273,7 @@ void MainWin::initStreaming()
             if ( m_model->getStreams().size() == 0 )
             {
                 QMessageBox msgBox;
-                msgBox.setText( QString::fromStdString( "Add stream announcement" ) );
+                msgBox.setText( "Add stream announcement" );
                 msgBox.setInformativeText( "Press button '+'" );
                 msgBox.setStandardButtons(QMessageBox::Ok);
                 msgBox.exec();
@@ -623,7 +623,7 @@ void MainWin::startViewingStream()
         // create channel
         //
         QMessageBox msgBox;
-        msgBox.setText( QString::fromStdString( "No channel for selected stream" ) );
+        msgBox.setText( "No channel for selected stream" );
         msgBox.setInformativeText( "Do You want to create channel?" );
         msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
         int reply = msgBox.exec();

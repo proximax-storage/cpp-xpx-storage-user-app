@@ -172,7 +172,7 @@ void AddStreamAnnouncementDialog::accept()
     if ( drive->getState() != no_modifications )
     {
         QMessageBox msgBox;
-        const QString message = QString::fromStdString("Last drive operation is not completed.");
+        const QString message = "Last drive operation is not completed.";
         msgBox.setText(message);
         msgBox.setStandardButtons( QMessageBox::Close );
         msgBox.exec();
