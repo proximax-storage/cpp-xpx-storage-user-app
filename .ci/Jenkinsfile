@@ -31,7 +31,7 @@ pipeline {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         buildImage.inside("-u 0") {
                             sh """
-                                apt-get install -y wget g++-10 libc++-dev libc++abi-dev
+                                apt-get install -y wget g++-10 libc++-dev libc++abi-dev apt-utils lsb-release software-properties-common gnupg gpg
                                 wget https://apt.llvm.org/llvm.sh
                                 chmod u+x llvm.sh
                                 ./llvm.sh 18
