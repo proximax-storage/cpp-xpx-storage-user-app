@@ -31,17 +31,17 @@ pipeline {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         buildImage.inside("-u 0") {
                             sh """
-                                echo 'Configure'
-                                echo "deb http://deb.debian.org/debian testing main" | tee -a /etc/apt/sources.list && apt-get update && apt-get install -y gcc-12 g++-12 dpkg && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && update-alternatives --config gcc && update-alternatives --config g++
-                                export LC_ALL=C.UTF-8
-                                export LANG=C.UTF-8
-                                g++ --version
+                                apt-get install -y wget g++-10 libc++-dev libc++abi-dev
+                                wget https://apt.llvm.org/llvm.sh
+                                chmod u+x llvm.sh
+                                ./llvm.sh 18
+
                                 echo 'Building'
                                 rm -rf _build 
                                 mkdir _build 
                                 cd _build
                                 export BUILD_DIR=\$PWD
-                                cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+                                cmake -G Ninja -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
