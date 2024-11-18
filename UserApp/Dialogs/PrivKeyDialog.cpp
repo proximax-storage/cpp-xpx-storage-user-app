@@ -147,7 +147,7 @@ void PrivKeyDialog::onGenerateKeysBtn()
         return std::uniform_int_distribution<std::uint32_t>(0,0xff) ( rng );
     });
 
-    ui->m_pkField->setText( QString::fromStdString( sirius::drive::toString( buffer ) ));
+    ui->m_pkField->setText( QString::fromStdString( sirius::drive::toString( buffer ) ).toUpper() );
 }
 
 void PrivKeyDialog::onLoadFromFileBtn()
