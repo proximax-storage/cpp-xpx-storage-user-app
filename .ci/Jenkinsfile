@@ -24,22 +24,22 @@ pipeline {
                     tag "release-*"     // only run these stage in tag 'release-*'
                 }
             }
-//             steps {
-//                 echo 'build inside a docker'
-//                 script {
-//                     def buildImage = docker.image("${BUILD_IMAGE_LINUX}")
-//                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-//                         buildImage.inside("-u 0") {
-//                             sh """
-//                                 echo 'Building'
-//                                 rm -rf _build
-//                                 mkdir _build
-//                                 cd _build
-//                                 export BUILD_DIR=\$PWD
-//                                 cmake -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
-//                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
-//                                 cd ..
-//
+            steps {
+                echo 'build inside a docker'
+                script {
+                    def buildImage = docker.image("${BUILD_IMAGE_LINUX}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        buildImage.inside("-u 0") {
+                            sh """
+                                echo 'Building'
+                                rm -rf _build
+                                mkdir _build
+                                cd _build
+                                export BUILD_DIR=\$PWD
+                                cmake -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
+                                cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
+                                cd ..
+
 //                                 export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
 //                                 cp tool.desktop \$BUILD_DIR/UserApp/
 //                                 /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
@@ -65,11 +65,11 @@ pipeline {
 //                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
 //
 //                                 tar -Jcvf linux-storage-tool.tar.xz \$DESTDIR
-//                             """
-//                         }
-//                     }
-//                 }
-//             }
+                            """
+                        }
+                    }
+                }
+            }
         }
 
         stage('Windows build') {
