@@ -16,7 +16,7 @@ void Diff::calcLocalDriveInfoR( LocalDriveItem& parent, fs::path path, bool calc
 
     for( const auto& entry : std::filesystem::directory_iterator(path.make_preferred()) )
     {
-        const auto entryNameQStringUFT8 = stdStringToQStringUtf8(entry.path().filename().make_preferred());
+        const auto entryNameQStringUFT8 = stdStringToQStringUtf8(entry.path().filename().make_preferred().string());
         const auto entryNameStdStringUFT8 = qStringToStdStringUTF8(entryNameQStringUFT8);
         if ( entry.is_directory() )
         {

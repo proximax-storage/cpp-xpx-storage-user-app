@@ -386,7 +386,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             Drive newDrive;
             newDrive.setKey(remoteDrive.data.multisig.c_str());
             newDrive.setName(remoteDrive.data.multisig.c_str());
-            newDrive.setLocalFolder(QString::fromUtf8(homeFolder().c_str()) + "/" + newDrive.getKey());
+            newDrive.setLocalFolder(stdStringToQStringUtf8(homeFolder().string()) + "/" + newDrive.getKey());
             newDrive.setSize(remoteDrive.data.size);
             newDrive.setReplicatorsCount(remoteDrive.data.replicatorCount);
             addDrive(newDrive);
@@ -428,7 +428,7 @@ void Model::onDrivesLoaded( const std::vector<xpx_chain_sdk::drives_page::Drives
             currentDrive.setModificationHash(Model::hexStringToHash( lastModificationId.c_str() ));
 
             // TODO: Approach needs to be improved
-            const QString pathToDriveData = stdStringToQStringUtf8(getSettingsFolder()) + "/" + currentDrive.getKey().toUpper() + CLIENT_SANDBOX_FOLDER;
+            const QString pathToDriveData = stdStringToQStringUtf8(getSettingsFolder().string()) + "/" + currentDrive.getKey().toUpper() + CLIENT_SANDBOX_FOLDER;
             bool isDirExists = QDir(QDir::toNativeSeparators(pathToDriveData)).exists();
             if (isDirExists) {
                 std::map<QString, QFileInfo> filesData;

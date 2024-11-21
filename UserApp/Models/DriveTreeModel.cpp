@@ -6,7 +6,7 @@
 
 void scanFolderR( DriveTreeItem* parent, const fs::path& path )
 {
-    const auto pathUTF8 = stdStringToQStringUtf8(path);
+    const auto pathUTF8 = stdStringToQStringUtf8(path.string());
     if ( !isFolderExists(pathUTF8) )
     {
         return;

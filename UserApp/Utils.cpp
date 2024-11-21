@@ -354,7 +354,7 @@ std::string qStringToStdStringUTF8(const QString& data) {
 }
 
 QString stdStringToQStringUtf8(const std::string& data) {
-    QString result = QString::fromUtf8(data.c_str());
+    QString result = QString::fromUtf8(data.c_str(), static_cast<long long>(data.size()));
     return result;
 }
 
@@ -362,7 +362,7 @@ std::vector<QString> convertToQStringVector(const std::vector<std::string>& stdS
     std::vector<QString> qStrings;
     qStrings.reserve(stdStrings.size());
     for (const auto& str : stdStrings) {
-        qStrings.emplace_back(QString::fromUtf8(str));
+        qStrings.emplace_back(stdStringToQStringUtf8(str));
     }
 
     return qStrings;

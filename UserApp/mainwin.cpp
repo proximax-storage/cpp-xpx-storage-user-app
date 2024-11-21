@@ -4003,7 +4003,7 @@ void MainWin::continueEasyDownload( uint64_t downloadId, const QString& channelK
             if ( downloadIt->m_isFolder )
             {
                 const auto savePathUTF8 = fs::path(qStringToStdStringUTF8(downloadIt->m_itemName)) / fs::path(qStringToStdStringUTF8(childIt->m_path)).make_preferred().string();
-                downloadInfo.setSaveFolder(stdStringToQStringUtf8(savePathUTF8));
+                downloadInfo.setSaveFolder(stdStringToQStringUtf8(savePathUTF8.string()));
                 downloadInfo.setFileName( childIt->m_fileName );
             }
             else
