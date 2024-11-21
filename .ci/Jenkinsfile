@@ -24,52 +24,52 @@ pipeline {
                     tag "release-*"     // only run these stage in tag 'release-*'
                 }
             }
-            steps {
-                echo 'build inside a docker'                
-                script {
-                    def buildImage = docker.image("${BUILD_IMAGE_LINUX}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside("-u 0") {
-                            sh """
-                                echo 'Building'
-                                rm -rf _build 
-                                mkdir _build 
-                                cd _build
-                                export BUILD_DIR=\$PWD
-                                cmake -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
-                                cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
-                                cd ..
-
-                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
-                                cp tool.desktop \$BUILD_DIR/UserApp/
-                                /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
-                                                                                                        
-                                rm -rf linux-storage-tool
-                                mkdir linux-storage-tool
-                                export DESTDIR=linux-storage-tool
-                                
-                                cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
-                                cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
-                                cp -r \$BUILD_DIR/lib \$DESTDIR
-                                cp -r \$BUILD_DIR/plugins \$DESTDIR
-                                cp -a \$BUILD_DIR/bin/boost/. \$DESTDIR/lib/
-                                cp -r \$BUILD_DIR/bin/. \$DESTDIR/lib/
-                                cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
-                                rm -r \$DESTDIR/lib/boost
-                                rm -r \$DESTDIR/lib/CMakeFiles
-                                cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.71.0 \$DESTDIR/lib/
-
-                                chmod a+x \$DESTDIR/StorageClientApp
-                                patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
-                                
-                                tar -Jcvf linux-storage-tool.tar.xz \$DESTDIR
-                            """
-                        }
-                    }
-                }                        
-            }
+//             steps {
+//                 echo 'build inside a docker'
+//                 script {
+//                     def buildImage = docker.image("${BUILD_IMAGE_LINUX}")
+//                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+//                         buildImage.inside("-u 0") {
+//                             sh """
+//                                 echo 'Building'
+//                                 rm -rf _build
+//                                 mkdir _build
+//                                 cd _build
+//                                 export BUILD_DIR=\$PWD
+//                                 cmake -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
+//                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
+//                                 cd ..
+//
+//                                 export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+//                                 cp tool.desktop \$BUILD_DIR/UserApp/
+//                                 /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
+//
+//                                 rm -rf linux-storage-tool
+//                                 mkdir linux-storage-tool
+//                                 export DESTDIR=linux-storage-tool
+//
+//                                 cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
+//                                 cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
+//                                 cp -r \$BUILD_DIR/lib \$DESTDIR
+//                                 cp -r \$BUILD_DIR/plugins \$DESTDIR
+//                                 cp -a \$BUILD_DIR/bin/boost/. \$DESTDIR/lib/
+//                                 cp -r \$BUILD_DIR/bin/. \$DESTDIR/lib/
+//                                 cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
+//                                 rm -r \$DESTDIR/lib/boost
+//                                 rm -r \$DESTDIR/lib/CMakeFiles
+//                                 cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
+//                                 cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
+//                                 cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.71.0 \$DESTDIR/lib/
+//
+//                                 chmod a+x \$DESTDIR/StorageClientApp
+//                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
+//
+//                                 tar -Jcvf linux-storage-tool.tar.xz \$DESTDIR
+//                             """
+//                         }
+//                     }
+//                 }
+//             }
         }
 
         stage('Windows build') {
