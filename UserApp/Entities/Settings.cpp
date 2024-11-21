@@ -177,13 +177,15 @@ bool Settings::load( const QString& pwd )
         qDebug() << "/*****************************************************************************************/.";
         qDebug() << "Settings::load. New session has been started.";
 
-#ifndef NDEBUG // Hide private key in release mode
+
         for( auto& account: m_accounts )
         {
             account.initAccount( account.m_accountName, account.m_privateKeyStr );
+
+#ifndef NDEBUG // Hide private key in release mode
             qDebug() << "Settings::load. Account keys(private/public):" << account.m_privateKeyStr << " / " << account.m_publicKeyStr;
-        }
 #endif
+        }
 
         if (!m_accounts.empty()) {
             qDebug() << "Settings::load. Current account public key: " << accountConfig().m_publicKeyStr;

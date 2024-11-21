@@ -123,7 +123,7 @@ void StorageEngine::start()
         ltAddress = "192.168.20.30:";
     }
 #endif
-    gStorageEngine->init(mp_model->getKeyPair(), ltAddress + mp_model->getUdpPort(), bootstraps,errorsCallback );
+    gStorageEngine->init(mp_model->getKeyPair(), ltAddress + mp_model->getUdpPort(), bootstraps, errorsCallback );
 }
 
 void StorageEngine::restart()
