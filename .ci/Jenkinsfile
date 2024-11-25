@@ -59,7 +59,7 @@ pipeline {
                                 rm -r \$DESTDIR/lib/CMakeFiles
                                 cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.71.0 \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/*boost*.so \$DESTDIR/lib/
 
                                 chmod a+x \$DESTDIR/StorageClientApp
                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
