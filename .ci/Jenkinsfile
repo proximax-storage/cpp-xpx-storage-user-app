@@ -57,9 +57,10 @@ pipeline {
                                 cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
                                 rm -r \$DESTDIR/lib/boost
                                 rm -r \$DESTDIR/lib/CMakeFiles
-                                cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libcrypto.so.* \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libssl.so.* \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/*boost*.so \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/*boost*.so.* \$DESTDIR/lib/
 
                                 chmod a+x \$DESTDIR/StorageClientApp
                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
