@@ -32,11 +32,25 @@ void Worker::process(const QUuid& id, const std::function<QVariant()>& request) 
 void Worker::handler() {
     if (mRequests.empty()) {
         mpTimer->stop();
-    } else {
-        const auto frontRequest = mRequests.front();
-        emit done(frontRequest.first, frontRequest.second());
-        mRequests.pop();
+        return;
     }
+
+    const auto frontRequest = mRequests.front();
+    if (frontRequest.first.isNull() || !frontRequest.second) {
+        qWarning() << "Worker::handler: Invalid request handler. Skipping.";
+        mRequests.pop();
+        return;
+    }
+
+    try {
+        emit done(frontRequest.first, frontRequest.second());
+    } catch (const std::exception& e) {
+        qWarning() << "Worker::handler: Exception caught during signal emit: " << e.what();
+    } catch (...) {
+        qWarning() << "Worker::handler: Unknown exception caught during signal emit.";
+    }
+
+    mRequests.pop();
 }
 
 Worker::~Worker()
