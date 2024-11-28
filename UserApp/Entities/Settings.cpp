@@ -651,7 +651,7 @@ void Settings::resolveBootstrapEndpoints() {
     resolveEndpointsList(MAINNET_REPLICATORS);
     resolveEndpointsList(TESTNET_API_NODES);
     resolveEndpointsList(TESTNET_REPLICATORS);
-    getFastestEndpoint(MAINNET_API_NODES);
-    getFastestEndpoint(TESTNET_API_NODES);
+    getRandomEndpoint(MAINNET_API_NODES);
+    getRandomEndpoint(TESTNET_API_NODES);
 }
 

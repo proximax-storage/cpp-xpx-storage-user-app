@@ -3,26 +3,25 @@
 #include <QPushButton>
 #include <QDateTime>
 #include <QFile>
+#include <QUrl>
+#include <QHostInfo>
 #include <QTextStream>
+#include <QHostAddress>
+#include <QRegularExpression>
+#include <QNetworkAccessManager>
 #include <QMutex>
+#include <random>
 #include <iostream>
 #include <xpxchaincpp/utils/HexParser.h>
 #include <utils/HexFormatter.h>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QDir>
-#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/message.hpp>
-#include <boost/beast/http/write.hpp>
-#include <boost/beast/http/string_body.hpp>
-#include <boost/beast/version.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/http/dynamic_body.hpp>
-#include <boost/beast/http/read.hpp>
 #include <vector>
 #include <tuple>
 #include <string>
-#include <future>
 #include <atomic>
 #include <mutex>
 #include <chrono>
@@ -222,91 +221,62 @@ QString dataSizeToString(uint64_t bytes)
     return stdStringToQStringUtf8(oss.str());
 }
 
-bool isResolvedToIpAddress(QString& host) {
-    try {
-        boost::asio::io_context io_context;
-        boost::asio::ip::tcp::resolver resolver(io_context);
-
-        const auto rawEndpoint = host.split(':');
-        if (rawEndpoint.size() == 2) {
-            const auto& address = rawEndpoint[0];
-            const auto& port = rawEndpoint[1];
-
-            auto endpoints = resolver.resolve(address.toStdString(), port.toStdString());
-            if (!endpoints.empty()) {
-                host = QString::fromStdString(endpoints.begin()->endpoint().address().to_string() + ":" + port.toStdString());
-                return true;
-            }
-        } else {
-            qWarning() << "Utils::isResolvedToIpAddress: Port is missing: " << " host: " << host;
-        }
-    } catch (const boost::system::system_error& e) {
-        qWarning() << "Utils::isResolvedToIpAddress: Cannot resolve host: " << e.what() << " host: " << host;
+bool isIpAddress(const QString &input) {
+    QHostAddress address(input);
+    if (address.protocol() != QAbstractSocket::UnknownNetworkLayerProtocol) {
+        return true;
     }
 
+    QRegularExpression ipRegex(R"((\d{1,3}\.){3}\d{1,3}(:\d+)?)");
+    QRegularExpressionMatch match = ipRegex.match(input);
+    return match.hasMatch();
+}
+
+bool isResolvedToIpAddress(QString& host) {
+    if (isIpAddress(host)) {
+        return true;
+    }
+
+    if (!host.startsWith("http://") || !host.startsWith("https://")) {
+        host = "https://" + host;
+    }
+
+    QUrl parsedUrl(host);
+    const auto name = parsedUrl.host();
+    QHostInfo info = QHostInfo::fromName(name);
+    if (info.error() == QHostInfo::NoError && !info.addresses().empty()) {
+        host = info.addresses().first().toString() + ":" + QString::number(parsedUrl.port());
+        return true;
+    }
+
+    qWarning() << "Utils::isResolvedToIpAddress: Cannot resolve host: " << host << " error: " << info.errorString();
     return false;
 }
 
 bool isEndpointAvailable(const std::string& ip, const std::string& port, std::atomic<bool>& found) {
-    try {
-        boost::asio::io_context ioc;
-        boost::beast::tcp_stream stream(ioc);
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), QString::fromStdString(port).toUShort());
-        stream.connect(endpoint);
-
-        boost::beast::http::request<boost::beast::http::string_body> request{boost::beast::http::verb::get, "/network", 11};
-        request.set(boost::beast::http::field::host, ip);
-        request.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-        boost::beast::http::write(stream, request);
-        boost::beast::flat_buffer buffer;
-        boost::beast::http::response<boost::beast::http::dynamic_body> res;
-        boost::beast::http::read(stream, buffer, res);
-
-        boost::beast::error_code ec;
-        stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-
-        return res.result() == boost::beast::http::status::ok && !found.load();
-
-    } catch (const std::exception& e) {
-        qWarning() << "Utils::isEndpointAvailable: Host error: " << e.what() << " ip: " << ip;
+    QTcpSocket socket;
+    socket.connectToHost(QString::fromStdString(ip), QString::fromStdString(port).toUShort());
+    if (!socket.waitForConnected(100)) {
+        qWarning() << "isEndpointAvailable: Connection failed to: " << ip << " on port: " << port << " Error:" << socket.errorString();
         return false;
     }
+
+    socket.close();
+    return true;
 }
 
-QString getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes) {
-    std::atomic<bool> isFound{false};
-    QString fastestEndpoint;
-    std::mutex mutex;
-
-    std::pair<std::chrono::milliseconds, int> minResponse{std::chrono::milliseconds::max(), -1};
-    std::vector<std::future<void>> futures;
-    for (int i = 0; i < nodes.size(); ++i) {
-        const auto& [host, port, ip] = nodes[i];
-        futures.push_back(std::async(std::launch::async, [&, i, hostC = host, ipC = ip, portC = port]() {
-            auto start = std::chrono::steady_clock::now();
-            if (!isFound.load() && isEndpointAvailable(ipC.toStdString(), portC.toStdString(), isFound)) {
-                auto end = std::chrono::steady_clock::now();
-                auto responseTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-                std::lock_guard<std::mutex> lock(mutex);
-                if (responseTime < minResponse.first) {
-                    minResponse = {responseTime, i};
-                    fastestEndpoint = hostC + ":" + portC;
-                }
-            }
-        }));
+QString getRandomEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes) {
+    if (nodes.empty()) {
+        return "";
     }
 
-    for (auto& f : futures) {
-        f.wait();
-    }
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, nodes.size() - 1);
 
-    if (minResponse.second != -1) {
-        std::iter_swap(nodes.begin(), nodes.begin() + minResponse.second);
-    }
-
-    return fastestEndpoint;
+    int randomIndex = dis(gen);
+    std::iter_swap(nodes.begin(), nodes.begin() + randomIndex);
+    return std::get<0>(nodes[0]) + ":" + std::get<1>(nodes[0]);
 }
 
 QString extractEndpointFromComboBox(QComboBox* comboBox) {

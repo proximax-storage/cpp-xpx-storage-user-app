@@ -60,11 +60,13 @@ enum ErrorType
 
 inline std::filesystem::path make_path( const QString& str ) { return std::filesystem::path(str.toUtf8().constData()).make_preferred(); };
 
+bool isIpAddress(const QString &input);
+
 bool isResolvedToIpAddress(QString& host);
 
 bool isEndpointAvailable(const QString& host, const QString& port, std::atomic<bool>& found);
 
-QString getFastestEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes);
+QString getRandomEndpoint(std::vector<std::tuple<QString, QString, QString>>& nodes);
 
 QString extractEndpointFromComboBox(QComboBox* comboBox);
 
