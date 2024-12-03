@@ -142,7 +142,10 @@ void MainWin::init()
     setGeometry(m_model->getWindowGeometry());
 
     const QString privateKey = m_model->getClientPrivateKey();
+
+#ifndef NDEBUG // Hide private key in release mode
     qDebug() << "MainWin::init. Private key: " << privateKey;
+#endif
 
     m_onChainClient = new OnChainClient(gStorageEngine.get(), this);
 

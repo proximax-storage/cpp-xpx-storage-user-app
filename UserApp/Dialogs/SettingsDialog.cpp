@@ -379,7 +379,11 @@ void SettingsDialog::accept()
 
     qDebug() << "SettingsDialog::accept: accept name: " << mpSettings->accountConfig().m_accountName;
     qDebug() << "SettingsDialog::accept: accept key: " << mpSettings->accountConfig().m_publicKeyStr;
+
+#ifndef NDEBUG // Hide private key in release mode
     qDebug() << "SettingsDialog::accept: accept privateKey: " << mpSettings->accountConfig().m_privateKeyStr;
+#endif
+
     qDebug() << "SettingsDialog::accept: REST bootstrap address: " << mpSettings->m_restBootstrap;
     qDebug() << "SettingsDialog::accept: REPLICATORS bootstrap addresses: " << mpSettings->m_replicatorBootstrap;
 
