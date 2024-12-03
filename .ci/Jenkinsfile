@@ -40,7 +40,7 @@ pipeline {
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
-                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/opt/boost-build-1.86.0/lib
                                 cp tool.desktop \$BUILD_DIR/UserApp/
                                 /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
 
