@@ -36,7 +36,7 @@ pipeline {
                                 mkdir _build
                                 cd _build
                                 export BUILD_DIR=\$PWD
-                                cmake -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
+                                cmake -Wno-dev -DBOOST_ROOT=/root/opt/boost-build-1.86.0 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
@@ -59,8 +59,12 @@ pipeline {
                                 rm -r \$DESTDIR/lib/CMakeFiles
                                 cp /usr/lib/x86_64-linux-gnu/libcrypto.so.* \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libssl.so.* \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/*boost*.so \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/*boost*.so.* \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libdl* \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libicui18n* \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libxkbcommon* \$DESTDIR/lib/
+                                cp /usr/lib/x86_64-linux-gnu/libicuuc* \$DESTDIR/lib/
+                                cp /root/opt/boost-build-1.86.0/lib/*boost*.so \$DESTDIR/lib/
+                                cp /root/opt/boost-build-1.86.0/lib/*boost*.so.* \$DESTDIR/lib/
 
                                 chmod a+x \$DESTDIR/StorageClientApp
                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
@@ -95,7 +99,7 @@ pipeline {
                                 export BUILD_DIR=\$PWD
                                 export PATH=/home/windows/mxe/usr/bin:\$PATH
 
-                                x86_64-w64-mingw32.shared-cmake -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
+                                x86_64-w64-mingw32.shared-cmake -Wno-dev -DSKIP_GRPC=ON -DXPX_STORAGE_SDK_NOT_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Release ..
                                 x86_64-w64-mingw32.shared-cmake --build . --target StorageClientApp -j\$(nproc)
                                 cd ..
 
