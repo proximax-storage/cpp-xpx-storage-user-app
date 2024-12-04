@@ -451,3 +451,9 @@ void StorageEngine::cancelStreaming()
     m_session->cancelStream();
 #endif
 }
+
+
+void StorageEngine::modificationHasBeenRegistered( const sirius::drive::ReplicatorList& list )
+{
+        m_session->modificationHasBeenRegistered( list );
+}

@@ -105,6 +105,8 @@ public:
     void finishStreaming( const QString& driveKey, std::function<void(const sirius::Key& driveKey, const sirius::drive::InfoHash& streamId, const sirius::drive::InfoHash& actionListHash, uint64_t streamBytes)> backCall );
     void cancelStreaming();
 
+    void modificationHasBeenRegistered( const sirius::drive::ReplicatorList& );
+
 signals:
     void newError(int errorType, const QString& errorText);
 

@@ -1764,6 +1764,10 @@ void MainWin::updateDriveWidgets(const QString& driveKey, int state, bool itIsNe
 
     qInfo() << "MainWin::onDriveStateChanged. Drive key: " << drive->getKey() << " state: " << getPrettyDriveState(state);
     
+    if ( state == uploading )
+    {
+        gStorageEngine->modificationHasBeenRegistered( drive->replicatorList() );
+    }
     // may be it is streaming drive
     Drive* streamingDrive = nullptr;
     if (driveKey.compare(ui->m_streamDriveCBox->currentData().toString(), Qt::CaseInsensitive) == 0 )
