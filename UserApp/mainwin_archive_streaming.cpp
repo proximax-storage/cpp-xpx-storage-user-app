@@ -70,7 +70,7 @@ void MainWin::initWizardArchiveStreaming()
 
                         auto driveKeyHex = rawHashFromHex(drive->getKey());
                         m_onChainClient->applyDataModification(driveKeyHex, actionList, confirmationCallback);
-                        drive->updateDriveState(registering);
+                        updateDriveState(drive,registering);
                     }
                 }
             }

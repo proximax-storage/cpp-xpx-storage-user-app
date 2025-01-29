@@ -82,6 +82,7 @@ AddDriveStreamDialog::AddDriveStreamDialog( OnChainClient* onChainClient,
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 #endif
             ui->m_localDriveFolder->setProperty("is_valid", true);
+            validate();
         } else {
             QToolTip::hideText();
             ui->m_localDriveFolder->setProperty("is_valid", true);
@@ -158,7 +159,7 @@ AddDriveStreamDialog::AddDriveStreamDialog( OnChainClient* onChainClient,
         validate();
     }
 
-    setWindowTitle("Create Drive");
+    setWindowTitle("Prepare Stream Drive");
     setFocus();
     ui->m_driveName->setFocus();
 

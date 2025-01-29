@@ -213,10 +213,10 @@ void MainWin::initStreaming()
                         //
                         // Start modification
                         //
-                        auto confirmationCallback = [&drive](auto fee)
+                        auto confirmationCallback = [&drive,this](auto fee)
                         {
                             if (showConfirmationDialog(fee)) {
-                                drive->updateDriveState(registering);
+                                updateDriveState(drive,registering);
                                 return true;
                             }
 
@@ -1140,6 +1140,30 @@ void MainWin::startFfmpegStreamingProcess(){}
 //
 
 #pragma mark --startStreamingProcess--
+
+//readStreamInfoList( const Drive&  driveInfo )
+void MainWin::startStreamingProcess( const Drive& driveInfo )
+{
+    auto streamInfoList = readStreamInfoList( driveInfo );
+    auto driveKey = driveInfo.getKey();
+    
+    if ( streamInfoList.size() > 1 )
+    {
+        qWarning() << LOG_SOURCE << "🔴 ! internal error: startStreamingProcess: streamInfoList.size() > 1 (" << streamInfoList.size() << ") " << driveKey;
+        displayError( "not found drive: " + driveKey );
+        return;
+    }
+
+    if ( streamInfoList.empty() )
+    {
+        qWarning() << LOG_SOURCE << "🔴 ! internal error: startStreamingProcess: streamInfoList.empty() "  << driveKey;
+        displayError( "not found drive: " + driveKey );
+        return;
+    }
+
+    startStreamingProcess( streamInfoList.back() );
+}
+
 void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
 {
     try
@@ -1301,9 +1325,9 @@ void MainWin::startStreamingProcess( const StreamInfo& streamInfo )
                 
                 drive->setModificationHash( txHash );
                 drive->setIsStreaming();
-                drive->updateDriveState(registering);
-                //              drive->updateDriveState(canceled); //todo
-                //              drive->updateDriveState(no_modifications); //todo
+                updateDriveState(drive,registering);
+                //              updateDriveState(drive,canceled); //todo
+                //              updateDriveState(drive,no_modifications); //todo
             };
             
             // Send tx to REST server
@@ -1325,7 +1349,7 @@ void MainWin::finishStreaming()
 
 //    if ( auto drive = m_model->findDrive( streamInfo->m_driveKey ); drive != nullptr )
 //    {
-//        drive->updateDriveState(uploading);
+//        updateDriveState(drive,uploading);
 //    }
     
     auto driveKey = streamInfo->m_driveKey;
@@ -1376,10 +1400,10 @@ void MainWin::cancelStreaming()
 
     if ( drive->getState() == registering )
     {
-        drive->updateDriveState(uploading);
+        updateDriveState(drive,uploading);
     }
 
-    drive->updateDriveState(canceling);
+    updateDriveState(drive,canceling);
 
     m_streamingPanel->hidePanel();
 }
@@ -1392,7 +1416,7 @@ void MainWin::connectToStreamingTransactions()
         qDebug () << "streamStartTransactionConfirmed: " << sirius::drive::toString(streamId).c_str();
         if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
         {
-            drive->updateDriveState(uploading);
+            updateDriveState(drive,uploading);
 
             if ( ! gUseFfmpeg )
             {
@@ -1425,7 +1449,7 @@ void MainWin::connectToStreamingTransactions()
         
         if ( auto drive = m_model->findDriveByModificationId( tx ); drive != nullptr )
         {
-            drive->updateDriveState(failed);
+            updateDriveState(drive,failed);
             drive->resetStreamingStatus();
         }
         m_model->setCurrentStreamInfo({});
@@ -1444,12 +1468,12 @@ void MainWin::connectToStreamingTransactions()
 
         if ( drive->getState() == canceled )
         {
-            drive->updateDriveState(no_modifications);
+            updateDriveState(drive,no_modifications);
             return;
         }
 
         m_model->setCurrentStreamInfo({});
-        drive->updateDriveState(canceled);
+        updateDriveState(drive,canceled);
         drive->resetStreamingStatus();
 
     }, Qt::QueuedConnection);
@@ -1460,7 +1484,7 @@ void MainWin::connectToStreamingTransactions()
     {
         if ( auto drive = m_model->findDrive( sirius::drive::toString(driveId).c_str() ); drive != nullptr )
         {
-            drive->updateDriveState(failed);
+            updateDriveState(drive,failed);
         }
         displayError( "Cancel transaction failed.");
         m_model->setCurrentStreamInfo({});
@@ -1472,7 +1496,7 @@ void MainWin::connectToStreamingTransactions()
     {
         if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
         {
-            drive->updateDriveState(approved);
+            updateDriveState(drive,approved);
         }
         updateDiffView();
     }, Qt::QueuedConnection);
@@ -1483,7 +1507,7 @@ void MainWin::connectToStreamingTransactions()
     {
         if ( auto drive = m_model->findDriveByModificationId( streamId ); drive != nullptr )
         {
-            drive->updateDriveState(failed);
+            updateDriveState(drive,failed);
         }
 
         displayError( "Finish stream transaction failed.", errorText);

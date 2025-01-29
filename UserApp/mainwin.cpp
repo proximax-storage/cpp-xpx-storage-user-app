@@ -3,7 +3,6 @@
 #include "mainwin.h"
 #include "./ui_mainwin.h"
 
-#include "Dialogs/WizardAddStreamAnnounceDialog.h"
 #include "Entities/Settings.h"
 #include "Models/Model.h"
 #include "Models/FsTreeTableModel.h"
@@ -31,7 +30,7 @@
 #include "Dialogs/ReplicatorOffBoardingDialog.h"
 #include "Dialogs/ReplicatorInfoDialog.h"
 #include "Dialogs/ModifyProgressPanel.h"
-//#include "Dialogs/StreamingPanel.h"
+#include "DialogsStreaming/StreamingPanel.h"
 #include "PopupMenu.h"
 #include "Dialogs/EditDialog.h"
 
@@ -929,7 +928,7 @@ void MainWin::cancelModification()
     CancelModificationDialog dialog(m_onChainClient, drive->getKey(), drive->getName(), this);
     if ( dialog.exec() == QMessageBox::Ok )
     {
-        drive->updateDriveState(canceling);
+        updateDriveState(drive,canceling);
     }
 }
 
@@ -2208,6 +2207,11 @@ void MainWin::onDriveStateChanged( Drive& drive )
     emit driveStateChangedSignal( drive.getKey(), drive.getState(), true );
 }
 
+void MainWin::updateDriveState( Drive* drive, DriveState state )
+{
+    drive->updateDriveState( state );
+}
+
 void MainWin::addChannel( const QString&              channelName,
                           const QString&              channelKey,
                           const QString&              driveKey,
@@ -2298,7 +2302,7 @@ void MainWin::onDriveCreationConfirmed( const QString &driveKey )
     if ( drive )
     {
         m_modificationsWatcher->addPath(drive->getLocalFolder());
-        drive->updateDriveState(no_modifications);
+        updateDriveState(drive,no_modifications);
         m_model->saveSettings();
 
         const QString message = "Drive '" + drive->getName() + "' created successfully.";
@@ -2324,7 +2328,7 @@ void MainWin::onDriveCreationFailed(const QString& driveKey, const QString& erro
         const QString message = "Drive creation failed (" + drive->getName() + ")";
         showNotification(message, gErrorCodeTranslator.translate(errorText));
         addNotification(message);
-        drive->updateDriveState(unconfirmed);
+        updateDriveState(drive,unconfirmed);
 
         if ( m_modalDialog )
         {
@@ -2342,7 +2346,7 @@ void MainWin::onDriveCloseConfirmed(const std::array<uint8_t, 32>& driveKey) {
 
     auto drive = m_model->findDrive(driveKeyHex);
     if (drive) {
-        drive->updateDriveState(deleted);
+        updateDriveState(drive,deleted);
     } else {
         qWarning() << "MainWin::onDriveCloseConfirmed. Unknown drive: " << driveKeyHex;
     }
@@ -2356,7 +2360,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
     auto drive = m_model->findDrive(alias);
     if (drive) {
         alias = drive->getName();
-        drive->updateDriveState(no_modifications);
+        updateDriveState(drive,no_modifications);
     } else {
         qWarning () << "MainWin::onDriveCloseFailed. Unknown drive: " << driveId << " error: " << errorText;
     }
@@ -2372,6 +2376,7 @@ void MainWin::onDriveCloseFailed(const std::array<uint8_t, 32>& driveKey, const 
 
 void MainWin::onApplyChanges()
 {
+    m_startStreamingNow = false;
     auto drive = m_model->currentDrive();
     if (!drive) {
         qWarning() << "MainWin::onApplyChanges. Unknown drive (Invalid pointer to current drive)";
@@ -2529,7 +2534,7 @@ void MainWin::onDataModificationTransactionConfirmed(const std::array<uint8_t, 3
     if ( auto drive = m_model->findDrive(rawHashToHex(driveKey)); drive != nullptr )
     {
         drive->setModificationHash( modificationId );
-        drive->updateDriveState(uploading);
+        updateDriveState(drive,uploading);
     }
     else
     {
@@ -2548,7 +2553,7 @@ void MainWin::onDataModificationTransactionFailed(const std::array<uint8_t, 32>&
 
     if ( auto drive = m_model->findDrive( rawHashToHex(driveKey)); drive != nullptr )
     {
-        drive->updateDriveState(failed);
+        updateDriveState(drive,failed);
     }
 }
 
@@ -2557,7 +2562,7 @@ void MainWin::onDataModificationApprovalTransactionConfirmed(const std::array<ui
     QString driveAlias = rawHashToHex(driveId);
     auto drive = m_model->findDrive(driveAlias);
     if (drive) {
-        drive->updateDriveState(approved);
+        updateDriveState(drive,approved);
         driveAlias = drive->getName();
     } else {
         qWarning () << LOG_SOURCE << "bad drive (alias not found): " << driveAlias;
@@ -2573,7 +2578,7 @@ void MainWin::onDataModificationApprovalTransactionFailed(const std::array<uint8
     auto drive = m_model->findDrive(driveAlias);
     if (drive) {
         driveAlias = drive->getName();
-        drive->updateDriveState(failed);
+        updateDriveState(drive,failed);
     } else {
         qWarning () << "MainWin::onDataModificationApprovalTransactionFailed: bad drive (alias not found): " << driveAlias;
     }
@@ -2603,7 +2608,7 @@ void MainWin::onCancelModificationTransactionConfirmed(const std::array<uint8_t,
     QString driveRawId = rawHashToHex(driveId);
     auto drive = m_model->findDrive(driveRawId);
     if (drive) {
-        drive->updateDriveState(canceled);
+        updateDriveState(drive,canceled);
     } else {
         qWarning () << "MainWin::onCancelModificationTransactionConfirmed: bad drive: " << driveRawId << " modification id: " << modificationId;
     }
@@ -2613,7 +2618,7 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     QString driveRawId = rawHashToHex(driveId);
     auto drive = m_model->findDrive(driveRawId);
     if (drive) {
-        drive->updateDriveState(failed);
+        updateDriveState(drive,failed);
     } else {
         qWarning () << "MainWin::onCancelModificationTransactionFailed bad drive: " << driveRawId << " modification id: " << modificationId;
     }
@@ -3211,10 +3216,10 @@ void MainWin::updateDriveStatusOnUi(const Drive& drive)
             ui->m_driveCBox->setItemText(index, drive.getName());
             ui->m_streamDriveCBox->setItemText(index, drive.getName());
 
-//            if ( m_modalDialog )
-//            {
+            if ( m_streamingPanel->isVisible() )
+            {
 //                m_modalDialog->closeModal();
-//            }
+            }
         }
     }
 }
@@ -3675,28 +3680,28 @@ ContractDeploymentData* MainWin::contractDeploymentData() {
 void
 MainWin::onDeployContractTransactionConfirmed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive(rawHashToHex(driveKey )); drive != nullptr ) {
-        drive->updateDriveState( contract_deploying );
+        updateDriveState(drive, contract_deploying );
     }
 }
 
 void
 MainWin::onDeployContractTransactionFailed( std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( rawHashToHex( driveKey )); drive != nullptr ) {
-        drive->updateDriveState( no_modifications );
+        updateDriveState(drive, no_modifications );
     }
 }
 
 void MainWin::onDeployContractApprovalTransactionConfirmed( std::array<uint8_t, 32> driveKey,
                                                             std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( rawHashToHex(driveKey )); drive != nullptr ) {
-        drive->updateDriveState( contract_deployed );
+        updateDriveState(drive, contract_deployed );
     }
 }
 
 void MainWin::onDeployContractApprovalTransactionFailed( std::array<uint8_t, 32> driveKey,
                                                          std::array<uint8_t, 32> contractId ) {
     if ( auto drive = m_model->findDrive( rawHashToHex( driveKey )); drive != nullptr ) {
-        drive->updateDriveState( no_modifications );
+        updateDriveState(drive, no_modifications );
     }
 }
 

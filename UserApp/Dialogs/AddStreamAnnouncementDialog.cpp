@@ -255,7 +255,7 @@ void AddStreamAnnouncementDialog::accept()
     auto confirmationCallback = [this, &drive](auto fee)
     {
         if (showConfirmationDialog(fee)) {
-            drive->updateDriveState(registering);
+            drive->updateDriveState (registering);
             QDialog::accept();
             return true;
         }

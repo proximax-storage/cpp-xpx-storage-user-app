@@ -1,6 +1,7 @@
 #include "Dialogs/AddDriveStreamDialog.h"
 #include "Dialogs/AskDriveWizardDialog.h"
 #include "Dialogs/WizardAddStreamAnnounceDialog.h"
+#include "DialogsStreaming/StreamingPanel.h"
 #include "Entities/Account.h"
 #include "Models/Model.h"
 #include "mainwin.h"
@@ -8,6 +9,45 @@
 //
 #include "Entities/StreamInfo.h"
 #include "qclipboard.h"
+
+bool MainWin::checkObsConfiguration()
+{
+    if( !ObsProfileData().isObsInstalled() )
+    {
+        displayError( "OBS not found in system (maybe not installed)." );
+        return false;
+    }
+
+    if( !ObsProfileData().isObsProfileAvailable() )
+    {
+        displayError( "There is no 'Sirius-stream' OBS profile." );
+        return false;
+    }
+
+    if( !ObsProfileData().isOutputModeCorrect() )
+    {
+        displayError( "'Output Mode' in 'Sirius-stream' profile must be set to "
+                        + ObsProfileData().m_outputMode
+                    , "(OBS Settings -> 'Output' tab -> 'Output Mode')" );
+        return false;
+    }
+
+    if( !ObsProfileData().isSiriusProfileSet() )
+    {
+        displayError( "The 'Sirius-stream' profile must be set as current OBS profile." );
+        return false;
+    }
+
+    if( !ObsProfileData().isRecordingPathSet() )
+    {
+        displayError( "'Recording Path' for stream must be set in 'Sirius-stream' profile."
+                     ,"(OBS Settings -> 'Output' tab -> Advanced mode -> "
+                      "'Recording' subtab -> 'Recording Path')");
+        return false;
+    }
+    
+    return true;
+}
 
 void MainWin::initWizardStreaming()
 {
@@ -22,11 +62,37 @@ void MainWin::initWizardStreaming()
     connect(ui->m_wizardStreamAnnouncementTable->model()
             , &QAbstractItemModel::rowsInserted, this
             , &MainWin::onRowsInsertedAnnouncements);
+
+    connect(ui->m_wizardStartStreamNow, &QPushButton::released, this, [this] ()
+        {
+            if ( !checkObsConfiguration() )
+            {
+                return;
+            }
+        
+            AddDriveStreamDialog dialog( m_onChainClient,m_model, this );
+            auto rc = dialog.exec();
+            if (rc == QDialog::Accepted)
+            {
+                // drive creation is started
+                m_streamingPanel->onStartStreamingWoAnnouncement();
+                //create drive
+                //drive created
+                //1-st stream modification
+                //modification approved
+                // start streaming
+            }
+        }, Qt::QueuedConnection);
     
     connect(ui->m_wizardAddStreamAnnouncementBtn, &QPushButton::released, this, [this] ()
         {
             if ( ui->m_driveCBox->count() == 0 )
             {
+                if ( !checkObsConfiguration() )
+                {
+                    return;
+                }
+
                 AskDriveWizardDialog dial(ui->m_wizardAddStreamAnnouncementBtn->text(),
                                           m_onChainClient, m_model, this);
                 auto rc = dial.exec();
@@ -63,37 +129,8 @@ void MainWin::initWizardStreaming()
 
     connect(ui->m_wizardStartSelectedStreamBtn, &QPushButton::released, this, [this] ()
         {
-            if( !ObsProfileData().isObsInstalled() )
+            if ( !checkObsConfiguration() )
             {
-                displayError( "OBS not found in system (maybe not installed)." );
-                return;
-            }
-
-            if( !ObsProfileData().isObsProfileAvailable() )
-            {
-                displayError( "There is no 'Sirius-stream' OBS profile." );
-                return;
-            }
-
-            if( !ObsProfileData().isOutputModeCorrect() )
-            {
-                displayError( "'Output Mode' in 'Sirius-stream' profile must be set to "
-                                + ObsProfileData().m_outputMode
-                            , "(OBS Settings -> 'Output' tab -> 'Output Mode')" );
-                return;
-            }
-
-            if( !ObsProfileData().isSiriusProfileSet() )
-            {
-                displayError( "The 'Sirius-stream' profile must be set as current OBS profile." );
-                return;
-            }
-
-            if( !ObsProfileData().isRecordingPathSet() )
-            {
-                displayError( "'Recording Path' for stream must be set in 'Sirius-stream' profile."
-                             ,"(OBS Settings -> 'Output' tab -> Advanced mode -> "
-                              "'Recording' subtab -> 'Recording Path')");
                 return;
             }
 
@@ -180,10 +217,10 @@ void MainWin::initWizardStreaming()
                         //
                         // Start modification
                         //
-                        auto confirmationCallback = [&drive](auto fee)
+                        auto confirmationCallback = [&drive,this](auto fee)
                         {
                             if (showConfirmationDialog(fee)) {
-                                drive->updateDriveState(registering);
+                                updateDriveState(drive,registering);
                                 return true;
                             }
 

@@ -14,6 +14,7 @@
 #include "CustomLogsRedirector.h"
 #include "Dialogs/ModalDialog.h"
 #include "drive/FlatDrive.h"
+#include "Entities/Drive.h"
 
 #include <boost/beast/core/string_type.hpp>
 
@@ -74,6 +75,8 @@ public:
     void removeDrive( Drive* drive );
     
     void onDriveStateChanged( Drive& );
+    
+    void updateDriveState( Drive* drive, DriveState state );
 
 signals:
     void refreshMyReplicatorsTable();
@@ -134,6 +137,7 @@ private:
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);
     void startStreamingProcess( const StreamInfo& streamInfo );
+    void startStreamingProcess( const Drive& driveInfo );
     void onStartStreamingBtnFfmpeg();
     void loadBalance();
     void setupDrivesTab();
@@ -177,6 +181,7 @@ private:
     
 private:
 
+    bool checkObsConfiguration();
     void initStreaming();
     void initWizardStreaming();
     void initWizardArchiveStreaming();
@@ -319,6 +324,7 @@ private:
     ModifyProgressPanel*    m_streamingProgressPanel;
     StreamingView*          m_streamingView = nullptr;
     StreamingPanel*         m_streamingPanel = nullptr;
+    bool                    m_startStreamingNow = false;
 
     Worker*                 mpWorker;
     QThread*                mpThread;

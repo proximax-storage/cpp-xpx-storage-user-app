@@ -36,10 +36,13 @@ public:
     void updateStreamingMode( Drive* );
 
     void updateUploadedDataAmount(const uint64_t amount, uint64_t replicatorNumber);
+    
+    bool setStartingWoAnnoncement( bool value ) { m_startingWoAnnoncement = value; }
 
 private:
     std::function<void()> m_cancelModificationFunc;
     Mode m_mode;
+    bool m_startingWoAnnoncement = false;
     Ui::Frame* ui;
     Model* mp_model;
     QMovie* m_loading;

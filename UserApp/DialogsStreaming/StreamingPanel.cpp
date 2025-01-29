@@ -44,13 +44,49 @@ StreamingPanel::~StreamingPanel()
 
 void StreamingPanel::onStartStreaming()
 {
+    m_woAnnoucement = false;
     ui->m_statusLabel->setText("starting...");
+    ui->m_info->setText("");
     show();
+}
+
+void StreamingPanel::onStartStreamingWoAnnouncement()
+{
+    m_woAnnoucement = true;
+    m_driveIsCreated = false;
+    ui->m_statusLabel->setText("starting...");
+    ui->m_info->setText("(creating drive)");
+    show();
+}
+
+//void StreamingPanel::onDriveCreatedOrApproved();
+//{
+//    if ( ! m_driveIsCreated )
+//    {
+//        m_driveIsCreated = true;
+//        ui->m_info->setText("(creating stream info)");
+//    }
+//    else
+//    {
+//        ui->m_info->setText("(regestering stream transaction)");
+//    }
+//    
+//}
+
+void StreamingPanel::onStreamStarted()
+{
+    ui->m_statusLabel->setText("is streaming...");
+    ui->m_info->setText("");
 }
 
 void StreamingPanel::hidePanel()
 {
     hide();
+}
+
+bool StreamingPanel::isVisible()
+{
+    return isVisible();
 }
 
 void StreamingPanel::onUpdateStatus( const QString& status )

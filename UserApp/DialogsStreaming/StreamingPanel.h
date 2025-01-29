@@ -10,6 +10,11 @@ class StreamingPanel : public QDialog
 {
     Q_OBJECT
 
+    Ui::StreamingPanel *ui;
+
+    bool                  m_woAnnoucement;
+    bool                  m_driveIsCreated = false;
+
     std::function<void()> m_cancelStreamingFunc;
     std::function<void()> m_finishStreamingFunc;
     
@@ -23,16 +28,17 @@ public:
 
     void setStreamLink( const QString& streamLink ) { m_streamLink = streamLink; }
     
+    void onDriveCreatedOrApproved();
+    void onStreamStarted();
+
     void onStartStreaming();
+    void onStartStreamingWoAnnouncement();
     void hidePanel();
+    bool isVisible();
     
     void setVisible( bool );
 
 public slots:
     void onUpdateStatus( const QString& status );
-
-    
-private:
-    Ui::StreamingPanel *ui;
 };
 

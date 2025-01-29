@@ -286,11 +286,11 @@ void WizardAddStreamAnnounceDialog::accept()
     //
     // Start modification
     //
-    auto confirmationCallback = [this, &drive](auto fee)
+    auto confirmationCallback = [this, drive](auto fee)
     {
         if (showConfirmationDialog(fee)) {
             drive->setCreatingStreamAnnouncement();
-            drive->updateDriveState(registering);
+            drive->updateDriveState (registering);
             QDialog::accept();
             return true;
         }
