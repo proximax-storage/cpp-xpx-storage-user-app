@@ -127,6 +127,7 @@ file(GLOB PROJECT_SOURCES
     "ErrorCodeTranslator/*.cpp"
     "ErrorCodeTranslator/*.txt"
     "SignalEmitters/*.h"
+    "ObsController/ObsController.*"
     ${TS_FILES}
 )
 
@@ -262,7 +263,7 @@ target_compile_definitions(StorageClientApp
     BOOST_EXCEPTION_DISABLE
 )
 else()
-    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet storage-crypto net model utils xpxchaincpp)
+    target_link_libraries(StorageClientApp PRIVATE ${Boost_LIBRARIES} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Multimedia Qt${QT_VERSION_MAJOR}::MultimediaWidgets torrent-sirius drive connection sdk_external nodediscovery ionet storage-crypto net model utils xpxchaincpp jsoncpp_static)
 endif()
 
 set_target_properties(StorageClientApp PROPERTIES

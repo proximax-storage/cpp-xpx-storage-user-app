@@ -86,7 +86,7 @@ void StreamingPanel::hidePanel()
 
 bool StreamingPanel::isVisible()
 {
-    return isVisible();
+    return QDialog::isVisible();
 }
 
 void StreamingPanel::onUpdateStatus( const QString& status )

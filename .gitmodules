@@ -8,3 +8,6 @@
 	url = https://github.com/proximax-storage/cpp-xpx-chain-sdk.git
 	branch = R21BC-245
         update = merge
+[submodule "jsoncpp"]
+	path = jsoncpp
+	url = git@github.com:proximax-storage/jsoncpp.git
