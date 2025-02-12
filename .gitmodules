@@ -11,3 +11,4 @@
 [submodule "jsoncpp"]
 	path = jsoncpp
 	url = git@github.com:proximax-storage/jsoncpp.git
+	branch = master
