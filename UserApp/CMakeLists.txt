@@ -127,7 +127,9 @@ file(GLOB PROJECT_SOURCES
     "ErrorCodeTranslator/*.cpp"
     "ErrorCodeTranslator/*.txt"
     "SignalEmitters/*.h"
-    "ObsController/ObsController.*"
+#    "ObsController/Logs.h"
+#    "ObsController/ObsController.h"
+#    "ObsController/ObsController.cpp"
     ${TS_FILES}
 )
 
