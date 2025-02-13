@@ -10,5 +10,5 @@
         update = merge
 [submodule "jsoncpp"]
 	path = jsoncpp
-	url = git@github.com:proximax-storage/jsoncpp.git
+	url = https://github.com/proximax-storage/jsoncpp.git
 	branch = master
