@@ -13,7 +13,7 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         BUILD_IMAGE_WINDOWS = "cpp-xpx-so-dependencies-win-build-image:v2.0-ubuntu"
-        BUILD_IMAGE_LINUX = "cpp-xpx-so-dependencies-linux-build-image:v1.0-ubuntu"
+        BUILD_IMAGE_LINUX = "cpp-xpx-so-dependencies-linux-build-image:v1.1-ubuntu"
     }
     
     stages {
@@ -36,11 +36,11 @@ pipeline {
                                 mkdir _build
                                 cd _build
                                 export BUILD_DIR=\$PWD
-                                cmake -Wno-dev -DBOOST_ROOT=/root/opt/boost-build-1.86.0 -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
+                                cmake -Wno-dev -DBOOST_ROOT=/root/boost-build-1_87_0 -DOPENSSL_ROOT_DIR=/usr/local/ssl -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Release ..
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
-                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/opt/boost-build-1.86.0/lib
+                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/boost-build-1_87_0/lib:/usr/local/ssl/lib64
                                 cp tool.desktop \$BUILD_DIR/UserApp/
                                 /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
 
@@ -50,21 +50,32 @@ pipeline {
 
                                 cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
                                 cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
-                                cp -r \$BUILD_DIR/lib \$DESTDIR
-                                cp -r \$BUILD_DIR/plugins \$DESTDIR
-                                cp -a \$BUILD_DIR/bin/boost/. \$DESTDIR/lib/
-                                cp -r \$BUILD_DIR/bin/. \$DESTDIR/lib/
-                                cp -a \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
-                                rm -r \$DESTDIR/lib/boost
-                                rm -r \$DESTDIR/lib/CMakeFiles
-                                cp /usr/lib/x86_64-linux-gnu/libcrypto.so.* \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libssl.so.* \$DESTDIR/lib/
-                                cp /usr/lib/x86_64-linux-gnu/libdl* \$DESTDIR/lib/
+                                cp -r /opt/qt/\${QT}/gcc_64/plugins \$DESTDIR
+                                rsync -avh --progress \$BUILD_DIR/bin/. \$DESTDIR/lib/
+                                rsync -avh --progress \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
+
+                                cp /usr/local/ssl/lib64/libcrypto.so.* \$DESTDIR/lib/
+                                cp /usr/local/ssl/lib64/libssl.so.* \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libicui18n* \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libxkbcommon* \$DESTDIR/lib/
                                 cp /usr/lib/x86_64-linux-gnu/libicuuc* \$DESTDIR/lib/
-                                cp /root/opt/boost-build-1.86.0/lib/*boost*.so \$DESTDIR/lib/
-                                cp /root/opt/boost-build-1.86.0/lib/*boost*.so.* \$DESTDIR/lib/
+                                cp /root/boost-build-1_87_0/lib/*boost*.so \$DESTDIR/lib/
+                                cp /root/boost-build-1_87_0/lib/*boost*.so.* \$DESTDIR/lib/
+
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6MultimediaWidgets.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Multimedia.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Network.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Widgets.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Gui.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Core.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6DBus.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6XcbQpa.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6OpenGL.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libicui18n.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libicuuc.so* \$DESTDIR/lib/
+                                cp /opt/qt/\${QT}/gcc_64/lib/libicudata.so* \$DESTDIR/lib/
+
+                                rm -f \$DESTDIR/lib/*.cmake
 
                                 chmod a+x \$DESTDIR/StorageClientApp
                                 patchelf --force-rpath --set-rpath ./lib \$DESTDIR/StorageClientApp
