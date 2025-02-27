@@ -40,7 +40,7 @@ pipeline {
                                 cmake --build \$BUILD_DIR --target StorageClientApp -j\$(nproc)
                                 cd ..
 
-                                export LD_LIBRARY_PATH=/opt/qt/\${QT}/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/boost-build-1_87_0/lib:/usr/local/ssl/lib64
+                                export LD_LIBRARY_PATH=/opt/qt/6.5.3/gcc_64/lib:\$BUILD_DIR/bin:\$BUILD_DIR/cpp-xpx-chain-sdk:\$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/boost-build-1_87_0/lib:/usr/local/ssl/lib64
                                 cp tool.desktop \$BUILD_DIR/UserApp/
                                 /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run \$BUILD_DIR/UserApp/tool.desktop -verbose=3
 
@@ -50,7 +50,7 @@ pipeline {
 
                                 cp \$BUILD_DIR/UserApp/StorageClientApp \$DESTDIR
                                 cp -r \$BUILD_DIR/UserApp/resources \$DESTDIR
-                                cp -r /opt/qt/\${QT}/gcc_64/plugins \$DESTDIR
+                                cp -r /opt/qt/6.5.3/gcc_64/plugins \$DESTDIR
                                 rsync -avh --progress \$BUILD_DIR/bin/. \$DESTDIR/lib/
                                 rsync -avh --progress \$BUILD_DIR/cpp-xpx-chain-sdk/. \$DESTDIR/lib/
 
@@ -62,18 +62,18 @@ pipeline {
                                 cp /root/boost-build-1_87_0/lib/*boost*.so \$DESTDIR/lib/
                                 cp /root/boost-build-1_87_0/lib/*boost*.so.* \$DESTDIR/lib/
 
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6MultimediaWidgets.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Multimedia.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Network.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Widgets.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Gui.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6Core.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6DBus.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6XcbQpa.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libQt6OpenGL.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libicui18n.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libicuuc.so* \$DESTDIR/lib/
-                                cp /opt/qt/\${QT}/gcc_64/lib/libicudata.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6MultimediaWidgets.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6Multimedia.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6Network.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6Widgets.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6Gui.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6Core.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6DBus.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6XcbQpa.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libQt6OpenGL.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libicui18n.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libicuuc.so* \$DESTDIR/lib/
+                                cp /opt/qt/6.5.3/gcc_64/lib/libicudata.so* \$DESTDIR/lib/
 
                                 rm -f \$DESTDIR/lib/*.cmake
 
