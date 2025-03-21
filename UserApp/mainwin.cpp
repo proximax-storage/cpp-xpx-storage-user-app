@@ -535,47 +535,56 @@ void MainWin::init()
              }, Qt::QueuedConnection );
 
     connect( ui->m_contractDriveCBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, [this]( int index ) {
-        auto* pContractDrive = contractDeploymentData();
-        if ( !pContractDrive ) {
-            ui->m_deploymentParameters->hide();
-            return;
-        }
+            if(ui->m_contractDriveCBox->count() == 0)
+            {
+                ui->m_deploymentParameters->hide();
+            }
+            else
+            {
+                auto* pContractDrive = contractDeploymentData();
+                if ( !pContractDrive ) {
+                    ui->m_deploymentParameters->show();
 
-        ui->m_contractAssignee->setText( pContractDrive->m_assignee );
-        ui->m_contractFile->setText( pContractDrive->m_file );
-        ui->m_contractFunction->setText( pContractDrive->m_function );
-        ui->m_contractParameters->setText( pContractDrive->m_parameters );
-        ui->m_contractExecutionCallPayment->setValue( pContractDrive->m_executionCallPayment );
-        ui->m_contractDownloadCallPayment->setValue( pContractDrive->m_downloadCallPayment );
-        ui->m_contractAutomaticExecutionsNumber->setValue( pContractDrive->m_automaticExecutionsNumber );
-        ui->m_contractAutomaticExecutionFileName->setText(pContractDrive->m_automaticExecutionFileName);
-        ui->m_contractAutomaticExecutionFunctionName->setText(pContractDrive->m_automaticExecutionFunctionName);
-        ui->m_contractAutomaticExecutionCallPayment->setValue( pContractDrive->m_automaticExecutionCallPayment );
-        ui->m_contractAutomaticDownloadCallPayment->setValue( pContractDrive->m_automaticDownloadCallPayment );
+                    // return;
+                }
+                else
+                {
+                    ui->m_contractAssignee->setText( pContractDrive->m_assignee );
+                    ui->m_contractFile->setText( pContractDrive->m_file );
+                    ui->m_contractFunction->setText( pContractDrive->m_function );
+                    ui->m_contractParameters->setText( pContractDrive->m_parameters );
+                    ui->m_contractExecutionCallPayment->setValue( pContractDrive->m_executionCallPayment );
+                    ui->m_contractDownloadCallPayment->setValue( pContractDrive->m_downloadCallPayment );
+                    ui->m_contractAutomaticExecutionsNumber->setValue( pContractDrive->m_automaticExecutionsNumber );
+                    ui->m_contractAutomaticExecutionFileName->setText(pContractDrive->m_automaticExecutionFileName);
+                    ui->m_contractAutomaticExecutionFunctionName->setText(pContractDrive->m_automaticExecutionFunctionName);
+                    ui->m_contractAutomaticExecutionCallPayment->setValue( pContractDrive->m_automaticExecutionCallPayment );
+                    ui->m_contractAutomaticDownloadCallPayment->setValue( pContractDrive->m_automaticDownloadCallPayment );
 
-        ui->m_contractMosaicTable->setRowCount( 0 );
+                    ui->m_contractMosaicTable->setRowCount( 0 );
 
-        for ( const auto&[mosaicId, amount]: pContractDrive->m_servicePayments ) {
-            ui->m_contractMosaicTable->blockSignals( true );
+                    for ( const auto&[mosaicId, amount]: pContractDrive->m_servicePayments ) {
+                        ui->m_contractMosaicTable->blockSignals( true );
 
-            int row = ui->m_contractMosaicTable->rowCount();
-            ui->m_contractMosaicTable->insertRow( row );
+                        int row = ui->m_contractMosaicTable->rowCount();
+                        ui->m_contractMosaicTable->insertRow( row );
 
-            auto* mosaicItem = new QTableWidgetItem;
-            mosaicItem->setText( QString::fromStdString( mosaicId ));
-            ui->m_contractMosaicTable->setItem( row, 0, mosaicItem );
+                        auto* mosaicItem = new QTableWidgetItem;
+                        mosaicItem->setText( QString::fromStdString( mosaicId ));
+                        ui->m_contractMosaicTable->setItem( row, 0, mosaicItem );
 
-            auto* amountItem = new QTableWidgetItem;
-            amountItem->setText( QString::fromStdString( amount ));
-            ui->m_contractMosaicTable->setItem( row, 1, amountItem );
+                        auto* amountItem = new QTableWidgetItem;
+                        amountItem->setText( QString::fromStdString( amount ));
+                        ui->m_contractMosaicTable->setItem( row, 1, amountItem );
 
-            ui->m_contractMosaicTable->blockSignals( false );
-        }
+                        ui->m_contractMosaicTable->blockSignals( false );
+                    }
 
-        ui->m_deploymentParameters->show();
+                    ui->m_deploymentParameters->show();
 
-        ui->m_contractDeployBtn->setDisabled( !pContractDrive->isValid());
-
+                    ui->m_contractDeployBtn->setDisabled( !pContractDrive->isValid());
+                }
+            }
     }, Qt::QueuedConnection );
 
     connect( ui->m_contractAssignee, &QLineEdit::textChanged, this, [this]( const auto& text ) {
@@ -876,6 +885,10 @@ void MainWin::drivesInitialized()
     for (const auto& [key, drive] : m_model->getDrives()) {
         addEntityToUi(ui->m_driveCBox, drive.getName(), drive.getKey());
         addEntityToUi(ui->m_streamDriveCBox, drive.getName(), drive.getKey());
+        if( drive.getFsTree().findChild("SC_DATA") == nullptr )
+        {
+            m_model->driveContractModel().onDriveStateChanged(drive.getKey(), 4);
+        }
         if (key.compare(m_model->currentDriveKey(), Qt::CaseInsensitive) == 0) {
             ui->m_drivePath->setText( "Path: /" );
             updateDriveWidgets(drive.getKey(), drive.getState(), false);
