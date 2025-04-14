@@ -1,4 +1,5 @@
-FROM --platform=linux/amd64 debian:bullseye AS BUILDER
+FROM --platform=linux/amd64 debian:bullseye AS builder
+
 RUN apt-get update && apt-get install --no-install-recommends -y \
     curl \
     build-essential \
@@ -48,42 +49,84 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ninja-build \
     patchelf \
     zip
+
 RUN pip install aqtinstall
+
 WORKDIR /linuxdeployqt
+
 RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage && \
-    chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
+    chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage \
+
 ARG QT=6.5.0
 ARG QT_MODULES="qtscxml qtmultimedia"
 ARG QT_ARCHIVES="qttools qtbase icu"
 ARG QT_HOST=linux
 ARG QT_TARGET=desktop
 ARG QT_ARCH=gcc_64
+
 RUN aqt install-qt -O /opt/qt ${QT_HOST} ${QT_TARGET} ${QT} ${QT_ARCH} -m ${QT_MODULES} --archives ${QT_ARCHIVES}
+
 ENV PATH /opt/qt/${QT}/gcc_64/bin:$PATH
 ENV QT_PLUGIN_PATH /opt/qt/${QT}/gcc_64/plugins/
 ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
 ENV BUILD_DIR /home/cempl/repositories/cpp-xpx-storage-user-app
-# FROM sirius-so-app:1 AS BUILDER
-WORKDIR $BUILD_DIR
+
+RUN apt-get update && \
+    echo "deb [trusted=yes] http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu focal main" | tee /etc/apt/sources.list.d/ubuntu-toolchain-r-test.list && \
+    apt-get update && \
+    apt-get install --only-upgrade -y libstdc++6 && \
+    apt-get install -y zip
+
+RUN wget https://github.com/openssl/openssl/releases/download/openssl-3.4.1/openssl-3.4.1.tar.gz && \
+    tar -xvzf openssl-3.4.1.tar.gz && \
+    cd openssl-3.4.1 && \
+    ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl '-Wl,-rpath,$(LIBRPATH)' && \
+    make -j$(nproc) && \
+    make install
+
 COPY . /app-src
-RUN cmake -G Ninja -DCMAKE_BUILD_TYPE=Release /app-src && \
+ARG QT=6.5.0
+ENV BUILD_DIR="/app-src/_build"
+ENV LD_LIBRARY_PATH="/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:$BUILD_DIR/cpp-xpx-storage-sdk:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/root/boost-build-1_87_0/lib:/usr/local/ssl/lib64"
+ENV PATH="/opt/qt/${QT}/gcc_64/bin:$PATH"
+WORKDIR $BUILD_DIR
+RUN cmake -Wno-dev -DBOOST_ROOT=/root/boost-build-1_87_0 -DOPENSSL_ROOT_DIR=/usr/local/ssl -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_BUILD_TYPE=Debug .. && \
     cmake --build $BUILD_DIR --target StorageClientApp -j$(nproc)
-ENV LD_LIBRARY_PATH=/opt/qt/${QT}/gcc_64/lib:$BUILD_DIR/bin:$BUILD_DIR/cpp-xpx-chain-sdk:"$LD_LIBRARY_PATH"
 RUN cp /app-src/tool.desktop $BUILD_DIR/UserApp/
-RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=1
-ENV DESTDIR /storage-tool
+RUN /linuxdeployqt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract-and-run $BUILD_DIR/UserApp/tool.desktop -verbose=3
+
+ENV DESTDIR=/storage-tool
 WORKDIR $DESTDIR
 RUN cp $BUILD_DIR/UserApp/StorageClientApp $DESTDIR
 RUN cp -r $BUILD_DIR/UserApp/resources $DESTDIR
-RUN cp -r $BUILD_DIR/lib $DESTDIR
-RUN cp -r $BUILD_DIR/plugins $DESTDIR
-RUN cp -a $BUILD_DIR/bin/boost/. $DESTDIR/lib/
-RUN cp -r $BUILD_DIR/bin/. $DESTDIR/lib/
-RUN cp -a $BUILD_DIR/cpp-xpx-chain-sdk/. $DESTDIR/lib/
-RUN cp /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 $DESTDIR/lib/
-RUN cp /usr/lib/x86_64-linux-gnu/libssl.so.1.1 $DESTDIR/lib/
-RUN cp /usr/lib/x86_64-linux-gnu/libboost_stacktrace_backtrace.so.1.74.0 $DESTDIR/lib/
+RUN cp -r /opt/qt/6.5.3/gcc_64/plugins $DESTDIR
+RUN rsync -avh --progress $BUILD_DIR/bin/. $DESTDIR/lib/
+RUN rsync -avh --progress $BUILD_DIR/cpp-xpx-chain-sdk/. $DESTDIR/lib/
+
+RUN cp /usr/local/ssl/lib64/libcrypto.so.* $DESTDIR/lib/
+RUN cp /usr/local/ssl/lib64/libssl.so.* $DESTDIR/lib/
+#RUN cp /usr/lib/x86_64-linux-gnu/libdl* $DESTDIR/lib/
+RUN cp /usr/lib/x86_64-linux-gnu/libicui18n* $DESTDIR/lib/
+RUN cp /usr/lib/x86_64-linux-gnu/libxkbcommon* $DESTDIR/lib/
+RUN cp /usr/lib/x86_64-linux-gnu/libicuuc* $DESTDIR/lib/
+RUN cp /root/boost-build-1_87_0/lib/*boost*.so $DESTDIR/lib/
+RUN cp /root/boost-build-1_87_0/lib/*boost*.so.* $DESTDIR/lib/
+
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6MultimediaWidgets.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6Multimedia.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6Network.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6Widgets.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6Gui.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6Core.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6DBus.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6XcbQpa.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libQt6OpenGL.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libicui18n.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libicuuc.so* $DESTDIR/lib/
+RUN cp /opt/qt/6.5.3/gcc_64/lib/libicudata.so* $DESTDIR/lib/
+
+RUN chmod a+x $DESTDIR/StorageClientApp
 RUN rm -r $DESTDIR/lib/boost
 RUN rm -r $DESTDIR/lib/CMakeFiles
 RUN chmod a+x $DESTDIR/StorageClientApp

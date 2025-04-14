@@ -1,0 +1,92 @@
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
+    build-essential \
+    wget \
+    g++-10 \
+    libc++-dev \
+    libc++abi-dev \
+    apt-utils \
+    lsb-release \
+    software-properties-common \
+    gnupg \
+    gpg \
+    pkg-config \
+    python3-pip \
+    python3-dev \
+    gnutls-bin \
+    libgtest-dev \
+    libgcrypt20-dev \
+    libssl-dev \
+    libgl1-mesa-dev \
+    libpulse-dev \
+    libxcb-glx0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-render0 \
+    libxcb-shape0 \
+    libxcb-shm0 \
+    libxcb-sync1 \
+    libxcb-util1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb1 \
+    libxkbcommon-dev \
+    libxkbcommon-x11-0 \
+    libxcb-cursor-dev \
+    libxcb-xkb-dev \
+    libfontconfig \
+    cereal \
+    patchelf \
+    git \
+    libxrandr2 \
+    libxrandr-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-base1.0-0 \
+    tar
+
+RUN git clone https://github.com/Kitware/CMake.git && \
+    cd CMake && \
+    git checkout v3.31.0 && \
+    ./bootstrap && \
+    make -j$(nproc) && \
+    make install
+
+RUN wget https://apt.llvm.org/llvm.sh && \
+    chmod u+x llvm.sh && \
+    ./llvm.sh 18
+
+RUN curl -o boost_1_86_0.tar.gz -SL https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.gz && \
+    tar -xzf boost_1_86_0.tar.gz && \
+    cd boost_1_86_0 && \
+    ./bootstrap.sh --prefix=${HOME}/opt/boost-build-1.86.0 && \
+    ./b2 --prefix=${HOME}/opt/boost-build-1.86.0 --without-python -j$(nproc) stage release && \
+    ./b2 --prefix=${HOME}/opt/boost-build-1.86.0 --without-python install && \
+    cd .. && \
+    rm -rf boost_1_86_0.tar.gz boost_1_86_0
+
+ENV BOOST_ROOT=/opt/boost-build-1.86.0
+
+RUN pip install aqtinstall
+
+WORKDIR /linuxdeployqt
+RUN curl -fsSL https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -o linuxdeployqt-continuous-x86_64.AppImage && \
+    chmod a+x ./linuxdeployqt-continuous-x86_64.AppImage
+
+ARG QT=6.5.3
+ARG QT_MODULES="qtscxml qtmultimedia"
+ARG QT_ARCHIVES="qttools qtbase icu"
+ARG QT_HOST=linux
+ARG QT_TARGET=desktop
+ARG QT_ARCH=gcc_64
+RUN aqt install-qt -O /opt/qt ${QT_HOST} ${QT_TARGET} ${QT} ${QT_ARCH} -m ${QT_MODULES} --archives ${QT_ARCHIVES}
+
+ENV PATH /opt/qt/${QT}/gcc_64/bin:$PATH
+ENV QT_PLUGIN_PATH /opt/qt/${QT}/gcc_64/plugins/
+ENV QML_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
+ENV QML2_IMPORT_PATH /opt/qt/${QT}/gcc_64/qml/
