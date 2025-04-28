@@ -107,7 +107,6 @@ void ConfirmLinkDialog::accept()
     }
     else
     {
-        m_dataInfo.m_itemName = m_folderNameConfirmEdit->text().toStdString().c_str();
         std::string link = m_dataInfo.getLink().toStdString();
         QClipboard* clipboard = QApplication::clipboard();
         if ( !clipboard ) {
