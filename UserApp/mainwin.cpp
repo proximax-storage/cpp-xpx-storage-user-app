@@ -863,8 +863,6 @@ void MainWin::init()
     ui->tabWidget->setTabVisible( 5, true );
 #endif
 
-    ui->tabWidget->setTabVisible( 4, true );
-
     m_easyDownloadTableModel->updateProgress( ui->m_easyDownloadTable->selectionModel() );
 
     doUpdateBalancePeriodically();
