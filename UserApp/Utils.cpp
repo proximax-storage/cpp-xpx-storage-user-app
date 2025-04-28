@@ -306,11 +306,21 @@ QString prettyBalance(uint64_t value) {
     return formattedBalance;
 }
 
-bool showConfirmationDialog(const QString& transactionFee) {
+bool showConfirmationDialog(const QString& transactionFee, const QString& message) {
     QMessageBox msgBox;
     msgBox.setWindowTitle("Confirmation");
-    msgBox.setText("The transaction will be sent, with an estimated cost\n"
-                   "of approximately: " + transactionFee + " xpx.");
+
+    if (message.isEmpty())
+    {
+        msgBox.setText("The transaction will be sent, with an estimated cost\n"
+                       "of approximately: " + transactionFee + " XPX.");
+    } else
+    {
+        msgBox.setText("Do you want to continue downloading " + message + " ?\n"
+                       "The transaction will be sent with an estimated cost\n"
+                       "of approximately: " + transactionFee + " XPX.");
+    }
+
     msgBox.setStandardButtons( QMessageBox::Ok | QMessageBox::Cancel );
     msgBox.button(QMessageBox::Ok)->setText("Confirm");
     msgBox.setModal(true);

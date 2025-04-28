@@ -74,7 +74,7 @@ bool isDarkSystemTheme();
 
 QString prettyBalance(uint64_t value);
 
-bool showConfirmationDialog(const QString& transactionFee);
+bool showConfirmationDialog(const QString& transactionFee, const QString& message = "");
 
 std::string qStringToStdStringUTF8(const QString& data);
 

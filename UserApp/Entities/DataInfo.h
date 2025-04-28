@@ -26,10 +26,12 @@ struct DataInfo
     
     DataInfo( const std::array<uint8_t, 32>& driveKey,
               QString                    driveName,
+              QString                    itemName,
               const QString&             path,
               uint64_t                   totalSize )
         : m_driveKey(driveKey)
         , m_driveName(driveName)
+        , m_itemName(itemName)
         , m_path(path)
         , m_totalSize(totalSize)
     {
