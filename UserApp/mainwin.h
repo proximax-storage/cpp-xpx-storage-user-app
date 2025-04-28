@@ -172,8 +172,7 @@ private:
 
     std::vector<DataInfo> readDataInfoList();
 public:
-    void addEasyDownload( const DataInfo& dataInfo );
-    void startEasyDownload( EasyDownloadInfo& info );
+    void startEasyDownload( const DataInfo& dataInfo, bool isInterrupted );
     void continueEasyDownload( uint64_t downloadId, const QString& channelKey );
     void restartInterruptedEasyDownloads();
 private:
