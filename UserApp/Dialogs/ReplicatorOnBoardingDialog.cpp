@@ -42,10 +42,11 @@ ReplicatorOnBoardingDialog::ReplicatorOnBoardingDialog(OnChainClient* onChainCli
         validate();
     }
 
-    QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([a-zA-Z0-9]{64})")));
+    QRegularExpression keyTemplate(QRegularExpression::anchoredPattern(QLatin1String(R"([A-Fa-f0-9]{64})")));
     connect(ui->replicatorKey, &QLineEdit::textChanged, this, [this, keyTemplate] (auto text)
     {
-        if (!keyTemplate.match(text).hasMatch() || !mpModel->findReplicatorByPublicKey(getReplicatorPublicKey()).getPrivateKey().isEmpty()) {
+        // TODO: Fix second check
+        if (!keyTemplate.match(text).hasMatch() /*|| !mpModel->findReplicatorByPublicKey(getReplicatorPublicKey()).getPrivateKey().isEmpty()*/) {
             QToolTip::showText(ui->replicatorKey->mapToGlobal(QPoint(0, 15)), tr("Invalid or duplicate key!"), nullptr, {}, 3000);
             ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
             ui->replicatorKey->setProperty("is_valid", false);
