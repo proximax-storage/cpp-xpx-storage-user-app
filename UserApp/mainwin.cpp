@@ -2641,7 +2641,7 @@ void MainWin::onCancelModificationTransactionFailed(const std::array<uint8_t, 32
     addNotification(errorText);
 }
 
-void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey) {
+void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey, bool isExists) {
     qInfo () << "MainWin::onReplicatorOnBoardingTransactionConfirmed" << replicatorPublicKey;
 
     m_onChainClient->getBlockchainEngine()->getReplicatorById(replicatorPublicKey.toStdString(), [this] (auto replicator, auto isSuccess, auto message, auto code ) {
@@ -2653,11 +2653,14 @@ void MainWin::onReplicatorOnBoardingTransactionConfirmed(const QString& replicat
         m_myReplicatorsModel->setupModelData({ replicator }, m_model);
     });
 
-    QString message;
-    message.append("Replicator onboarded successful: ");
-    message.append(replicatorPublicKey);
-    showNotification(message);
-    addNotification(message);
+    if (!isExists)
+    {
+        QString message;
+        message.append("Replicator onboarded successful: ");
+        message.append(replicatorPublicKey);
+        showNotification(message);
+        addNotification(message);
+    }
 }
 
 void MainWin::onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error) {

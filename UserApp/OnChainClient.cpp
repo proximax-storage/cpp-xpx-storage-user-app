@@ -256,7 +256,7 @@ void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, co
     auto publicKey = rawHashToHex(keyPair.publicKey().array());
     if (isExists) {
         mpBlockchainEngine->getReplicatorById(publicKey.toStdString(),
-            [this, publicKey, replicatorPrivateKey](auto drivesPage, auto isSuccess, auto message, auto code){
+            [this, isExists, publicKey, replicatorPrivateKey](auto drivesPage, auto isSuccess, auto message, auto code){
             if (!isSuccess) {
                 qWarning() << "nChainClient::replicatorOnBoarding. Replicator marked as exists, but not found!. Id: " << publicKey;
 
@@ -271,7 +271,7 @@ void OnChainClient::replicatorOnBoarding(const QString &replicatorPrivateKey, co
             }
 
             qInfo() << "OnChainClient::replicatorOnBoarding. Callback. Replicator already exists: " << publicKey;
-            emit replicatorOnBoardingTransactionConfirmed(publicKey);
+            emit replicatorOnBoardingTransactionConfirmed(publicKey, isExists);
         });
     } else {
 
@@ -403,8 +403,8 @@ void OnChainClient::initConnects() {
         emit cancelModificationTransactionFailed(driveId, modificationId, error);
     });
 
-    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey) {
-        emit replicatorOnBoardingTransactionConfirmed(replicatorPublicKey);
+    connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingConfirmed, this, [this](auto replicatorPublicKey, auto isExists) {
+        emit replicatorOnBoardingTransactionConfirmed(replicatorPublicKey, isExists);
     });
 
     connect(mpTransactionsEngine, &TransactionsEngine::replicatorOnBoardingFailed, this, [this](auto replicatorPublicKey, auto replicatorPrivateKey, auto error) {

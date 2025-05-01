@@ -848,7 +848,7 @@ void TransactionsEngine::replicatorOnBoarding(const QString& replicatorPrivateKe
             removeConfirmedAddedNotifier(replicatorAccount->address(), id.c_str());
             removeStatusNotifier(replicatorAccount->address(), statusNotifierId.c_str());
 
-            emit replicatorOnBoardingConfirmed(rawHashToHex(replicatorAccount->publicKey()));
+            emit replicatorOnBoardingConfirmed(rawHashToHex(replicatorAccount->publicKey()), false);
         }
     });
 

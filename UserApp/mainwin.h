@@ -132,7 +132,7 @@ private:
     void onDataModificationApprovalTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& fileStructureCdi, uint8_t);
     void onCancelModificationTransactionConfirmed(const std::array<uint8_t, 32>& driveId, const QString& modificationId);
     void onCancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId, const QString& error);
-    void onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+    void onReplicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey, bool isExists);
     void onReplicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
     void onReplicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
     void onReplicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);

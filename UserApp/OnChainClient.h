@@ -112,7 +112,7 @@ class OnChainClient : public QObject
         void cancelModificationTransactionFailed(const std::array<uint8_t, 32>& driveId, const QString& modificationId, const QString& error);
         void replicatorOffBoardingTransactionConfirmed(const QString& replicatorPublicKey);
         void replicatorOffBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& error);
-        void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey);
+        void replicatorOnBoardingTransactionConfirmed(const QString& replicatorPublicKey, bool isExists);
         void replicatorOnBoardingTransactionFailed(const QString& replicatorPublicKey, const QString& replicatorPrivateKey, const QString& error);
 
         void deployContractTransactionConfirmed(std::array<uint8_t, 32> driveKey, std::array<uint8_t, 32> contractId);
